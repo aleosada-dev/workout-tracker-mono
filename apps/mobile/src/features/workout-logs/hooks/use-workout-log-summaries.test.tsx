@@ -50,7 +50,8 @@ describe('useWorkoutLogSummaries', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: PAGE_SIZE, cursor: undefined }),
+      { query: { limit: String(PAGE_SIZE), cursor: undefined } },
+      expect.anything(),
     );
   });
 
@@ -73,7 +74,8 @@ describe('useWorkoutLogSummaries', () => {
     });
 
     expect(mockFetch).toHaveBeenLastCalledWith(
-      expect.objectContaining({ limit: PAGE_SIZE, cursor: '2026-05-02T00:00:00Z' }),
+      { query: { limit: String(PAGE_SIZE), cursor: '2026-05-02T00:00:00Z' } },
+      expect.anything(),
     );
   });
 

@@ -17,7 +17,7 @@ export function useWorkoutLogSummaries() {
     queryKey: ['workout-logs', 'summaries'] as const,
     initialPageParam: undefined,
     queryFn: ({ pageParam, signal }) =>
-      fetchWorkoutLogSummaries({ limit: PAGE_SIZE, cursor: pageParam, signal }),
+      fetchWorkoutLogSummaries({ query: { limit: String(PAGE_SIZE), cursor: pageParam } }, signal),
     getNextPageParam: (last) => (last.hasMore ? last.items.at(-1)?.startedAt : undefined),
   });
 }

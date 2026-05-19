@@ -48,7 +48,7 @@ describe('fetchWorkoutLogSummaries', () => {
   test('first page: only limit in querystring', async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(samplePage));
 
-    const result = await fetchWorkoutLogSummaries({ limit: 10 });
+    const result = await fetchWorkoutLogSummaries({ query: { limit: '10' } });
 
     const [url] = mockFetch.mock.calls[0];
     const u = new URL(String(url));
@@ -61,7 +61,9 @@ describe('fetchWorkoutLogSummaries', () => {
   test('subsequent pages: includes cursor', async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(samplePage));
 
-    await fetchWorkoutLogSummaries({ limit: 10, cursor: '2026-04-22T17:39:11.741831+00:00' });
+    await fetchWorkoutLogSummaries({
+      query: { limit: '10', cursor: '2026-04-22T17:39:11.741831+00:00' },
+    });
 
     const [url] = mockFetch.mock.calls[0];
     const u = new URL(String(url));
@@ -73,7 +75,7 @@ describe('fetchWorkoutLogSummaries', () => {
     const controller = new AbortController();
     mockFetch.mockResolvedValueOnce(jsonResponse(samplePage));
 
-    await fetchWorkoutLogSummaries({ limit: 10, signal: controller.signal });
+    await fetchWorkoutLogSummaries({ query: { limit: '10' } }, controller.signal);
 
     const [, init] = mockFetch.mock.calls[0];
     expect(init.signal).toBeInstanceOf(AbortSignal);
