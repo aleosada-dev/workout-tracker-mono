@@ -7,10 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workout-tracker/ui-mobile';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMuscles } from '@/features/muscles/hooks/use-muscles';
-import { buildGroups, buildLabelMap } from '@/features/muscles/lib/build-groups';
+import { useMuscleSections } from '@/features/muscles/hooks/use-muscle-sections';
 
 type Props = {
   value: string | null;
@@ -21,10 +20,7 @@ type Props = {
 
 export function MuscleSelect({ value, onValueChange, placeholder, disabled }: Props) {
   const { t } = useTranslation();
-  const { data } = useMuscles();
-
-  const groups = useMemo(() => buildGroups(data ?? [], t), [data, t]);
-  const labels = useMemo(() => buildLabelMap(groups), [groups]);
+  const { sections, labels } = useMuscleSections();
 
   const selectedOption = value ? { value, label: labels[value] ?? value } : undefined;
 
@@ -38,10 +34,10 @@ export function MuscleSelect({ value, onValueChange, placeholder, disabled }: Pr
         <SelectValue placeholder={placeholder ?? t('muscles.placeholder')} />
       </SelectTrigger>
       <SelectContent>
-        {groups.map((group) => (
-          <SelectGroup key={group.id}>
-            <SelectLabel>{group.label}</SelectLabel>
-            {group.items.map((item) => (
+        {sections.map((section) => (
+          <SelectGroup key={section.id}>
+            <SelectLabel>{section.label}</SelectLabel>
+            {section.items.map((item) => (
               <React.Fragment key={item.value}>
                 <SelectItem value={item.value} label={item.label}>
                   {item.label}

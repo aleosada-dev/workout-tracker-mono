@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { ExerciseDetail } from '@/features/exercises/components/ExerciseDetail';
-import { useExerciseHistory } from '@/features/exercises/hooks/use-exercise-history';
+import { useExerciseDetail } from '@/features/exercises/hooks/use-exercise-detail';
 import { toExerciseDetailData } from '@/features/exercises/lib/detail';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
@@ -17,7 +17,7 @@ export default function ExerciseDetailScreen() {
   const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<Params>();
   const variationId = id ?? '';
-  const { data, isLoading, isError, error, refetch } = useExerciseHistory(variationId);
+  const { data, isLoading, isError, error, refetch } = useExerciseDetail(variationId);
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercise_detail',
     extra: { exerciseId: variationId },

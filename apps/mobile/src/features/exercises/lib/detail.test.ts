@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { ExerciseHistoryResponse } from '@/features/exercises/api/exercises';
+import type { ExerciseDetailResponse } from '@/features/exercises/api/exercises';
 import { toExerciseDetailData } from '@/features/exercises/lib/detail';
 
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -22,7 +22,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
 const makeT = (lng: string) =>
   ((key: string) => TRANSLATIONS[lng]?.[key] ?? key) as unknown as TFunction;
 
-function makeResponse(overrides: Partial<ExerciseHistoryResponse> = {}): ExerciseHistoryResponse {
+function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): ExerciseDetailResponse {
   const variation = {
     exerciseName: 'Barra Fixa',
     variationName: null,
@@ -111,7 +111,7 @@ describe('toExerciseDetailData', () => {
     expect(data.lastSession).toEqual({ date: '', sets: [] });
   });
 
-  test('exposes no demonstration video (not provided by the history endpoint)', () => {
+  test('exposes no demonstration video (not provided by the detail endpoint)', () => {
     expect(toExerciseDetailData(makeResponse(), 'pt', makeT('pt')).videoUrl).toBeNull();
   });
 

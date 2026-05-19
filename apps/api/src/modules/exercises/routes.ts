@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { AppBindings } from "../../shared/http/types";
 import {
-	ExerciseHistoryResponseSchema,
+	ExerciseDetailResponseSchema,
 	ExerciseIdParamSchema,
 	ExerciseListResponseSchema,
 	ListExercisesQuerySchema,
@@ -41,16 +41,16 @@ export const exercisesRouter = new Hono<AppBindings>()
 		},
 	)
 	.get(
-		"/:id/history",
+		"/:id/detail",
 		describeRoute({
-			summary: "Get exercise history (sessions and records per variation)",
+			summary: "Get exercise detail (sessions and records per variation)",
 			tags: ["Exercises"],
 			responses: {
 				200: {
 					description: "OK",
 					content: {
 						"application/json": {
-							schema: resolver(ExerciseHistoryResponseSchema),
+							schema: resolver(ExerciseDetailResponseSchema),
 						},
 					},
 				},
@@ -66,7 +66,7 @@ export const exercisesRouter = new Hono<AppBindings>()
 
 			const { id: variationId } = c.req.valid("param");
 			const { getExerciseHistory } = c.get("container").workoutLogs;
-			const history = await getExerciseHistory({ userId, variationId });
-			return c.json(history);
+			const detail = await getExerciseHistory({ userId, variationId });
+			return c.json(detail);
 		},
 	);

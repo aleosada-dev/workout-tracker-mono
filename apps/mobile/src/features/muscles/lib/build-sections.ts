@@ -1,25 +1,28 @@
 import type { TFunction } from 'i18next';
-import type { ApiMuscle } from '@/features/muscles/api/muscles';
+import type { ListMuscleResponseItem } from '@/features/muscles/api/muscles';
 
-export type MuscleGroupItem = {
+export type MuscleSectionItem = {
   value: string;
   label: string;
-  children?: MuscleGroupItem[];
+  children?: MuscleSectionItem[];
 };
 
-export type MuscleGroup = {
+export type MuscleSection = {
   id: string;
   label: string;
-  items: MuscleGroupItem[];
+  items: MuscleSectionItem[];
 };
 
-type NestedMuscle = ApiMuscle & { children?: NestedMuscle[] };
+type NestedMuscle = ListMuscleResponseItem & { children?: NestedMuscle[] };
 
 function translate(t: TFunction, slug: string): string {
   return t(`muscles.${slug}` as never);
 }
 
-export function buildGroups(muscles: ApiMuscle[], t: TFunction): MuscleGroup[] {
+export function buildMuscleSections(
+  muscles: ListMuscleResponseItem[],
+  t: TFunction,
+): MuscleSection[] {
   return (muscles as NestedMuscle[])
     .filter((m) => m.level === 1)
     .map((region) => ({
@@ -36,10 +39,10 @@ export function buildGroups(muscles: ApiMuscle[], t: TFunction): MuscleGroup[] {
     }));
 }
 
-export function buildLabelMap(groups: MuscleGroup[]): Record<string, string> {
+export function buildLabelMap(sections: MuscleSection[]): Record<string, string> {
   const map: Record<string, string> = {};
-  for (const group of groups) {
-    for (const item of group.items) {
+  for (const section of sections) {
+    for (const item of section.items) {
       map[item.value] = item.label;
       if (item.children) {
         for (const child of item.children) {

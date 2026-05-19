@@ -4,7 +4,7 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 const $get = honoClient.api.v1.muscles.$get;
 
 export type ListMusclesResponse = InferResponseType<typeof $get, 200>;
-export type ApiMuscle = ListMusclesResponse[number];
+export type ListMuscleResponseItem = ListMusclesResponse[number];
 
 export async function fetchMuscles({
   signal,

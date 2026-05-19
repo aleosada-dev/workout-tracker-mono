@@ -5,8 +5,6 @@ import { observability } from '@/features/observability/lib';
 import { getBaseUrl } from './config';
 import { ApiError, ApiNetworkError, ApiUnauthorizedError } from './errors';
 
-const shouldLog = __DEV__ && process.env.NODE_ENV !== 'test';
-
 function extractUrl(input: RequestInfo | URL): string {
   if (typeof input === 'string') return input;
   if (input instanceof URL) return input.toString();
@@ -16,11 +14,9 @@ function extractUrl(input: RequestInfo | URL): string {
 const loggingFetch: typeof fetch = async (input, init) => {
   const url = extractUrl(input);
   const method = init?.method ?? 'GET';
-  if (shouldLog) console.log(`[honoClient] → ${method} ${url}`);
 
   try {
     const response = await fetch(input, init);
-    if (shouldLog) console.log(`[honoClient] ← ${response.status} ${url}`);
     observability.addBreadcrumb({
       category: 'http',
       message: `${method} ${url}`,
@@ -28,12 +24,10 @@ const loggingFetch: typeof fetch = async (input, init) => {
     });
     return response;
   } catch (err) {
-    if (shouldLog) console.log(`[honoClient] ✖ ${method} ${url}`, err);
     observability.addBreadcrumb({
       category: 'http',
       message: `${method} ${url} (network error)`,
     });
-    if (err instanceof ApiError) throw err;
     throw new ApiNetworkError(err);
   }
 };

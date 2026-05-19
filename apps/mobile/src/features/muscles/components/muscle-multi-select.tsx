@@ -7,10 +7,9 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '@workout-tracker/ui-mobile';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMuscles } from '@/features/muscles/hooks/use-muscles';
-import { buildGroups, buildLabelMap } from '@/features/muscles/lib/build-groups';
+import { useMuscleSections } from '@/features/muscles/hooks/use-muscle-sections';
 
 type Props = {
   value: string[];
@@ -21,10 +20,7 @@ type Props = {
 
 export function MuscleMultiSelect({ value, onValueChange, placeholder, disabled }: Props) {
   const { t } = useTranslation();
-  const { data } = useMuscles();
-
-  const groups = useMemo(() => buildGroups(data ?? [], t), [data, t]);
-  const labels = useMemo(() => buildLabelMap(groups), [groups]);
+  const { sections, labels } = useMuscleSections();
 
   return (
     <MultiSelect value={value} onValueChange={onValueChange} disabled={disabled}>
@@ -36,10 +32,10 @@ export function MuscleMultiSelect({ value, onValueChange, placeholder, disabled 
         />
       </MultiSelectTrigger>
       <MultiSelectContent>
-        {groups.map((group) => (
-          <MultiSelectGroup key={group.id}>
-            <MultiSelectLabel>{group.label}</MultiSelectLabel>
-            {group.items.map((item) => (
+        {sections.map((section) => (
+          <MultiSelectGroup key={section.id}>
+            <MultiSelectLabel>{section.label}</MultiSelectLabel>
+            {section.items.map((item) => (
               <React.Fragment key={item.value}>
                 <MultiSelectItem value={item.value} indent={0}>
                   {item.label}

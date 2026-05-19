@@ -3,15 +3,29 @@ jest.mock('@/features/shared/lib/supabase', () => {
   return createSupabaseMock();
 });
 
+jest.mock('react-native-toast-message', () => {
+  const { createToastMock } = jest.requireActual(
+    '@/features/test-utils/react-native-toast-message',
+  );
+  return createToastMock();
+});
+
 import type { QueryClient } from '@tanstack/react-query';
-import { ApiError, ApiUnauthorizedError } from '@/features/api/lib/errors';
+import Toast from 'react-native-toast-message';
+import { ApiError, ApiNetworkError, ApiUnauthorizedError } from '@/features/api/lib/errors';
 import { createQueryClient } from '@/features/query/lib/client';
 import { supabase } from '@/features/shared/lib/supabase';
+import { setupI18n } from '@/internationalization/i18n';
 
 const mockSignOut = supabase.auth.signOut as jest.Mock;
+const mockToastShow = Toast.show as jest.Mock;
 
 describe('createQueryClient', () => {
   let client: QueryClient;
+
+  beforeAll(() => {
+    setupI18n('en');
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,12 +40,12 @@ describe('createQueryClient', () => {
     client.clear();
   });
 
-  test('calls supabase.auth.signOut when a query throws ApiUnauthorizedError', async () => {
-    await client
+  const runQuery = (error: unknown) =>
+    client
       .fetchQuery({
         queryKey: ['test'],
         queryFn: () => {
-          throw new ApiUnauthorizedError();
+          throw error;
         },
         retry: false,
       })
@@ -39,15 +53,12 @@ describe('createQueryClient', () => {
         /* expected */
       });
 
-    expect(mockSignOut).toHaveBeenCalledTimes(1);
-  });
-
-  test('calls supabase.auth.signOut when a mutation throws ApiUnauthorizedError', async () => {
-    await client
+  const runMutation = (error: unknown) =>
+    client
       .getMutationCache()
       .build(client, {
         mutationFn: async () => {
-          throw new ApiUnauthorizedError();
+          throw error;
         },
         retry: false,
       })
@@ -56,38 +67,49 @@ describe('createQueryClient', () => {
         /* expected */
       });
 
+  test('calls supabase.auth.signOut when a query throws ApiUnauthorizedError', async () => {
+    await runQuery(new ApiUnauthorizedError());
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockToastShow).not.toHaveBeenCalled();
   });
 
-  test('does NOT call signOut for non-401 ApiError', async () => {
-    await client
-      .fetchQuery({
-        queryKey: ['test'],
-        queryFn: () => {
-          throw new ApiError(500, 'boom');
-        },
-        retry: false,
-      })
-      .catch(() => {
-        /* expected */
-      });
-
-    expect(mockSignOut).not.toHaveBeenCalled();
+  test('calls supabase.auth.signOut when a mutation throws ApiUnauthorizedError', async () => {
+    await runMutation(new ApiUnauthorizedError());
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockToastShow).not.toHaveBeenCalled();
   });
 
-  test('does NOT call signOut for arbitrary errors', async () => {
-    await client
-      .fetchQuery({
-        queryKey: ['test'],
-        queryFn: () => {
-          throw new Error('boom');
-        },
-        retry: false,
-      })
-      .catch(() => {
-        /* expected */
-      });
-
+  test('shows server error toast when a query throws 5XX ApiError', async () => {
+    await runQuery(new ApiError(500, 'boom'));
     expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'Server error' }),
+    );
+  });
+
+  test('shows server error toast when a mutation throws 5XX ApiError', async () => {
+    await runMutation(new ApiError(503, 'down'));
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'Server error' }),
+    );
+  });
+
+  test('shows network error toast when query throws ApiNetworkError', async () => {
+    await runQuery(new ApiNetworkError(new Error('offline')));
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'No connection' }),
+    );
+  });
+
+  test('does NOT show toast or call signOut for 4XX (non-401) ApiError', async () => {
+    await runQuery(new ApiError(404, 'not found'));
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockToastShow).not.toHaveBeenCalled();
+  });
+
+  test('does NOT show toast or call signOut for arbitrary errors', async () => {
+    await runQuery(new Error('boom'));
+    expect(mockSignOut).not.toHaveBeenCalled();
+    expect(mockToastShow).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,8 @@
 import type { TFunction } from 'i18next';
 import type { MetricChartPoint } from '@/features/charts/lib/types';
 import type {
-  ExerciseHistoryResponse,
-  ExerciseHistoryResponseSession,
+  ExerciseDetailResponse,
+  ExerciseDetailResponseSession,
 } from '@/features/exercises/api/exercises';
 import {
   EXERCISE_METRIC_UNIT,
@@ -13,14 +13,14 @@ import {
 import { composeExerciseName } from './format';
 
 function sortedSessions(
-  sessions: ExerciseHistoryResponseSession[],
-): ExerciseHistoryResponseSession[] {
+  sessions: ExerciseDetailResponseSession[],
+): ExerciseDetailResponseSession[] {
   return [...sessions].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
 }
 
 function series(
-  sessions: ExerciseHistoryResponseSession[],
-  value: (s: ExerciseHistoryResponseSession) => number | null,
+  sessions: ExerciseDetailResponseSession[],
+  value: (s: ExerciseDetailResponseSession) => number | null,
 ): MetricChartPoint[] {
   const points: MetricChartPoint[] = [];
   for (const session of sessions) {
@@ -30,7 +30,7 @@ function series(
   return points;
 }
 
-function toPersonalRecords(records: ExerciseHistoryResponse['records']): PersonalRecord[] {
+function toPersonalRecords(records: ExerciseDetailResponse['records']): PersonalRecord[] {
   const candidates: Array<[PersonalRecord['metric'], number | null]> = [
     ['maxWeight', records.maxWeightKg],
     ['volume', records.maxVolumeKg],
@@ -40,9 +40,9 @@ function toPersonalRecords(records: ExerciseHistoryResponse['records']): Persona
   return candidates.flatMap(([metric, value]) => (value != null ? [{ metric, value }] : []));
 }
 
-/** Maps the exercise history payload to the data the detail screen renders. */
+/** Maps the exercise detail payload to the data the detail screen renders. */
 export function toExerciseDetailData(
-  response: ExerciseHistoryResponse,
+  response: ExerciseDetailResponse,
   language: string,
   t: TFunction,
 ): ExerciseDetailData {

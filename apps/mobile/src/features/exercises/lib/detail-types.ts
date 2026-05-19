@@ -1,5 +1,5 @@
 import type { MetricChartPoint } from '@/features/charts/lib/types';
-import type { ExerciseHistoryResponseSession } from '@/features/exercises/api/exercises';
+import type { ExerciseDetailResponseSession } from '@/features/exercises/api/exercises';
 import type { SetType } from '@/features/exercises/lib/sets';
 
 /** Metrics tracked for an exercise on its detail screen. */
@@ -60,8 +60,8 @@ export const EXERCISE_METRIC_UNIT: Record<ExerciseMetricKey, ExerciseMetricUnit>
   sets: 'count',
 };
 
-/** Maps a history session's sets to the detail-screen rows, ordered by `setOrder`. */
-export function toSetEntries(session: ExerciseHistoryResponseSession): ExerciseSetEntry[] {
+/** Maps a detail session's sets to the detail-screen rows, ordered by `setOrder`. */
+export function toSetEntries(session: ExerciseDetailResponseSession): ExerciseSetEntry[] {
   return [...session.sets]
     .sort((a, b) => a.setOrder - b.setOrder)
     .map((set) => ({

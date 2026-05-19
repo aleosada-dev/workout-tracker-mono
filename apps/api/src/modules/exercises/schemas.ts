@@ -87,7 +87,7 @@ export const ExerciseIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
-const HistorySessionSetSchema = z.object({
+const DetailSessionSetSchema = z.object({
 	setOrder: z.number().int().nonnegative(),
 	setType: z.enum(WORKOUT_SET_TYPES),
 	weightKg: z.number().nullable(),
@@ -96,24 +96,24 @@ const HistorySessionSetSchema = z.object({
 	repsMax: z.number().int().nullable(),
 });
 
-const HistorySessionSchema = z.object({
+const DetailSessionSchema = z.object({
 	workoutLogId: z.uuid(),
 	startedAt: z.iso.datetime({ offset: true }),
 	maxWeightKg: z.number().nullable(),
 	totalVolumeKg: z.number(),
 	maxReps: z.number().int().nullable(),
 	totalSets: z.number().int().nonnegative(),
-	sets: z.array(HistorySessionSetSchema),
+	sets: z.array(DetailSessionSetSchema),
 });
 
-const HistoryRecordsSchema = z.object({
+const DetailRecordsSchema = z.object({
 	maxWeightKg: z.number().nullable(),
 	maxVolumeKg: z.number().nullable(),
 	maxReps: z.number().int().nullable(),
 	maxSets: z.number().int().nullable(),
 });
 
-const HistoryVariationSchema = z.object({
+const DetailVariationSchema = z.object({
 	exerciseName: z.string().trim().min(1),
 	variationName: z.string().trim().min(1).nullable(),
 	equipmentSlug: z.string().trim().min(1),
@@ -124,12 +124,12 @@ const HistoryVariationSchema = z.object({
 	uploadedVideoObjectKey: z.string().nullable(),
 });
 
-export const ExerciseHistoryResponseSchema = z.object({
+export const ExerciseDetailResponseSchema = z.object({
 	variationId: z.uuid(),
-	variation: HistoryVariationSchema,
-	sessions: z.array(HistorySessionSchema),
-	lastSession: HistorySessionSchema.nullable(),
-	records: HistoryRecordsSchema,
+	variation: DetailVariationSchema,
+	sessions: z.array(DetailSessionSchema),
+	lastSession: DetailSessionSchema.nullable(),
+	records: DetailRecordsSchema,
 });
 
-export type ExerciseHistoryResponse = z.infer<typeof ExerciseHistoryResponseSchema>;
+export type ExerciseDetailResponse = z.infer<typeof ExerciseDetailResponseSchema>;
