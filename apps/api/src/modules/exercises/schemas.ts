@@ -1,0 +1,135 @@
+import {
+	EXERCISE_TYPES,
+	type ExerciseListItem,
+	VISIBILITIES,
+	WORKOUT_SET_TYPES,
+} from "@workout-tracker/domain";
+import { z } from "zod";
+import { arrayQuery } from "../../shared/http/schemas";
+
+export const VisibilitySchema = z.enum(VISIBILITIES);
+export const ExerciseTypeSchema = z.enum(EXERCISE_TYPES);
+
+export const ListExercisesQuerySchema = z.object({
+	visibility: VisibilitySchema.default("all"),
+	muscleIds: arrayQuery(z.uuid()).optional(),
+	equipmentIds: arrayQuery(z.uuid()).optional(),
+	exerciseTypes: arrayQuery(ExerciseTypeSchema).optional(),
+});
+
+export type ListExercisesQuery = z.infer<typeof ListExercisesQuerySchema>;
+
+const VariationMuscleSchema = z.object({
+	id: z.uuid(),
+	name: z.string(),
+	slug: z.string(),
+	level2: z.object({
+		name: z.string(),
+		slug: z.string(),
+	}),
+});
+
+const VariationSecondaryMuscleSchema = z.object({
+	id: z.uuid(),
+	name: z.string(),
+	slug: z.string(),
+});
+
+const VariationEquipmentSchema = z.object({
+	id: z.uuid(),
+	name: z.string(),
+	slug: z.string(),
+	preposition: z.string(),
+});
+
+const VariationVideoSchema = z.object({
+	url: z.string().nullable(),
+	objectKey: z.string().nullable(),
+	thumbnailKey: z.string().nullable(),
+	durationSeconds: z.number().nullable(),
+	processingStatus: z.string().nullable(),
+});
+
+export const VariationResponseSchema = z.object({
+	id: z.uuid(),
+	name: z.string().nullable(),
+	muscle: VariationMuscleSchema,
+	secondaryMuscle: VariationSecondaryMuscleSchema.nullable(),
+	equipment: VariationEquipmentSchema,
+	video: VariationVideoSchema.nullable(),
+	imageUrl: z.string().nullable(),
+});
+
+export const ExerciseListItemResponseSchema = z.object({
+	id: z.uuid(),
+	name: z.string(),
+	type: ExerciseTypeSchema,
+	userId: z.uuid().nullable(),
+	variations: z.array(VariationResponseSchema),
+});
+
+export const ExerciseListResponseSchema = z.array(ExerciseListItemResponseSchema);
+
+export type VariationResponse = z.infer<typeof VariationResponseSchema>;
+export type ExerciseListItemResponse = z.infer<typeof ExerciseListItemResponseSchema>;
+
+export function toExerciseListItemResponse(item: ExerciseListItem): ExerciseListItemResponse {
+	return {
+		id: item.id,
+		name: item.name,
+		type: item.type,
+		userId: item.userId,
+		variations: item.variations,
+	};
+}
+
+export const ExerciseIdParamSchema = z.object({
+	id: z.uuid(),
+});
+
+const HistorySessionSetSchema = z.object({
+	setOrder: z.number().int().nonnegative(),
+	setType: z.enum(WORKOUT_SET_TYPES),
+	weightKg: z.number().nullable(),
+	reps: z.number().int().nullable(),
+	repsMin: z.number().int().nullable(),
+	repsMax: z.number().int().nullable(),
+});
+
+const HistorySessionSchema = z.object({
+	workoutLogId: z.uuid(),
+	startedAt: z.iso.datetime({ offset: true }),
+	maxWeightKg: z.number().nullable(),
+	totalVolumeKg: z.number(),
+	maxReps: z.number().int().nullable(),
+	totalSets: z.number().int().nonnegative(),
+	sets: z.array(HistorySessionSetSchema),
+});
+
+const HistoryRecordsSchema = z.object({
+	maxWeightKg: z.number().nullable(),
+	maxVolumeKg: z.number().nullable(),
+	maxReps: z.number().int().nullable(),
+	maxSets: z.number().int().nullable(),
+});
+
+const HistoryVariationSchema = z.object({
+	exerciseName: z.string().trim().min(1),
+	variationName: z.string().trim().min(1).nullable(),
+	equipmentSlug: z.string().trim().min(1),
+	equipmentPreposition: z.string().trim().min(1),
+	muscleSlug: z.string().trim().min(1),
+	secondaryMuscleSlug: z.string().trim().min(1).nullable(),
+	youtubeUrl: z.url().nullable(),
+	uploadedVideoObjectKey: z.string().nullable(),
+});
+
+export const ExerciseHistoryResponseSchema = z.object({
+	variationId: z.uuid(),
+	variation: HistoryVariationSchema,
+	sessions: z.array(HistorySessionSchema),
+	lastSession: HistorySessionSchema.nullable(),
+	records: HistoryRecordsSchema,
+});
+
+export type ExerciseHistoryResponse = z.infer<typeof ExerciseHistoryResponseSchema>;

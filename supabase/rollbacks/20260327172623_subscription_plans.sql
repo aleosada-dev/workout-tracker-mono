@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS on_profile_created_subscription ON public.profiles;
+DROP FUNCTION IF EXISTS public.handle_new_subscription();
+DROP TRIGGER IF EXISTS subscriptions_updated_at ON public.subscriptions;
+DROP FUNCTION IF EXISTS public.update_subscriptions_updated_at();
+DROP FUNCTION IF EXISTS public.resolve_all_feature_access(uuid);
+DROP FUNCTION IF EXISTS public.resolve_feature_access(uuid, text);
+DROP TABLE IF EXISTS public.subscription_feature_overrides;
+DROP TABLE IF EXISTS public.subscriptions;
+DROP TABLE IF EXISTS public.plan_feature_limits;
+DROP TABLE IF EXISTS public.subscription_plans;

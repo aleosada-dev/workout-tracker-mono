@@ -1,0 +1,36 @@
+appId: ${MAESTRO_APP_ID}
+name: 11 - Detalhe - vídeo demonstrativo visível
+---
+- runFlow: ../../subflows/open-exercises-list-coach.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "abdominal na maquina"
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- assertVisible:
+    id: "exercise-detail.video"
+# Toggle só renderiza quando o exercício tem URL de dispositivo E de YouTube.
+- assertVisible:
+    id: "exercise-detail.video.source.uploaded"
+- assertVisible:
+    id: "exercise-detail.video.source.youtube"
+# Estado inicial: source = 'uploaded' (player de dispositivo renderizado).
+- assertNotVisible:
+    id: "exercise-detail.youtube"
+# Troca para YouTube → player do YouTube aparece.
+- tapOn:
+    id: "exercise-detail.video.source.youtube"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail.youtube"
+    timeout: 5000
+# Volta para Dispositivo → player do YouTube some.
+- tapOn:
+    id: "exercise-detail.video.source.uploaded"
+- assertNotVisible:
+    id: "exercise-detail.youtube"

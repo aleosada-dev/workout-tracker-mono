@@ -1,0 +1,10 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: sign-in-coach.yaml
+- tapOn: "Treinos"
+- assertVisible: "Exercícios"
+- tapOn: "Exercícios"
+- extendedWaitUntil:
+    visible:
+      id: "exercises-list"
+    timeout: 15000

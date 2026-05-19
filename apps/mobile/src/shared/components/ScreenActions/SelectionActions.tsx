@@ -1,0 +1,163 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Button, rgb, useTheme } from '@workout-tracker/ui-mobile';
+import { Stack } from 'expo-router';
+import { useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { IconAction, SelectionActionsProps } from './types';
+
+export function SelectionActions({ count, onCancel, onSelectAll, actions }: SelectionActionsProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const empty = count === 0;
+  const headerIconColor = rgb(theme.foreground);
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Button
+              variant="ghost"
+              size="icon"
+              onPress={onCancel}
+              hitSlop={12}
+              accessibilityLabel="Cancelar"
+            >
+              <Ionicons name="close" size={24} color={headerIconColor} />
+            </Button>
+          ),
+          headerRight: () => (
+            <View style={styles.headerRight}>
+              {onSelectAll && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onPress={onSelectAll}
+                  hitSlop={12}
+                  accessibilityLabel="Selecionar Todos"
+                >
+                  <Ionicons name="checkmark-done" size={22} color={headerIconColor} />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onPress={() => setMenuOpen(true)}
+                hitSlop={12}
+                disabled={empty}
+                accessibilityLabel="Mais opções"
+              >
+                <Ionicons name="ellipsis-vertical" size={22} color={headerIconColor} />
+              </Button>
+            </View>
+          ),
+        }}
+      />
+
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setMenuOpen(false)}>
+          <View style={[styles.menu, { top: insets.top + 56 }]}>
+            {actions.map((a, i) => (
+              <MenuItem
+                key={a.label}
+                action={a}
+                first={i === 0}
+                onPick={() => {
+                  setMenuOpen(false);
+                  a.onPress?.();
+                }}
+              />
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+function MenuItem({
+  action,
+  first,
+  onPick,
+}: {
+  action: IconAction;
+  first: boolean;
+  onPick: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPick}
+      disabled={action.disabled}
+      style={({ pressed }) => [
+        styles.menuItem,
+        !first && styles.menuItemBorder,
+        pressed && styles.menuItemPressed,
+        action.disabled && styles.menuItemDisabled,
+      ]}
+    >
+      <Ionicons
+        name={action.androidIcon}
+        size={20}
+        color={action.destructive ? '#ef4444' : '#f3f4f6'}
+      />
+      <Text style={[styles.menuLabel, action.destructive && styles.menuLabelDestructive]}>
+        {action.label}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerRight: {
+    flexDirection: 'row',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  menu: {
+    position: 'absolute',
+    right: 8,
+    minWidth: 220,
+    backgroundColor: '#1f2326',
+    borderRadius: 8,
+    paddingVertical: 6,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuItemBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#2a2f33',
+  },
+  menuItemPressed: {
+    backgroundColor: '#262b2f',
+  },
+  menuItemDisabled: {
+    opacity: 0.4,
+  },
+  menuLabel: {
+    color: '#f3f4f6',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  menuLabelDestructive: {
+    color: '#ef4444',
+  },
+});

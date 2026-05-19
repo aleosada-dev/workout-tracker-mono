@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+name: 01 - Launch e renderização da tela de login
+---
+- runFlow: ../../subflows/launch-fresh.yaml
+- assertVisible: "Bem-vindo de volta!"
+- assertVisible: "Entre para continuar seus treinos."
+- assertVisible: "Email"
+- assertVisible: "Senha"
+- assertVisible: "Esqueceu sua senha?"
+- assertVisible: "Não tem uma conta?"
+- assertVisible: "Cadastre-se"
+- assertVisible:
+    id: "signIn.emailInput"
+- assertVisible:
+    id: "signIn.passwordInput"
+- assertVisible:
+    id: "signIn.submitButton"

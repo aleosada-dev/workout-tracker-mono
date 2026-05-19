@@ -1,0 +1,29 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: launch-fresh.yaml
+- tapOn:
+    id: "signIn.emailInput"
+- inputText: ${E2E_TEST_EMAIL}
+- tapOn:
+    id: "signIn.passwordInput"
+- inputText: ${E2E_TEST_PASSWORD}
+- tapOn:
+    id: "signIn.submitButton"
+# iOS pode exibir a sheet "Salvar Senha?" por cima do app, bloqueando os elementos.
+# Aguarda ela aparecer (se aparecer) e dispensa.
+- extendedWaitUntil:
+    visible:
+      text: "Agora Não|Not Now"
+    timeout: 5000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        text: "Agora Não|Not Now"
+    commands:
+      - tapOn:
+          text: "Agora Não|Not Now"
+- extendedWaitUntil:
+    visible:
+      id: "text.home.title"
+    timeout: 15000

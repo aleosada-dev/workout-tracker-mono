@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+name: 01 - Home renderiza a lista de treinos
+---
+- runFlow: ../../subflows/sign-in-athlete.yaml
+- extendedWaitUntil:
+    visible:
+      id: "workout-log-list"
+    timeout: 15000
+- assertNotVisible:
+    id: "workout-log-list.loading"
+- assertNotVisible:
+    id: "workout-log-list.error"
+- assertNotVisible:
+    id: "workout-log-list.empty"

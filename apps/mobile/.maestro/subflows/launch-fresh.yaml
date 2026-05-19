@@ -1,0 +1,5 @@
+appId: ${MAESTRO_APP_ID}
+---
+- launchApp
+- openLink: ${MAESTRO_APP_SCHEME}://debug/reset?lang=pt
+- assertVisible: "Bem-vindo de volta!"

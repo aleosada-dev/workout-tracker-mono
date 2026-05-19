@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+name: 03 - Validação de email inválido
+---
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: "signIn.emailInput"
+- inputText: "abc"
+- tapOn:
+    id: "signIn.passwordInput"
+- assertVisible: "Email inválido"
+- tapOn:
+    id: "signIn.emailInput"
+- eraseText
+- inputText: "test@example.com"
+- tapOn:
+    id: "signIn.passwordInput"
+- assertNotVisible: "Email inválido"

@@ -1,0 +1,45 @@
+{
+  "name": "@workout-tracker/ui-mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "echo \"no lint configured\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gorhom/bottom-sheet": "*",
+    "@rn-primitives/accordion": "*",
+    "@rn-primitives/alert-dialog": "*",
+    "@rn-primitives/checkbox": "*",
+    "@rn-primitives/dialog": "*",
+    "@rn-primitives/label": "*",
+    "@rn-primitives/popover": "*",
+    "@rn-primitives/select": "*",
+    "@rn-primitives/separator": "*",
+    "@rn-primitives/slot": "*",
+    "@rn-primitives/switch": "*",
+    "@rn-primitives/tabs": "*",
+    "@rn-primitives/toggle": "*",
+    "@rn-primitives/toggle-group": "*",
+    "class-variance-authority": "*",
+    "clsx": "*",
+    "lucide-react-native": "*",
+    "nativewind": "*",
+    "react": "*",
+    "react-i18next": "*",
+    "react-native": "*",
+    "react-native-reanimated": "*",
+    "react-native-screens": "*",
+    "tailwind-merge": "*"
+  },
+  "devDependencies": {
+    "@workout-tracker/typescript-config": "workspace:*",
+    "@types/react": "~19.2.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+name: 05 - Login bem-sucedido (happy path)
+---
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: "signIn.emailInput"
+- inputText: ${E2E_TEST_EMAIL}
+- tapOn:
+    id: "signIn.passwordInput"
+- inputText: ${E2E_TEST_PASSWORD}
+- tapOn:
+    id: "signIn.submitButton"
+- extendedWaitUntil:
+    visible:
+      id: "tabs.home"
+    timeout: 15000
+- assertNotVisible: "Bem-vindo de volta!"

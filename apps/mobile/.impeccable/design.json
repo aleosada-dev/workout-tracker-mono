@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-13T00:00:00Z",
+  "title": "Design System: Workout Tracker",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Athletic Teal",
+        "canonical": "#008762",
+        "tonalRamp": [
+          "#244935",
+          "#205C46",
+          "#127053",
+          "#008762",
+          "#0D9974",
+          "#3CAF8E",
+          "#73C4AF",
+          "#9BD6C7"
+        ]
+      },
+      "primary-dark": {
+        "role": "primary",
+        "displayName": "Athletic Teal (dark theme)",
+        "canonical": "#127053",
+        "tonalRamp": [
+          "#244935",
+          "#205C46",
+          "#127053",
+          "#008762",
+          "#0D9974",
+          "#3CAF8E",
+          "#73C4AF",
+          "#BEE5DC"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Achievement Emerald",
+        "canonical": "#059669",
+        "tonalRamp": [
+          "#064E3B",
+          "#065F46",
+          "#047857",
+          "#059669",
+          "#10B981",
+          "#34D399",
+          "#6EE7B7",
+          "#A7F3D0"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "#D97706",
+        "tonalRamp": [
+          "#451A03",
+          "#78350F",
+          "#92400E",
+          "#B45309",
+          "#D97706",
+          "#F59E0B",
+          "#FBBF24",
+          "#FCD34D"
+        ]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Signal Crimson",
+        "canonical": "#DC2626",
+        "tonalRamp": [
+          "#450A0A",
+          "#7F1D1D",
+          "#991B1B",
+          "#B91C1C",
+          "#DC2626",
+          "#EF4444",
+          "#F87171",
+          "#FCA5A5"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Pure White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#18181B",
+          "#27272A",
+          "#3F3F46",
+          "#52525B",
+          "#71717A",
+          "#A1A1AA",
+          "#D4D4D8",
+          "#FAFAFA"
+        ]
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "Anvil Black",
+        "canonical": "#18181B",
+        "tonalRamp": [
+          "#09090B",
+          "#18181B",
+          "#27272A",
+          "#3F3F46",
+          "#52525B",
+          "#71717A",
+          "#A1A1AA",
+          "#D4D4D8"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Anvil Black",
+        "canonical": "#18181B"
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Steel Mist",
+        "canonical": "#71717A"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Quiet Stone",
+        "canonical": "#E4E4E7"
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Brushed Cream",
+        "canonical": "#FAFAFA"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero numbers and rare top-of-screen statements. Geist ExtraBold 36px with tight tracking."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page-level h2 with bottom border for section divisions."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Screen titles like the exercise name on the detail screen (h3). SemiBold 24px tight tracking."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All running text. Regular 400 at 16px."
+      },
+      "label": {
+        "displayName": "Micro Label",
+        "purpose": "Uppercase 10px tracked metadata captions. Used for role labels like 'PRINCIPAL' / 'AUXILIAR' next to a name."
+      }
+    },
+    "shadows": [
+      {
+        "name": "whisper",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "The only shadow in production. Applied to cards, buttons, inputs. So subtle it reads as a tint, not depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-shift",
+        "value": "150ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Default ease-out-quart for color and opacity state transitions (hover, press, focus)."
+      },
+      {
+        "name": "accordion",
+        "value": "200ms ease-out",
+        "purpose": "Accordion open/close. Kept short so the UI does not feel performative."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px",
+        "purpose": "Buttons and inputs shrink from 40px to 36px height at this breakpoint (`sm:h-9`)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary CTA. Athletic Teal with desaturated mint foreground. Reserved for the one most-important action on a screen.",
+      "html": "<button class=\"ds-btn-primary\">Iniciar treino</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; background: #008762; color: #EBFAF3; border: none; border-radius: 11.2px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Geist', system-ui, sans-serif; font-weight: 500; font-size: 14px; letter-spacing: normal; cursor: pointer; transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { background: rgba(0, 135, 98, 0.9); } .ds-btn-primary:active { background: rgba(0, 135, 98, 0.9); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action. Transparent fill with 1px border, foreground text. Used when more than one action shares a row.",
+      "html": "<button class=\"ds-btn-outline\">Cancelar</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; background: #FFFFFF; color: #18181B; border: 1px solid #E4E4E7; border-radius: 11.2px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Geist', system-ui, sans-serif; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-outline:hover { background: #F4F4F5; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Irreversible actions only (delete, leave, reset). Signal Crimson background, white text.",
+      "html": "<button class=\"ds-btn-destructive\">Apagar treino</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 8px 16px; background: #DC2626; color: #FFFFFF; border: none; border-radius: 11.2px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Geist', system-ui, sans-serif; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-destructive:hover { background: rgba(220, 38, 38, 0.9); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default page surface. Brushed Cream against a Pure White canvas. 1px Quiet Stone border + whisper shadow. Rounded xl (19.6px).",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Última sessão</div><div class=\"ds-card-desc\">Quinta, 12 de maio · 5 séries</div></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 24px; padding: 24px; background: #FAFAFA; color: #18181B; border: 1px solid #E4E4E7; border-radius: 19.6px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Geist', system-ui, sans-serif; } .ds-card-title { font-weight: 600; font-size: 18px; line-height: 1; } .ds-card-desc { color: #71717A; font-size: 14px; line-height: 20px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text field. 1px border, 40px height, rounded medium. Focus reveals an Athletic Teal ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nome do exercício\" />",
+      "css": ".ds-input { display: flex; height: 40px; width: 100%; padding: 4px 12px; background: #FFFFFF; color: #18181B; border: 1px solid #E4E4E7; border-radius: 11.2px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Geist', system-ui, sans-serif; font-size: 16px; line-height: 20px; outline: none; transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input::placeholder { color: #71717A; } .ds-input:focus-visible { border-color: #008762; box-shadow: 0 0 0 3px rgba(0, 135, 98, 0.5); }"
+    },
+    {
+      "name": "Success Badge",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Achievement state. Used for primary-muscle indicator, completed-set marker, personal-record callout.",
+      "html": "<span class=\"ds-badge-success\">Glúteos</span>",
+      "css": ".ds-badge-success { display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; background: #059669; color: #FFFFFF; border-radius: 9999px; font-family: 'Geist', system-ui, sans-serif; font-weight: 500; font-size: 12px; line-height: 16px; }"
+    },
+    {
+      "name": "Outline Badge",
+      "kind": "chip",
+      "refersTo": "badge-outline",
+      "description": "Neutral chip. Used for unselected metric tabs, auxiliary muscle indicators, and tags without a state.",
+      "html": "<span class=\"ds-badge-outline\">Abdutores</span>",
+      "css": ".ds-badge-outline { display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; background: transparent; color: #18181B; border: 1px solid #E4E4E7; border-radius: 9999px; font-family: 'Geist', system-ui, sans-serif; font-weight: 500; font-size: 12px; line-height: 16px; }"
+    },
+    {
+      "name": "Metadata Pair",
+      "kind": "custom",
+      "refersTo": "metadata-pair",
+      "description": "Signature pattern: uppercase 10px tracked label + 14px semibold value, baseline-aligned. Used wherever a screen needs a role + value disclosure (Principal Glúteos, Auxiliar Abdutores, etc.). No card wrapper, no fixed-width column.",
+      "html": "<div class=\"ds-meta-pair\"><span class=\"ds-meta-label\">Principal</span><span class=\"ds-meta-value\">Glúteos</span></div>",
+      "css": ".ds-meta-pair { display: inline-flex; align-items: baseline; gap: 8px; font-family: 'Geist', system-ui, sans-serif; } .ds-meta-label { color: #71717A; font-weight: 500; font-size: 10px; line-height: 16px; letter-spacing: 0.05em; text-transform: uppercase; } .ds-meta-value { color: #18181B; font-weight: 600; font-size: 14px; line-height: 20px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Strength Instrument",
+    "overview": "The interface is a precision instrument in the athlete's hands. A workshop tool, not a coach yelling encouragement. The vocabulary is correct (drop set, RPE, cluster) because the user is treated as someone who knows or is learning seriously. Numbers are protagonists. Typography breathes. Color is reserved and meaningful. The motion is small and purposeful, never decorative.\n\nDensity scales with the user: a beginner sees the essentials, a periodizing athlete sees aggregates, charts, and historical depth. Surfaces never compete for attention. The tool disappears into the task during execution, returns into focus during review. Borders carry more visual weight than shadows; the system is flat by inclination, with whisper-soft elevation only where it earns its place.\n\nThe system explicitly rejects four neighboring aesthetics: gamified-puerile (Duolingo confetti and badges), fitness-influencer hype (neon gradients, shouted caps, motivational slogans), cold spreadsheet (raw numbers, no hierarchy, backoffice ergonomics), and bodybuilding old-school (red-on-black, hardcore-2000s grit). Living between those four constraints is the strategic line.",
+    "keyCharacteristics": [
+      "Numbers and progression are the protagonists, not chrome or copy.",
+      "Color codes meaning and nothing else; never decoration.",
+      "Typography carries the \"premium\" feeling, not gradients or glass.",
+      "Components are restrained, confident, and consistent screen to screen.",
+      "Motion is modest, meaningful, and always state-driven."
+    ],
+    "rules": [
+      {
+        "name": "The Achievement Reservation Rule",
+        "body": "Achievement Emerald is reserved for completed-set indicators, personal records, and the primary-muscle badge. Never for selected nav tabs, never for buttons, never for headers. Its rarity is what makes it read as achievement.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Athletic Teal carries primary action and current selection only. A screen has at most one zone of Athletic Teal at a time. If two CTAs both want it, one is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Second-Channel Rule",
+        "body": "Color never carries meaning alone. Every state expressed in color also expresses through icon, position, weight, or label. Verify in deuteranopia before shipping a new color decision.",
+        "section": "colors"
+      },
+      {
+        "name": "The Micro-Caption Rule",
+        "body": "When a metadata pair needs an explicit role label (Principal/Auxiliar, Tipo/Peso, Última-sessão), the role is rendered in the Label style and the value in Strong Body or Body. Never use Body-case for role labels; the case + tracking is what disambiguates 'metadata' from 'content'.",
+        "section": "typography"
+      },
+      {
+        "name": "The Numeric Alignment Rule",
+        "body": "Stacked numerical columns (weight, reps, set count in tables and history rows) right-align and use a single weight per column. Switch to Geist Mono only when numbers must align across rows of variable text content.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tracking-Tight Rule",
+        "body": "All title-class typography uses tracking-tight (~-0.02em). Body and below run with default tracking. Labels use positive tracking (0.05em+). The three regimes are non-negotiable.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. The whisper shadow is so subtle it functions as a tint, not depth. No drop shadows beyond shadow-sm. No shadow-md/lg/xl anywhere in the system.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Border-Carries-The-Weight Rule",
+        "body": "Where two surfaces meet, a 1px border in the border token does the visual job. Never a colored stripe, never a gradient seam, never a glow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No-Nested-Cards Rule",
+        "body": "A card containing a card is forbidden. If hierarchy is needed inside a card, use spacing and typography, not nested surfaces.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reserve Athletic Teal for the primary action and current selection on each screen. One zone per screen.",
+      "Do treat Achievement Emerald as the reward color. Use it on completed sets, personal records, and primary-muscle indicators. Never on buttons or selected tabs.",
+      "Do carry a second channel (icon, weight, position, label) whenever color expresses state. Run a deuteranopia simulation before shipping a new color decision.",
+      "Do use the Metadata Pair signature pattern (uppercase label 10px + semibold value 14px) for any 'role + name' disclosure. Never invent a new pattern for that job.",
+      "Do keep cards flat: 1px border + whisper shadow. Use 24px internal padding via the slot subcomponents.",
+      "Do match Tailwind sizes to the fixed scale (12 / 14 / 16 / 18 / 20 / 24 / 30 / 36 / 48). Do not invent off-scale sizes unless you know exactly why.",
+      "Do use font-sans-medium for buttons and labels, font-sans-semibold for titles and emphasized values, font-sans for body. Stick to those three lanes.",
+      "Do make tap targets ≥40px tall on touchable elements, especially in execution-screen rows where users have sweaty hands and seconds between sets.",
+      "Do localize every user-visible string through react-i18next. No hard-coded text. Render dates via date-fns + locale; render numbers via Intl.NumberFormat."
+    ],
+    "donts": [
+      "Don't add gamified ornaments. No confetti animations, no streak flames, no achievement-style trophy decorations. (PRODUCT.md anti-reference: gamificação pueril.)",
+      "Don't use neon gradients, shouted-caps motivational copy, or hype typography. (PRODUCT.md anti-reference: fitness-influencer hype.)",
+      "Don't render data tables without typographic hierarchy. Raw zinc-on-white tables with YYYY-MM-DD dates and no formatted numbers. (PRODUCT.md anti-reference: planilha fria sem alma.)",
+      "Don't lean on red+black+grit. No colored side-stripe borders on alert rows, no charcoal-graphite gradients, no hardcore iconography. (PRODUCT.md anti-reference: bodybuilding old-school agressivo.)",
+      "Don't use side-stripe borders greater than 1px as a colored accent. Rewrite with a full border, a background tint, a leading icon, or nothing.",
+      "Don't use gradient text. Use a solid color and emphasize through weight or size.",
+      "Don't use glassmorphism as decorative default. Rare and purposeful, or never.",
+      "Don't nest cards inside cards. If a card needs internal hierarchy, use spacing and typography.",
+      "Don't use em dashes in UI copy. Use commas, colons, periods, or parentheses instead.",
+      "Don't invent off-scale text sizes without an explicit reason. The fixed scale exists.",
+      "Don't orchestrate page-load motion sequences. Motion is 150 to 250 ms and confined to state changes.",
+      "Don't show shadows beyond shadow-sm. No shadow-md/lg/xl exists in production.",
+      "Don't use Geist Mono for body copy or labels. It is reserved for fixed-width numerical alignment only.",
+      "Don't call drop sets 'extra sets' or RPE 'intensity rating' in UI copy. The vocabulary of training is part of the brand voice."
+    ]
+  }
+}

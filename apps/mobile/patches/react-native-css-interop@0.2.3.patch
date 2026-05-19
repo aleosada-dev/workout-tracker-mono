@@ -1,0 +1,31 @@
+diff --git a/dist/metro/index.js b/dist/metro/index.js
+index c91ba6adf049dd5c6eec1ec8301ecc0802f41bfc..d71e2cb1fcfa4cef7f8d6d36f6ce12e43a500f03 100644
+--- a/dist/metro/index.js
++++ b/dist/metro/index.js
+@@ -177,17 +177,15 @@ async function startCSSProcessor(filePath, platform, isDev, { input, getCSSForPl
+                 : getNativeJS((0, css_to_rn_1.cssToReactNativeRuntime)(css, options), debug)));
+             debug(`virtualStyles.emit ${platform}`);
+             haste.emit("change", {
+-                eventsQueue: [
+-                    {
+-                        filePath,
+-                        metadata: {
+-                            modifiedTime: Date.now(),
+-                            size: 1,
+-                            type: "virtual",
+-                        },
+-                        type: "change",
+-                    },
+-                ],
++                changes: {
++                    addedDirectories: [],
++                    removedDirectories: [],
++                    addedFiles: [],
++                    modifiedFiles: [[filePath, { isSymlink: false, modifiedTime: Date.now() }]],
++                    removedFiles: [],
++                },
++                logger: null,
++                rootDir: "",
+             });
+         }).then((css) => {
+             debug(`virtualStyles.initial ${platform}`);

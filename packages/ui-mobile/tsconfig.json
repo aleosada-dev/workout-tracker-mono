@@ -1,0 +1,5 @@
+{
+  "extends": "@workout-tracker/typescript-config/react-native.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "nativewind-env.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

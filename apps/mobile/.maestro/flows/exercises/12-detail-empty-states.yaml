@@ -1,0 +1,24 @@
+appId: ${MAESTRO_APP_ID}
+name: 12 - Detalhe - empty states (exercício sem dados)
+---
+- runFlow: ../../subflows/open-exercises-list-coach.yaml
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+# Sem sessões → gráfico, séries e recordes caem em empty state.
+- assertVisible:
+    id: "exercise-detail.chart.empty"
+- assertVisible:
+    id: "exercise-detail.sets.empty"
+- assertVisible:
+    id: "exercise-detail.records.empty"
+# Sem URL de vídeo (mp4 ou YouTube) → o container do vídeo não renderiza.
+- assertNotVisible:
+    id: "exercise-detail.video"
+# O badge de músculos sempre renderiza, mesmo sem sessões.
+- assertVisible:
+    id: "exercise-detail.muscle.primary"

@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+name: 03 - Detalhes do exercício
+---
+- runFlow: ../../subflows/open-exercises-list.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "Leg Press 45"
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- assertVisible: "Recordes pessoais"
+# trocar a métrica selecionada atualiza o destaque sem sair da tela
+- tapOn:
+    id: "exercise-detail.metric.volume"
+- assertVisible:
+    id: "exercise-detail"
+# voltar para a lista (no iOS o header usa "BackButton")
+- tapOn:
+    id: "BackButton"
+- assertVisible:
+    id: "exercises-list"

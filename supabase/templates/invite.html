@@ -1,0 +1,481 @@
+<table
+  role="presentation"
+  style="
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f5f5f5;
+    font-family:
+      -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
+      &quot;Helvetica Neue&quot;, Arial, sans-serif;
+  "
+>
+  <tr>
+    <td align="center">
+      <table
+        role="presentation"
+        style="
+          width: 100%;
+          max-width: 600px;
+          border-collapse: collapse;
+          background-color: #ffffff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        "
+      >
+        <!-- Header -->
+        <tr>
+          <td
+            style="
+              background: linear-gradient(135deg, #059669 0%, #047857 100%);
+              padding: 40px 20px;
+              text-align: center;
+            "
+          >
+            <img
+              src="{{ .SiteURL }}/icons/icon-512x512-transparent.png"
+              alt="Workout Tracker"
+              style="width: 80px; height: 80px; margin-bottom: 20px"
+            />
+            <h1
+              style="
+                color: #ffffff;
+                margin: 0 0 10px;
+                font-size: 28px;
+                font-weight: 700;
+              "
+            >
+              Você foi Convidado!
+            </h1>
+            <p style="color: #d1fae5; margin: 0; font-size: 16px">
+              Comece sua jornada fitness com seu treinador
+            </p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding: 40px 20px 20px">
+            <p
+              style="
+                color: #171717;
+                font-size: 16px;
+                line-height: 1.6;
+                margin: 0 0 20px;
+              "
+            >
+              Olá <strong>{{ .Data.full_name }}</strong>,
+            </p>
+          </td>
+        </tr>
+
+        <!-- Trainer Info Card -->
+        <tr>
+          <td style="padding: 0 20px 30px">
+            <table
+              role="presentation"
+              style="
+                width: 100%;
+                border-collapse: collapse;
+                background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+                border-radius: 8px;
+                border: 2px solid #059669;
+                overflow: hidden;
+              "
+            >
+              <tr>
+                <td style="padding: 25px; text-align: center">
+                  <p
+                    style="
+                      color: #047857;
+                      font-size: 18px;
+                      font-weight: 700;
+                      margin: 0 0 5px;
+                    "
+                  >
+                    {{ .Data.trainer_name }}
+                  </p>
+
+                  <p style="color: #065f46; font-size: 14px; margin: 0">
+                    convidou você para usar o <strong>Workout Tracker</strong>
+                    e ter acesso a treinos personalizados!
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Benefits -->
+        <tr>
+          <td style="padding: 0 20px 30px">
+            <h2
+              style="
+                color: #171717;
+                font-size: 18px;
+                margin: 0 0 20px;
+                font-weight: 600;
+              "
+            >
+              O que você vai conseguir:
+            </h2>
+
+            <table
+              role="presentation"
+              style="width: 100%; border-collapse: collapse"
+            >
+              <tr>
+                <td style="padding: 12px 0">
+                  <table
+                    role="presentation"
+                    style="width: 100%; border-collapse: collapse"
+                  >
+                    <tr>
+                      <td style="width: 35px; vertical-align: top">
+                        <div
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            background-color: #d1fae5;
+                            border-radius: 50%;
+                            text-align: center;
+                            line-height: 24px;
+                          "
+                        >
+                          <span
+                            style="
+                              color: #059669;
+                              font-size: 14px;
+                              font-weight: 700;
+                            "
+                            >✓</span
+                          >
+                        </div>
+                      </td>
+                      <td>
+                        <p
+                          style="
+                            color: #404040;
+                            font-size: 15px;
+                            line-height: 1.5;
+                            margin: 0;
+                          "
+                        >
+                          <strong>Treinos personalizados</strong> criados
+                          especialmente para você
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 12px 0">
+                  <table
+                    role="presentation"
+                    style="width: 100%; border-collapse: collapse"
+                  >
+                    <tr>
+                      <td style="width: 35px; vertical-align: top">
+                        <div
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            background-color: #d1fae5;
+                            border-radius: 50%;
+                            text-align: center;
+                            line-height: 24px;
+                          "
+                        >
+                          <span
+                            style="
+                              color: #059669;
+                              font-size: 14px;
+                              font-weight: 700;
+                            "
+                            >✓</span
+                          >
+                        </div>
+                      </td>
+                      <td>
+                        <p
+                          style="
+                            color: #404040;
+                            font-size: 15px;
+                            line-height: 1.5;
+                            margin: 0;
+                          "
+                        >
+                          <strong>Acompanhamento profissional</strong> do seu
+                          progresso
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 12px 0">
+                  <table
+                    role="presentation"
+                    style="width: 100%; border-collapse: collapse"
+                  >
+                    <tr>
+                      <td style="width: 35px; vertical-align: top">
+                        <div
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            background-color: #d1fae5;
+                            border-radius: 50%;
+                            text-align: center;
+                            line-height: 24px;
+                          "
+                        >
+                          <span
+                            style="
+                              color: #059669;
+                              font-size: 14px;
+                              font-weight: 700;
+                            "
+                            >✓</span
+                          >
+                        </div>
+                      </td>
+                      <td>
+                        <p
+                          style="
+                            color: #404040;
+                            font-size: 15px;
+                            line-height: 1.5;
+                            margin: 0;
+                          "
+                        >
+                          <strong>Comunicação direta</strong> com seu treinador
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 12px 0">
+                  <table
+                    role="presentation"
+                    style="width: 100%; border-collapse: collapse"
+                  >
+                    <tr>
+                      <td style="width: 35px; vertical-align: top">
+                        <div
+                          style="
+                            width: 24px;
+                            height: 24px;
+                            background-color: #d1fae5;
+                            border-radius: 50%;
+                            text-align: center;
+                            line-height: 24px;
+                          "
+                        >
+                          <span
+                            style="
+                              color: #059669;
+                              font-size: 14px;
+                              font-weight: 700;
+                            "
+                            >✓</span
+                          >
+                        </div>
+                      </td>
+                      <td>
+                        <p
+                          style="
+                            color: #404040;
+                            font-size: 15px;
+                            line-height: 1.5;
+                            margin: 0;
+                          "
+                        >
+                          <strong>Histórico completo</strong> de treinos e
+                          evolução
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA Button -->
+        <tr>
+          <td style="padding: 0 20px 30px">
+            <table
+              role="presentation"
+              style="width: 100%; border-collapse: collapse"
+            >
+              <tr>
+                <td align="center" style="padding: 0">
+                  <a
+                    href="{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=invite&next=/onboarding"
+                    style="
+                      display: inline-block;
+                      background-color: #059669;
+                      color: #ffffff;
+                      text-decoration: none;
+                      padding: 16px 48px;
+                      border-radius: 8px;
+                      font-weight: 600;
+                      font-size: 16px;
+                      box-shadow: 0 4px 6px rgba(5, 150, 105, 0.3);
+                    "
+                  >
+                    Aceitar Convite
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p
+              style="
+                color: #737373;
+                font-size: 14px;
+                line-height: 1.6;
+                margin: 20px 0 10px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e5e5;
+                text-align: center;
+              "
+            >
+              Ou copie e cole este link no seu navegador:
+            </p>
+            <p
+              style="
+                color: #059669;
+                font-size: 13px;
+                line-height: 1.6;
+                margin: 0;
+                word-break: break-all;
+                text-align: center;
+              "
+            >
+              {{ .SiteURL }}/confirm?token_hash={{ .TokenHash
+              }}&type=invite&next=/onboarding
+            </p>
+          </td>
+        </tr>
+
+        <!-- Info Box -->
+        <tr>
+          <td style="padding: 0 20px 40px">
+            <table
+              role="presentation"
+              style="
+                width: 100%;
+                border-collapse: collapse;
+                background-color: #fafafa;
+                border-radius: 6px;
+                padding: 20px;
+              "
+            >
+              <tr>
+                <td style="padding: 20px">
+                  <p
+                    style="
+                      color: #737373;
+                      font-size: 14px;
+                      line-height: 1.6;
+                      margin: 0 0 10px;
+                    "
+                  >
+                    <strong>ℹ️ Como funciona:</strong>
+                  </p>
+                  <p
+                    style="
+                      color: #737373;
+                      font-size: 13px;
+                      line-height: 1.6;
+                      margin: 0 0 8px;
+                    "
+                  >
+                    1. Clique no botão acima para criar sua conta
+                  </p>
+                  <p
+                    style="
+                      color: #737373;
+                      font-size: 13px;
+                      line-height: 1.6;
+                      margin: 0 0 8px;
+                    "
+                  >
+                    2. Preencha seus dados e confirme seu email
+                  </p>
+                  <p
+                    style="
+                      color: #737373;
+                      font-size: 13px;
+                      line-height: 1.6;
+                      margin: 0 0 15px;
+                    "
+                  >
+                    3. Você será automaticamente vinculado a
+                    <strong>{{ .Data.trainer_name }}</strong>
+                  </p>
+                  <p
+                    style="
+                      color: #737373;
+                      font-size: 12px;
+                      line-height: 1.6;
+                      margin: 0;
+                      padding-top: 10px;
+                      border-top: 1px solid #e5e5e5;
+                    "
+                  >
+                    Este convite expira em 7 dias. Caso não tenha solicitado,
+                    você pode ignorar este email.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td
+            style="
+              background-color: #fafafa;
+              padding: 30px 20px;
+              text-align: center;
+              border-top: 1px solid #e5e5e5;
+            "
+          >
+            <p
+              style="
+                color: #737373;
+                font-size: 13px;
+                line-height: 1.6;
+                margin: 0 0 10px;
+              "
+            >
+              © 2026 Workout Tracker. Todos os direitos reservados.
+            </p>
+            <p
+              style="
+                color: #a3a3a3;
+                font-size: 12px;
+                line-height: 1.6;
+                margin: 0;
+              "
+            >
+              Este é um email automático, por favor não responda.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

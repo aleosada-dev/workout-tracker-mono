@@ -1,0 +1,30 @@
+appId: ${MAESTRO_APP_ID}
+name: 07 - Detalhe - cycla todas as 4 métricas
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "barra fixa na máquina"
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- tapOn:
+    id: "exercise-detail.metric.maxWeight"
+- assertVisible:
+    id: "exercise-detail"
+- tapOn:
+    id: "exercise-detail.metric.volume"
+- assertVisible:
+    id: "exercise-detail"
+- tapOn:
+    id: "exercise-detail.metric.maxReps"
+- assertVisible:
+    id: "exercise-detail"
+- tapOn:
+    id: "exercise-detail.metric.sets"
+- assertVisible:
+    id: "exercise-detail"

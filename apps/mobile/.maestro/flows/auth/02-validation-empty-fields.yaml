@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+name: 02 - Validação de campos vazios
+---
+- runFlow: ../../subflows/launch-fresh.yaml
+- tapOn:
+    id: "signIn.emailInput"
+- tapOn:
+    id: "signIn.passwordInput"
+- tapOn:
+    id: "signIn.emailInput"
+- assertVisible: "Email inválido"
+- assertVisible: "Senha é obrigatória"
+- assertVisible:
+    id: "signIn.submitButton"

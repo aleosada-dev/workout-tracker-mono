@@ -1,0 +1,4 @@
+[install]
+# Hoisted linker required for Expo/React Native — Metro bundler does not
+# follow symlinks reliably, so dependencies must live in a flat node_modules.
+linker = "hoisted"

@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+name: 02 - Pull-to-refresh na home
+---
+- runFlow: ../../subflows/sign-in-athlete.yaml
+- extendedWaitUntil:
+    visible:
+      id: "workout-log-list"
+    timeout: 15000
+- swipe:
+    from:
+      id: "workout-log-list"
+    direction: DOWN
+    duration: 600
+- assertVisible:
+    id: "workout-log-list"
+- assertNotVisible:
+    id: "workout-log-list.error"

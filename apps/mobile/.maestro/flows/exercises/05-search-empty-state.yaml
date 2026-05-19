@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+name: 05 - Busca sem resultados exibe empty state
+---
+- runFlow: ../../subflows/open-exercises-list.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "zzqqxx-nao-existe"
+- assertVisible:
+    id: "exercises-list.search-empty"
+- assertNotVisible:
+    id: "exercise-card"

@@ -1,0 +1,261 @@
+import {
+  EXERCISE_TYPES,
+  type ExerciseType,
+  VISIBILITIES,
+  type Visibility,
+} from '@workout-tracker/domain';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Checkbox,
+  cn,
+  Text,
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@workout-tracker/ui-mobile';
+import { router } from 'expo-router';
+import { AlertTriangle } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { EquipmentSelect } from '@/equipments/components/equipment-select';
+import { EMPTY_EXERCISE_LIST_PARAMS, type ExerciseListParams } from '@/exercises/api/exercises';
+import { exerciseFilters$, setExerciseFilters } from '@/exercises/state/filter-store';
+import { MuscleMultiSelect } from '@/muscles/components/muscle-multi-select';
+
+export default function ExercisesFilterScreen() {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const [draft, setDraft] = useState<ExerciseListParams>(() => exerciseFilters$.get());
+  const [showTypeWarning, setShowTypeWarning] = useState(false);
+  const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearWarningTimer = useCallback(() => {
+    if (warningTimer.current) {
+      clearTimeout(warningTimer.current);
+      warningTimer.current = null;
+    }
+  }, []);
+
+  const dismissTypeWarning = useCallback(() => {
+    clearWarningTimer();
+    setShowTypeWarning(false);
+  }, [clearWarningTimer]);
+
+  const triggerTypeWarning = useCallback(() => {
+    clearWarningTimer();
+    setShowTypeWarning(true);
+    warningTimer.current = setTimeout(() => {
+      warningTimer.current = null;
+      setShowTypeWarning(false);
+    }, 3000);
+  }, [clearWarningTimer]);
+
+  useEffect(() => clearWarningTimer, [clearWarningTimer]);
+
+  const toggleType = useCallback(
+    (type: ExerciseType) => {
+      const current = draft.query.exerciseTypes;
+      const arr = current ? (Array.isArray(current) ? current : [current]) : [...EXERCISE_TYPES];
+      const has = arr.includes(type);
+      if (has && arr.length === 1) {
+        triggerTypeWarning();
+        return;
+      }
+      setDraft((prev) => ({
+        ...prev,
+        query: {
+          ...prev.query,
+          exerciseTypes: has ? arr.filter((x) => x !== type) : [...arr, type],
+        },
+      }));
+    },
+    [draft.query.exerciseTypes, triggerTypeWarning],
+  );
+
+  const setVisibility = useCallback((visibility: Visibility) => {
+    setDraft((prev) => ({ ...prev, query: { ...prev.query, visibility } }));
+  }, []);
+
+  const setMuscleIds = useCallback((muscleIds: string[]) => {
+    setDraft((prev) => ({
+      ...prev,
+      query: { ...prev.query, muscleIds: muscleIds.length > 0 ? muscleIds : undefined },
+    }));
+  }, []);
+
+  const setEquipmentId = useCallback((equipmentId: string | null) => {
+    setDraft((prev) => ({
+      ...prev,
+      query: { ...prev.query, equipmentIds: equipmentId ? [equipmentId] : undefined },
+    }));
+  }, []);
+
+  const handleApply = () => {
+    setExerciseFilters(draft);
+    router.back();
+  };
+
+  const handleClear = () => setDraft(EMPTY_EXERCISE_LIST_PARAMS);
+
+  return (
+    <View className="flex-1 bg-background" testID="exercises-filter">
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 12,
+          gap: 20,
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Section title={t('exerciseListScreen.filter.sections.type')}>
+          {showTypeWarning ? (
+            <Alert
+              variant="warning"
+              icon={AlertTriangle}
+              onDismiss={dismissTypeWarning}
+              dismissAccessibilityLabel={t('common.close')}
+              testID="exercises-filter.type.warning"
+            >
+              <AlertTitle>{t('exerciseListScreen.filter.warnings.typeMinOne.title')}</AlertTitle>
+              <AlertDescription>
+                {t('exerciseListScreen.filter.warnings.typeMinOne.message')}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          <View className="flex-row gap-4">
+            {EXERCISE_TYPES.map((type) => {
+              const checked = draft.query.exerciseTypes
+                ? !!(Array.isArray(draft.query.exerciseTypes)
+                    ? draft.query.exerciseTypes.includes(type)
+                    : draft.query.exerciseTypes === type)
+                : true;
+              return (
+                <CheckboxRow
+                  key={type}
+                  label={t(`exercises.type.${type}`)}
+                  checked={checked}
+                  onChange={() => toggleType(type)}
+                  testID={`exercises-filter.type.${type}`}
+                  className="flex-1"
+                />
+              );
+            })}
+          </View>
+        </Section>
+
+        <Section title={t('exerciseListScreen.filter.sections.visibility')}>
+          <ToggleGroup
+            type="single"
+            value={typeof draft.query.visibility === 'string' ? draft.query.visibility : 'all'}
+            onValueChange={(value) => {
+              if (value === 'all' || value === 'public' || value === 'private') {
+                setVisibility(value);
+              }
+            }}
+            variant="outline"
+            size="sm"
+          >
+            {VISIBILITIES.map((v, i) => (
+              <ToggleGroupItem
+                key={v}
+                value={v}
+                isFirst={i === 0}
+                isLast={i === VISIBILITIES.length - 1}
+                className="flex-1"
+                testID={`exercises-filter.visibility.${v}`}
+              >
+                <Text>
+                  {v === 'all'
+                    ? t('exerciseListScreen.filter.visibility.all')
+                    : t(`exercises.visibility.${v}`)}
+                </Text>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </Section>
+
+        <Section title={t('exerciseListScreen.filter.sections.primaryMuscle')}>
+          <MuscleMultiSelect
+            value={
+              Array.isArray(draft.query.muscleIds)
+                ? draft.query.muscleIds
+                : draft.query.muscleIds
+                  ? [draft.query.muscleIds]
+                  : []
+            }
+            onValueChange={setMuscleIds}
+            placeholder={t('exerciseListScreen.filter.placeholders.primaryMuscle')}
+          />
+        </Section>
+
+        <Section title={t('exerciseListScreen.filter.sections.equipment')}>
+          <EquipmentSelect
+            value={
+              Array.isArray(draft.query.equipmentIds)
+                ? (draft.query.equipmentIds[0] ?? null)
+                : (draft.query.equipmentIds ?? null)
+            }
+            onValueChange={setEquipmentId}
+            placeholder={t('exerciseListScreen.filter.placeholders.equipment')}
+          />
+        </Section>
+      </ScrollView>
+
+      <View
+        className="flex-row gap-3 border-border border-t bg-background px-4 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
+        <Button
+          variant="outline"
+          className="flex-1"
+          onPress={handleClear}
+          testID="exercises-filter.clear"
+        >
+          <Text>{t('exerciseListScreen.filter.clear')}</Text>
+        </Button>
+        <Button className="flex-1" onPress={handleApply} testID="exercises-filter.apply">
+          <Text className="text-primary-foreground">{t('exerciseListScreen.filter.apply')}</Text>
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View className="gap-2">
+      <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+        {title}
+      </Text>
+      <View className="gap-1">{children}</View>
+    </View>
+  );
+}
+
+function CheckboxRow({
+  label,
+  checked,
+  onChange,
+  testID,
+  className,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+  testID?: string;
+  className?: string;
+}) {
+  return (
+    <View className={cn('flex-row items-center gap-3 py-1.5', className)}>
+      <Checkbox checked={checked} onCheckedChange={onChange} testID={testID} />
+      <Text className="font-sans text-base text-foreground" onPress={onChange}>
+        {label}
+      </Text>
+    </View>
+  );
+}

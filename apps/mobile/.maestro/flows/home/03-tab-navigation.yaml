@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+name: 03 - Navegação entre as tabs
+---
+- runFlow: ../../subflows/sign-in-coach.yaml
+- extendedWaitUntil:
+    visible:
+      id: "workout-log-list"
+    timeout: 15000
+- tapOn: "Relatórios"
+- assertVisible: "Reports"
+- tapOn: "Config."
+- assertVisible: "Perfil"
+- tapOn: "Início"
+- assertVisible:
+    id: "workout-log-list"

@@ -1,0 +1,39 @@
+{
+	"name": "@workout-tracker/api",
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy --minify",
+		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
+		"lint": "biome lint .",
+		"lint:fix": "biome lint --write .",
+		"format": "biome format --write .",
+		"check": "biome check --write .",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@hono/standard-validator": "^0.2.2",
+		"@scalar/hono-api-reference": "^0.10.16",
+		"@sentry/cloudflare": "10.53.1",
+		"@sentry/hono": "^10.53.1",
+		"@supabase/supabase-js": "^2.105.4",
+		"@workout-tracker/application": "workspace:*",
+		"@workout-tracker/domain": "workspace:*",
+		"@workout-tracker/infrastructure": "workspace:*",
+		"hono": "^4.12.18",
+		"hono-openapi": "^1.3.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
+		"@types/bun": "^1.3.14",
+		"@workout-tracker/typescript-config": "workspace:*",
+		"wrangler": "^4.4.0"
+	}
+}

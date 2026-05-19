@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+name: 04 - Busca filtra a lista
+---
+- runFlow: ../../subflows/open-exercises-list.yaml
+- tapOn:
+    id: "exercises-list.search"
+# "Sup" deve casar com Supino (exercício comum no seed). Trocar caso a base de
+# teste use outros nomes — o ponto é validar que a digitação filtra sem quebrar.
+- inputText: "Sup"
+- assertVisible:
+    id: "exercise-card"
+- assertNotVisible:
+    id: "exercises-list.search-empty"
+- hideKeyboard
+- assertVisible: "Exercícios"

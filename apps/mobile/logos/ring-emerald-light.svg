@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+  <title id="t">Workout Tracker — Ring (Emerald W)</title>
+  <desc id="d">Activity progress ring with barbell-style W mark in emerald</desc>
+  <rect width="512" height="512" rx="112" fill="#FAFAFA"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#E5E5E5" stroke-width="36"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#059669" stroke-width="36"
+    stroke-linecap="round"
+    stroke-dasharray="707 942"
+    transform="rotate(-90 256 256)"/>
+  <g fill="#059669" stroke="#047857" stroke-width="2.5">
+    <circle cx="184" cy="196" r="26"/>
+    <circle cx="256" cy="220" r="26"/>
+    <circle cx="328" cy="196" r="26"/>
+    <circle cx="220" cy="316" r="26"/>
+    <circle cx="292" cy="316" r="26"/>
+  </g>
+  <path d="M 184 196 L 220 316 L 256 220 L 292 316 L 328 196"
+    stroke="#059669" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

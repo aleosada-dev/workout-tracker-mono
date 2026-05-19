@@ -1,0 +1,45 @@
+import {
+  differenceInCalendarDays,
+  format,
+  formatDuration,
+  formatRelative,
+  intervalToDuration,
+  type Locale,
+  parseISO,
+} from 'date-fns';
+import type { TFunction } from 'i18next';
+
+const DEFAULT_RELATIVE_WINDOW_DAYS = 6;
+
+function toDate(date: Date | string): Date {
+  return typeof date === 'string' ? parseISO(date) : date;
+}
+
+export function formatRelativeDate(
+  date: Date | string,
+  locale: Locale,
+  options?: { windowDays?: number },
+): string | null {
+  const d = toDate(date);
+  const days = differenceInCalendarDays(new Date(), d);
+  const window = options?.windowDays ?? DEFAULT_RELATIVE_WINDOW_DAYS;
+  if (days < 0 || days > window) return null;
+  const out = formatRelative(d, new Date(), { locale });
+  return out ? out.charAt(0).toLocaleUpperCase() + out.slice(1) : out;
+}
+
+export function formatDateAtTime(date: Date | string, t: TFunction, locale: Locale): string {
+  const d = toDate(date);
+  return t('common.dateAtTime', {
+    date: format(d, 'P', { locale }),
+    time: format(d, 'HH:mm', { locale }),
+  });
+}
+
+export function formatDurationSeconds(seconds: number, locale: Locale): string {
+  return formatDuration(intervalToDuration({ start: 0, end: seconds * 1000 }), {
+    locale,
+    format: ['hours', 'minutes'],
+    delimiter: ' ',
+  });
+}

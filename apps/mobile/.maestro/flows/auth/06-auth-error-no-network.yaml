@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+name: 06 - Erro de autenticação sem internet (Android)
+onFlowComplete:
+  - setAirplaneMode: disabled
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - runFlow: ../../subflows/launch-fresh.yaml
+      - setAirplaneMode: enabled
+      - tapOn:
+          id: "signIn.emailInput"
+      - inputText: ${E2E_TEST_EMAIL}
+      - tapOn:
+          id: "signIn.passwordInput"
+      - inputText: ${E2E_TEST_PASSWORD}
+      - tapOn:
+          id: "signIn.submitButton"
+      - extendedWaitUntil:
+          visible: "Erro ao entrar"
+          timeout: 10000
+      - assertVisible: "Network request failed"
+      - setAirplaneMode: disabled
+      - assertVisible: "Entrar"

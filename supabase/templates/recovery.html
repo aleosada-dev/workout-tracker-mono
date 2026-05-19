@@ -1,0 +1,17 @@
+<div
+  style="
+    font-family:
+      -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
+      &quot;Helvetica Neue&quot;, Arial, sans-serif;
+  "
+>
+  <h2>Redefina sua senha</h2>
+
+  <p>Clique no link a seguir para redefinir sua senha</p>
+  <p>
+    <a
+      href="{{ .SiteURL }}/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password"
+      >Redefinir senha</a
+    >
+  </p>
+</div>

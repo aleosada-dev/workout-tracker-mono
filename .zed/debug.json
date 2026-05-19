@@ -1,0 +1,35 @@
+[
+  {
+    "label": "Attach to Wrangler (API)",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "attach",
+    "port": 9229,
+    "cwd": "/",
+    "resolveSourceMapLocations": null,
+    "attachExistingChildren": false,
+    "autoAttachChildProcesses": false,
+    "sourceMaps": true
+  },
+  {
+    "label": "Debug current test file (Bun)",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/api",
+    "program": "$ZED_FILE",
+    "runtimeExecutable": "bun",
+    "runtimeArgs": ["test", "--inspect-wait=6499"],
+    "attachSimplePort": 6499
+  },
+  {
+    "label": "Debug all tests (API)",
+    "adapter": "JavaScript",
+    "type": "node",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/api",
+    "runtimeExecutable": "bun",
+    "runtimeArgs": ["test", "--inspect-wait=6499"],
+    "attachSimplePort": 6499
+  }
+]

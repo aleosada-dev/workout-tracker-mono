@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+name: 09 - Detalhe - seção de recordes pessoais
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "Barra fixa na máquina"
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- assertVisible: "Recordes pessoais"
+- assertVisible:
+    id: "exercise-detail.metric.volume"
+- assertVisible:
+    id: "exercise-detail.metric.maxReps"
+- assertVisible:
+    id: "exercise-detail.metric.sets"
+- assertNotVisible:
+    id: "exercise-detail.record.maxWeight"

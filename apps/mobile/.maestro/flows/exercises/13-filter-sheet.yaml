@@ -1,0 +1,28 @@
+appId: ${MAESTRO_APP_ID}
+name: 13 - Filtro de exercícios
+# Nota: o gatilho do menu de overflow é nativo no iOS (Stack.Toolbar.Menu) e
+# acessível por texto/imagem do ícone; no Android usa accessibilityLabel "Mais
+# opções". Se o tapOn abaixo falhar no iOS, abrir manualmente uma vez e usar
+# `maestro studio` para descobrir o seletor correto.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn: "Mais opções"
+- tapOn: "Filtrar"
+- assertVisible: "Filtrar exercícios"
+- assertVisible: "Tipo"
+- assertVisible: "Visibilidade"
+- tapOn:
+    id: "exercises-filter.type.musculacao"
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (1)"
+- tapOn: "Filtrar (1)"
+- tapOn:
+    id: "exercises-filter.clear"
+- tapOn:
+    id: "exercises-filter.apply"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar"
+- assertNotVisible: "Filtrar (1)"

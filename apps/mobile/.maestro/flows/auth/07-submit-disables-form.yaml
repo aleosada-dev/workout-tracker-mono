@@ -1,0 +1,36 @@
+appId: ${MAESTRO_APP_ID}
+name: 07 - Campos e botão desabilitados durante submit
+---
+- runFlow: ../../subflows/launch-fresh.yaml
+- openLink: ${MAESTRO_APP_SCHEME}://debug/slow-auth?ms=3000
+- assertVisible: "Bem-vindo de volta!"
+- tapOn:
+    id: "signIn.emailInput"
+- inputText: ${E2E_TEST_EMAIL}
+- tapOn:
+    id: "signIn.passwordInput"
+- inputText: ${E2E_TEST_PASSWORD}
+- tapOn:
+    id: "signIn.submitButton"
+- assertVisible: "Entrando..."
+- assertVisible:
+    id: "signIn.submitButton"
+    enabled: false
+- assertVisible:
+    id: "signIn.emailInput"
+    enabled: false
+- assertVisible:
+    id: "signIn.passwordInput"
+    enabled: false
+- assertVisible:
+    id: "signIn.togglePasswordVisibility"
+    enabled: false
+- assertVisible:
+    id: "signIn.forgotPasswordLink"
+    enabled: false
+- assertVisible:
+    id: "signIn.signUpLink"
+    enabled: false
+- extendedWaitUntil:
+    notVisible: "Entrando..."
+    timeout: 10000

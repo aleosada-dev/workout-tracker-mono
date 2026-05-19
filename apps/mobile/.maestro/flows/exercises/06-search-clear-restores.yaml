@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+name: 06 - Limpar a busca restaura a lista
+---
+- runFlow: ../../subflows/open-exercises-list.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: "zzqqxx-nao-existe"
+- assertVisible:
+    id: "exercises-list.search-empty"
+- eraseText
+- assertNotVisible:
+    id: "exercises-list.search-empty"
+- assertVisible:
+    id: "exercise-card"
