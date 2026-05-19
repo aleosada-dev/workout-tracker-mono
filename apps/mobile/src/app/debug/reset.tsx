@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { debugResetAuth } from '@/shared/lib/debug-reset';
-import { debugSetLanguage } from '@/shared/lib/debug-set-language';
+import { debugResetAuth } from '@/features/shared/lib/debug-reset';
+import { debugSetLanguage } from '@/features/shared/lib/debug-set-language';
 
 export default function DebugResetRoute() {
   const { lang } = useLocalSearchParams<{ lang?: string }>();

@@ -1,4 +1,3 @@
-import '../internationalization/i18n.ts';
 import 'react-native-gesture-handler';
 import '../global.css';
 import {
@@ -26,13 +25,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import { useSession } from '@/auth/hooks/useSession';
-import { ObservabilityErrorBoundary, ObservabilityProvider } from '@/observability/lib';
-import { QueryProvider } from '@/query/lib/provider';
-import { LanguageBridge } from '@/settings/state/language-bridge';
-import { ThemeBridge } from '@/settings/state/theme-bridge';
-import { useNavTheme } from '@/shared/lib/theme';
-import { toastConfig } from '@/shared/lib/toast-config';
+import { useSession } from '@/features/auth/hooks/useSession';
+import { ObservabilityErrorBoundary, ObservabilityProvider } from '@/features/observability/lib';
+import { QueryProvider } from '@/features/query/lib/provider';
+import { LanguageBridge, resolveLanguage } from '@/features/settings/state/language-bridge';
+import { language$ } from '@/features/settings/state/settings-store';
+import { ThemeBridge } from '@/features/settings/state/theme-bridge';
+import { useNavTheme } from '@/features/shared/lib/theme';
+import { toastConfig } from '@/features/shared/lib/toast-config';
+import { setupI18n } from '@/internationalization/i18n';
+
+setupI18n(resolveLanguage(language$.get()));
 
 SplashScreen.preventAutoHideAsync();
 

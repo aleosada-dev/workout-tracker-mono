@@ -1,7 +1,7 @@
 import { Label } from '@workout-tracker/ui-mobile';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { LanguageSelect } from '@/settings/components/language-select';
+import { LanguageSelect } from '@/features/settings/components/language-select';
 
 export default function LocalScreen() {
   const { t } = useTranslation();

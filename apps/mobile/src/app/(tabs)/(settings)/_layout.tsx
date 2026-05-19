@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import SignOut from '@/auth/components/sign-out';
+import SignOut from '@/features/auth/components/sign-out';
 
 export default function SettingsLayout() {
   const { t } = useTranslation();

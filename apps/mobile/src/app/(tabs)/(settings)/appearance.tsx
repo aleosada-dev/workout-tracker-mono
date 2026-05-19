@@ -1,7 +1,7 @@
 import { Label } from '@workout-tracker/ui-mobile';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { ThemeToggle } from '@/settings/components/theme-toggle';
+import { ThemeToggle } from '@/features/settings/components/theme-toggle';
 
 export default function AppearanceScreen() {
   const { t } = useTranslation();

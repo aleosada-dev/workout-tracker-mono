@@ -14,10 +14,10 @@ import Animated, { useAnimatedProps, useAnimatedStyle } from 'react-native-reani
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
-import { signInErrorMessageKey } from '@/auth/lib/auth-error';
-import { LanguageMenuButton } from '@/settings/components/language-menu-button';
-import { ThemeToggle } from '@/settings/components/theme-toggle';
-import { supabase } from '@/shared/lib/supabase';
+import { signInErrorMessageKey } from '@/features/auth/lib/auth-error';
+import { LanguageMenuButton } from '@/features/settings/components/language-menu-button';
+import { ThemeToggle } from '@/features/settings/components/theme-toggle';
+import { supabase } from '@/features/shared/lib/supabase';
 
 const signInSchema = z.object({
   email: z.email('signInScreen.validation.emailInvalid'),

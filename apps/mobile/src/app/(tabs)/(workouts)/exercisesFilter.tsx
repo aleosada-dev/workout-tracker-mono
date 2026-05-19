@@ -21,10 +21,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EquipmentSelect } from '@/equipments/components/equipment-select';
-import { EMPTY_EXERCISE_LIST_PARAMS, type ExerciseListParams } from '@/exercises/api/exercises';
-import { exerciseFilters$, setExerciseFilters } from '@/exercises/state/filter-store';
-import { MuscleMultiSelect } from '@/muscles/components/muscle-multi-select';
+import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
+import {
+  EMPTY_EXERCISE_LIST_PARAMS,
+  type ExerciseListParams,
+} from '@/features/exercises/api/exercises';
+import { exerciseFilters$, setExerciseFilters } from '@/features/exercises/state/filter-store';
+import { MuscleMultiSelect } from '@/features/muscles/components/muscle-multi-select';
 
 export default function ExercisesFilterScreen() {
   const { t } = useTranslation();

@@ -4,7 +4,7 @@ import { Calendar, Dumbbell, HeartPulse, List } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MenuCard } from '@/shared/components/MenuCard';
+import { MenuCard } from '@/features/shared/components/MenuCard';
 
 export default function WorkoutsScreen() {
   const router = useRouter();

@@ -5,15 +5,15 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
-import { ExerciseCard, ExerciseCardSkeleton } from '@/exercises/components/ExerciseCard';
-import { useExercises } from '@/exercises/hooks/use-exercises';
-import { toExercise } from '@/exercises/lib/format';
-import { countActiveFilters } from '@/exercises/lib/list.helpers';
-import type { ExerciseListItem } from '@/exercises/lib/list.types';
-import { exerciseFilters$ } from '@/exercises/state/filter-store';
-import { useReportRequestError } from '@/observability/hooks/use-report-request-error';
-import { exerciseObservability } from '@/observability/lib';
-import * as ScreenActions from '@/shared/components/ScreenActions';
+import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
+import { useExercises } from '@/features/exercises/hooks/use-exercises';
+import { toExercise } from '@/features/exercises/lib/format';
+import { countActiveFilters } from '@/features/exercises/lib/list.helpers';
+import type { ExerciseListItem } from '@/features/exercises/lib/list.types';
+import { exerciseFilters$ } from '@/features/exercises/state/filter-store';
+import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
+import { exerciseObservability } from '@/features/observability/lib';
+import * as ScreenActions from '@/features/shared/components/ScreenActions';
 
 type Mode = 'browse' | 'select';
 

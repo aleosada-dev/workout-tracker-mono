@@ -33,37 +33,37 @@ Prebuild scripts (`prebuild:dev` / `prebuild:preview` / `prebuild:prod`) regener
 
 ## Routing & auth
 
-`src/app/_layout.tsx` is the root layout. It uses `Stack.Protected` with `isAuthenticated` from `useSession()` (`src/hooks/useSession.ts`) to gate `(tabs)` vs `(auth)/signIn`. Supabase session state drives `isAuthenticated` and is observed via `supabase.auth.onAuthStateChange`.
+`src/app/_layout.tsx` is the root layout. It uses `Stack.Protected` with `isAuthenticated` from `useSession()` (`src/features/auth/hooks/useSession.ts`) to gate `(tabs)` vs `(auth)/signIn`. Supabase session state drives `isAuthenticated` and is observed via `supabase.auth.onAuthStateChange`.
 
 Tabs live under `src/app/(tabs)/` with three groups: `(workouts)`, `(reports)`, `(profile)`.
 
 ## Supabase / secure storage
 
-`src/lib/supabase.ts` wires Supabase to an **encrypted MMKV** instance (`supabase-auth`). The encryption key is generated lazily on first launch via `expo-crypto`, stored in `expo-secure-store` under `WT_MMKV_KEY`, and then reused for the lifetime of the install — it is never rotated.
+`src/features/shared/lib/supabase.ts` wires Supabase to an **encrypted MMKV** instance (`supabase-auth`). The encryption key is generated lazily on first launch via `expo-crypto`, stored in `expo-secure-store` under `WT_MMKV_KEY`, and then reused for the lifetime of the install — it is never rotated.
 
 For a normal **logout**, `supabase.auth.signOut()` is enough: it invalidates the server-side session and removes the auth keys via the MMKV storage adapter.
 
-`src/lib/debug-reset.ts` (`debugResetAuth`) does something stronger — it simulates a **fresh install** for E2E flows: signs out, then `authStorage.clearAll()` (wipes the entire MMKV instance, not only Supabase-managed keys), then deletes `WT_MMKV_KEY` from SecureStore so the next launch generates a brand new encryption key. Don't copy this pattern into a regular logout; it's intentionally destructive for Maestro.
+`src/features/shared/lib/debug-reset.ts` (`debugResetAuth`) does something stronger — it simulates a **fresh install** for E2E flows: signs out, then `authStorage.clearAll()` (wipes the entire MMKV instance, not only Supabase-managed keys), then deletes `WT_MMKV_KEY` from SecureStore so the next launch generates a brand new encryption key. Don't copy this pattern into a regular logout; it's intentionally destructive for Maestro.
 
 Required env vars (`.env`): `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Missing values throw at module load.
 
 ## State & bridges
 
-User settings (`themeMode$`, `language$`) live in `src/state/settings/settings-store.ts` as `@legendapp/state` observables persisted to MMKV (`app-storage`). Two bridge components in `_layout.tsx` — `ThemeBridge` and `LanguageBridge` — subscribe to these observables and push changes into NativeWind's `useColorScheme` and i18next respectively. **Don't call `setColorScheme` or `i18n.changeLanguage` directly from features**; mutate the observables and let the bridges fan out.
+User settings (`themeMode$`, `language$`) live in `src/features/settings/state/settings-store.ts` as `@legendapp/state` observables persisted to MMKV (`app-storage`). Two bridge components in `_layout.tsx` — `ThemeBridge` and `LanguageBridge` — subscribe to these observables and push changes into NativeWind's `useColorScheme` and i18next respectively. **Don't call `setColorScheme` or `i18n.changeLanguage` directly from features**; mutate the observables and let the bridges fan out.
 
 ## Observability
 
-`src/lib/observability/index.ts` selects the adapter at module load: `consoleAdapter` when `__DEV__`, otherwise `sentryAdapter`. New telemetry should go through `observability.*` or the `captureWorkoutError` / `trackWorkoutAction` helpers — never call `@sentry/react-native` directly from features. `ObservabilityProvider` in the root layout wires the Supabase user ID and current locale onto the adapter.
+`src/features/observability/lib/index.ts` selects the adapter at module load: `consoleAdapter` when `__DEV__`, otherwise `sentryAdapter`. New telemetry should go through `observability.*` or the `captureWorkoutError` / `trackWorkoutAction` helpers — never call `@sentry/react-native` directly from features. `ObservabilityProvider` in the root layout wires the Supabase user ID and current locale onto the adapter.
 
 Source maps are uploaded to Sentry via `npx sentry-expo-upload-sourcemaps` after `eas update:preview` / `update:prod`.
 
 ## API client
 
-`src/lib/api/index.ts` exposes `apiClient` (typed `get/post/put/patch/delete`) and the error classes (`ApiError`, `ApiUnauthorizedError`, `ApiNetworkError`). All HTTP calls to the workout-tracker backend MUST go through `apiClient`. Never call `fetch` directly from features and never re-implement the auth header or base URL.
+`src/features/api/lib/index.ts` exposes `apiClient` (typed `get/post/put/patch/delete`) and the error classes (`ApiError`, `ApiUnauthorizedError`, `ApiNetworkError`). All HTTP calls to the workout-tracker backend MUST go through `apiClient`. Never call `fetch` directly from features and never re-implement the auth header or base URL.
 
 The base URL comes from `EXPO_PUBLIC_API_URL` in `.env`, validated at module load. Auth is automatic: the client reads the current Supabase access token and adds `Authorization: Bearer <token>`. For the rare public endpoint, pass `{ authenticated: false }`.
 
-Errors are thrown, never logged inside the client. Features decide whether to surface them; the `QueryClient` in `src/lib/query/client.ts` reacts to `ApiUnauthorizedError` globally via `QueryCache`/`MutationCache` listeners and triggers `supabase.auth.signOut()`. Other errors propagate to the calling hook.
+Errors are thrown, never logged inside the client. Features decide whether to surface them; the `QueryClient` in `src/features/query/lib/client.ts` reacts to `ApiUnauthorizedError` globally via `QueryCache`/`MutationCache` listeners and triggers `supabase.auth.signOut()`. Other errors propagate to the calling hook.
 
 Required env var: `EXPO_PUBLIC_API_URL`. Missing values throw at module load (same pattern as Supabase).
 

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { enableSlowAuth } from '@/shared/lib/debug-slow-auth';
+import { enableSlowAuth } from '@/features/shared/lib/debug-slow-auth';
 
 export default function DebugSlowAuthRoute() {
   const { ms } = useLocalSearchParams<{ ms?: string }>();

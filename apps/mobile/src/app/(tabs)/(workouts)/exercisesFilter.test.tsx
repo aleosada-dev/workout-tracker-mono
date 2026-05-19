@@ -1,15 +1,15 @@
-jest.mock('@/api/lib/config', () => {
-  const { createApiConfigMock } = jest.requireActual('@/test-utils/api-config');
+jest.mock('@/features/api/lib/config', () => {
+  const { createApiConfigMock } = jest.requireActual('@/features/test-utils/api-config');
   return createApiConfigMock();
 });
 
-jest.mock('@/auth/lib', () => {
-  const { createAuthMock } = jest.requireActual('@/test-utils/auth');
+jest.mock('@/features/auth/lib', () => {
+  const { createAuthMock } = jest.requireActual('@/features/test-utils/auth');
   return createAuthMock();
 });
 
-jest.mock('@/observability/lib', () => {
-  const { createObservabilityMock } = jest.requireActual('@/test-utils/observability');
+jest.mock('@/features/observability/lib', () => {
+  const { createObservabilityMock } = jest.requireActual('@/features/test-utils/observability');
   return createObservabilityMock();
 });
 
@@ -41,18 +41,21 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('@/muscles/components/muscle-multi-select', () => ({
+jest.mock('@/features/muscles/components/muscle-multi-select', () => ({
   MuscleMultiSelect: () => null,
 }));
 
-jest.mock('@/equipments/components/equipment-select', () => ({
+jest.mock('@/features/equipments/components/equipment-select', () => ({
   EquipmentSelect: () => null,
 }));
 
 import { fireEvent, render } from '@testing-library/react-native';
 import ExercisesFilterScreen from '@/app/(tabs)/(workouts)/exercisesFilter';
-import { EMPTY_EXERCISE_LIST_PARAMS, type ExerciseListParams } from '@/exercises/api/exercises';
-import { exerciseFilters$, setExerciseFilters } from '@/exercises/state/filter-store';
+import {
+  EMPTY_EXERCISE_LIST_PARAMS,
+  type ExerciseListParams,
+} from '@/features/exercises/api/exercises';
+import { exerciseFilters$, setExerciseFilters } from '@/features/exercises/state/filter-store';
 
 beforeEach(() => {
   mockBack.mockClear();

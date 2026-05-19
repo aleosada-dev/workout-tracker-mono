@@ -3,11 +3,11 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
-import { ExerciseDetail } from '@/exercises/components/ExerciseDetail';
-import { useExerciseHistory } from '@/exercises/hooks/use-exercise-history';
-import { toExerciseDetailData } from '@/exercises/lib/detail';
-import { useReportRequestError } from '@/observability/hooks/use-report-request-error';
-import { exerciseObservability } from '@/observability/lib';
+import { ExerciseDetail } from '@/features/exercises/components/ExerciseDetail';
+import { useExerciseHistory } from '@/features/exercises/hooks/use-exercise-history';
+import { toExerciseDetailData } from '@/features/exercises/lib/detail';
+import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
+import { exerciseObservability } from '@/features/observability/lib';
 
 type Params = {
   id?: string;

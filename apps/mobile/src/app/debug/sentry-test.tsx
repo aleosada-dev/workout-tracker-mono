@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { observability, workoutObservability } from '@/observability/lib';
+import { observability, workoutObservability } from '@/features/observability/lib';
 
 function CrashOnRender({ enabled }: { enabled: boolean }) {
   if (enabled) {

@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Bell, CreditCard, Languages, Palette, ShieldCheck, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
-import { MenuCard } from '@/shared/components/MenuCard';
+import { MenuCard } from '@/features/shared/components/MenuCard';
 
 export default function SettingsScreen() {
   const router = useRouter();
