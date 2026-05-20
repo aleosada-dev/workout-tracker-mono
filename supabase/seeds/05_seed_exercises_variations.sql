@@ -473,6 +473,7 @@ INSERT INTO public.variations (id, name, exercise_id, muscle_id, secondary_muscl
   ('158c13a7-b20c-4a20-bb04-14c52f8e028f', NULL,                '34659a06-4529-4308-ae97-7c7a91f98e89', m_triceps,NULL,      eq_maq),
   -- Puxada com Braço Estendido (e104)
   ('ec73930c-989a-41d0-ab05-8cf72c437368', NULL,                'e105c303-d6c3-4c2d-ac24-0dcc142c8f40', m_costas, m_triceps, eq_cabo),
+  ('83e7f2b3-0e89-487d-8365-5b32238a3927', 'com Corda',         'e105c303-d6c3-4c2d-ac24-0dcc142c8f40', m_costas, m_triceps, eq_cabo),
   -- Puxada Frontal (e105)
   ('3385d001-549d-4c56-bdd7-0602c30449a0', NULL,                '0db36693-5543-448e-aea7-1ab030899a54', m_costas, m_biceps,  eq_elas),
   ('bdb21e3e-5b3a-4f4c-8800-efaae09b71cb', NULL,                '0db36693-5543-448e-aea7-1ab030899a54', m_costas, m_biceps,  eq_cabo),
@@ -715,5 +716,43 @@ FROM public.variations v
 JOIN public.exercises e ON e.id = v.exercise_id
 WHERE e.user_id = u_coach1
 ON CONFLICT (variation_id, shared_with_id) DO NOTHING;
+
+-- ------------------------------------------------
+-- VÍDEOS DE REFERÊNCIA (YouTube)
+-- URLs do YouTube em variations.video_url (exposto como youtube_url na API).
+-- Variações da biblioteca pública.
+-- ------------------------------------------------
+UPDATE public.variations SET video_url = 'https://www.youtube.com/watch?v=ZaSetOZFo-k'
+  WHERE id = '7833c241-b639-4ff2-af20-2d12a8840b6f'; -- Agachamento (barra)
+UPDATE public.variations SET video_url = 'https://www.youtube.com/watch?v=ZaTM37cfiDs'
+  WHERE id = '854c3198-7725-4008-a4ff-f6e406a3ba63'; -- Levantamento Terra (barra)
+UPDATE public.variations SET video_url = 'https://www.youtube.com/watch?v=Qx7XIbUOJlQ'
+  WHERE id = 'c82a7007-0a6a-43ef-88fe-7251cc4241ca'; -- Supino Pegada Fechada (barra)
+UPDATE public.variations SET video_url = 'https://www.youtube.com/watch?v=pLofEAcfsO8'
+  WHERE id = '743194d6-145d-4466-863e-f4b854b04c09'; -- Supino na máquina
+
+-- ------------------------------------------------
+-- VÍDEOS ENVIADOS (R2) — biblioteca pública
+-- variation_videos guarda uploads no R2 (object_key), não URLs.
+-- object_key: catalog/<variation_id>/<file_id>.<ext>
+-- PRÉ-REQUISITO: os arquivos precisam existir no bucket R2 nas keys abaixo.
+-- processing_status = 'ready' pula o transcode (o trigger só dispara em 'pending').
+-- ------------------------------------------------
+INSERT INTO public.variation_videos (
+  variation_id, object_key, thumbnail_key,
+  duration_seconds, size_bytes, content_type,
+  uploaded_by, processing_status
+) VALUES
+  -- Supino na máquina (vídeo da biblioteca pública — uploaded_by NULL)
+  ('743194d6-145d-4466-863e-f4b854b04c09',
+   'catalog/743194d6-145d-4466-863e-f4b854b04c09/8bb6090d-7712-4473-8774-00292de7ae66.mp4',
+   'catalog/743194d6-145d-4466-863e-f4b854b04c09/abc1a465-94cf-49d5-a8e6-23fa7e249ba7.jpg',
+   12, 4525741, 'video/mp4', NULL, 'ready'),
+  -- Puxada com Braço Estendido "com Corda" (vídeo da biblioteca pública — uploaded_by NULL)
+  ('83e7f2b3-0e89-487d-8365-5b32238a3927',
+   'catalog/83e7f2b3-0e89-487d-8365-5b32238a3927/93970b6e-eddf-445d-8944-115dd2174932.mp4',
+   'catalog/83e7f2b3-0e89-487d-8365-5b32238a3927/f0127175-f542-4b88-ae81-85d5a0ee19d1.jpg',
+   15, 5141962, 'video/mp4', NULL, 'ready')
+ON CONFLICT (variation_id) DO NOTHING;
 
 END $$;

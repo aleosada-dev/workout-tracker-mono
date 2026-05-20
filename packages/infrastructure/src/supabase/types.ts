@@ -1680,7 +1680,7 @@ export type Database = {
           size_bytes: number
           thumbnail_key: string | null
           uploaded_at: string
-          uploaded_by: string
+          uploaded_by: string | null
           variation_id: string
         }
         Insert: {
@@ -1695,7 +1695,7 @@ export type Database = {
           size_bytes: number
           thumbnail_key?: string | null
           uploaded_at?: string
-          uploaded_by: string
+          uploaded_by?: string | null
           variation_id: string
         }
         Update: {
@@ -1710,7 +1710,7 @@ export type Database = {
           size_bytes?: number
           thumbnail_key?: string | null
           uploaded_at?: string
-          uploaded_by?: string
+          uploaded_by?: string | null
           variation_id?: string
         }
         Relationships: [

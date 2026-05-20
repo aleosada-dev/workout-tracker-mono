@@ -1,3 +1,12 @@
+-- ================================================
+-- variation_videos.uploaded_by passa a aceitar NULL.
+-- Vídeos da biblioteca pública não têm dono — a visibilidade já é
+-- inferível por variations.user_id, então um uploaded_by artificial é
+-- desnecessário. NULL mantém esses vídeos sem dono explícito.
+-- ================================================
+ALTER TABLE "public"."variation_videos" ALTER COLUMN "uploaded_by" DROP NOT NULL;
+
+
 CREATE OR REPLACE FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
