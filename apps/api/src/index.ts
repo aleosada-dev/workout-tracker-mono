@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/hono/cloudflare";
 import { sentry } from "@sentry/hono/cloudflare";
-import { NotFoundError, ValidationError } from "@workout-tracker/domain";
+import { ConflictError, NotFoundError, ValidationError } from "@workout-tracker/domain";
 import { Hono } from "hono";
 import { buildContainer } from "./container";
 import { equipmentsRouter } from "./modules/equipments/routes";
@@ -44,6 +44,10 @@ const app = baseApp
 
 		if (err instanceof NotFoundError) {
 			return c.json({ error: err.message }, 404);
+		}
+
+		if (err instanceof ConflictError) {
+			return c.json({ error: err.message }, 409);
 		}
 
 		if (err instanceof ValidationError) {

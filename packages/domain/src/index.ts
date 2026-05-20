@@ -1,5 +1,6 @@
 export * from './equipments/equipment';
 export * from './equipments/equipment-repo';
+export * from './exercises/create-exercise';
 export * from './exercises/exercise-detail';
 export * from './exercises/exercise-list';
 export * from './exercises/exercise-repo';
@@ -7,6 +8,7 @@ export * from './exercises/models';
 export * from './muscles/muscle';
 export * from './muscles/muscle-repo';
 export * from './set/sets';
+export * from './shared/conflict-error';
 export * from './shared/not-found-error';
 export * from './shared/numbers';
 export * from './shared/type-helpers';

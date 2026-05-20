@@ -5,8 +5,6 @@ import { presignGetHourSnapped } from './presign';
 export type BuildUploadedVideoUrlInput = {
   /** R2 object key of the uploaded video. */
   objectKey: string;
-  /** Owner of the variation: `null` for the global library, a user id otherwise. */
-  variationUserId: string | null;
 };
 
 export type BuildUploadedVideoUrl = (input: BuildUploadedVideoUrlInput) => Promise<string>;
@@ -14,18 +12,10 @@ export type BuildUploadedVideoUrl = (input: BuildUploadedVideoUrlInput) => Promi
 /**
  * Builds a playable URL for an uploaded variation video.
  *
- * - Global library videos (`variationUserId === null`) are public content,
- *   served straight from the R2 public domain so the CDN can cache them.
- * - User-uploaded videos are private and only reachable through a short-lived
- *   presigned URL.
+ * The R2 bucket is private, so every video — global library and user uploads
+ * alike — is reachable only through a short-lived presigned URL. There is no
+ * public, unsigned path to any object.
  */
 export function makeBuildUploadedVideoUrl(env: R2Env): BuildUploadedVideoUrl {
-  return async ({ objectKey, variationUserId }) => {
-    if (variationUserId === null) {
-      const publicBase = env.R2_PUBLIC_BASE;
-      if (!publicBase) throw new Error('R2 env var missing: R2_PUBLIC_BASE');
-      return `${publicBase.replace(/\/+$/, '')}/${objectKey}`;
-    }
-    return presignGetHourSnapped(readR2Config(env), objectKey);
-  };
+  return async ({ objectKey }) => presignGetHourSnapped(readR2Config(env), objectKey);
 }

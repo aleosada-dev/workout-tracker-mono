@@ -2,11 +2,13 @@ import { AwsClient } from 'aws4fetch';
 import type { R2Config } from './config';
 
 /**
- * Presigned GET URLs stay valid for 1h05 counting from the hour they were
- * signed in. The extra 5 minutes is grace for a request that starts just before
- * the wall-clock hour rolls over.
+ * Presigned GET URLs stay valid for 25h counting from the start of the hour
+ * they were signed in. Because the signing timestamp is snapped to the hour
+ * (see `presignGetHourSnapped`), a URL minted late in the hour still gets at
+ * least 24h of validity — long enough that an API response cached on the
+ * client never hands out a URL that has already expired.
  */
-const PRESIGN_TTL_SECONDS = 3900;
+const PRESIGN_TTL_SECONDS = 90_000;
 
 /** Formats a Date as the AWS SigV4 `X-Amz-Date` value (`YYYYMMDDTHHMMSSZ`). */
 function toAmzDate(date: Date): string {
@@ -21,9 +23,10 @@ function encodeKey(key: string): string {
 /**
  * Returns a presigned GET URL whose signature is deterministic within the
  * current wall-clock hour: the signing timestamp is snapped to the start of the
- * hour, so every call made in the same hour yields the identical URL — critical
- * for CDN cacheability, since a per-request timestamp would defeat the cache.
- * The URL expires at the next hour + 5min.
+ * hour, so every call made in the same hour yields the identical URL. That
+ * stability lets the client's HTTP cache reuse the response instead of
+ * refetching the same object under an ever-changing query string.
+ * The URL stays valid for `PRESIGN_TTL_SECONDS` from the start of that hour.
  */
 export async function presignGetHourSnapped(config: R2Config, key: string): Promise<string> {
   const aws = new AwsClient({

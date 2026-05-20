@@ -1,4 +1,6 @@
 import {
+  ConflictError,
+  type CreateExerciseInput,
   type ExerciseListItem,
   type ExerciseRepository,
   type ListExercisesFilter,
@@ -59,6 +61,35 @@ export function makeSupabaseExerciseRepository(
         data as unknown as GetExerciseDetailRpcResponse,
         deps.buildUploadedVideoUrl,
       );
+    },
+
+    async createExercise(input: CreateExerciseInput): Promise<{ id: string }> {
+      const { data, error } = await supabase.rpc('upsert_exercise_variation', {
+        p_user_id: input.userId,
+        // @ts-expect-error NULL creates a new exercise; the generated types require a string.
+        p_exercise_id: null,
+        p_name: input.exerciseName,
+        // @ts-expect-error NULL creates a new variation; the generated types require a string.
+        p_variation_id: null,
+        // @ts-expect-error A variation may have no name; the generated types require a string.
+        p_variation_name: input.variationName,
+        p_muscle_id: input.muscleId,
+        p_equipment_id: input.equipmentId,
+        p_video_url: input.youtubeVideoUrl ?? '',
+        p_image_url: '',
+        p_new_variation: true,
+        p_secondary_muscle_id: input.secondaryMuscleId ?? undefined,
+        p_exercise_type: input.exerciseType,
+      });
+
+      if (error) {
+        if (error.message.startsWith('BUSINESS:')) {
+          throw new ConflictError(error.message.replace(/^BUSINESS:\s*/, ''));
+        }
+        throw new Error(`Failed to create exercise: ${error.message}`);
+      }
+
+      return { id: (data as unknown as { id: string }).id };
     },
   };
 }

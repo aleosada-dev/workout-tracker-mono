@@ -41,7 +41,6 @@ export type GetExerciseDetailRpcResponseVariation = {
   secondary_muscle_slug: string | null;
   youtube_url: string | null;
   uploaded_video_object_key: string | null;
-  variation_user_id: string | null;
 };
 
 export type GetExerciseDetailRpcResponse = {
@@ -76,12 +75,7 @@ export const toExerciseDetail = async (
   buildUploadedVideoUrl: BuildUploadedVideoUrl,
 ): Promise<ExerciseDetail> => {
   const objectKey = raw.variation.uploaded_video_object_key;
-  const videoUrl = objectKey
-    ? await buildUploadedVideoUrl({
-        objectKey,
-        variationUserId: raw.variation.variation_user_id,
-      })
-    : null;
+  const videoUrl = objectKey ? await buildUploadedVideoUrl({ objectKey }) : null;
 
   return {
     variationId: raw.variation_id,

@@ -44,8 +44,6 @@ const VariationEquipmentSchema = z.object({
 
 const VariationVideoSchema = z.object({
 	url: z.string().nullable(),
-	objectKey: z.string().nullable(),
-	thumbnailKey: z.string().nullable(),
 	durationSeconds: z.number().nullable(),
 	processingStatus: z.string().nullable(),
 });
@@ -82,6 +80,24 @@ export function toExerciseListItemResponse(item: ExerciseListItem): ExerciseList
 		variations: item.variations,
 	};
 }
+
+export const CreateExerciseRequestSchema = z.object({
+	exerciseName: z.string().trim().min(1),
+	exerciseType: ExerciseTypeSchema,
+	variationName: z.string().trim().min(1).nullable(),
+	muscleId: z.uuid(),
+	secondaryMuscleId: z.uuid().nullable(),
+	equipmentId: z.uuid(),
+	youtubeVideoUrl: z.url().nullable(),
+});
+
+export type CreateExerciseRequest = z.infer<typeof CreateExerciseRequestSchema>;
+
+export const CreateExerciseResponseSchema = z.object({
+	id: z.uuid(),
+});
+
+export type CreateExerciseResponse = z.infer<typeof CreateExerciseResponseSchema>;
 
 export const ExerciseIdParamSchema = z.object({
 	id: z.uuid(),

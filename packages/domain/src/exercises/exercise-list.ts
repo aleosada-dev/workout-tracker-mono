@@ -26,7 +26,7 @@ export type VariationListItemEquipment = {
 };
 
 export type VariationListItemVideo = Nullable<
-  Pick<ExerciseVideoProps, 'objectKey' | 'thumbnailKey' | 'durationSeconds' | 'processingStatus'>
+  Pick<ExerciseVideoProps, 'durationSeconds' | 'processingStatus'>
 > & {
   url: string | null;
 };

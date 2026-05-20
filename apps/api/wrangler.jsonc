@@ -4,17 +4,13 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-05-14",
 	"compatibility_flags": ["nodejs_compat"]
-	// R2 video storage. Reaches `c.env` for exercise-detail video URL building.
-	// `R2_PUBLIC_BASE` is public (serves the global library) — set it per env here
-	// or via `vars`. The rest are secrets — set them with `wrangler secret put`:
+	// R2 video storage. Reaches `c.env` to presign playable variation video URLs.
+	// The bucket is private — all four values are secrets, set with `wrangler secret put`:
 	//   wrangler secret put R2_ACCOUNT_ID
 	//   wrangler secret put R2_ACCESS_KEY_ID
 	//   wrangler secret put R2_SECRET_ACCESS_KEY
 	//   wrangler secret put R2_BUCKET_NAME
-	// For local `wrangler dev`, put all five in apps/api/.dev.vars.
-	// "vars": {
-	//   "R2_PUBLIC_BASE": "https://videos.example.com"
-	// },
+	// For local `wrangler dev`, put all four in apps/api/.dev.vars.
 	// "kv_namespaces": [
 	//   {
 	//     "binding": "MY_KV_NAMESPACE",

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
-import type { ExerciseListItemResponse } from "./schemas";
+import type { CreateExerciseRequest, ExerciseListItemResponse } from "./schemas";
 
 const SEED_MUSCLE_PEITO_ID = "dc2d2b99-eff0-4a81-b949-c23e6cf61b75";
 const SEED_MUSCLE_PEITO_SLUG = "chest";
@@ -354,5 +354,92 @@ describe("GET /api/v1/exercises", () => {
 
 			expect(res.status).toBe(400);
 		});
+	});
+});
+
+describe("POST /api/v1/exercises", () => {
+	// Unique exercise name per run so the RPC duplicate check does not break re-runs.
+	function newExerciseBody(): CreateExerciseRequest {
+		return {
+			exerciseName: `Test Exercise ${crypto.randomUUID()}`,
+			exerciseType: "musculacao",
+			variationName: "Barra",
+			muscleId: SEED_MUSCLE_PEITO_ID,
+			secondaryMuscleId: null,
+			equipmentId: SEED_EQUIPMENT_BARRA,
+			youtubeVideoUrl: null,
+		};
+	}
+
+	test("creates an exercise and returns 201 with the new id", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+
+		const res = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(201);
+		const data = (await res.json()) as { id: string };
+		expect(typeof data.id).toBe("string");
+		expect(data.id.length).toBeGreaterThan(0);
+
+		// The new exercise is persisted and owned by the creating user.
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "private" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const created = list.find((e) => e.name === body.exerciseName);
+
+		expect(created).toBeDefined();
+		expect(created?.userId).toBe(getTestUserAuth("athlete").userId);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$post({ json: newExerciseBody() });
+
+		expect(res.status).toBe(401);
+	});
+
+	test("returns 400 when exerciseName is empty", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$post(
+			{ json: { ...newExerciseBody(), exerciseName: "" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		// The validator's 400 is a runtime response not modeled in the client type.
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 400 when muscleId is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$post(
+			{ json: { ...newExerciseBody(), muscleId: "not-a-uuid" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 409 when the same variation already exists", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+
+		const first = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(first.status).toBe(201);
+
+		const second = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		// The error handler's 409 is a runtime response not modeled in the client type.
+		expect(second.status as number).toBe(409);
 	});
 });

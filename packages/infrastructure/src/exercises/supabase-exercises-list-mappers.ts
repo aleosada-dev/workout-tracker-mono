@@ -61,8 +61,6 @@ function toVariation(row: ListExerciseItemRpcRow): VariationListItem {
     video: hasVideo
       ? {
           url: row.video_url,
-          objectKey: row.video_object_key,
-          thumbnailKey: row.video_thumbnail_key,
           durationSeconds: row.video_duration_seconds,
           processingStatus: row.video_processing_status,
         }

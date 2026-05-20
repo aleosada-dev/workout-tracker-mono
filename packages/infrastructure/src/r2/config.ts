@@ -8,7 +8,6 @@ export type R2Env = {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   R2_BUCKET_NAME?: string;
-  R2_PUBLIC_BASE?: string;
 };
 
 /** Credentials and bucket needed to presign a private R2 object. */
