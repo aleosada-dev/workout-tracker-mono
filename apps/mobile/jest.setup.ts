@@ -3,6 +3,8 @@ import { server } from './src/mocks/server';
 jest.mock('react-native-reanimated', () => {
   const { View } = require('react-native');
   const FadeOutUp = { duration: () => FadeOutUp };
+  const FadeIn = { duration: () => FadeIn, delay: () => FadeIn };
+  const FadeOut = { duration: () => FadeOut, delay: () => FadeOut };
   const LinearTransition = { duration: () => LinearTransition };
   const LayoutAnimationConfig = ({ children }: { children: React.ReactNode }) => children;
   return {
@@ -18,6 +20,8 @@ jest.mock('react-native-reanimated', () => {
     interpolate: () => 0,
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     FadeOutUp,
+    FadeIn,
+    FadeOut,
     LinearTransition,
     LayoutAnimationConfig,
   };
@@ -38,6 +42,14 @@ jest.mock('@gorhom/bottom-sheet', () => {
     BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
   };
 });
+
+// Render portalled content inline so tests can query it without a PortalHost,
+// and so the portal's module-global store can't leak between test cases.
+jest.mock('@rn-primitives/portal', () => ({
+  __esModule: true,
+  Portal: ({ children }: { children: React.ReactNode }) => children,
+  PortalHost: () => null,
+}));
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());

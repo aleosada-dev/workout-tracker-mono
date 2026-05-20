@@ -8,6 +8,7 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEquipments } from '@/features/equipments/hooks/use-equipments';
+import { SelectScrollArea } from '@/features/shared/components/select-scroll-area';
 
 type Props = {
   value: string | null;
@@ -47,11 +48,13 @@ export function EquipmentSelect({ value, onValueChange, placeholder, disabled, t
         />
       </SelectTrigger>
       <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} label={option.label}>
-            {option.label}
-          </SelectItem>
-        ))}
+        <SelectScrollArea>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value} label={option.label}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectScrollArea>
       </SelectContent>
     </Select>
   );

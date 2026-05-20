@@ -7,6 +7,21 @@
 ALTER TABLE "public"."variation_videos" ALTER COLUMN "uploaded_by" DROP NOT NULL;
 
 
+-- ================================================
+-- Slugs públicos para exercises e variations.
+-- A coluna é NULL nas linhas de usuário (privadas) e só é preenchida
+-- nas linhas públicas da biblioteca global (user_id IS NULL). O slug
+-- usa camelCase para servir de chave direta nos arquivos .ts de
+-- tradução, sem necessidade de aspas.
+-- ================================================
+ALTER TABLE "public"."exercises" ADD COLUMN "slug" "text";
+ALTER TABLE "public"."variations" ADD COLUMN "slug" "text";
+
+ALTER TABLE ONLY "public"."exercises"
+    ADD CONSTRAINT "exercises_slug_unique" UNIQUE ("slug");
+ALTER TABLE ONLY "public"."variations"
+    ADD CONSTRAINT "variations_slug_unique" UNIQUE ("slug");
+
 CREATE OR REPLACE FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''

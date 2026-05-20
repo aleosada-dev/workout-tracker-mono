@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMuscleSections } from '@/features/muscles/hooks/use-muscle-sections';
+import { SelectScrollArea } from '@/features/shared/components/select-scroll-area';
 
 type Props = {
   value: string | null;
@@ -34,28 +35,30 @@ export function MuscleSelect({ value, onValueChange, placeholder, disabled }: Pr
         <SelectValue placeholder={placeholder ?? t('muscles.placeholder')} />
       </SelectTrigger>
       <SelectContent>
-        {sections.map((section) => (
-          <SelectGroup key={section.id}>
-            <SelectLabel>{section.label}</SelectLabel>
-            {section.items.map((item) => (
-              <React.Fragment key={item.value}>
-                <SelectItem value={item.value} label={item.label}>
-                  {item.label}
-                </SelectItem>
-                {item.children?.map((child) => (
-                  <SelectItem
-                    key={child.value}
-                    value={child.value}
-                    label={child.label}
-                    className="pl-8"
-                  >
-                    {child.label}
+        <SelectScrollArea>
+          {sections.map((section) => (
+            <SelectGroup key={section.id}>
+              <SelectLabel className="text-sm">{section.label}</SelectLabel>
+              {section.items.map((item) => (
+                <React.Fragment key={item.value}>
+                  <SelectItem value={item.value} label={item.label}>
+                    {item.label}
                   </SelectItem>
-                ))}
-              </React.Fragment>
-            ))}
-          </SelectGroup>
-        ))}
+                  {item.children?.map((child) => (
+                    <SelectItem
+                      key={child.value}
+                      value={child.value}
+                      label={child.label}
+                      className="pl-8"
+                    >
+                      {child.label}
+                    </SelectItem>
+                  ))}
+                </React.Fragment>
+              ))}
+            </SelectGroup>
+          ))}
+        </SelectScrollArea>
       </SelectContent>
     </Select>
   );

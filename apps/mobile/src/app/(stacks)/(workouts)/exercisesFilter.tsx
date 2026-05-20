@@ -11,6 +11,7 @@ import {
   Button,
   Checkbox,
   cn,
+  Label,
   Text,
   ToggleGroup,
   ToggleGroupItem,
@@ -114,7 +115,10 @@ export default function ExercisesFilterScreen() {
         contentContainerClassName="gap-5 px-4 pb-3"
         keyboardShouldPersistTaps="handled"
       >
-        <Section title={t('exerciseListScreen.filter.sections.type')}>
+        <View className="gap-2">
+          <Label className="uppercase tracking-wider">
+            {t('exerciseListScreen.filter.sections.type')}
+          </Label>
           {showTypeWarning ? (
             <Alert
               variant="warning"
@@ -148,9 +152,12 @@ export default function ExercisesFilterScreen() {
               );
             })}
           </View>
-        </Section>
+        </View>
 
-        <Section title={t('exerciseListScreen.filter.sections.visibility')}>
+        <View className="gap-2">
+          <Label className="uppercase tracking-wider">
+            {t('exerciseListScreen.filter.sections.visibility')}
+          </Label>
           <ToggleGroup
             type="single"
             value={typeof draft.query.visibility === 'string' ? draft.query.visibility : 'all'}
@@ -179,9 +186,12 @@ export default function ExercisesFilterScreen() {
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
-        </Section>
+        </View>
 
-        <Section title={t('exerciseListScreen.filter.sections.primaryMuscle')}>
+        <View className="gap-2">
+          <Label className="uppercase tracking-wider">
+            {t('exerciseListScreen.filter.sections.primaryMuscle')}
+          </Label>
           <MuscleMultiSelect
             testID="exercises-filter.muscle"
             value={
@@ -194,9 +204,12 @@ export default function ExercisesFilterScreen() {
             onValueChange={setMuscleIds}
             placeholder={t('exerciseListScreen.filter.placeholders.primaryMuscle')}
           />
-        </Section>
+        </View>
 
-        <Section title={t('exerciseListScreen.filter.sections.equipment')}>
+        <View className="gap-2">
+          <Label className="uppercase tracking-wider">
+            {t('exerciseListScreen.filter.sections.equipment')}
+          </Label>
           <EquipmentSelect
             testID="exercises-filter.equipment"
             value={
@@ -207,7 +220,7 @@ export default function ExercisesFilterScreen() {
             onValueChange={setEquipmentId}
             placeholder={t('exerciseListScreen.filter.placeholders.equipment')}
           />
-        </Section>
+        </View>
       </ScrollView>
 
       <View
@@ -226,17 +239,6 @@ export default function ExercisesFilterScreen() {
           <Text className="text-primary-foreground">{t('exerciseListScreen.filter.apply')}</Text>
         </Button>
       </View>
-    </View>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View className="gap-2">
-      <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-        {title}
-      </Text>
-      <View className="gap-1">{children}</View>
     </View>
   );
 }

@@ -1,10 +1,7 @@
 export default {
   type: {
     musculacao: 'Strength training',
-    preparatorio: 'Preparatory',
-    calistenia: 'Calisthenics',
-    cardio: 'Cardio',
-    alongamento: 'Stretching',
+    preparatorio: 'Warm-up',
   },
   visibility: {
     public: 'Public',
