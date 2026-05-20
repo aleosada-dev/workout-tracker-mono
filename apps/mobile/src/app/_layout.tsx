@@ -21,6 +21,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -42,6 +43,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { session } = useSession();
   const isAuthenticated = !!session;
+  const { t } = useTranslation();
 
   const [loaded, error] = useFonts({
     Geist_400Regular,
@@ -80,9 +82,57 @@ export default function RootLayout() {
               <SafeAreaProvider>
                 <BottomSheetModalProvider>
                   <ThemeProvider value={navTheme}>
-                    <Stack>
+                    <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
                       <Stack.Protected guard={isAuthenticated}>
                         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+                        <Stack.Screen
+                          name="(stacks)/(workouts)/exercisesList"
+                          options={{ title: t('exerciseListScreen.title') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(workouts)/exercisesFilter"
+                          options={{
+                            title: t('exerciseListScreen.filter.title'),
+                            presentation: 'modal',
+                          }}
+                        />
+                        <Stack.Screen name="(stacks)/(workouts)/exerciseDetail" />
+                        <Stack.Screen
+                          name="(stacks)/(workouts)/addExercise"
+                          options={{
+                            title: t('exerciseListScreen.addExercise.title'),
+                            presentation: 'modal',
+                          }}
+                        />
+                        <Stack.Screen name="(stacks)/(workouts)/workoutsList" />
+                        <Stack.Screen name="(stacks)/(workouts)/cardioList" />
+                        <Stack.Screen name="(stacks)/(workouts)/myPeriodization" />
+
+                        <Stack.Screen
+                          name="(stacks)/(settings)/profile"
+                          options={{ title: t('settings.profile') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(settings)/appearance"
+                          options={{ title: t('settings.appearance') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(settings)/local"
+                          options={{ title: t('settings.local') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(settings)/notifications"
+                          options={{ title: t('settings.notifications') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(settings)/privacy"
+                          options={{ title: t('settings.privacy') }}
+                        />
+                        <Stack.Screen
+                          name="(stacks)/(settings)/subscription"
+                          options={{ title: t('settings.subscription') }}
+                        />
                       </Stack.Protected>
 
                       <Stack.Protected guard={!isAuthenticated}>

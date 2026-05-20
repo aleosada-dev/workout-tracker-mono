@@ -50,21 +50,21 @@ jest.mock('@/features/equipments/components/equipment-select', () => ({
 }));
 
 import { fireEvent, render } from '@testing-library/react-native';
-import ExercisesFilterScreen from '@/app/(tabs)/(workouts)/exercisesFilter';
+import ExercisesFilterScreen from '@/app/(stacks)/(workouts)/exercisesFilter';
 import {
   EMPTY_EXERCISE_LIST_PARAMS,
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
-import { exerciseFilters$, setExerciseFilters } from '@/features/exercises/state/filter-store';
+import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 
 beforeEach(() => {
   mockBack.mockClear();
-  setExerciseFilters(EMPTY_EXERCISE_LIST_PARAMS);
+  exerciseFilters$.set(EMPTY_EXERCISE_LIST_PARAMS);
 });
 
 describe('<ExercisesFilterScreen />', () => {
   test('Apply forwards the draft (with a type toggled off) to filters$', () => {
-    setExerciseFilters({
+    exerciseFilters$.set({
       query: { visibility: 'all', exerciseTypes: ['musculacao', 'preparatorio'] },
     });
     const { getByTestId } = render(<ExercisesFilterScreen />);
@@ -88,18 +88,13 @@ describe('<ExercisesFilterScreen />', () => {
     });
   });
 
-  test('Clear resets the draft without touching applied filters', () => {
-    setExerciseFilters({ query: { visibility: 'private', exerciseTypes: ['musculacao'] } });
+  test('Clear applies an empty filter and closes the screen', () => {
+    exerciseFilters$.set({ query: { visibility: 'private', exerciseTypes: ['musculacao'] } });
     const { getByTestId } = render(<ExercisesFilterScreen />);
 
     fireEvent.press(getByTestId('exercises-filter.clear'));
 
-    // Clear only mutates the local draft — applied stays until Apply.
-    expect(exerciseFilters$.get()).toEqual<ExerciseListParams>({
-      query: { visibility: 'private', exerciseTypes: ['musculacao'] },
-    });
-
-    fireEvent.press(getByTestId('exercises-filter.apply'));
     expect(exerciseFilters$.get()).toEqual<ExerciseListParams>(EMPTY_EXERCISE_LIST_PARAMS);
+    expect(mockBack).toHaveBeenCalledTimes(1);
   });
 });

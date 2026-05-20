@@ -1,10 +1,26 @@
 import * as PopoverPrimitive from '@rn-primitives/popover';
 import { Check, ChevronDown } from 'lucide-react-native';
 import * as React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, type ViewProps } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView as RNScrollView,
+  StyleSheet,
+  View,
+  type ViewProps,
+} from 'react-native';
+import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 import { cn } from '../../lib/utils';
+
+// On Android a plain RN ScrollView inside the popover overlay loses the JS
+// responder negotiation and won't scroll; gesture-handler's ScrollView runs on
+// RNGH's native gesture pipeline and scrolls correctly. iOS already scrolls
+// with the RN ScrollView, and RNGH gestures don't reach inside the iOS
+// FullWindowOverlay window — so keep the platform split.
+const ScrollView = Platform.OS === 'android' ? GHScrollView : RNScrollView;
+
 import { Icon } from './icon';
 import { NativeOnlyAnimatedView } from './native-only-animated-view';
 import { Text, TextClassContext } from './text';
@@ -140,6 +156,10 @@ function MultiSelectContent({
   portalHost?: string;
 }) {
   const ctx = useMultiSelectContext();
+  // On Android, a ScrollView inside the absolutely-positioned popover content
+  // never gets a bounded viewport from `maxHeight` alone, so it expands to fit
+  // all items and won't scroll. Measure the content and pin an explicit height.
+  const [contentHeight, setContentHeight] = React.useState(maxHeight);
   return (
     <PopoverPrimitive.Portal hostName={portalHost}>
       <FullWindowOverlay>
@@ -157,12 +177,17 @@ function MultiSelectContent({
                   {...props}
                 >
                   <ScrollView
-                    style={{ maxHeight }}
+                    style={{ height: Math.min(contentHeight, maxHeight) }}
                     bounces={false}
                     showsVerticalScrollIndicator={true}
                     nestedScrollEnabled
                   >
-                    <View className="py-2">{children}</View>
+                    <View
+                      className="py-2"
+                      onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
+                    >
+                      {children}
+                    </View>
                   </ScrollView>
                 </PopoverPrimitive.Content>
               </TextClassContext.Provider>

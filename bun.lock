@@ -225,6 +225,12 @@
     "@shopify/react-native-skia",
     "@sentry/cli",
   ],
+  "patchedDependencies": {
+    "react-native-css-interop@0.2.4": "patches/react-native-css-interop@0.2.4.patch",
+  },
+  "overrides": {
+    "react-native-css-interop": "0.2.4",
+  },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 

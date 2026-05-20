@@ -41,12 +41,13 @@ export function ScreenActions({ primary, overflow }: ScreenActionsProps) {
       />
 
       <View
-        className="border-border border-t bg-background px-4 py-3"
+        className="border-border border-t bg-background px-4 pt-3"
         style={{
           position: 'absolute',
           left: 0,
           right: 0,
           bottom: 0,
+          paddingBottom: Math.max(insets.bottom, 12),
         }}
       >
         <Button

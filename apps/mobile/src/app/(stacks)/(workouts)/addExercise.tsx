@@ -11,6 +11,7 @@ import {
 } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
 import { Upload, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
@@ -48,11 +49,13 @@ const EQUIPMENT = [
 ];
 
 export default function AddExerciseScreen() {
+  const { t } = useTranslation();
+
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Adicionar exercício',
+          title: t('exerciseListScreen.addExercise.title'),
           headerLeft: () => (
             <Pressable
               onPress={() => router.back()}

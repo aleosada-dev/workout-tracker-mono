@@ -1,37 +1,52 @@
-import { useValue } from '@legendapp/state/react';
 import { FlashList } from '@shopify/flash-list';
 import { Button, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
+import {
+  EMPTY_EXERCISE_LIST_PARAMS,
+  type ExerciseListParams,
+} from '@/features/exercises/api/exercises';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
 import { useExercises } from '@/features/exercises/hooks/use-exercises';
 import { toExercise } from '@/features/exercises/lib/format';
 import { countActiveFilters } from '@/features/exercises/lib/list.helpers';
 import type { ExerciseListItem } from '@/features/exercises/lib/list.types';
-import { exerciseFilters$ } from '@/features/exercises/state/filter-store';
+import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
 import * as ScreenActions from '@/features/shared/components/ScreenActions';
+import { normalizeString } from '@/features/shared/lib/utils';
 
 type Mode = 'browse' | 'select';
 
-/** Lowercase + strip diacritics — so "abducao" matches "Abdução". */
-const normalizeSearch = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
-
 export default function ExercisesListScreen() {
   const { t, i18n } = useTranslation();
-  const filters = useValue(exerciseFilters$);
+  // The filter lives in a separate modal screen that writes to exerciseFilters$
+  // while this list is hidden behind it. On Android, changing the FlashList data
+  // in place while it's off-screen leaves the list blank until a manual scroll,
+  // so re-read the filter when the screen regains focus and remount the
+  // FlashList via `key` — a fresh mount measures correctly, an in-place swap
+  // doesn't.
+  const [filters, setFilters] = useState<ExerciseListParams>(() => exerciseFilters$.get());
+  useFocusEffect(
+    useCallback(() => {
+      setFilters(exerciseFilters$.get());
+    }, []),
+  );
   const { data, isLoading, isError, error, refetch } = useExercises(filters);
   const activeFilterCount = countActiveFilters(filters);
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercises',
   });
+
+  // The filter is scoped to this screen — drop it when the list unmounts.
+  useEffect(() => {
+    return () => {
+      exerciseFilters$.set(EMPTY_EXERCISE_LIST_PARAMS);
+    };
+  }, []);
   const exercises = useMemo<ExerciseListItem[]>(
     () =>
       (data ?? [])
@@ -47,11 +62,11 @@ export default function ExercisesListScreen() {
   const [query, setQuery] = useState('');
 
   const filteredExercises = useMemo(() => {
-    const q = normalizeSearch(query.trim());
+    const q = normalizeString(query.trim());
     if (!q) return exercises;
     return exercises.filter((e) => {
-      if (normalizeSearch(e.name).includes(q)) return true;
-      return e.variationName ? normalizeSearch(e.variationName).includes(q) : false;
+      if (normalizeString(e.name).includes(q)) return true;
+      return e.variationName ? normalizeString(e.variationName).includes(q) : false;
     });
   }, [exercises, query]);
 
@@ -74,6 +89,9 @@ export default function ExercisesListScreen() {
 
   // FlashList memoizes cells; bump this whenever selection state the cells read changes.
   const listExtraData = useMemo(() => ({ mode, selected }), [mode, selected]);
+  // Remounts the FlashList when the applied filter changes — see the focus
+  // effect above for why an in-place data swap isn't enough on Android.
+  const listKey = useMemo(() => JSON.stringify(filters), [filters]);
 
   if (isLoading) {
     return (
@@ -166,6 +184,7 @@ export default function ExercisesListScreen() {
           />
         </View>
         <FlashList
+          key={listKey}
           data={filteredExercises}
           keyExtractor={(exercise) => exercise.id}
           renderItem={({ item }) => (
@@ -205,7 +224,7 @@ export default function ExercisesListScreen() {
               />
             )
           }
-          ListFooterComponent={<View className="h-30" />}
+          ListFooterComponent={<View className="h-28" />}
         />
       </View>
 

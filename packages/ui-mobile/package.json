@@ -33,6 +33,7 @@
     "react": "*",
     "react-i18next": "*",
     "react-native": "*",
+    "react-native-gesture-handler": "*",
     "react-native-reanimated": "*",
     "react-native-screens": "*",
     "tailwind-merge": "*"

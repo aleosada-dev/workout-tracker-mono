@@ -19,14 +19,14 @@ import { router } from 'expo-router';
 import { AlertTriangle } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import {
   EMPTY_EXERCISE_LIST_PARAMS,
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
-import { exerciseFilters$, setExerciseFilters } from '@/features/exercises/state/filter-store';
+import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 import { MuscleMultiSelect } from '@/features/muscles/components/muscle-multi-select';
 
 export default function ExercisesFilterScreen() {
@@ -36,26 +36,26 @@ export default function ExercisesFilterScreen() {
   const [showTypeWarning, setShowTypeWarning] = useState(false);
   const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearWarningTimer = useCallback(() => {
+  const clearWarningTimer = () => {
     if (warningTimer.current) {
       clearTimeout(warningTimer.current);
       warningTimer.current = null;
     }
-  }, []);
+  };
 
-  const dismissTypeWarning = useCallback(() => {
+  const dismissTypeWarning = () => {
     clearWarningTimer();
     setShowTypeWarning(false);
-  }, [clearWarningTimer]);
+  };
 
-  const triggerTypeWarning = useCallback(() => {
+  const triggerTypeWarning = () => {
     clearWarningTimer();
     setShowTypeWarning(true);
     warningTimer.current = setTimeout(() => {
       warningTimer.current = null;
       setShowTypeWarning(false);
     }, 3000);
-  }, [clearWarningTimer]);
+  };
 
   useEffect(() => clearWarningTimer, [clearWarningTimer]);
 
@@ -79,45 +79,39 @@ export default function ExercisesFilterScreen() {
     [draft.query.exerciseTypes, triggerTypeWarning],
   );
 
-  const setVisibility = useCallback((visibility: Visibility) => {
+  const setVisibility = (visibility: Visibility) => {
     setDraft((prev) => ({ ...prev, query: { ...prev.query, visibility } }));
-  }, []);
+  };
 
-  const setMuscleIds = useCallback((muscleIds: string[]) => {
+  const setMuscleIds = (muscleIds: string[]) => {
     setDraft((prev) => ({
       ...prev,
       query: { ...prev.query, muscleIds: muscleIds.length > 0 ? muscleIds : undefined },
     }));
-  }, []);
+  };
 
-  const setEquipmentId = useCallback((equipmentId: string | null) => {
+  const setEquipmentId = (equipmentId: string | null) => {
     setDraft((prev) => ({
       ...prev,
       query: { ...prev.query, equipmentIds: equipmentId ? [equipmentId] : undefined },
     }));
-  }, []);
+  };
 
   const handleApply = () => {
-    setExerciseFilters(draft);
+    exerciseFilters$.set(draft);
     router.back();
   };
 
-  const handleClear = () => setDraft(EMPTY_EXERCISE_LIST_PARAMS);
+  const handleClear = () => {
+    exerciseFilters$.set(EMPTY_EXERCISE_LIST_PARAMS);
+    router.back();
+  };
 
   return (
-    <View
-      className="flex-1 bg-background"
-      style={{ paddingTop: Platform.OS === 'android' ? insets.top : 0 }}
-      testID="exercises-filter"
-    >
+    <View className="flex-1 pt-4" testID="exercises-filter">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 12,
-          gap: 20,
-        }}
+        contentContainerClassName="gap-5 px-4 pb-3"
         keyboardShouldPersistTaps="handled"
       >
         <Section title={t('exerciseListScreen.filter.sections.type')}>

@@ -18,6 +18,9 @@ export default {
     move: 'Mover',
     delete: 'Excluir',
   },
+  addExercise: {
+    title: 'Adicionar exercício',
+  },
   filter: {
     title: 'Filtrar exercícios',
     apply: 'Aplicar',

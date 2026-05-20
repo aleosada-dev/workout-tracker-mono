@@ -133,7 +133,7 @@
   },
   "private": true,
   "patchedDependencies": {
-    "react-native-css-interop@0.2.3": "patches/react-native-css-interop@0.2.3.patch"
+    "react-native-css-interop@0.2.4": "patches/react-native-css-interop@0.2.4.patch"
   },
   "jest": {
     "preset": "jest-expo",

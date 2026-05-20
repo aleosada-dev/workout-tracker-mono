@@ -1,19 +1,13 @@
 import { rgb, useTheme } from '@workout-tracker/ui-mobile';
-import { usePathname } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
 export default function TabsLayout() {
-  const pathname = usePathname();
   const theme = useTheme();
   const { t } = useTranslation();
 
   return (
-    <NativeTabs
-      labelVisibilityMode="labeled"
-      hidden={pathname !== '/'}
-      tintColor={rgb(theme.primary)}
-    >
+    <NativeTabs labelVisibilityMode="labeled" tintColor={rgb(theme.primary)}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
