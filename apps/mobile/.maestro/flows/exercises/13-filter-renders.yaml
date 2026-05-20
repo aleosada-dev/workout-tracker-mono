@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+name: 13 - Tela de filtro renderiza
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+- assertVisible: "Filtrar exercícios"
+- assertVisible: "Tipo"
+- assertVisible: "Visibilidade"
+- assertVisible: "Músculo primário"
+- assertVisible: "Equipamento"
+- assertVisible:
+    id: "exercises-filter.type.musculacao"
+- assertVisible:
+    id: "exercises-filter.type.preparatorio"
+- assertVisible:
+    id: "exercises-filter.muscle"
+- assertVisible:
+    id: "exercises-filter.equipment"
+- assertVisible:
+    id: "exercises-filter.clear"
+- assertVisible:
+    id: "exercises-filter.apply"

@@ -4,6 +4,7 @@ import type {
   ExerciseDetailSessionSet,
   WorkoutSetType,
 } from '@workout-tracker/domain';
+import type { BuildUploadedVideoUrl } from '../r2';
 
 export type GetExerciseDetailRpcResponseSet = {
   set_order: number;
@@ -40,6 +41,7 @@ export type GetExerciseDetailRpcResponseVariation = {
   secondary_muscle_slug: string | null;
   youtube_url: string | null;
   uploaded_video_object_key: string | null;
+  variation_user_id: string | null;
 };
 
 export type GetExerciseDetailRpcResponse = {
@@ -69,24 +71,37 @@ const toSession = (raw: GetExerciseDetailRpcResponseSession): ExerciseDetailSess
   sets: raw.sets.map(toSet),
 });
 
-export const toExerciseDetail = (raw: GetExerciseDetailRpcResponse): ExerciseDetail => ({
-  variationId: raw.variation_id,
-  variation: {
-    exerciseName: raw.variation.exercise_name,
-    variationName: raw.variation.variation_name,
-    equipmentSlug: raw.variation.equipment_slug,
-    equipmentPreposition: raw.variation.equipment_preposition,
-    muscleSlug: raw.variation.muscle_slug,
-    secondaryMuscleSlug: raw.variation.secondary_muscle_slug,
-    youtubeUrl: raw.variation.youtube_url,
-    uploadedVideoObjectKey: raw.variation.uploaded_video_object_key,
-  },
-  sessions: raw.sessions.map(toSession),
-  lastSession: raw.last_session ? toSession(raw.last_session) : null,
-  records: {
-    maxWeightKg: raw.records.max_weight_kg,
-    maxVolumeKg: raw.records.max_volume_kg,
-    maxReps: raw.records.max_reps,
-    maxSets: raw.records.max_sets,
-  },
-});
+export const toExerciseDetail = async (
+  raw: GetExerciseDetailRpcResponse,
+  buildUploadedVideoUrl: BuildUploadedVideoUrl,
+): Promise<ExerciseDetail> => {
+  const objectKey = raw.variation.uploaded_video_object_key;
+  const videoUrl = objectKey
+    ? await buildUploadedVideoUrl({
+        objectKey,
+        variationUserId: raw.variation.variation_user_id,
+      })
+    : null;
+
+  return {
+    variationId: raw.variation_id,
+    variation: {
+      exerciseName: raw.variation.exercise_name,
+      variationName: raw.variation.variation_name,
+      equipmentSlug: raw.variation.equipment_slug,
+      equipmentPreposition: raw.variation.equipment_preposition,
+      muscleSlug: raw.variation.muscle_slug,
+      secondaryMuscleSlug: raw.variation.secondary_muscle_slug,
+      youtubeUrl: raw.variation.youtube_url,
+      videoUrl,
+    },
+    sessions: raw.sessions.map(toSession),
+    lastSession: raw.last_session ? toSession(raw.last_session) : null,
+    records: {
+      maxWeightKg: raw.records.max_weight_kg,
+      maxVolumeKg: raw.records.max_volume_kg,
+      maxReps: raw.records.max_reps,
+      maxSets: raw.records.max_sets,
+    },
+  };
+};

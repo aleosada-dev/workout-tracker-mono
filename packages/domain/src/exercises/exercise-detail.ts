@@ -34,7 +34,8 @@ export type ExerciseDetailVariation = {
   muscleSlug: string;
   secondaryMuscleSlug: string | null;
   youtubeUrl: string | null;
-  uploadedVideoObjectKey: string | null;
+  /** Playable URL of the uploaded video: public for the library, presigned for user uploads. */
+  videoUrl: string | null;
 };
 
 export type ExerciseDetail = {

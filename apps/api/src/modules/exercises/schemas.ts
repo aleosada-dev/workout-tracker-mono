@@ -121,7 +121,7 @@ const DetailVariationSchema = z.object({
 	muscleSlug: z.string().trim().min(1),
 	secondaryMuscleSlug: z.string().trim().min(1).nullable(),
 	youtubeUrl: z.url().nullable(),
-	uploadedVideoObjectKey: z.string().nullable(),
+	videoUrl: z.url().nullable(),
 });
 
 export const ExerciseDetailResponseSchema = z.object({

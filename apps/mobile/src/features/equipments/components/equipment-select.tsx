@@ -14,9 +14,10 @@ type Props = {
   onValueChange: (value: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  testID?: string;
 };
 
-export function EquipmentSelect({ value, onValueChange, placeholder, disabled }: Props) {
+export function EquipmentSelect({ value, onValueChange, placeholder, disabled, testID }: Props) {
   const { t, i18n } = useTranslation();
   const { data } = useEquipments();
 
@@ -40,7 +41,7 @@ export function EquipmentSelect({ value, onValueChange, placeholder, disabled }:
       onValueChange={(opt) => onValueChange(opt?.value ?? null)}
       disabled={disabled}
     >
-      <SelectTrigger>
+      <SelectTrigger testID={testID}>
         <SelectValue
           placeholder={placeholder ?? t('exerciseListScreen.filter.placeholders.equipment')}
         />

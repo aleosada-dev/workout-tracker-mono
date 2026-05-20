@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+# Abre a lista de exercícios (conta atleta) e navega até a tela de filtro pelo
+# menu de overflow. Reutilizado pelos flows de filtro (13-19). Só funciona com
+# o filtro limpo — o item do menu é "Filtrar" sem contador.
+---
+- runFlow: open-exercises-list-athlete.yaml
+- tapOn: "Mais opções"
+- tapOn: "Filtrar"
+- extendedWaitUntil:
+    visible:
+      id: "exercises-filter"
+    timeout: 10000

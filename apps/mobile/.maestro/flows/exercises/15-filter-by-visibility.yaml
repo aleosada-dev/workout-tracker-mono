@@ -1,0 +1,14 @@
+appId: ${MAESTRO_APP_ID}
+name: 15 - Filtrar por visibilidade soma no badge
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+# "Todos" é o padrão (não conta); qualquer outro valor conta como filtro ativo.
+- tapOn:
+    id: "exercises-filter.visibility.public"
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- assertVisible:
+    id: "exercises-list"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (1)"

@@ -12,7 +12,7 @@ export function ScreenActions({ primary, overflow }: ScreenActionsProps) {
     <>
       {overflow && overflow.length > 0 && (
         <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Menu icon="ellipsis.circle">
+          <Stack.Toolbar.Menu icon="ellipsis.circle" accessibilityLabel="Mais opções">
             {overflow.map((a) => (
               <Stack.Toolbar.MenuAction
                 key={a.label}

@@ -31,7 +31,7 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
     muscleSlug: 'back',
     secondaryMuscleSlug: null,
     youtubeUrl: null,
-    uploadedVideoObjectKey: null,
+    videoUrl: null,
   };
   const session = {
     workoutLogId: 'log-2',
@@ -111,8 +111,26 @@ describe('toExerciseDetailData', () => {
     expect(data.lastSession).toEqual({ date: '', sets: [] });
   });
 
-  test('exposes no demonstration video (not provided by the detail endpoint)', () => {
+  test('passes the uploaded video URL through from the detail endpoint', () => {
     expect(toExerciseDetailData(makeResponse(), 'pt', makeT('pt')).videoUrl).toBeNull();
+
+    const withVideo = toExerciseDetailData(
+      makeResponse({
+        variation: {
+          exerciseName: 'Barra Fixa',
+          variationName: null,
+          equipmentSlug: 'machine',
+          equipmentPreposition: 'na',
+          muscleSlug: 'back',
+          secondaryMuscleSlug: null,
+          youtubeUrl: null,
+          videoUrl: 'https://cdn.example.com/clip.mp4',
+        },
+      }),
+      'pt',
+      makeT('pt'),
+    );
+    expect(withVideo.videoUrl).toBe('https://cdn.example.com/clip.mp4');
   });
 
   test('translates muscle slugs to the current language', () => {
@@ -135,7 +153,7 @@ describe('toExerciseDetailData', () => {
           muscleSlug: 'quadriceps',
           secondaryMuscleSlug: 'glutes',
           youtubeUrl: null,
-          uploadedVideoObjectKey: null,
+          videoUrl: null,
         },
       }),
       'pt',

@@ -6,6 +6,7 @@ import {
 } from "@workout-tracker/application";
 import {
 	createSupabaseClient,
+	makeBuildUploadedVideoUrl,
 	makeSupabaseEquipmentRepository,
 	makeSupabaseExerciseRepository,
 	makeSupabaseMuscleRepository,
@@ -16,7 +17,9 @@ import type { Env } from "./env";
 export function buildContainer(env: Env, accessToken?: string) {
 	const supabase = createSupabaseClient(env.SUPABASE_URL, env.SUPABASE_KEY, accessToken);
 	const muscleRepository = makeSupabaseMuscleRepository(supabase);
-	const exerciseRepository = makeSupabaseExerciseRepository(supabase);
+	const exerciseRepository = makeSupabaseExerciseRepository(supabase, {
+		buildUploadedVideoUrl: makeBuildUploadedVideoUrl(env),
+	});
 	const equipmentRepository = makeSupabaseEquipmentRepository(supabase);
 	const workoutLogRepository = makeSupabaseWorkoutLogRepository(supabase);
 

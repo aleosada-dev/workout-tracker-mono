@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+name: 18 - Múltiplos filtros somam e Limpar zera o badge
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+# Dois filtros independentes: tipo (subconjunto) + visibilidade => badge (2).
+- tapOn:
+    id: "exercises-filter.type.musculacao"
+- tapOn:
+    id: "exercises-filter.visibility.public"
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (2)"
+# Reabre o filtro pelo item com contador e limpa tudo.
+- tapOn: "Filtrar (2)"
+- assertVisible:
+    id: "exercises-filter"
+- tapOn:
+    id: "exercises-filter.clear"
+- assertNotVisible: "Filtrar exercícios"
+- tapOn: "Mais opções"
+- assertNotVisible: "Filtrar (2)"
+- assertNotVisible: "Filtrar (1)"
+- assertVisible: "Filtrar"

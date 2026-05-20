@@ -9,11 +9,13 @@
   },
   "scripts": {
     "lint": "echo \"no lint configured\"",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
-    "@workout-tracker/domain": "workspace:*"
+    "@workout-tracker/domain": "workspace:*",
+    "aws4fetch": "^1.0.20"
   },
   "devDependencies": {
     "@workout-tracker/typescript-config": "workspace:*",

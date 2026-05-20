@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+name: 14 - Filtrar por tipo soma no badge
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+# Os dois tipos vêm marcados por padrão. Desmarcar um deixa um subconjunto
+# (1 de 2) — é isso que conta como filtro ativo no badge.
+- tapOn:
+    id: "exercises-filter.type.musculacao"
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- assertVisible:
+    id: "exercises-list"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (1)"

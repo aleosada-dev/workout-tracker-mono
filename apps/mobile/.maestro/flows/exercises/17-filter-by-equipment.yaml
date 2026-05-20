@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+name: 17 - Filtrar por equipamento soma no badge
+# "Anilha" é o primeiro equipamento da lista (ordenada alfabeticamente, dado de
+# referência), portanto sempre visível. Trocar caso o seed use outro rótulo.
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+- tapOn:
+    id: "exercises-filter.equipment"
+# O dropdown de equipamento é seleção única e fecha sozinho ao escolher.
+- tapOn: Anilha
+- assertVisible: Anilha
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- assertVisible:
+    id: "exercises-list"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (1)"

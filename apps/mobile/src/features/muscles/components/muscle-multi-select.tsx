@@ -16,15 +16,16 @@ type Props = {
   onValueChange: (value: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
+  testID?: string;
 };
 
-export function MuscleMultiSelect({ value, onValueChange, placeholder, disabled }: Props) {
+export function MuscleMultiSelect({ value, onValueChange, placeholder, disabled, testID }: Props) {
   const { t } = useTranslation();
   const { sections, labels } = useMuscleSections();
 
   return (
     <MultiSelect value={value} onValueChange={onValueChange} disabled={disabled}>
-      <MultiSelectTrigger>
+      <MultiSelectTrigger testID={testID}>
         <MultiSelectValue
           placeholder={placeholder ?? t('muscles.placeholder')}
           labels={labels}

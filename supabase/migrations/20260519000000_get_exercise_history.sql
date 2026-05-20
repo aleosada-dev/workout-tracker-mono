@@ -28,7 +28,10 @@ BEGIN
     'muscle_slug', m.slug,
     'secondary_muscle_slug', sm.slug,
     'youtube_url', v.video_url,
-    'uploaded_video_object_key', vv.object_key
+    'uploaded_video_object_key', vv.object_key,
+    -- NULL for global library variations, the owner's id for user-created ones.
+    -- The API uses this to decide between a public URL and a presigned one.
+    'variation_user_id', v.user_id
   )
   INTO v_variation
   FROM public.variations v

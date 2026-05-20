@@ -49,6 +49,10 @@ E2E_EXERCISE_EMPTY=...        # flow 12: exercício sem sessões e sem vídeo (t
 
 Os flows de 07 a 11 validam o caminho feliz — escolha exercícios que a conta atleta (`open-exercises-list-athlete.yaml`) tenha registrado. O flow 12 faz o oposto: aponta pra um exercício "virgem" e valida que todos os empty states aparecem.
 
+### Flows de filtro (13-19)
+
+Os flows 16 e 17 abrem os dropdowns de músculo e equipamento e selecionam um item por rótulo fixo no flow ("Peito" e "Anilha"). São dados de referência — iguais para qualquer conta — e ambos aparecem no topo do dropdown sem rolar. Se o seed mudar esses rótulos, ajuste o `tapOn` direto no flow.
+
 ## Comandos
 
 Rodar a suíte completa contra development build:
@@ -109,11 +113,12 @@ O handler é gated por variant ≠ `production` — em build de produção é no
 │   ├── sign-in-coach.yaml                 # login com a conta coach
 │   ├── sign-in-athlete.yaml               # login com a conta atleta
 │   ├── open-exercises-list-coach.yaml     # login coach + navega ate a lista de exercicios
-│   └── open-exercises-list-athlete.yaml   # login atleta + navega ate a lista de exercicios
+│   ├── open-exercises-list-athlete.yaml   # login atleta + navega ate a lista de exercicios
+│   └── open-exercises-filter-athlete.yaml # atleta + abre a tela de filtro pelo overflow
 └── flows/
     ├── auth/                   # telas de autenticacao
     ├── home/                   # tela inicial (lista de treinos)
-    └── exercises/              # lista e detalhes do exercicio
+    └── exercises/              # lista, detalhes e filtro do exercicio
         ├── 01-list-renders.yaml
         ├── 02-back-to-workouts.yaml
         ├── 03-exercise-detail.yaml
@@ -125,7 +130,14 @@ O handler é gated por variant ≠ `production` — em build de produção é no
         ├── 09-detail-records-section.yaml
         ├── 10-detail-muscle-badge.yaml
         ├── 11-detail-video-visible.yaml
-        └── 12-detail-empty-states.yaml
+        ├── 12-detail-empty-states.yaml
+        ├── 13-filter-renders.yaml
+        ├── 14-filter-by-type.yaml
+        ├── 15-filter-by-visibility.yaml
+        ├── 16-filter-by-muscle.yaml
+        ├── 17-filter-by-equipment.yaml
+        ├── 18-filter-count-and-clear.yaml
+        └── 19-filter-type-min-one-warning.yaml
 ```
 
 ## Convenções de testID

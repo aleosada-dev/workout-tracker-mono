@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+name: 16 - Filtrar por músculo soma no badge
+# "Peito" é um grupo muscular de nível 1 (dado de referência), visível no topo
+# do dropdown sem rolar. Trocar caso o seed use outro rótulo.
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+- tapOn:
+    id: "exercises-filter.muscle"
+- tapOn: Peito
+# O dropdown de músculo é multi-seleção e não fecha sozinho: tocar de novo no
+# gatilho (atrás do overlay) fecha o popover.
+- tapOn:
+    id: "exercises-filter.muscle"
+- assertVisible: Peito
+- tapOn:
+    id: "exercises-filter.apply"
+- assertNotVisible: "Filtrar exercícios"
+- assertVisible:
+    id: "exercises-list"
+- tapOn: "Mais opções"
+- assertVisible: "Filtrar (1)"

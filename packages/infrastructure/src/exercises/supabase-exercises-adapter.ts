@@ -4,6 +4,7 @@ import {
   type ListExercisesFilter,
   NotFoundError,
 } from '@workout-tracker/domain';
+import type { BuildUploadedVideoUrl } from '../r2';
 import type { Supabase } from '../supabase/client';
 import {
   type GetExerciseDetailRpcResponse,
@@ -13,7 +14,15 @@ import toExerciseListItems, {
   type ListExerciseItemRpcRow,
 } from './supabase-exercises-list-mappers';
 
-export function makeSupabaseExerciseRepository(supabase: Supabase): ExerciseRepository {
+export type SupabaseExerciseRepositoryDeps = {
+  /** Turns an uploaded video's R2 object key into a playable URL. */
+  buildUploadedVideoUrl: BuildUploadedVideoUrl;
+};
+
+export function makeSupabaseExerciseRepository(
+  supabase: Supabase,
+  deps: SupabaseExerciseRepositoryDeps,
+): ExerciseRepository {
   return {
     async list(filter: ListExercisesFilter): Promise<ExerciseListItem[]> {
       const { data, error } = await supabase.rpc('list_variation_views_for_mobile', {
@@ -46,7 +55,10 @@ export function makeSupabaseExerciseRepository(supabase: Supabase): ExerciseRepo
         throw new Error(`Failed to get exercise history: ${error.message}`);
       }
 
-      return toExerciseDetail(data as unknown as GetExerciseDetailRpcResponse);
+      return toExerciseDetail(
+        data as unknown as GetExerciseDetailRpcResponse,
+        deps.buildUploadedVideoUrl,
+      );
     },
   };
 }

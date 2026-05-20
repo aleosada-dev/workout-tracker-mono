@@ -183,6 +183,7 @@ export default function ExercisesFilterScreen() {
 
         <Section title={t('exerciseListScreen.filter.sections.primaryMuscle')}>
           <MuscleMultiSelect
+            testID="exercises-filter.muscle"
             value={
               Array.isArray(draft.query.muscleIds)
                 ? draft.query.muscleIds
@@ -197,6 +198,7 @@ export default function ExercisesFilterScreen() {
 
         <Section title={t('exerciseListScreen.filter.sections.equipment')}>
           <EquipmentSelect
+            testID="exercises-filter.equipment"
             value={
               Array.isArray(draft.query.equipmentIds)
                 ? (draft.query.equipmentIds[0] ?? null)

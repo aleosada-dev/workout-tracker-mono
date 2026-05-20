@@ -1,0 +1,13 @@
+appId: ${MAESTRO_APP_ID}
+name: 19 - Aviso bloqueia desmarcar todos os tipos
+---
+- runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+# Ambos os tipos vêm marcados. Desmarca um; ao tentar desmarcar o último o
+# app deve exibir o aviso em vez de deixar a seleção vazia.
+- tapOn:
+    id: "exercises-filter.type.musculacao"
+- tapOn:
+    id: "exercises-filter.type.preparatorio"
+- assertVisible:
+    id: "exercises-filter.type.warning"
+- assertVisible: "Selecione ao menos um tipo"
