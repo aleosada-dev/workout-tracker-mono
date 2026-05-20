@@ -1,11 +1,11 @@
 import type {
-  ExerciseHistory,
-  ExerciseHistorySession,
-  ExerciseHistorySessionSet,
+  ExerciseDetail,
+  ExerciseDetailSession,
+  ExerciseDetailSessionSet,
   WorkoutSetType,
 } from '@workout-tracker/domain';
 
-export type GetExerciseHistoryRpcResponseSet = {
+export type GetExerciseDetailRpcResponseSet = {
   set_order: number;
   set_type: string;
   weight_kg: number | null;
@@ -14,24 +14,24 @@ export type GetExerciseHistoryRpcResponseSet = {
   reps_max: number | null;
 };
 
-export type GetExerciseHistoryRpcResponseSession = {
+export type GetExerciseDetailRpcResponseSession = {
   workout_log_id: string;
   started_at: string;
   max_weight_kg: number | null;
   total_volume_kg: number;
   max_reps: number | null;
   total_sets: number;
-  sets: GetExerciseHistoryRpcResponseSet[];
+  sets: GetExerciseDetailRpcResponseSet[];
 };
 
-export type GetExerciseHistoryRpcResponseRecords = {
+export type GetExerciseDetailRpcResponseRecords = {
   max_weight_kg: number | null;
   max_volume_kg: number | null;
   max_reps: number | null;
   max_sets: number | null;
 };
 
-export type GetExerciseHistoryRpcResponseVariation = {
+export type GetExerciseDetailRpcResponseVariation = {
   exercise_name: string;
   variation_name: string | null;
   equipment_slug: string;
@@ -42,15 +42,15 @@ export type GetExerciseHistoryRpcResponseVariation = {
   uploaded_video_object_key: string | null;
 };
 
-export type GetExerciseHistoryRpcResponse = {
+export type GetExerciseDetailRpcResponse = {
   variation_id: string;
-  variation: GetExerciseHistoryRpcResponseVariation;
-  sessions: GetExerciseHistoryRpcResponseSession[];
-  last_session: GetExerciseHistoryRpcResponseSession | null;
-  records: GetExerciseHistoryRpcResponseRecords;
+  variation: GetExerciseDetailRpcResponseVariation;
+  sessions: GetExerciseDetailRpcResponseSession[];
+  last_session: GetExerciseDetailRpcResponseSession | null;
+  records: GetExerciseDetailRpcResponseRecords;
 };
 
-const toSet = (raw: GetExerciseHistoryRpcResponseSet): ExerciseHistorySessionSet => ({
+const toSet = (raw: GetExerciseDetailRpcResponseSet): ExerciseDetailSessionSet => ({
   setOrder: raw.set_order,
   setType: raw.set_type as WorkoutSetType,
   weightKg: raw.weight_kg,
@@ -59,7 +59,7 @@ const toSet = (raw: GetExerciseHistoryRpcResponseSet): ExerciseHistorySessionSet
   repsMax: raw.reps_max,
 });
 
-const toSession = (raw: GetExerciseHistoryRpcResponseSession): ExerciseHistorySession => ({
+const toSession = (raw: GetExerciseDetailRpcResponseSession): ExerciseDetailSession => ({
   workoutLogId: raw.workout_log_id,
   startedAt: raw.started_at,
   maxWeightKg: raw.max_weight_kg,
@@ -69,7 +69,7 @@ const toSession = (raw: GetExerciseHistoryRpcResponseSession): ExerciseHistorySe
   sets: raw.sets.map(toSet),
 });
 
-export const toExerciseHistory = (raw: GetExerciseHistoryRpcResponse): ExerciseHistory => ({
+export const toExerciseDetail = (raw: GetExerciseDetailRpcResponse): ExerciseDetail => ({
   variationId: raw.variation_id,
   variation: {
     exerciseName: raw.variation.exercise_name,

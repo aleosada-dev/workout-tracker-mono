@@ -55,6 +55,7 @@ export const exercisesRouter = new Hono<AppBindings>()
 					},
 				},
 				401: { description: "Unauthorized" },
+				404: { description: "Exercise variation not found" },
 			},
 		}),
 		validator("param", ExerciseIdParamSchema),
@@ -65,8 +66,8 @@ export const exercisesRouter = new Hono<AppBindings>()
 			}
 
 			const { id: variationId } = c.req.valid("param");
-			const { getExerciseHistory } = c.get("container").workoutLogs;
-			const detail = await getExerciseHistory({ userId, variationId });
+			const { getExerciseDetail } = c.get("container").exercises;
+			const detail = await getExerciseDetail({ userId, variationId });
 			return c.json(detail);
 		},
 	);

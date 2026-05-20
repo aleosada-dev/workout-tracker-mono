@@ -160,6 +160,7 @@ function MultiSelectContent({
                     style={{ maxHeight }}
                     bounces={false}
                     showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled
                   >
                     <View className="py-2">{children}</View>
                   </ScrollView>

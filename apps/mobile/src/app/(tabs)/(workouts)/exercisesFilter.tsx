@@ -19,7 +19,7 @@ import { router } from 'expo-router';
 import { AlertTriangle } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import {
@@ -105,8 +105,13 @@ export default function ExercisesFilterScreen() {
   const handleClear = () => setDraft(EMPTY_EXERCISE_LIST_PARAMS);
 
   return (
-    <View className="flex-1 bg-background" testID="exercises-filter">
+    <View
+      className="flex-1 bg-background"
+      style={{ paddingTop: Platform.OS === 'android' ? insets.top : 0 }}
+      testID="exercises-filter"
+    >
       <ScrollView
+        className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,

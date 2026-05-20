@@ -1,6 +1,6 @@
 import type { WorkoutSetType } from '../set/sets';
 
-export type ExerciseHistorySessionSet = {
+export type ExerciseDetailSessionSet = {
   setOrder: number;
   setType: WorkoutSetType;
   weightKg: number | null;
@@ -9,24 +9,24 @@ export type ExerciseHistorySessionSet = {
   repsMax: number | null;
 };
 
-export type ExerciseHistorySession = {
+export type ExerciseDetailSession = {
   workoutLogId: string;
   startedAt: string;
   maxWeightKg: number | null;
   totalVolumeKg: number;
   maxReps: number | null;
   totalSets: number;
-  sets: ExerciseHistorySessionSet[];
+  sets: ExerciseDetailSessionSet[];
 };
 
-export type ExerciseHistoryRecords = {
+export type ExerciseDetailRecords = {
   maxWeightKg: number | null;
   maxVolumeKg: number | null;
   maxReps: number | null;
   maxSets: number | null;
 };
 
-export type ExerciseHistoryVariation = {
+export type ExerciseDetailVariation = {
   exerciseName: string;
   variationName: string | null;
   equipmentSlug: string;
@@ -37,15 +37,15 @@ export type ExerciseHistoryVariation = {
   uploadedVideoObjectKey: string | null;
 };
 
-export type ExerciseHistory = {
+export type ExerciseDetail = {
   variationId: string;
-  variation: ExerciseHistoryVariation;
-  sessions: ExerciseHistorySession[];
-  lastSession: ExerciseHistorySession | null;
-  records: ExerciseHistoryRecords;
+  variation: ExerciseDetailVariation;
+  sessions: ExerciseDetailSession[];
+  lastSession: ExerciseDetailSession | null;
+  records: ExerciseDetailRecords;
 };
 
-export type GetExerciseHistoryFilter = {
+export type GetExerciseDetailFilter = {
   userId: string;
   variationId: string;
 };

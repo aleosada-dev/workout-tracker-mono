@@ -1,6 +1,7 @@
 export * from './equipments/equipment';
 export * from './equipments/equipment-repo';
-export * from './exercises/exercise-list-item';
+export * from './exercises/exercise-detail';
+export * from './exercises/exercise-list';
 export * from './exercises/exercise-repo';
 export * from './exercises/models';
 export * from './muscles/muscle';
@@ -10,6 +11,5 @@ export * from './shared/not-found-error';
 export * from './shared/numbers';
 export * from './shared/type-helpers';
 export * from './shared/validation-error';
-export * from './workout-logs/exercise-history';
 export * from './workout-logs/workout-log-repo';
 export * from './workout-logs/workout-log-summary';
