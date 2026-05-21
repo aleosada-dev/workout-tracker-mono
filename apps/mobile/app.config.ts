@@ -65,6 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-font',
     'expo-secure-store',
     'expo-localization',
+    'expo-notifications',
     'expo-video',
     [
       'expo-image-picker',

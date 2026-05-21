@@ -32,6 +32,7 @@ import { QueryProvider } from '@/features/query/lib/provider';
 import { LanguageBridge, resolveLanguage } from '@/features/settings/state/language-bridge';
 import { language$ } from '@/features/settings/state/settings-store';
 import { ThemeBridge } from '@/features/settings/state/theme-bridge';
+import { ensureTimerNotificationChannel } from '@/features/shared/lib/notifications';
 import { useNavTheme } from '@/features/shared/lib/theme';
 import { toastConfig } from '@/features/shared/lib/toast-config';
 import { setupI18n } from '@/internationalization/i18n';
@@ -61,6 +62,10 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
+
+  useEffect(() => {
+    ensureTimerNotificationChannel();
+  }, []);
 
   const navTheme = useNavTheme();
   const { colorScheme } = useColorScheme();
