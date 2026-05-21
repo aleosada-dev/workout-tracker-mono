@@ -35,7 +35,7 @@ export default function ExercisesListScreen() {
       setFilters(exerciseFilters$.get());
     }, []),
   );
-  const { data, isLoading, isError, error, refetch } = useExercises(filters);
+  const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useExercises(filters);
   const activeFilterCount = countActiveFilters(filters);
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercises',
@@ -89,9 +89,15 @@ export default function ExercisesListScreen() {
 
   // FlashList memoizes cells; bump this whenever selection state the cells read changes.
   const listExtraData = useMemo(() => ({ mode, selected }), [mode, selected]);
-  // Remounts the FlashList when the applied filter changes — see the focus
-  // effect above for why an in-place data swap isn't enough on Android.
-  const listKey = useMemo(() => JSON.stringify(filters), [filters]);
+  // Remounts the FlashList when the applied filter changes OR when a refetch
+  // brings fresh data (`dataUpdatedAt`). An in-place data swap while the list
+  // is off-screen — e.g. behind the addExercise modal — doesn't render on
+  // Android (FlashList 2.x, still unfixed as of 2.3.1), so forcing a fresh
+  // mount is the only reliable way to surface a just-created exercise.
+  const listKey = useMemo(
+    () => `${JSON.stringify(filters)}:${dataUpdatedAt}`,
+    [filters, dataUpdatedAt],
+  );
 
   if (isLoading) {
     return (

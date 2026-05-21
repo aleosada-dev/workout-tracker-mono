@@ -20,6 +20,32 @@ export default {
   },
   addExercise: {
     title: 'Add exercise',
+    success: {
+      title: 'Exercise created.',
+      message: 'The exercise is now in your list.',
+    },
+    fields: {
+      name: 'Exercise name',
+      exerciseType: 'Exercise type',
+      variation: 'Variation',
+      primaryMuscle: 'Primary muscle',
+      secondaryMuscle: 'Secondary muscle',
+      equipment: 'Equipment',
+      videoUrl: 'Youtube URL',
+    },
+    validation: {
+      name: 'Enter the exercise name',
+      exerciseType: 'Select the exercise type',
+      primaryMuscle: 'Select the primary muscle',
+      equipment: 'Select an equipment',
+      youtubeVideoUrl: 'Enter a valid URL',
+    },
+    errors: {
+      conflict: {
+        title: 'Exercise already exists',
+        message: 'A variation with this name and equipment already exists.',
+      },
+    },
   },
   filter: {
     title: 'Filter exercises',

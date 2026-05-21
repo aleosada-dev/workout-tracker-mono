@@ -15,10 +15,15 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import Toast from 'react-native-toast-message';
 import { z } from 'zod';
+import { ApiError } from '@/features/api/lib/errors';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
+import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
 import { MuscleSelect } from '@/features/muscles/components/muscle-select';
+import { exerciseObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useNavTheme } from '@/features/shared/lib/theme';
 
 // Portal host mounted inside this (modal) screen so the name autocomplete's
@@ -29,20 +34,29 @@ const SUGGESTIONS_PORTAL_HOST = 'add-exercise-suggestions';
 // `null` quando vazios para casar com o schema de entrada da API, que os
 // declara `nullable()`. Por isso o tipo de entrada do form (strings dos
 // inputs controlados) difere do tipo de saída (já pronto para a API).
+//
+// As mensagens de erro são chaves de i18n; resolvidas com `t()` no render do
+// `Field` (mesmo padrão de `signIn.tsx`), já que o schema é criado fora do
+// componente e não tem acesso ao `t`.
 const exerciseFormSchema = z.object({
-  name: z.string().trim().min(1, 'Informe o nome do exercício'),
-  exerciseType: z.string().min(1, 'Selecione o tipo de exercício'),
+  name: z.string().trim().min(1, 'exerciseListScreen.addExercise.validation.name'),
+  exerciseType: z.enum(EXERCISE_TYPES, {
+    error: 'exerciseListScreen.addExercise.validation.exerciseType',
+  }),
   variationName: z
     .string()
     .trim()
     .transform((v) => v || null),
-  primaryMuscleId: z.string().min(1, 'Selecione o músculo primário'),
+  primaryMuscleId: z.string().min(1, 'exerciseListScreen.addExercise.validation.primaryMuscle'),
   secondaryMuscleId: z.string().transform((v) => v || null),
-  equipmentId: z.string().min(1, 'Selecione um equipamento'),
+  equipmentId: z.string().min(1, 'exerciseListScreen.addExercise.validation.equipment'),
   youtubeVideoUrl: z
     .string()
     .trim()
-    .refine((v) => v === '' || z.url().safeParse(v).success, 'Informe uma URL válida')
+    .refine(
+      (v) => v === '' || z.url().safeParse(v).success,
+      'exerciseListScreen.addExercise.validation.youtubeVideoUrl',
+    )
     .transform((v) => v || null),
 });
 
@@ -70,8 +84,50 @@ export default function AddExerciseScreen() {
     },
   });
 
-  const onSubmit = handleSubmit(() => {
-    router.back();
+  const { mutate: createExercise, isPending } = useCreateExercise();
+
+  const handleCreateError = handleLocalError((error) => {
+    if (error instanceof ApiError && error.status === 409) {
+      Toast.show({
+        type: 'error',
+        text1: t('exerciseListScreen.addExercise.errors.conflict.title'),
+        text2: t('exerciseListScreen.addExercise.errors.conflict.message'),
+      });
+      return;
+    }
+
+    exerciseObservability.captureError(error, { action: 'create_exercise' });
+    Toast.show({
+      type: 'error',
+      text1: t('errors.unexpected.title'),
+      text2: t('errors.unexpected.message'),
+    });
+  });
+
+  const onSubmit = handleSubmit((values) => {
+    createExercise(
+      {
+        exerciseName: values.name,
+        exerciseType: values.exerciseType,
+        variationName: values.variationName,
+        muscleId: values.primaryMuscleId,
+        secondaryMuscleId: values.secondaryMuscleId,
+        equipmentId: values.equipmentId,
+        youtubeVideoUrl: values.youtubeVideoUrl,
+      },
+      {
+        onSuccess: () => {
+          exerciseObservability.trackAction('exercise_created');
+          Toast.show({
+            type: 'success',
+            text1: t('exerciseListScreen.addExercise.success.title'),
+            text2: t('exerciseListScreen.addExercise.success.message'),
+          });
+          router.back();
+        },
+        onError: handleCreateError,
+      },
+    );
   });
 
   return (
@@ -103,7 +159,10 @@ export default function AddExerciseScreen() {
       >
         <Text variant="muted">Preencha os campos para criar o exercício.</Text>
 
-        <Field label="Nome do exercício" error={errors.name?.message}>
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.name')}
+          error={errors.name?.message && t(errors.name.message)}
+        >
           <Controller
             control={control}
             name="name"
@@ -118,7 +177,10 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Tipo de exercício" error={errors.exerciseType?.message}>
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.exerciseType')}
+          error={errors.exerciseType?.message && t(errors.exerciseType.message)}
+        >
           <Controller
             control={control}
             name="exerciseType"
@@ -128,7 +190,7 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Variação">
+        <Field label={t('exerciseListScreen.addExercise.fields.variation')}>
           <Controller
             control={control}
             name="variationName"
@@ -143,7 +205,10 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Músculo primário" error={errors.primaryMuscleId?.message}>
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.primaryMuscle')}
+          error={errors.primaryMuscleId?.message && t(errors.primaryMuscleId.message)}
+        >
           <Controller
             control={control}
             name="primaryMuscleId"
@@ -157,7 +222,7 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Músculo secundário">
+        <Field label={t('exerciseListScreen.addExercise.fields.secondaryMuscle')}>
           <Controller
             control={control}
             name="secondaryMuscleId"
@@ -171,7 +236,10 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Equipamento" error={errors.equipmentId?.message}>
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.equipment')}
+          error={errors.equipmentId?.message && t(errors.equipmentId.message)}
+        >
           <Controller
             control={control}
             name="equipmentId"
@@ -185,7 +253,10 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <Field label="Video URL" error={errors.youtubeVideoUrl?.message}>
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.videoUrl')}
+          error={errors.youtubeVideoUrl?.message && t(errors.youtubeVideoUrl.message)}
+        >
           <Controller
             control={control}
             name="youtubeVideoUrl"
@@ -220,11 +291,16 @@ export default function AddExerciseScreen() {
         </View>
 
         <View className="mt-2 flex-row gap-3">
-          <Button variant="outline" className="flex-1" onPress={() => router.back()}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onPress={() => router.back()}
+            disabled={isPending}
+          >
             <Text>Cancelar</Text>
           </Button>
-          <Button className="flex-1" onPress={onSubmit}>
-            <Text>Salvar</Text>
+          <Button className="flex-1" onPress={onSubmit} disabled={isPending}>
+            <Text>{isPending ? 'Salvando...' : 'Salvar'}</Text>
           </Button>
         </View>
       </KeyboardAwareScrollView>

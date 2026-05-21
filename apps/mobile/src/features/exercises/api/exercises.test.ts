@@ -13,7 +13,12 @@ jest.mock('@/features/observability/lib', () => {
   return createObservabilityMock();
 });
 
-import { EMPTY_EXERCISE_LIST_PARAMS, fetchExercises } from '@/features/exercises/api/exercises';
+import {
+  type CreateExerciseRequest,
+  createExercise,
+  EMPTY_EXERCISE_LIST_PARAMS,
+  fetchExercises,
+} from '@/features/exercises/api/exercises';
 
 const mockFetch = jest.fn();
 
@@ -95,5 +100,48 @@ describe('fetchExercises', () => {
     expect(u.searchParams.get('visibility')).toBe('private');
     expect(u.searchParams.getAll('exerciseTypes')).toEqual(['musculacao']);
     expect(u.searchParams.getAll('muscleIds')).toEqual(['m1', 'm2']);
+  });
+});
+
+const createBody: CreateExerciseRequest = {
+  exerciseName: 'Supino',
+  exerciseType: 'musculacao',
+  variationName: 'Barra',
+  muscleId: 'b1d0e8a2-1111-4ba2-b2c3-324a63844771',
+  secondaryMuscleId: null,
+  equipmentId: 'c2e1f9b3-2222-4ba2-b2c3-324a63844771',
+  youtubeVideoUrl: null,
+};
+
+function jsonResponseWithStatus<T>(data: T, status: number) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+describe('createExercise', () => {
+  test('posts the exercise body and returns the created id', async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponseWithStatus({ id: 'new-ex-1' }, 201));
+
+    const result = await createExercise(createBody);
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/exercises');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(createBody);
+    expect(result).toEqual({ id: 'new-ex-1' });
+  });
+
+  test('throws ApiError with status 409 when the variation already exists', async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponseWithStatus({ error: 'Exercise variation already exists' }, 409),
+    );
+
+    await expect(createExercise(createBody)).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 409,
+      message: 'Exercise variation already exists',
+    });
   });
 });

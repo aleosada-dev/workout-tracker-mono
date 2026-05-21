@@ -20,6 +20,32 @@ export default {
   },
   addExercise: {
     title: 'Adicionar exercício',
+    success: {
+      title: 'Exercício criado.',
+      message: 'O exercício já aparece na sua lista.',
+    },
+    fields: {
+      name: 'Nome do exercício',
+      exerciseType: 'Tipo de exercício',
+      variation: 'Variação',
+      primaryMuscle: 'Músculo primário',
+      secondaryMuscle: 'Músculo secundário',
+      equipment: 'Equipamento',
+      videoUrl: 'Youtube URL',
+    },
+    validation: {
+      name: 'Informe o nome do exercício',
+      exerciseType: 'Selecione o tipo de exercício',
+      primaryMuscle: 'Selecione o músculo primário',
+      equipment: 'Selecione um equipamento',
+      youtubeVideoUrl: 'Informe uma URL válida',
+    },
+    errors: {
+      conflict: {
+        title: 'Exercício já existe',
+        message: 'Já existe uma variação com esse nome e equipamento.',
+      },
+    },
   },
   filter: {
     title: 'Filtrar exercícios',
