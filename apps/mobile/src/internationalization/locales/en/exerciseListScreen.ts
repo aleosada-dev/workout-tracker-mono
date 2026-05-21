@@ -46,6 +46,23 @@ export default {
         message: 'A variation with this name and equipment already exists.',
       },
     },
+    video: {
+      label: 'Uploaded video',
+      hint: 'Pick a short video from your gallery — under 100 MB and 30 seconds.',
+      select: 'Select video',
+      selected: 'Selected video',
+      remove: 'Remove',
+      errors: {
+        tooLarge: {
+          title: 'Video too large',
+          message: 'The video must be under 100 MB.',
+        },
+        tooLong: {
+          title: 'Video too long',
+          message: 'The video must be under 30 seconds.',
+        },
+      },
+    },
   },
   filter: {
     title: 'Filter exercises',

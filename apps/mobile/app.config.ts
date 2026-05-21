@@ -66,6 +66,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-localization',
     'expo-video',
+    [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Permite que o Workout Tracker acesse sua galeria para selecionar vídeos de exercícios e a foto do seu perfil.',
+        cameraPermission:
+          'Permite que o Workout Tracker use a câmera para gravar vídeos de exercícios e tirar a foto do seu perfil.',
+        microphonePermission:
+          'Permite que o Workout Tracker use o microfone para gravar o áudio dos vídeos de exercícios.',
+      },
+    ],
     './plugins/withGradleJvmArgs',
     [
       '@sentry/react-native/expo',

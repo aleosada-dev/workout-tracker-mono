@@ -46,6 +46,23 @@ export default {
         message: 'Já existe uma variação com esse nome e equipamento.',
       },
     },
+    video: {
+      label: 'Vídeo enviado',
+      hint: 'Escolha um vídeo curto da galeria — menos de 100 MB e menos de 30 segundos.',
+      select: 'Selecionar vídeo',
+      selected: 'Vídeo selecionado',
+      remove: 'Remover',
+      errors: {
+        tooLarge: {
+          title: 'Vídeo muito grande',
+          message: 'O vídeo deve ter menos de 100 MB.',
+        },
+        tooLong: {
+          title: 'Vídeo muito longo',
+          message: 'O vídeo deve ter menos de 30 segundos.',
+        },
+      },
+    },
   },
   filter: {
     title: 'Filtrar exercícios',

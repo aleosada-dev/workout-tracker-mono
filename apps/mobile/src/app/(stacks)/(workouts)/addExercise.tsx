@@ -10,7 +10,7 @@ import {
   ToggleGroupItem,
 } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
-import { Upload, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -20,15 +20,21 @@ import { z } from 'zod';
 import { ApiError } from '@/features/api/lib/errors';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
+import { ExerciseYouTubeCard } from '@/features/exercises/components/ExerciseYouTubeCard';
 import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
 import { MuscleSelect } from '@/features/muscles/components/muscle-select';
 import { exerciseObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useNavTheme } from '@/features/shared/lib/theme';
+import { extractYouTubeVideoId } from '@/features/shared/lib/youtube';
 
 // Portal host mounted inside this (modal) screen so the name autocomplete's
 // suggestion list shares the screen's coordinate space and floats above it.
 const SUGGESTIONS_PORTAL_HOST = 'add-exercise-suggestions';
+
+// Horizontal padding of the scroll content. Shared with the inline YouTube
+// preview so its embedded player is sized to the actual available width.
+const SCREEN_PADDING = 20;
 
 // Os campos opcionais (variação, músculo secundário, vídeo) são enviados como
 // `null` quando vazios para casar com o schema de entrada da API, que os
@@ -152,7 +158,7 @@ export default function AddExerciseScreen() {
 
       <KeyboardAwareScrollView
         className="flex-1 bg-background"
-        contentContainerStyle={{ padding: 20, paddingBottom: 120, gap: 20 }}
+        contentContainerStyle={{ padding: SCREEN_PADDING, paddingBottom: 120, gap: 20 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={20}
@@ -261,34 +267,24 @@ export default function AddExerciseScreen() {
             control={control}
             name="youtubeVideoUrl"
             render={({ field }) => (
-              <Input
-                placeholder="https://..."
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                aria-invalid={!!errors.youtubeVideoUrl}
-              />
+              <View className="gap-3">
+                <Input
+                  placeholder="https://..."
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-invalid={!!errors.youtubeVideoUrl}
+                />
+                {extractYouTubeVideoId(field.value) ? (
+                  <ExerciseYouTubeCard url={field.value} horizontalPadding={SCREEN_PADDING * 2} />
+                ) : null}
+              </View>
             )}
           />
         </Field>
-
-        <View className="gap-2">
-          <Text className="font-sans-semibold">Vídeo enviado</Text>
-          <Text variant="muted" className="text-sm">
-            Para enviar um vídeo do dispositivo, primeiro salve a variação e depois abra-a para
-            anexar.
-          </Text>
-          <Pressable
-            disabled
-            className="mt-1 flex-row items-center justify-center gap-2 rounded-md border border-border border-dashed bg-muted/40 px-4 py-6 opacity-60"
-          >
-            <Upload size={18} color="#a1a1aa" />
-            <Text variant="muted">Selecionar vídeo</Text>
-          </Pressable>
-        </View>
 
         <View className="mt-2 flex-row gap-3">
           <Button
