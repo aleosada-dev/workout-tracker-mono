@@ -10,7 +10,7 @@ import {
   type PersonalRecord,
   toSetEntries,
 } from './detail-types';
-import { composeExerciseName } from './format';
+import { composeExerciseName, resolveExerciseName, resolveVariationName } from './format';
 
 function sortedSessions(
   sessions: ExerciseDetailResponseSession[],
@@ -52,13 +52,21 @@ export function toExerciseDetailData(
     id: response.variationId,
     name: composeExerciseName(
       {
-        exerciseName: response.variation.exerciseName,
+        exerciseName: resolveExerciseName(
+          response.variation.exerciseSlug,
+          response.variation.exerciseName,
+          t,
+        ),
         equipmentName: t(`equipment.${response.variation.equipmentSlug}`),
         equipmentPreposition: response.variation.equipmentPreposition,
       },
       language,
     ),
-    variationName: response.variation.variationName,
+    variationName: resolveVariationName(
+      response.variation.variationSlug,
+      response.variation.variationName,
+      t,
+    ),
     primaryMuscle: t(`muscles.${response.variation.muscleSlug}`),
     secondaryMuscle: response.variation.secondaryMuscleSlug
       ? t(`muscles.${response.variation.secondaryMuscleSlug}`)

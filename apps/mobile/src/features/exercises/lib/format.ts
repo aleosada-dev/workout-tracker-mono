@@ -30,6 +30,29 @@ export function composeExerciseName(
   return `${equipmentName} ${exerciseName}`;
 }
 
+/**
+ * Display name for an exercise: the translation keyed by its `slug`, falling
+ * back to the stored `name` when the exercise has no slug (user-created) or no
+ * translation registered yet.
+ */
+export function resolveExerciseName(slug: string | null, name: string, t: TFunction): string {
+  return slug ? t(`exerciseNames.${slug}`, { defaultValue: name }) : name;
+}
+
+/**
+ * Display name for a variation: the translation keyed by its `slug`, falling
+ * back to the stored `name` when the variation has no slug (user-created) or no
+ * translation registered yet. Returns `null` for an unnamed, unslugged variation.
+ */
+export function resolveVariationName(
+  slug: string | null,
+  name: string | null,
+  t: TFunction,
+): string | null {
+  if (!slug) return name;
+  return t(`variationNames.${slug}`, { defaultValue: name ?? '' }) || null;
+}
+
 export function toExercise(
   exercise: ListExercisesResponseExercise,
   variation: ListExercisesResponseVariation,
@@ -40,13 +63,13 @@ export function toExercise(
     id: variation.id,
     name: composeExerciseName(
       {
-        exerciseName: exercise.name,
+        exerciseName: resolveExerciseName(exercise.slug, exercise.name, t),
         equipmentName: t(`equipment.${variation.equipment.slug}`),
         equipmentPreposition: variation.equipment.preposition,
       },
       language,
     ),
-    variationName: variation.name,
+    variationName: resolveVariationName(variation.slug, variation.name, t),
     primaryMuscle: t(`muscles.${variation.muscle.slug}`),
     type: exercise.type.toString(),
     visibility: exercise.userId == null ? 'public' : 'private',

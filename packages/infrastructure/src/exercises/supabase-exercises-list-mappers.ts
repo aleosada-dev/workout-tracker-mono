@@ -10,6 +10,8 @@ type ListExerciseItemRpcReturn =
 
 type NullableField =
   | 'name'
+  | 'variation_slug'
+  | 'exercise_slug'
   | 'secondary_muscle_id'
   | 'secondary_muscle_name'
   | 'secondary_muscle_slug'
@@ -36,6 +38,7 @@ function toVariation(row: ListExerciseItemRpcRow): VariationListItem {
   return {
     id: row.id,
     name: row.name,
+    slug: row.variation_slug,
     muscle: {
       id: row.muscle_id,
       name: row.muscle_name,
@@ -75,6 +78,7 @@ export default function toExerciseListItems(rows: ListExerciseItemRpcRow[]): Exe
     {
       id: string;
       name: string;
+      slug: string | null;
       type: ExerciseType;
       userId: string | null;
       variations: VariationListItem[];
@@ -87,6 +91,7 @@ export default function toExerciseListItems(rows: ListExerciseItemRpcRow[]): Exe
       entry = {
         id: row.exercise_id,
         name: row.exercise_name,
+        slug: row.exercise_slug,
         type: row.exercise_type as ExerciseType,
         userId: row.user_id,
         variations: [],
@@ -100,6 +105,7 @@ export default function toExerciseListItems(rows: ListExerciseItemRpcRow[]): Exe
     ExerciseListItem.restore({
       id: entry.id,
       name: entry.name,
+      slug: entry.slug,
       type: entry.type,
       userId: entry.userId,
       variations: entry.variations,

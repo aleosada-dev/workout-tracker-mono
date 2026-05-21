@@ -2,6 +2,17 @@ jest.mock('@/features/exercises/hooks/use-exercises', () => ({
   useExercises: jest.fn(),
 }));
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: { defaultValue?: string }) => {
+      const translations: Record<string, string> = {
+        'exerciseNames.benchPress': 'Bench Press',
+      };
+      return translations[key] ?? opts?.defaultValue ?? key;
+    },
+  }),
+}));
+
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
@@ -35,5 +46,18 @@ describe('<ExerciseNameAutocomplete />', () => {
 
     await waitFor(() => getByText('Supino Reto'));
     expect(queryByText('Agachamento Livre')).toBeNull();
+  });
+
+  test('shows the translated name for exercises that have a slug', async () => {
+    mockUseExercises.mockReturnValue({
+      data: [{ id: '1', name: 'Supino', slug: 'benchPress' }],
+    });
+
+    const user = userEvent.setup();
+    const { getByTestId, getByText } = render(<Harness />);
+
+    await user.type(getByTestId('name'), 'bench', { skipBlur: true });
+
+    await waitFor(() => getByText('Bench Press'));
   });
 });

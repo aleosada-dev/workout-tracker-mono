@@ -1,6 +1,8 @@
 import { Autocomplete } from '@workout-tracker/ui-mobile';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useExercises } from '@/features/exercises/hooks/use-exercises';
+import { resolveExerciseName } from '@/features/exercises/lib/format';
 import { normalizeString } from '@/features/shared/lib/utils';
 
 type Props = {
@@ -25,15 +27,17 @@ export function ExerciseNameAutocomplete({
   portalHost,
 }: Props) {
   const { data } = useExercises();
+  const { t } = useTranslation();
 
   const names = useMemo(() => {
     const byKey = new Map<string, string>();
     for (const e of data ?? []) {
-      const key = normalizeString(e.name);
-      if (!byKey.has(key)) byKey.set(key, e.name);
+      const display = resolveExerciseName(e.slug, e.name, t);
+      const key = normalizeString(display);
+      if (!byKey.has(key)) byKey.set(key, display);
     }
     return [...byKey.values()].sort((a, b) => a.localeCompare(b));
-  }, [data]);
+  }, [data, t]);
 
   return (
     <Autocomplete

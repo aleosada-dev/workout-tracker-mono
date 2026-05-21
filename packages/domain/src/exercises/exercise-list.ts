@@ -34,6 +34,7 @@ export type VariationListItemVideo = Nullable<
 export type VariationListItem = {
   id: string;
   name: string | null;
+  slug: string | null;
   muscle: VariationListItemMuscle;
   secondaryMuscle: VariationListItemSecondaryMuscle | null;
   equipment: VariationListItemEquipment;
@@ -42,6 +43,7 @@ export type VariationListItem = {
 };
 
 export type ExerciseListItemProps = Pick<ExerciseProps, 'id' | 'name' | 'userId'> & {
+  slug: string | null;
   type: ExerciseType;
   variations: VariationListItem[];
 };
@@ -49,6 +51,7 @@ export type ExerciseListItemProps = Pick<ExerciseProps, 'id' | 'name' | 'userId'
 export class ExerciseListItem {
   readonly id!: string;
   readonly name!: string;
+  readonly slug!: string | null;
   readonly type!: ExerciseType;
   readonly userId!: string | null;
   readonly variations!: VariationListItem[];

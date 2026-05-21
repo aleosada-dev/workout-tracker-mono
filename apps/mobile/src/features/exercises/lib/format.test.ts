@@ -9,15 +9,20 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
   pt: {
     'muscles.reto-abdominal': 'Reto Abdominal',
     'equipment.maquina': 'Máquina',
+    'exerciseNames.benchPress': 'Supino',
+    'variationNames.inclineBench': 'Inclinado',
   },
   en: {
     'muscles.reto-abdominal': 'Rectus Abdominis',
     'equipment.maquina': 'Machine',
+    'exerciseNames.benchPress': 'Bench Press',
+    'variationNames.inclineBench': 'Incline Bench',
   },
 };
 
 const makeT = (lng: string) =>
-  ((key: string) => TRANSLATIONS[lng]?.[key] ?? key) as unknown as TFunction;
+  ((key: string, opts?: { defaultValue?: string }) =>
+    TRANSLATIONS[lng]?.[key] ?? opts?.defaultValue ?? key) as unknown as TFunction;
 
 function makeExercise(
   overrides: Partial<ListExercisesResponseExercise> = {},
@@ -25,6 +30,7 @@ function makeExercise(
   return {
     id: 'ex-1',
     name: 'Abdominal',
+    slug: null,
     type: 'musculacao',
     userId: null,
     variations: [],
@@ -38,6 +44,7 @@ function makeVariation(
   return {
     id: 'id-1',
     name: null,
+    slug: null,
     muscle: {
       id: 'm1',
       name: 'Reto Abdominal',
@@ -119,5 +126,29 @@ describe('toExercise', () => {
     expect(
       toExercise(makeExercise({ type: 'preparatorio' }), makeVariation(), 'pt', makeT('pt')).type,
     ).toBe('preparatorio');
+  });
+
+  test('translates the exercise name from its slug', () => {
+    expect(
+      toExercise(makeExercise({ slug: 'benchPress' }), makeVariation(), 'pt', makeT('pt')).name,
+    ).toBe('Supino na Máquina');
+  });
+
+  test('translates the variation name from its slug', () => {
+    expect(
+      toExercise(makeExercise(), makeVariation({ slug: 'inclineBench' }), 'en', makeT('en'))
+        .variationName,
+    ).toBe('Incline Bench');
+  });
+
+  test('falls back to the stored name when the slug has no translation', () => {
+    const item = toExercise(
+      makeExercise({ slug: 'unknownExercise' }),
+      makeVariation({ slug: 'unknownVariation', name: 'Pegada Fechada' }),
+      'pt',
+      makeT('pt'),
+    );
+    expect(item.name).toBe('Abdominal na Máquina');
+    expect(item.variationName).toBe('Pegada Fechada');
   });
 });

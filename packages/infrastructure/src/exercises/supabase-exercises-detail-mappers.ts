@@ -34,7 +34,9 @@ export type GetExerciseDetailRpcResponseRecords = {
 
 export type GetExerciseDetailRpcResponseVariation = {
   exercise_name: string;
+  exercise_slug: string | null;
   variation_name: string | null;
+  variation_slug: string | null;
   equipment_slug: string;
   equipment_preposition: string;
   muscle_slug: string;
@@ -81,7 +83,9 @@ export const toExerciseDetail = async (
     variationId: raw.variation_id,
     variation: {
       exerciseName: raw.variation.exercise_name,
+      exerciseSlug: raw.variation.exercise_slug,
       variationName: raw.variation.variation_name,
+      variationSlug: raw.variation.variation_slug,
       equipmentSlug: raw.variation.equipment_slug,
       equipmentPreposition: raw.variation.equipment_preposition,
       muscleSlug: raw.variation.muscle_slug,

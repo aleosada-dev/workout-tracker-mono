@@ -9,6 +9,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'muscles.quadriceps': 'Quadríceps',
     'equipment.machine': 'Máquina',
     'equipment.barbell': 'Barra',
+    'exerciseNames.pullUp': 'Barra Fixa',
+    'variationNames.wideGrip': 'Pegada Aberta',
   },
   en: {
     'muscles.back': 'Back',
@@ -16,16 +18,21 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'muscles.quadriceps': 'Quadriceps',
     'equipment.machine': 'Machine',
     'equipment.barbell': 'Barbell',
+    'exerciseNames.pullUp': 'Pull-up',
+    'variationNames.wideGrip': 'Wide Grip',
   },
 };
 
 const makeT = (lng: string) =>
-  ((key: string) => TRANSLATIONS[lng]?.[key] ?? key) as unknown as TFunction;
+  ((key: string, opts?: { defaultValue?: string }) =>
+    TRANSLATIONS[lng]?.[key] ?? opts?.defaultValue ?? key) as unknown as TFunction;
 
 function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): ExerciseDetailResponse {
   const variation = {
     exerciseName: 'Barra Fixa',
+    exerciseSlug: null,
     variationName: null,
+    variationSlug: null,
     equipmentSlug: 'machine',
     equipmentPreposition: 'na',
     muscleSlug: 'back',
@@ -118,7 +125,9 @@ describe('toExerciseDetailData', () => {
       makeResponse({
         variation: {
           exerciseName: 'Barra Fixa',
+          exerciseSlug: null,
           variationName: null,
+          variationSlug: null,
           equipmentSlug: 'machine',
           equipmentPreposition: 'na',
           muscleSlug: 'back',
@@ -142,12 +151,60 @@ describe('toExerciseDetailData', () => {
     expect(en.primaryMuscle).toBe('Back');
   });
 
+  test('translates the exercise and variation names from their slugs', () => {
+    const data = toExerciseDetailData(
+      makeResponse({
+        variation: {
+          exerciseName: 'Barra Fixa',
+          exerciseSlug: 'pullUp',
+          variationName: 'Pegada Aberta',
+          variationSlug: 'wideGrip',
+          equipmentSlug: 'machine',
+          equipmentPreposition: 'na',
+          muscleSlug: 'back',
+          secondaryMuscleSlug: null,
+          youtubeUrl: null,
+          videoUrl: null,
+        },
+      }),
+      'en',
+      makeT('en'),
+    );
+    expect(data.name).toBe('Machine Pull-up');
+    expect(data.variationName).toBe('Wide Grip');
+  });
+
+  test('falls back to the stored names when the slugs have no translation', () => {
+    const data = toExerciseDetailData(
+      makeResponse({
+        variation: {
+          exerciseName: 'Barra Fixa',
+          exerciseSlug: 'unknownExercise',
+          variationName: 'Pegada Fechada',
+          variationSlug: 'unknownVariation',
+          equipmentSlug: 'machine',
+          equipmentPreposition: 'na',
+          muscleSlug: 'back',
+          secondaryMuscleSlug: null,
+          youtubeUrl: null,
+          videoUrl: null,
+        },
+      }),
+      'pt',
+      makeT('pt'),
+    );
+    expect(data.name).toBe('Barra Fixa na Máquina');
+    expect(data.variationName).toBe('Pegada Fechada');
+  });
+
   test('maps the secondary muscle when present', () => {
     const data = toExerciseDetailData(
       makeResponse({
         variation: {
           exerciseName: 'Agachamento',
+          exerciseSlug: null,
           variationName: null,
+          variationSlug: null,
           equipmentSlug: 'barbell',
           equipmentPreposition: 'com',
           muscleSlug: 'quadriceps',

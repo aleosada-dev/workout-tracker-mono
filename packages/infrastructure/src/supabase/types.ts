@@ -2684,6 +2684,7 @@ export type Database = {
           equipment_slug: string
           exercise_id: string
           exercise_name: string
+          exercise_slug: string
           exercise_type: string
           id: string
           image_url: string
@@ -2697,6 +2698,7 @@ export type Database = {
           secondary_muscle_name: string
           secondary_muscle_slug: string
           user_id: string
+          variation_slug: string
           video_duration_seconds: number
           video_object_key: string
           video_processing_status: string

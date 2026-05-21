@@ -3,6 +3,7 @@ import equipment from './equipment';
 import errors from './errors';
 import exerciseDetailScreen from './exerciseDetailScreen';
 import exerciseListScreen from './exerciseListScreen';
+import exerciseNames from './exerciseNames';
 import exercises from './exercises';
 import homeScreen from './homeScreen';
 import multiSelect from './multiSelect';
@@ -11,6 +12,7 @@ import sets from './sets';
 import settings from './settings';
 import signInScreen from './signInScreen';
 import tabs from './tabs';
+import variationNames from './variationNames';
 import workoutLogs from './workoutLogs';
 import workoutsScreen from './workoutsScreen';
 
@@ -27,6 +29,8 @@ const en = {
     exerciseDetailScreen,
     sets,
     exercises,
+    exerciseNames,
+    variationNames,
     muscles,
     multiSelect,
     equipment,

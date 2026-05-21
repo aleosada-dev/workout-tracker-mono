@@ -28,13 +28,14 @@ export type ExerciseDetailRecords = {
 
 export type ExerciseDetailVariation = {
   exerciseName: string;
+  exerciseSlug: string | null;
   variationName: string | null;
+  variationSlug: string | null;
   equipmentSlug: string;
   equipmentPreposition: string;
   muscleSlug: string;
   secondaryMuscleSlug: string | null;
   youtubeUrl: string | null;
-  /** Playable URL of the uploaded video: public for the library, presigned for user uploads. */
   videoUrl: string | null;
 };
 

@@ -51,6 +51,7 @@ const VariationVideoSchema = z.object({
 export const VariationResponseSchema = z.object({
 	id: z.uuid(),
 	name: z.string().nullable(),
+	slug: z.string().nullable(),
 	muscle: VariationMuscleSchema,
 	secondaryMuscle: VariationSecondaryMuscleSchema.nullable(),
 	equipment: VariationEquipmentSchema,
@@ -61,6 +62,7 @@ export const VariationResponseSchema = z.object({
 export const ExerciseListItemResponseSchema = z.object({
 	id: z.uuid(),
 	name: z.string(),
+	slug: z.string().nullable(),
 	type: ExerciseTypeSchema,
 	userId: z.uuid().nullable(),
 	variations: z.array(VariationResponseSchema),
@@ -75,6 +77,7 @@ export function toExerciseListItemResponse(item: ExerciseListItem): ExerciseList
 	return {
 		id: item.id,
 		name: item.name,
+		slug: item.slug,
 		type: item.type,
 		userId: item.userId,
 		variations: item.variations,
@@ -131,7 +134,9 @@ const DetailRecordsSchema = z.object({
 
 const DetailVariationSchema = z.object({
 	exerciseName: z.string().trim().min(1),
+	exerciseSlug: z.string().nullable(),
 	variationName: z.string().trim().min(1).nullable(),
+	variationSlug: z.string().nullable(),
 	equipmentSlug: z.string().trim().min(1),
 	equipmentPreposition: z.string().trim().min(1),
 	muscleSlug: z.string().trim().min(1),
