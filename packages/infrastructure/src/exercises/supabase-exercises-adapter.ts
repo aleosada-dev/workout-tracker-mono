@@ -44,11 +44,10 @@ export function makeSupabaseExerciseRepository(
     },
 
     async getExerciseDetail({ userId, variationId }) {
-      const { data, error } = await supabase.rpc(
-        // @ts-expect-error get_exercise_history is added by the migration; regenerate types.ts after applying it
-        'get_exercise_history',
-        { p_user_id: userId, p_variation_id: variationId },
-      );
+      const { data, error } = await supabase.rpc('get_exercise_history', {
+        p_user_id: userId,
+        p_variation_id: variationId,
+      });
 
       if (error) {
         if (error.code === 'P0002') {
@@ -64,32 +63,33 @@ export function makeSupabaseExerciseRepository(
     },
 
     async createExercise(input: CreateExerciseInput): Promise<{ id: string }> {
-      const { data, error } = await supabase.rpc('upsert_exercise_variation', {
-        p_user_id: input.userId,
-        // @ts-expect-error NULL creates a new exercise; the generated types require a string.
-        p_exercise_id: null,
-        p_name: input.exerciseName,
-        // @ts-expect-error NULL creates a new variation; the generated types require a string.
-        p_variation_id: null,
-        // @ts-expect-error A variation may have no name; the generated types require a string.
+      const { error } = await supabase.rpc('create_user_exercise', {
+        p_variation_id: input.variationId,
+        p_exercise_name: input.exerciseName,
+        p_exercise_type: input.exerciseType,
+        // @ts-expect-error
         p_variation_name: input.variationName,
         p_muscle_id: input.muscleId,
         p_equipment_id: input.equipmentId,
-        p_video_url: input.youtubeVideoUrl ?? '',
-        p_image_url: '',
-        p_new_variation: true,
-        p_secondary_muscle_id: input.secondaryMuscleId ?? undefined,
-        p_exercise_type: input.exerciseType,
+        // @ts-expect-error
+        p_secondary_muscle_id: input.secondaryMuscleId,
+        // @ts-expect-error
+        p_youtube_video_url: input.youtubeVideoUrl,
+        p_video_object_key: input.video?.objectKey,
+        p_video_thumbnail_key: input.video?.thumbnailKey,
+        p_video_duration_secs: input.video?.durationSeconds,
+        p_video_size_bytes: input.video?.sizeBytes,
+        p_video_content_type: input.video?.contentType,
       });
 
       if (error) {
-        if (error.message.startsWith('BUSINESS:')) {
-          throw new ConflictError(error.message.replace(/^BUSINESS:\s*/, ''));
+        if (error.code === '23505') {
+          throw new ConflictError('exercise variation already exists');
         }
         throw new Error(`Failed to create exercise: ${error.message}`);
       }
 
-      return { id: (data as unknown as { id: string }).id };
+      return { id: input.variationId };
     },
   };
 }

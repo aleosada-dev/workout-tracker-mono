@@ -8,9 +8,12 @@ import {
   Text,
   ToggleGroup,
   ToggleGroupItem,
+  UploadProgressBar,
 } from '@workout-tracker/ui-mobile';
+import * as Crypto from 'expo-crypto';
 import { router, Stack } from 'expo-router';
 import { X } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -20,8 +23,16 @@ import { z } from 'zod';
 import { ApiError } from '@/features/api/lib/errors';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
+import {
+  ExerciseVideoPicker,
+  type SelectedVideo,
+} from '@/features/exercises/components/ExerciseVideoPicker';
 import { ExerciseYouTubeCard } from '@/features/exercises/components/ExerciseYouTubeCard';
 import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
+import {
+  type ExerciseVideoUpload,
+  uploadExerciseVideo,
+} from '@/features/exercises/lib/upload-video';
 import { MuscleSelect } from '@/features/muscles/components/muscle-select';
 import { exerciseObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
@@ -96,6 +107,25 @@ export default function AddExerciseScreen() {
 
   const { mutate: createExercise, isPending } = useCreateExercise();
 
+  // The variation id is minted up front so the device video can be uploaded to
+  // R2 (under {userId}/{variationId}/...) before the variation row exists.
+  const [variationId] = useState(() => Crypto.randomUUID());
+  const [video, setVideo] = useState<SelectedVideo | null>(null);
+  // Holds the result of a successful upload so a retry (e.g. after a 409 on the
+  // exercise name) re-posts without re-uploading the video.
+  const [uploadedVideo, setUploadedVideo] = useState<ExerciseVideoUpload | null>(null);
+  // null = no upload in progress; 0..1 = upload running.
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  const busy = isPending || uploadProgress !== null;
+
+  function handleVideoChange(next: SelectedVideo | null) {
+    setVideo(next);
+    // A changed or removed video invalidates any previously uploaded file.
+    setUploadedVideo(null);
+    setUploadProgress(null);
+  }
+
   const handleCreateError = handleLocalError((error) => {
     if (error instanceof ApiError && error.status === 409) {
       Toast.show({
@@ -114,9 +144,38 @@ export default function AddExerciseScreen() {
     });
   });
 
-  const onSubmit = handleSubmit((values) => {
+  const onSubmit = handleSubmit(async (values) => {
+    // Reuse a video already uploaded on a previous attempt; otherwise upload it
+    // now, before creating the exercise.
+    let videoPayload: ExerciseVideoUpload | null = uploadedVideo;
+
+    if (video && !videoPayload) {
+      try {
+        setUploadProgress(0);
+        videoPayload = await uploadExerciseVideo({
+          variationId,
+          fileUri: video.uri,
+          contentType: video.contentType,
+          durationMs: video.durationMs,
+          onProgress: setUploadProgress,
+        });
+        setUploadedVideo(videoPayload);
+      } catch (error) {
+        exerciseObservability.captureError(error, { action: 'upload_exercise_video' });
+        Toast.show({
+          type: 'error',
+          text1: t('exerciseListScreen.addExercise.video.errors.uploadFailed.title'),
+          text2: t('exerciseListScreen.addExercise.video.errors.uploadFailed.message'),
+        });
+        return;
+      } finally {
+        setUploadProgress(null);
+      }
+    }
+
     createExercise(
       {
+        variationId,
         exerciseName: values.name,
         exerciseType: values.exerciseType,
         variationName: values.variationName,
@@ -124,6 +183,7 @@ export default function AddExerciseScreen() {
         secondaryMuscleId: values.secondaryMuscleId,
         equipmentId: values.equipmentId,
         youtubeVideoUrl: values.youtubeVideoUrl,
+        video: videoPayload,
       },
       {
         onSuccess: () => {
@@ -295,17 +355,27 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
+        <ExerciseVideoPicker value={video} onChange={handleVideoChange} disabled={busy} />
+
+        {uploadProgress !== null ? (
+          <UploadProgressBar
+            progress={uploadProgress}
+            label={t('exerciseListScreen.addExercise.video.uploading')}
+            testID="add-exercise.video.progress"
+          />
+        ) : null}
+
         <View className="mt-2 flex-row gap-3">
           <Button
             variant="outline"
             className="flex-1"
             onPress={() => router.back()}
-            disabled={isPending}
+            disabled={busy}
           >
             <Text>Cancelar</Text>
           </Button>
-          <Button className="flex-1" onPress={onSubmit} disabled={isPending}>
-            <Text>{isPending ? 'Salvando...' : 'Salvar'}</Text>
+          <Button className="flex-1" onPress={onSubmit} disabled={busy}>
+            <Text>{busy ? 'Salvando...' : 'Salvar'}</Text>
           </Button>
         </View>
       </KeyboardAwareScrollView>

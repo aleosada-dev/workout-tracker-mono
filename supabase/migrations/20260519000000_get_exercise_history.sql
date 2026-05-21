@@ -266,3 +266,94 @@ ALTER TABLE ONLY "public"."variations"
     GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "anon";
     GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "authenticated";
     GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "service_role";
+
+
+-- ================================================
+-- variations_user_dedup_uidx: a user cannot own two variations of the same
+-- exercise with the same equipment and name. Enforced as a constraint so
+-- create_user_exercise can stay a plain INSERT — a collision surfaces as a
+-- native unique_violation (SQLSTATE 23505). NULLS NOT DISTINCT treats two
+-- unnamed variations as equal. Partial: the public library (user_id IS NULL)
+-- is exempt; variations.user_id is set by the variations_sync_scope trigger.
+-- ================================================
+CREATE UNIQUE INDEX IF NOT EXISTS "variations_user_dedup_uidx"
+    ON "public"."variations" ("exercise_id", "equipment_id", "name") NULLS NOT DISTINCT
+    WHERE ("user_id" IS NOT NULL);
+
+
+-- ================================================
+-- create_user_exercise: cria exercício + variação + (opcionalmente) o vídeo
+-- enviado pelo dispositivo, numa única transação atômica.
+--
+-- A variação usa o p_variation_id gerado no frontend — necessário porque o
+-- vídeo é enviado ao R2 ANTES de a variação existir. O dono é sempre
+-- auth.uid(). Os dados chegam já tratados pela camada de API/domínio: a
+-- função apenas persiste e deixa as constraints rejeitarem entradas inválidas.
+-- Retorna o número de linhas inseridas em variations (1 em caso de sucesso);
+-- o id já é conhecido pelo cliente, que o gerou.
+-- ================================================
+DROP FUNCTION IF EXISTS "public"."create_user_exercise"("uuid", "uuid", "text", "text", "text", "uuid", "uuid", "uuid", "text", "text", "text", smallint, integer, "text");
+
+CREATE FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid" DEFAULT NULL::"uuid", "p_youtube_video_url" "text" DEFAULT NULL::"text", "p_video_object_key" "text" DEFAULT NULL::"text", "p_video_thumbnail_key" "text" DEFAULT NULL::"text", "p_video_duration_secs" smallint DEFAULT NULL::smallint, "p_video_size_bytes" integer DEFAULT NULL::integer, "p_video_content_type" "text" DEFAULT NULL::"text") RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_exercise_id uuid;
+  v_inserted integer;
+BEGIN
+  -- The one invariant no constraint can cover: without an identity the INSERTs
+  -- below would silently create public-library rows. 28000 = not authenticated.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'create_user_exercise called without an authenticated user'
+      USING ERRCODE = '28000';
+  END IF;
+
+  -- Find-or-create the exercise: the client works at the variation level and
+  -- sends only a name, so exercises are deduplicated per user by name.
+  SELECT id INTO v_exercise_id
+  FROM public.exercises
+  WHERE user_id = v_user_id AND name = p_exercise_name;
+
+  IF v_exercise_id IS NULL THEN
+    INSERT INTO public.exercises (name, user_id, exercise_type)
+    VALUES (p_exercise_name, v_user_id, p_exercise_type)
+    RETURNING id INTO v_exercise_id;
+  END IF;
+
+  -- Insert the variation with the frontend-supplied id. variations.user_id is
+  -- filled by the variations_sync_scope trigger. A repeated p_variation_id or a
+  -- duplicate (exercise, equipment, name) raises unique_violation (23505).
+  INSERT INTO public.variations (
+    id, name, exercise_id, muscle_id, equipment_id, secondary_muscle_id, video_url
+  )
+  VALUES (
+    p_variation_id, p_variation_name, v_exercise_id, p_muscle_id, p_equipment_id,
+    p_secondary_muscle_id, p_youtube_video_url
+  );
+  GET DIAGNOSTICS v_inserted = ROW_COUNT;
+
+  -- Persist the uploaded device video, if any, in the same transaction. The
+  -- variation_videos_dispatch_transcode trigger dispatches the transcode.
+  IF p_video_object_key IS NOT NULL THEN
+    INSERT INTO public.variation_videos (
+      variation_id, object_key, thumbnail_key,
+      duration_seconds, size_bytes, content_type, uploaded_by
+    )
+    VALUES (
+      p_variation_id, p_video_object_key, p_video_thumbnail_key,
+      p_video_duration_secs, p_video_size_bytes, p_video_content_type, v_user_id
+    );
+  END IF;
+
+  RETURN v_inserted;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") OWNER TO "postgres";
+
+GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "service_role";

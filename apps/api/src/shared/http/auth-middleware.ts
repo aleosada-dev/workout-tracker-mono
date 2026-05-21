@@ -17,8 +17,17 @@ export const bearerAuthMiddleware = createMiddleware<AppBindings>(async (c, next
 		if (error || !data) {
 			return c.json({ error: "Invalid or expired token" }, 401);
 		}
+
+		const claims = data.claims as UserClaims;
+		const userId = claims.sub;
+
+		if (!userId) {
+			return c.json({ error: "Missing user identity" }, 401);
+		}
+
 		c.set("accessToken", token);
-		c.set("userClaims", data.claims as UserClaims);
+		c.set("userClaims", claims);
+		c.set("userId", userId);
 	} catch {
 		return c.json({ error: "Invalid or expired token" }, 401);
 	}

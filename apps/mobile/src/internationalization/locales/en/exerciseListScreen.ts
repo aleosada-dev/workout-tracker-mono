@@ -52,6 +52,7 @@ export default {
       select: 'Select video',
       selected: 'Selected video',
       remove: 'Remove',
+      uploading: 'Uploading video…',
       errors: {
         tooLarge: {
           title: 'Video too large',
@@ -60,6 +61,14 @@ export default {
         tooLong: {
           title: 'Video too long',
           message: 'The video must be under 30 seconds.',
+        },
+        unsupportedFormat: {
+          title: 'Unsupported format',
+          message: 'Use an MP4, WebM or MOV video.',
+        },
+        uploadFailed: {
+          title: 'Upload failed',
+          message: 'Could not upload the video. Please try again.',
         },
       },
     },

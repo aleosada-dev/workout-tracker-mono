@@ -737,6 +737,7 @@ export type Database = {
           exercise_type: string
           id: string
           name: string
+          slug: string | null
           updated_at: string
           updated_by: string | null
           user_id: string | null
@@ -747,6 +748,7 @@ export type Database = {
           exercise_type?: string
           id?: string
           name: string
+          slug?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
@@ -757,6 +759,7 @@ export type Database = {
           exercise_type?: string
           id?: string
           name?: string
+          slug?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
@@ -1741,6 +1744,7 @@ export type Database = {
           muscle_id: string
           name: string | null
           secondary_muscle_id: string | null
+          slug: string | null
           updated_at: string
           updated_by: string | null
           user_id: string | null
@@ -1756,6 +1760,7 @@ export type Database = {
           muscle_id: string
           name?: string | null
           secondary_muscle_id?: string | null
+          slug?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
@@ -1771,6 +1776,7 @@ export type Database = {
           muscle_id?: string
           name?: string | null
           secondary_muscle_id?: string | null
+          slug?: string | null
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
@@ -2475,6 +2481,7 @@ export type Database = {
           equipment_slug: string | null
           exercise_id: string | null
           exercise_name: string | null
+          exercise_slug: string | null
           exercise_type: string | null
           id: string | null
           image_url: string | null
@@ -2488,6 +2495,7 @@ export type Database = {
           secondary_muscle_name: string | null
           secondary_muscle_slug: string | null
           user_id: string | null
+          variation_slug: string | null
           video_duration_seconds: number | null
           video_object_key: string | null
           video_processing_status: string | null
@@ -2553,6 +2561,24 @@ export type Database = {
         Args: { p_athlete_id: string; p_coach_id: string }
         Returns: undefined
       }
+      create_user_exercise: {
+        Args: {
+          p_equipment_id: string
+          p_exercise_name: string
+          p_exercise_type: string
+          p_muscle_id: string
+          p_secondary_muscle_id?: string
+          p_variation_id: string
+          p_variation_name?: string
+          p_video_content_type?: string
+          p_video_duration_secs?: number
+          p_video_object_key?: string
+          p_video_size_bytes?: number
+          p_video_thumbnail_key?: string
+          p_youtube_video_url?: string
+        }
+        Returns: number
+      }
       delete_exercise_variation:
         | {
             Args: { p_user_id: string; p_variation_id: string }
@@ -2600,6 +2626,10 @@ export type Database = {
           average_rating: number
           testimonial_count: number
         }[]
+      }
+      get_exercise_history: {
+        Args: { p_user_id: string; p_variation_id: string }
+        Returns: Json
       }
       get_previous_workout_log_for_summary: {
         Args: { p_user_id: string; p_workout_id: string }

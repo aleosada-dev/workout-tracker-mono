@@ -4,6 +4,7 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 const $get = honoClient.api.v1.exercises.$get;
 const $getDetail = honoClient.api.v1.exercises[':id'].detail.$get;
 const $post = honoClient.api.v1.exercises.$post;
+const $videoUploadUrls = honoClient.api.v1.medias['video-upload-urls'].$post;
 
 export type ListExercisesResponse = InferResponseType<typeof $get, 200>;
 export type ExerciseListParams = InferRequestType<typeof $get>;
@@ -12,6 +13,9 @@ export type ListExercisesResponseVariation = ListExercisesResponseExercise['vari
 
 export type CreateExerciseRequest = InferRequestType<typeof $post>['json'];
 export type CreateExerciseResponse = InferResponseType<typeof $post, 201>;
+
+export type VideoUploadUrlsRequest = InferRequestType<typeof $videoUploadUrls>['json'];
+export type VideoUploadUrlsResponse = InferResponseType<typeof $videoUploadUrls, 200>;
 
 export type ExerciseDetailResponse = InferResponseType<typeof $getDetail, 200>;
 export type ExerciseDetailResponseVariation = ExerciseDetailResponse['variation'];
@@ -40,6 +44,18 @@ export async function fetchExerciseDetail(
 
 export async function createExercise(body: CreateExerciseRequest): Promise<CreateExerciseResponse> {
   const response = await $post({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+/**
+ * Asks the API for presigned R2 URLs to upload an exercise video and its
+ * thumbnail. The object keys are built server-side from the authenticated user.
+ */
+export async function createVideoUploadUrls(
+  body: VideoUploadUrlsRequest,
+): Promise<VideoUploadUrlsResponse> {
+  const response = await $videoUploadUrls({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

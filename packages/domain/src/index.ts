@@ -5,6 +5,7 @@ export * from './exercises/exercise-detail';
 export * from './exercises/exercise-list';
 export * from './exercises/exercise-repo';
 export * from './exercises/models';
+export * from './media/video';
 export * from './muscles/muscle';
 export * from './muscles/muscle-repo';
 export * from './set/sets';

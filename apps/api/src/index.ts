@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { buildContainer } from "./container";
 import { equipmentsRouter } from "./modules/equipments/routes";
 import { exercisesRouter } from "./modules/exercises/routes";
+import { mediasRouter } from "./modules/medias/routes";
 import { musclesRouter } from "./modules/muscles/routes";
 import { workoutLogsRouter } from "./modules/workout-logs/routes";
 import { bearerAuthMiddleware } from "./shared/http/auth-middleware";
@@ -24,6 +25,7 @@ const apiApp = new Hono<AppBindings>()
 	})
 	.route("/muscles", musclesRouter)
 	.route("/exercises", exercisesRouter)
+	.route("/medias", mediasRouter)
 	.route("/equipments", equipmentsRouter)
 	.route("/workout-logs", workoutLogsRouter);
 

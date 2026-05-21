@@ -13,5 +13,7 @@ export type AppBindings = {
 		container: Container;
 		accessToken?: string;
 		userClaims?: UserClaims;
+		/** Authenticated user id. Guaranteed by bearerAuthMiddleware on /api/v1. */
+		userId: string;
 	};
 };

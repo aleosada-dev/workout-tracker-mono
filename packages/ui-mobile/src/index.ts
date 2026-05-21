@@ -27,6 +27,7 @@ export * from './components/ui/text';
 export * from './components/ui/textarea';
 export * from './components/ui/toggle';
 export * from './components/ui/toggle-group';
+export * from './components/ui/upload-progress-bar';
 export * from './hooks/use-debounced-value';
 export * from './lib/theme';
 export { cn } from './lib/utils';

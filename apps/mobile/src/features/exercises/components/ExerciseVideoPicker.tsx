@@ -2,29 +2,40 @@ import { Text } from '@workout-tracker/ui-mobile';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Upload, X } from 'lucide-react-native';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { exerciseObservability } from '@/features/observability/lib';
-import { validatePickedVideo } from '../lib/video-validation';
+import { type VideoContentType, validatePickedVideo } from '../lib/video-validation';
 
-type SelectedVideo = {
+export type SelectedVideo = {
   uri: string;
   fileName: string | null;
+  /** Video length in milliseconds, or `null` when the device did not report it. */
+  durationMs: number | null;
+  contentType: VideoContentType;
+};
+
+export type ExerciseVideoPickerProps = {
+  value: SelectedVideo | null;
+  onChange: (video: SelectedVideo | null) => void;
+  /** Locks picking and removing while an upload is in flight. */
+  disabled?: boolean;
 };
 
 /**
  * Seleção do vídeo de demonstração a partir da galeria do dispositivo.
  *
- * Por enquanto o vídeo só vive no estado local desta tela: o endpoint de criar
- * exercício ainda não aceita upload, então enviá-lo ao backend é uma etapa
- * futura. Aqui cuidamos apenas de escolher, validar (tamanho e duração) e
- * pré-visualizar.
+ * Componente controlado: o vídeo escolhido vive no formulário pai, que o envia
+ * ao R2 ao salvar. Aqui cuidamos apenas de escolher, validar (formato, tamanho
+ * e duração) e pré-visualizar.
  */
-export function ExerciseVideoPicker() {
+export function ExerciseVideoPicker({
+  value,
+  onChange,
+  disabled = false,
+}: ExerciseVideoPickerProps) {
   const { t } = useTranslation();
-  const [video, setVideo] = useState<SelectedVideo | null>(null);
 
   async function handlePick() {
     try {
@@ -40,6 +51,7 @@ export function ExerciseVideoPicker() {
       const validation = validatePickedVideo({
         fileSize: asset.fileSize,
         durationMs: asset.duration,
+        mimeType: asset.mimeType,
       });
       if (!validation.ok) {
         exerciseObservability.trackAction('exercise_video_rejected', { reason: validation.reason });
@@ -51,7 +63,12 @@ export function ExerciseVideoPicker() {
         return;
       }
 
-      setVideo({ uri: asset.uri, fileName: asset.fileName ?? null });
+      onChange({
+        uri: asset.uri,
+        fileName: asset.fileName ?? null,
+        durationMs: asset.duration ?? null,
+        contentType: validation.contentType,
+      });
       exerciseObservability.trackAction('exercise_video_selected');
     } catch (error) {
       exerciseObservability.captureError(error, { action: 'pick_exercise_video' });
@@ -67,13 +84,14 @@ export function ExerciseVideoPicker() {
     <View className="gap-2">
       <Text className="font-sans-semibold">{t('exerciseListScreen.addExercise.video.label')}</Text>
 
-      {video ? (
-        <SelectedVideoPreview video={video} onRemove={() => setVideo(null)} />
+      {value ? (
+        <SelectedVideoPreview video={value} disabled={disabled} onRemove={() => onChange(null)} />
       ) : (
         <>
           <Text variant="muted">{t('exerciseListScreen.addExercise.video.hint')}</Text>
           <Pressable
             onPress={handlePick}
+            disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={t('exerciseListScreen.addExercise.video.select')}
             testID="add-exercise.video.select"
@@ -88,7 +106,15 @@ export function ExerciseVideoPicker() {
   );
 }
 
-function SelectedVideoPreview({ video, onRemove }: { video: SelectedVideo; onRemove: () => void }) {
+function SelectedVideoPreview({
+  video,
+  disabled,
+  onRemove,
+}: {
+  video: SelectedVideo;
+  disabled: boolean;
+  onRemove: () => void;
+}) {
   const { t } = useTranslation();
   const player = useVideoPlayer(video.uri, (p) => {
     p.loop = true;
@@ -109,17 +135,19 @@ function SelectedVideoPreview({ video, onRemove }: { video: SelectedVideo; onRem
         <Text variant="muted" numberOfLines={1} className="flex-1">
           {video.fileName ?? t('exerciseListScreen.addExercise.video.selected')}
         </Text>
-        <Pressable
-          onPress={onRemove}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={t('exerciseListScreen.addExercise.video.remove')}
-          testID="add-exercise.video.remove"
-          className="flex-row items-center gap-1 active:opacity-70"
-        >
-          <X size={16} color="#a1a1aa" />
-          <Text variant="muted">{t('exerciseListScreen.addExercise.video.remove')}</Text>
-        </Pressable>
+        {disabled ? null : (
+          <Pressable
+            onPress={onRemove}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('exerciseListScreen.addExercise.video.remove')}
+            testID="add-exercise.video.remove"
+            className="flex-row items-center gap-1 active:opacity-70"
+          >
+            <X size={16} color="#a1a1aa" />
+            <Text variant="muted">{t('exerciseListScreen.addExercise.video.remove')}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

@@ -1,8 +1,9 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { exerciseObservability } from '@/features/observability/lib';
-import { ExerciseVideoPicker } from './ExerciseVideoPicker';
+import { ExerciseVideoPicker, type SelectedVideo } from './ExerciseVideoPicker';
 
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(),
@@ -37,10 +38,17 @@ function videoAsset(overrides: Record<string, unknown> = {}) {
     fileName: 'demo.mp4',
     fileSize: 5 * 1024 * 1024,
     duration: 10_000,
+    mimeType: 'video/mp4',
     width: 1080,
     height: 1920,
     ...overrides,
   };
+}
+
+/** Controlled host so the picker's `value` reflects what `onChange` reports. */
+function Harness() {
+  const [video, setVideo] = useState<SelectedVideo | null>(null);
+  return <ExerciseVideoPicker value={video} onChange={setVideo} />;
 }
 
 afterEach(() => {
@@ -49,7 +57,7 @@ afterEach(() => {
 
 describe('<ExerciseVideoPicker />', () => {
   test('shows the select action and no preview initially', () => {
-    const { getByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, queryByTestId } = render(<Harness />);
 
     getByTestId('add-exercise.video.select');
     expect(queryByTestId('add-exercise.video.preview')).toBeNull();
@@ -58,7 +66,7 @@ describe('<ExerciseVideoPicker />', () => {
   test('shows a preview when the picked video is within the limits', async () => {
     launchImageLibraryAsync.mockResolvedValue({ canceled: false, assets: [videoAsset()] });
 
-    const { getByTestId, findByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, findByTestId, queryByTestId } = render(<Harness />);
     fireEvent.press(getByTestId('add-exercise.video.select'));
 
     await findByTestId('add-exercise.video.preview');
@@ -73,7 +81,7 @@ describe('<ExerciseVideoPicker />', () => {
       assets: [videoAsset({ fileSize: 200 * 1024 * 1024 })],
     });
 
-    const { getByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, queryByTestId } = render(<Harness />);
     fireEvent.press(getByTestId('add-exercise.video.select'));
 
     await waitFor(() => expect(toastShow).toHaveBeenCalled());
@@ -92,7 +100,7 @@ describe('<ExerciseVideoPicker />', () => {
       assets: [videoAsset({ duration: 45_000 })],
     });
 
-    const { getByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, queryByTestId } = render(<Harness />);
     fireEvent.press(getByTestId('add-exercise.video.select'));
 
     await waitFor(() => expect(toastShow).toHaveBeenCalled());
@@ -104,10 +112,28 @@ describe('<ExerciseVideoPicker />', () => {
     expect(queryByTestId('add-exercise.video.preview')).toBeNull();
   });
 
+  test('rejects an unsupported format with an error toast', async () => {
+    launchImageLibraryAsync.mockResolvedValue({
+      canceled: false,
+      assets: [videoAsset({ mimeType: 'video/avi' })],
+    });
+
+    const { getByTestId, queryByTestId } = render(<Harness />);
+    fireEvent.press(getByTestId('add-exercise.video.select'));
+
+    await waitFor(() => expect(toastShow).toHaveBeenCalled());
+    expect(toastShow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text1: 'exerciseListScreen.addExercise.video.errors.unsupportedFormat.title',
+      }),
+    );
+    expect(queryByTestId('add-exercise.video.preview')).toBeNull();
+  });
+
   test('does nothing when the picker is canceled', async () => {
     launchImageLibraryAsync.mockResolvedValue({ canceled: true, assets: null });
 
-    const { getByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, queryByTestId } = render(<Harness />);
     fireEvent.press(getByTestId('add-exercise.video.select'));
 
     await waitFor(() => expect(launchImageLibraryAsync).toHaveBeenCalled());
@@ -118,7 +144,7 @@ describe('<ExerciseVideoPicker />', () => {
   test('clears the preview when the user removes the video', async () => {
     launchImageLibraryAsync.mockResolvedValue({ canceled: false, assets: [videoAsset()] });
 
-    const { getByTestId, findByTestId, queryByTestId } = render(<ExerciseVideoPicker />);
+    const { getByTestId, findByTestId, queryByTestId } = render(<Harness />);
     fireEvent.press(getByTestId('add-exercise.video.select'));
 
     await findByTestId('add-exercise.video.preview');

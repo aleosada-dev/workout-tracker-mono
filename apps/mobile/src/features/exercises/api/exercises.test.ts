@@ -16,6 +16,7 @@ jest.mock('@/features/observability/lib', () => {
 import {
   type CreateExerciseRequest,
   createExercise,
+  createVideoUploadUrls,
   EMPTY_EXERCISE_LIST_PARAMS,
   fetchExercises,
 } from '@/features/exercises/api/exercises';
@@ -104,6 +105,7 @@ describe('fetchExercises', () => {
 });
 
 const createBody: CreateExerciseRequest = {
+  variationId: 'd3f0e8a2-3333-4ba2-b2c3-324a63844771',
   exerciseName: 'Supino',
   exerciseType: 'musculacao',
   variationName: 'Barra',
@@ -111,6 +113,7 @@ const createBody: CreateExerciseRequest = {
   secondaryMuscleId: null,
   equipmentId: 'c2e1f9b3-2222-4ba2-b2c3-324a63844771',
   youtubeVideoUrl: null,
+  video: null,
 };
 
 function jsonResponseWithStatus<T>(data: T, status: number) {
@@ -143,5 +146,41 @@ describe('createExercise', () => {
       status: 409,
       message: 'Exercise variation already exists',
     });
+  });
+});
+
+describe('createVideoUploadUrls', () => {
+  test('posts the variation id and content type, returns the presigned URLs', async () => {
+    const payload = {
+      uploadId: 'a35c0d15-db1f-4ba2-b2c3-324a63844771',
+      video: { objectKey: 'user/var/upload.mp4', uploadUrl: 'https://r2.example/put-video' },
+      thumbnail: { objectKey: 'user/var/upload.jpg', uploadUrl: 'https://r2.example/put-thumb' },
+    };
+    mockFetch.mockResolvedValueOnce(jsonResponseWithStatus(payload, 200));
+
+    const result = await createVideoUploadUrls({
+      variationId: 'd3f0e8a2-3333-4ba2-b2c3-324a63844771',
+      videoContentType: 'video/mp4',
+    });
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(String(url)).toContain('/api/v1/medias/video-upload-urls');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      variationId: 'd3f0e8a2-3333-4ba2-b2c3-324a63844771',
+      videoContentType: 'video/mp4',
+    });
+    expect(result).toEqual(payload);
+  });
+
+  test('throws ApiError when the request fails', async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponseWithStatus({ error: 'Invalid input' }, 400));
+
+    await expect(
+      createVideoUploadUrls({
+        variationId: 'd3f0e8a2-3333-4ba2-b2c3-324a63844771',
+        videoContentType: 'video/mp4',
+      }),
+    ).rejects.toMatchObject({ name: 'ApiError', status: 400 });
   });
 });

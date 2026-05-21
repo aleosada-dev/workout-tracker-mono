@@ -52,6 +52,7 @@ export default {
       select: 'Selecionar vídeo',
       selected: 'Vídeo selecionado',
       remove: 'Remover',
+      uploading: 'Enviando vídeo…',
       errors: {
         tooLarge: {
           title: 'Vídeo muito grande',
@@ -60,6 +61,14 @@ export default {
         tooLong: {
           title: 'Vídeo muito longo',
           message: 'O vídeo deve ter menos de 30 segundos.',
+        },
+        unsupportedFormat: {
+          title: 'Formato não suportado',
+          message: 'Use um vídeo MP4, WebM ou MOV.',
+        },
+        uploadFailed: {
+          title: 'Falha no envio',
+          message: 'Não foi possível enviar o vídeo. Tente novamente.',
         },
       },
     },

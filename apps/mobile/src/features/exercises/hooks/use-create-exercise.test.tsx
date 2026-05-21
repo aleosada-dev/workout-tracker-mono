@@ -11,6 +11,7 @@ import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercis
 const mockCreateExercise = createExercise as jest.Mock;
 
 const createBody: CreateExerciseRequest = {
+  variationId: 'd3f0e8a2-3333-4ba2-b2c3-324a63844771',
   exerciseName: 'Supino',
   exerciseType: 'musculacao',
   variationName: 'Barra',
@@ -18,6 +19,7 @@ const createBody: CreateExerciseRequest = {
   secondaryMuscleId: null,
   equipmentId: 'c2e1f9b3-2222-4ba2-b2c3-324a63844771',
   youtubeVideoUrl: null,
+  video: null,
 };
 
 function makeWrapper() {

@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
+import type { Container } from "../../container";
 import type { AppBindings } from "../../shared/http/types";
 import {
+	type CreateExerciseRequest,
 	CreateExerciseRequestSchema,
 	CreateExerciseResponseSchema,
 	ExerciseDetailResponseSchema,
@@ -10,6 +12,35 @@ import {
 	ListExercisesQuerySchema,
 	toExerciseListItemResponse,
 } from "./schemas";
+
+/**
+ * Validates a device video already uploaded to R2 before the exercise is
+ * persisted. The R2 keys are client-supplied, so they cannot be trusted:
+ * confirm they sit under this user's and variation's prefix, then HEAD the
+ * object to confirm the upload actually landed and matches the declared size
+ * and content type. Returns an error message, or `null` when the video is ok.
+ */
+async function validateUploadedVideo(
+	video: NonNullable<CreateExerciseRequest["video"]>,
+	userId: string,
+	variationId: string,
+	videoUploads: Container["videoUploads"],
+): Promise<string | null> {
+	const keyPrefix = `${userId}/${variationId}/`;
+	if (!video.objectKey.startsWith(keyPrefix) || !video.thumbnailKey.startsWith(keyPrefix)) {
+		return "Video keys do not match the authenticated user and variation";
+	}
+
+	const head = await videoUploads.headObject(video.objectKey);
+	if (!head) {
+		return "Uploaded video not found in storage";
+	}
+	if (head.contentLength !== video.sizeBytes || head.contentType !== video.contentType) {
+		return "Uploaded video does not match the provided metadata";
+	}
+
+	return null;
+}
 
 export const exercisesRouter = new Hono<AppBindings>()
 	.get(
@@ -31,11 +62,7 @@ export const exercisesRouter = new Hono<AppBindings>()
 		}),
 		validator("query", ListExercisesQuerySchema),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
-				return c.json({ error: "Missing user identity" }, 401);
-			}
-
+			const userId = c.get("userId");
 			const query = c.req.valid("query");
 			const { list } = c.get("container").exercises;
 			const exercises = await list({ ...query, userId });
@@ -63,12 +90,21 @@ export const exercisesRouter = new Hono<AppBindings>()
 		}),
 		validator("json", CreateExerciseRequestSchema),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
-				return c.json({ error: "Missing user identity" }, 401);
+			const userId = c.get("userId");
+			const body = c.req.valid("json");
+
+			if (body.video) {
+				const videoError = await validateUploadedVideo(
+					body.video,
+					userId,
+					body.variationId,
+					c.get("container").videoUploads,
+				);
+				if (videoError) {
+					return c.json({ error: videoError }, 400);
+				}
 			}
 
-			const body = c.req.valid("json");
 			const { createExercise } = c.get("container").exercises;
 			const { id } = await createExercise({ userId, ...body });
 			return c.json({ id }, 201);
@@ -94,11 +130,7 @@ export const exercisesRouter = new Hono<AppBindings>()
 		}),
 		validator("param", ExerciseIdParamSchema),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
-				return c.json({ error: "Missing user identity" }, 401);
-			}
-
+			const userId = c.get("userId");
 			const { id: variationId } = c.req.valid("param");
 			const { getExerciseDetail } = c.get("container").exercises;
 			const detail = await getExerciseDetail({ userId, variationId });

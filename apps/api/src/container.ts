@@ -7,6 +7,8 @@ import {
 import {
 	createSupabaseClient,
 	makeBuildUploadedVideoUrl,
+	makeBuildVideoUploadUrls,
+	makeHeadObject,
 	makeSupabaseEquipmentRepository,
 	makeSupabaseExerciseRepository,
 	makeSupabaseMuscleRepository,
@@ -28,6 +30,10 @@ export function buildContainer(env: Env, accessToken?: string) {
 		exercises: makeExerciseApp(exerciseRepository),
 		equipments: makeEquipmentApp(equipmentRepository),
 		workoutLogs: makeWorkoutLogApp(workoutLogRepository),
+		videoUploads: {
+			buildUploadUrls: makeBuildVideoUploadUrls(env),
+			headObject: makeHeadObject(env),
+		},
 	};
 }
 

@@ -358,9 +358,11 @@ describe("GET /api/v1/exercises", () => {
 });
 
 describe("POST /api/v1/exercises", () => {
-	// Unique exercise name per run so the RPC duplicate check does not break re-runs.
+	// Unique exercise name and variation id per run so the RPC duplicate /
+	// collision checks do not break re-runs.
 	function newExerciseBody(): CreateExerciseRequest {
 		return {
+			variationId: crypto.randomUUID(),
 			exerciseName: `Test Exercise ${crypto.randomUUID()}`,
 			exerciseType: "musculacao",
 			variationName: "Barra",
@@ -368,10 +370,11 @@ describe("POST /api/v1/exercises", () => {
 			secondaryMuscleId: null,
 			equipmentId: SEED_EQUIPMENT_BARRA,
 			youtubeVideoUrl: null,
+			video: null,
 		};
 	}
 
-	test("creates an exercise and returns 201 with the new id", async () => {
+	test("creates an exercise and returns the client-supplied variation id", async () => {
 		const client = getTestClient();
 		const body = newExerciseBody();
 
@@ -382,8 +385,8 @@ describe("POST /api/v1/exercises", () => {
 
 		expect(res.status).toBe(201);
 		const data = (await res.json()) as { id: string };
-		expect(typeof data.id).toBe("string");
-		expect(data.id.length).toBeGreaterThan(0);
+		// The variation row uses the id minted by the client.
+		expect(data.id).toBe(body.variationId);
 
 		// The new exercise is persisted and owned by the creating user.
 		const listRes = await client.api.v1.exercises.$get(
@@ -395,13 +398,38 @@ describe("POST /api/v1/exercises", () => {
 
 		expect(created).toBeDefined();
 		expect(created?.userId).toBe(getTestUserAuth("athlete").userId);
+		expect(created?.variations.some((v) => v.id === body.variationId)).toBeTrue();
+	});
+
+	test("returns 400 when the video keys are not under the user's prefix", async () => {
+		const client = getTestClient();
+		const foreignId = "00000000-0000-4000-8000-000000000000";
+		const res = await client.api.v1.exercises.$post(
+			{
+				json: {
+					...newExerciseBody(),
+					video: {
+						objectKey: `${foreignId}/${foreignId}/${foreignId}.mp4`,
+						thumbnailKey: `${foreignId}/${foreignId}/${foreignId}.jpg`,
+						durationSeconds: 10,
+						sizeBytes: 1024,
+						contentType: "video/mp4",
+					},
+				},
+			},
+			{ headers: authHeaders("athlete") },
+		);
+
+		// The prefix check rejects the request before any storage call.
+		expect(res.status as number).toBe(400);
 	});
 
 	test("returns 401 when Authorization header is missing", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.exercises.$post({ json: newExerciseBody() });
 
-		expect(res.status).toBe(401);
+		// The auth middleware's 401 is a runtime response not modeled in the client type.
+		expect(res.status as number).toBe(401);
 	});
 
 	test("returns 400 when exerciseName is empty", async () => {
@@ -427,6 +455,8 @@ describe("POST /api/v1/exercises", () => {
 
 	test("returns 409 when the same variation already exists", async () => {
 		const client = getTestClient();
+		// Re-posting with a fresh variation id but the same name/equipment/variation
+		// still trips the duplicate check.
 		const body = newExerciseBody();
 
 		const first = await client.api.v1.exercises.$post(
@@ -436,7 +466,7 @@ describe("POST /api/v1/exercises", () => {
 		expect(first.status).toBe(201);
 
 		const second = await client.api.v1.exercises.$post(
-			{ json: body },
+			{ json: { ...body, variationId: crypto.randomUUID() } },
 			{ headers: authHeaders("athlete") },
 		);
 		// The error handler's 409 is a runtime response not modeled in the client type.

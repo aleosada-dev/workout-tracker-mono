@@ -1,11 +1,14 @@
 import {
 	EXERCISE_TYPES,
 	type ExerciseListItem,
+	MAX_VIDEO_DURATION_SECONDS,
+	MAX_VIDEO_SIZE_BYTES,
 	VISIBILITIES,
 	WORKOUT_SET_TYPES,
 } from "@workout-tracker/domain";
 import { z } from "zod";
 import { arrayQuery } from "../../shared/http/schemas";
+import { VideoContentTypeSchema } from "../medias/schemas";
 
 export const VisibilitySchema = z.enum(VISIBILITIES);
 export const ExerciseTypeSchema = z.enum(EXERCISE_TYPES);
@@ -84,7 +87,20 @@ export function toExerciseListItemResponse(item: ExerciseListItem): ExerciseList
 	};
 }
 
+/** Metadata of a device video already uploaded to R2, sent with the exercise. */
+export const CreateExerciseVideoSchema = z.object({
+	objectKey: z.string().min(1),
+	thumbnailKey: z.string().min(1),
+	// Ranges come from the domain video module (which the variation_videos CHECK
+	// constraints mirror), so a bad payload is a clean 400 instead of a DB error.
+	durationSeconds: z.number().int().min(1).max(MAX_VIDEO_DURATION_SECONDS),
+	sizeBytes: z.number().int().min(1).max(MAX_VIDEO_SIZE_BYTES),
+	contentType: VideoContentTypeSchema,
+});
+
 export const CreateExerciseRequestSchema = z.object({
+	// Minted by the client so the device video can be uploaded to R2 up front.
+	variationId: z.uuid(),
 	exerciseName: z.string().trim().min(1),
 	exerciseType: ExerciseTypeSchema,
 	variationName: z.string().trim().min(1).nullable(),
@@ -92,6 +108,7 @@ export const CreateExerciseRequestSchema = z.object({
 	secondaryMuscleId: z.uuid().nullable(),
 	equipmentId: z.uuid(),
 	youtubeVideoUrl: z.url().nullable(),
+	video: CreateExerciseVideoSchema.nullable(),
 });
 
 export type CreateExerciseRequest = z.infer<typeof CreateExerciseRequestSchema>;

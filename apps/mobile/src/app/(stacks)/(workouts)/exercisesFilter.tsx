@@ -37,26 +37,26 @@ export default function ExercisesFilterScreen() {
   const [showTypeWarning, setShowTypeWarning] = useState(false);
   const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearWarningTimer = () => {
+  const clearWarningTimer = useCallback(() => {
     if (warningTimer.current) {
       clearTimeout(warningTimer.current);
       warningTimer.current = null;
     }
-  };
+  }, []);
 
   const dismissTypeWarning = () => {
     clearWarningTimer();
     setShowTypeWarning(false);
   };
 
-  const triggerTypeWarning = () => {
+  const triggerTypeWarning = useCallback(() => {
     clearWarningTimer();
     setShowTypeWarning(true);
     warningTimer.current = setTimeout(() => {
       warningTimer.current = null;
       setShowTypeWarning(false);
     }, 3000);
-  };
+  }, [clearWarningTimer]);
 
   useEffect(() => clearWarningTimer, [clearWarningTimer]);
 
