@@ -38,7 +38,7 @@ export default {
       exerciseType: 'Selecione o tipo de exercício',
       primaryMuscle: 'Selecione o músculo primário',
       equipment: 'Selecione um equipamento',
-      youtubeVideoUrl: 'Informe uma URL válida',
+      youtubeVideoUrl: 'Informe uma URL do YouTube válida',
     },
     errors: {
       conflict: {

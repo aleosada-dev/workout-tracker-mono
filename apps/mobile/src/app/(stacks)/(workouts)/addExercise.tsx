@@ -56,11 +56,14 @@ const exerciseFormSchema = z.object({
   primaryMuscleId: z.string().min(1, 'exerciseListScreen.addExercise.validation.primaryMuscle'),
   secondaryMuscleId: z.string().transform((v) => v || null),
   equipmentId: z.string().min(1, 'exerciseListScreen.addExercise.validation.equipment'),
+  // Vazio é permitido (campo opcional). Caso contrário, exige uma URL da qual
+  // seja possível extrair um vídeo do YouTube — o mesmo critério que decide se
+  // o preview aparece. Uma URL "válida" mas de outro site é considerada inválida.
   youtubeVideoUrl: z
     .string()
     .trim()
     .refine(
-      (v) => v === '' || z.url().safeParse(v).success,
+      (v) => v === '' || extractYouTubeVideoId(v) !== null,
       'exerciseListScreen.addExercise.validation.youtubeVideoUrl',
     )
     .transform((v) => v || null),
@@ -76,6 +79,7 @@ export default function AddExerciseScreen() {
   const {
     control,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<ExerciseFormInput, unknown, ExerciseFormValues>({
     resolver: zodResolver(exerciseFormSchema),
@@ -275,7 +279,12 @@ export default function AddExerciseScreen() {
                   keyboardType="url"
                   value={field.value}
                   onChangeText={field.onChange}
-                  onBlur={field.onBlur}
+                  onBlur={() => {
+                    field.onBlur();
+                    // Valida só este campo ao sair dele, para que o estado
+                    // inválido apareça junto com a ausência do preview.
+                    void trigger('youtubeVideoUrl');
+                  }}
                   aria-invalid={!!errors.youtubeVideoUrl}
                 />
                 {extractYouTubeVideoId(field.value) ? (
