@@ -1,5 +1,6 @@
 import { Equipment, type EquipmentRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
+import { supabaseError } from '../supabase/supabase-error';
 
 export function makeSupabaseEquipmentRepository(supabase: Supabase): EquipmentRepository {
   return {
@@ -9,7 +10,7 @@ export function makeSupabaseEquipmentRepository(supabase: Supabase): EquipmentRe
         .select('id, name, slug, preposition, created_at');
 
       if (error) {
-        throw new Error(`Failed to list equipments: ${error.message}`);
+        throw supabaseError('Failed to list equipments', error);
       }
 
       return (data ?? []).map((row) =>

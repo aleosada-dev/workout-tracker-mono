@@ -22,5 +22,6 @@ export {
   readR2Config,
 } from './r2';
 export { createSupabaseClient, type Supabase } from './supabase/client';
+export { supabaseError } from './supabase/supabase-error';
 export type { Database, Json } from './supabase/types';
 export { makeSupabaseWorkoutLogRepository } from './workout-logs/supabase-workout-logs-adapter';

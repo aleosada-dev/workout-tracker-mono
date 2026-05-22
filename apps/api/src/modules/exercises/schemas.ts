@@ -123,6 +123,49 @@ export const ExerciseIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+/** Body of PUT /exercises/:id — same fields as create, minus the path-supplied id. */
+export const UpdateExerciseRequestSchema = z.object({
+	exerciseName: z.string().trim().min(1),
+	exerciseType: ExerciseTypeSchema,
+	variationName: z.string().trim().min(1).nullable(),
+	muscleId: z.uuid(),
+	secondaryMuscleId: z.uuid().nullable(),
+	equipmentId: z.uuid(),
+	youtubeVideoUrl: z.url().nullable(),
+	video: CreateExerciseVideoSchema.nullable(),
+});
+
+export type UpdateExerciseRequest = z.infer<typeof UpdateExerciseRequestSchema>;
+
+/** Uploaded device video of a variation, as returned for the edit form. */
+const ExerciseForEditVideoSchema = z.object({
+	objectKey: z.string(),
+	thumbnailKey: z.string(),
+	durationSeconds: z.number().int(),
+	sizeBytes: z.number().int(),
+	contentType: VideoContentTypeSchema,
+	processingStatus: z.string(),
+	/** Playable URL of the uploaded video, or null when it cannot be resolved. */
+	url: z.string().nullable(),
+});
+
+/** Response of GET /exercises/:id — everything the edit form pre-fills. */
+export const ExerciseForEditResponseSchema = z.object({
+	variationId: z.uuid(),
+	exerciseName: z.string(),
+	exerciseType: ExerciseTypeSchema,
+	variationName: z.string().nullable(),
+	muscleId: z.uuid(),
+	secondaryMuscleId: z.uuid().nullable(),
+	equipmentId: z.uuid(),
+	equipmentSlug: z.string(),
+	equipmentPreposition: z.string(),
+	youtubeVideoUrl: z.string().nullable(),
+	video: ExerciseForEditVideoSchema.nullable(),
+});
+
+export type ExerciseForEditResponse = z.infer<typeof ExerciseForEditResponseSchema>;
+
 const DetailSessionSetSchema = z.object({
 	setOrder: z.number().int().nonnegative(),
 	setType: z.enum(WORKOUT_SET_TYPES),
@@ -160,6 +203,8 @@ const DetailVariationSchema = z.object({
 	secondaryMuscleSlug: z.string().trim().min(1).nullable(),
 	youtubeUrl: z.url().nullable(),
 	videoUrl: z.url().nullable(),
+	/** Owner of the variation; null for the public library. Drives editability. */
+	userId: z.uuid().nullable(),
 });
 
 export const ExerciseDetailResponseSchema = z.object({

@@ -11,7 +11,8 @@ import { workoutLogsRouter } from "./modules/workout-logs/routes";
 import { bearerAuthMiddleware } from "./shared/http/auth-middleware";
 import { buildOpenApiSpec, registerOpenApiRoutes } from "./shared/http/openapi";
 import type { AppBindings } from "./shared/http/types";
-import { isObservabilityEnabled } from "./shared/observability/config";
+import { isDevelopment, isSentryEnabled } from "./shared/observability/config";
+import { formatError } from "./shared/observability/log-error";
 import { observabilityMiddleware } from "./shared/observability/observability-middleware";
 import { sentryUserMiddleware } from "./shared/observability/sentry-user-middleware";
 
@@ -42,8 +43,8 @@ const sentryMiddleware = sentry(baseApp, (env) => ({
 
 const app = baseApp
 	.onError((err, c) => {
-		console.error(`[onError] ${err.name}: ${err.message}`);
-
+		// Expected domain outcomes — control flow, not failures. The request log
+		// from observabilityMiddleware already records the resulting status.
 		if (err instanceof NotFoundError) {
 			return c.json({ error: err.message }, 404);
 		}
@@ -56,15 +57,31 @@ const app = baseApp
 			return c.json({ error: err.message, issues: err.issues }, 400);
 		}
 
-		if (isObservabilityEnabled(c.env)) {
+		// Unhandled error → 500. Always print it in full (message, stack and the
+		// whole `cause` chain, e.g. a wrapped Supabase RPC error) so it is visible
+		// in `wrangler dev`. Forward to Sentry only when a DSN is configured.
+		console.error(`[unhandled] ${formatError(err)}`);
+
+		if (isSentryEnabled(c.env)) {
 			Sentry.captureException(err);
-			console.error(err);
+		}
+
+		// Outside production, return the real error so it shows up in the client
+		// and the network inspector instead of an opaque "Internal Server Error".
+		if (isDevelopment(c.env)) {
+			return c.json(
+				{
+					error: "Internal Server Error",
+					message: err instanceof Error ? err.message : String(err),
+				},
+				500,
+			);
 		}
 
 		return c.text("Internal Server Error", 500);
 	})
 	.use("/api/v1/*", async (c, next) => {
-		if (!isObservabilityEnabled(c.env)) {
+		if (!isSentryEnabled(c.env)) {
 			await next();
 			return;
 		}

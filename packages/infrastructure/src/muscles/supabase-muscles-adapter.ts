@@ -1,5 +1,6 @@
 import { Muscle, type MuscleProps, type MuscleRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
+import { supabaseError } from '../supabase/supabase-error';
 
 type MuscleRow = {
   id: string;
@@ -36,7 +37,7 @@ export function makeSupabaseMuscleRepository(supabase: Supabase): MuscleReposito
         .order('sort_order', { ascending: true });
 
       if (error) {
-        throw new Error(`Failed to list muscles: ${error.message}`);
+        throw supabaseError('Failed to list muscles', error);
       }
 
       return (data ?? []).map((row) => Muscle.restore(toFlatProps(row)));
@@ -50,7 +51,7 @@ export function makeSupabaseMuscleRepository(supabase: Supabase): MuscleReposito
         .order('sort_order', { ascending: true });
 
       if (error) {
-        throw new Error(`Failed to list muscles tree: ${error.message}`);
+        throw supabaseError('Failed to list muscles tree', error);
       }
 
       const propsById = new Map<string, MuscleProps>();

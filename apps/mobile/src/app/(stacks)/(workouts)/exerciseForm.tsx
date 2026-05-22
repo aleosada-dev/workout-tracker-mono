@@ -5,23 +5,26 @@ import {
   Button,
   Field,
   Input,
+  RequestErrorState,
+  Skeleton,
   Text,
   ToggleGroup,
   ToggleGroupItem,
   UploadProgressBar,
 } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 import { ApiError } from '@/features/api/lib/errors';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
+import type { ExerciseForEditResponse } from '@/features/exercises/api/exercises';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
 import {
   ExerciseVideoPicker,
@@ -29,6 +32,9 @@ import {
 } from '@/features/exercises/components/ExerciseVideoPicker';
 import { ExerciseYouTubeCard } from '@/features/exercises/components/ExerciseYouTubeCard';
 import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
+import { useExerciseForEdit } from '@/features/exercises/hooks/use-exercise-for-edit';
+import { useUpdateExercise } from '@/features/exercises/hooks/use-update-exercise';
+import { composeExerciseName } from '@/features/exercises/lib/format';
 import {
   type ExerciseVideoUpload,
   uploadExerciseVideo,
@@ -83,9 +89,36 @@ const exerciseFormSchema = z.object({
 type ExerciseFormInput = z.input<typeof exerciseFormSchema>;
 type ExerciseFormValues = z.output<typeof exerciseFormSchema>;
 
-export default function AddExerciseScreen() {
-  const { t } = useTranslation();
+/**
+ * Tela de criação e edição de exercício. Sem `id` na rota é criação; com `id`
+ * (id da variação) carrega os dados e entra em modo edição.
+ */
+export default function ExerciseFormScreen() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editQuery = useExerciseForEdit(id ?? '');
+
+  // Em modo edição, esperamos os dados antes de montar o form para que ele já
+  // nasça preenchido (evita um reset() após o primeiro render).
+  if (id) {
+    if (editQuery.isPending) {
+      return <ExerciseFormFallback state="loading" />;
+    }
+    if (editQuery.isError || !editQuery.data) {
+      return <ExerciseFormFallback state="error" onRetry={() => editQuery.refetch()} />;
+    }
+    return <ExerciseForm editData={editQuery.data} />;
+  }
+
+  return <ExerciseForm editData={null} />;
+}
+
+function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }) {
+  const { t, i18n } = useTranslation();
   const navTheme = useNavTheme();
+  // Caps the centered title so it never slides under the header buttons — iOS
+  // centers a custom headerTitle across the full width and ignores them.
+  const { width } = useWindowDimensions();
+  const isEdit = editData !== null;
 
   const {
     control,
@@ -94,30 +127,56 @@ export default function AddExerciseScreen() {
     formState: { errors },
   } = useForm<ExerciseFormInput, unknown, ExerciseFormValues>({
     resolver: zodResolver(exerciseFormSchema),
-    defaultValues: {
-      name: '',
-      exerciseType: 'musculacao',
-      variationName: '',
-      primaryMuscleId: '',
-      secondaryMuscleId: '',
-      equipmentId: '',
-      youtubeVideoUrl: '',
-    },
+    defaultValues: editData
+      ? {
+          name: editData.exerciseName,
+          exerciseType: editData.exerciseType,
+          variationName: editData.variationName ?? '',
+          primaryMuscleId: editData.muscleId,
+          secondaryMuscleId: editData.secondaryMuscleId ?? '',
+          equipmentId: editData.equipmentId,
+          youtubeVideoUrl: editData.youtubeVideoUrl ?? '',
+        }
+      : {
+          name: '',
+          exerciseType: 'musculacao',
+          variationName: '',
+          primaryMuscleId: '',
+          secondaryMuscleId: '',
+          equipmentId: '',
+          youtubeVideoUrl: '',
+        },
   });
 
-  const { mutate: createExercise, isPending } = useCreateExercise();
+  const { mutate: createExercise, isPending: isCreating } = useCreateExercise();
 
-  // The variation id is minted up front so the device video can be uploaded to
-  // R2 (under {userId}/{variationId}/...) before the variation row exists.
-  const [variationId] = useState(() => Crypto.randomUUID());
+  // Create: minted up front so the device video can be uploaded to R2 before the
+  // variation exists. Edit: the variation already exists, so use its id.
+  const [variationId] = useState(() => editData?.variationId ?? Crypto.randomUUID());
+  const { mutate: updateExercise, isPending: isUpdating } = useUpdateExercise(variationId);
+
   const [video, setVideo] = useState<SelectedVideo | null>(null);
   // Holds the result of a successful upload so a retry (e.g. after a 409 on the
   // exercise name) re-posts without re-uploading the video.
   const [uploadedVideo, setUploadedVideo] = useState<ExerciseVideoUpload | null>(null);
   // null = no upload in progress; 0..1 = upload running.
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  // The video already on the server (edit mode), and whether the user removed it.
+  const [existingVideo] = useState(() => editData?.video ?? null);
+  const [removedExisting, setRemovedExisting] = useState(false);
 
-  const busy = isPending || uploadProgress !== null;
+  const busy = isCreating || isUpdating || uploadProgress !== null;
+
+  const headerName = editData
+    ? composeExerciseName(
+        {
+          exerciseName: editData.exerciseName,
+          equipmentName: t(`equipment.${editData.equipmentSlug}`),
+          equipmentPreposition: editData.equipmentPreposition,
+        },
+        i18n.language,
+      )
+    : '';
 
   function handleVideoChange(next: SelectedVideo | null) {
     setVideo(next);
@@ -126,7 +185,7 @@ export default function AddExerciseScreen() {
     setUploadProgress(null);
   }
 
-  const handleCreateError = handleLocalError((error) => {
+  const handleSaveError = handleLocalError((error) => {
     if (error instanceof ApiError && error.status === 409) {
       Toast.show({
         type: 'error',
@@ -136,7 +195,9 @@ export default function AddExerciseScreen() {
       return;
     }
 
-    exerciseObservability.captureError(error, { action: 'create_exercise' });
+    exerciseObservability.captureError(error, {
+      action: isEdit ? 'update_exercise' : 'create_exercise',
+    });
     Toast.show({
       type: 'error',
       text1: t('errors.unexpected.title'),
@@ -145,47 +206,77 @@ export default function AddExerciseScreen() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    // Reuse a video already uploaded on a previous attempt; otherwise upload it
-    // now, before creating the exercise.
-    let videoPayload: ExerciseVideoUpload | null = uploadedVideo;
+    // Resolve the video to persist: a freshly-picked video is uploaded now; an
+    // untouched server video is re-sent as-is; otherwise there is no video.
+    let videoPayload: ExerciseVideoUpload | null;
 
-    if (video && !videoPayload) {
-      try {
-        setUploadProgress(0);
-        videoPayload = await uploadExerciseVideo({
-          variationId,
-          fileUri: video.uri,
-          contentType: video.contentType,
-          durationMs: video.durationMs,
-          sizeBytes: video.sizeBytes,
-          onProgress: setUploadProgress,
-        });
-        setUploadedVideo(videoPayload);
-      } catch (error) {
-        exerciseObservability.captureError(error, { action: 'upload_exercise_video' });
-        Toast.show({
-          type: 'error',
-          text1: t('exerciseListScreen.addExercise.video.errors.uploadFailed.title'),
-          text2: t('exerciseListScreen.addExercise.video.errors.uploadFailed.message'),
-        });
-        return;
-      } finally {
-        setUploadProgress(null);
+    if (video) {
+      videoPayload = uploadedVideo;
+      if (!videoPayload) {
+        try {
+          setUploadProgress(0);
+          videoPayload = await uploadExerciseVideo({
+            variationId,
+            fileUri: video.uri,
+            contentType: video.contentType,
+            durationMs: video.durationMs,
+            sizeBytes: video.sizeBytes,
+            onProgress: setUploadProgress,
+          });
+          setUploadedVideo(videoPayload);
+        } catch (error) {
+          exerciseObservability.captureError(error, { action: 'upload_exercise_video' });
+          Toast.show({
+            type: 'error',
+            text1: t('exerciseListScreen.addExercise.video.errors.uploadFailed.title'),
+            text2: t('exerciseListScreen.addExercise.video.errors.uploadFailed.message'),
+          });
+          return;
+        } finally {
+          setUploadProgress(null);
+        }
       }
+    } else if (existingVideo && !removedExisting) {
+      videoPayload = {
+        objectKey: existingVideo.objectKey,
+        thumbnailKey: existingVideo.thumbnailKey,
+        durationSeconds: existingVideo.durationSeconds,
+        sizeBytes: existingVideo.sizeBytes,
+        contentType: existingVideo.contentType,
+      };
+    } else {
+      videoPayload = null;
+    }
+
+    const fields = {
+      exerciseName: values.name,
+      exerciseType: values.exerciseType,
+      variationName: values.variationName,
+      muscleId: values.primaryMuscleId,
+      secondaryMuscleId: values.secondaryMuscleId,
+      equipmentId: values.equipmentId,
+      youtubeVideoUrl: values.youtubeVideoUrl,
+      video: videoPayload,
+    };
+
+    if (isEdit) {
+      updateExercise(fields, {
+        onSuccess: () => {
+          exerciseObservability.trackAction('exercise_updated');
+          Toast.show({
+            type: 'success',
+            text1: t('exerciseListScreen.editExercise.success.title'),
+            text2: t('exerciseListScreen.editExercise.success.message'),
+          });
+          router.back();
+        },
+        onError: handleSaveError,
+      });
+      return;
     }
 
     createExercise(
-      {
-        variationId,
-        exerciseName: values.name,
-        exerciseType: values.exerciseType,
-        variationName: values.variationName,
-        muscleId: values.primaryMuscleId,
-        secondaryMuscleId: values.secondaryMuscleId,
-        equipmentId: values.equipmentId,
-        youtubeVideoUrl: values.youtubeVideoUrl,
-        video: videoPayload,
-      },
+      { variationId, ...fields },
       {
         onSuccess: () => {
           exerciseObservability.trackAction('exercise_created');
@@ -196,7 +287,7 @@ export default function AddExerciseScreen() {
           });
           router.back();
         },
-        onError: handleCreateError,
+        onError: handleSaveError,
       },
     );
   });
@@ -205,19 +296,26 @@ export default function AddExerciseScreen() {
     <>
       <Stack.Screen
         options={{
-          title: t('exerciseListScreen.addExercise.title'),
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar"
-              className="px-2"
-            >
-              <X size={22} color={navTheme.colors.text} />
-            </Pressable>
-          ),
+          headerLeft: () => <HeaderCloseButton color={navTheme.colors.text} />,
           headerBackVisible: false,
+          ...(isEdit
+            ? {
+                title: '',
+                headerTitleAlign: 'center' as const,
+                headerTitle: () => (
+                  <View className="items-center" style={{ maxWidth: width - 140 }}>
+                    <Text numberOfLines={1} className="font-sans-semibold text-base">
+                      {headerName}
+                    </Text>
+                    {editData?.variationName ? (
+                      <Text numberOfLines={1} className="text-muted-foreground text-xs">
+                        {editData.variationName}
+                      </Text>
+                    ) : null}
+                  </View>
+                ),
+              }
+            : { title: t('exerciseListScreen.addExercise.title') }),
         }}
       />
 
@@ -228,7 +326,11 @@ export default function AddExerciseScreen() {
         showsVerticalScrollIndicator={false}
         bottomOffset={20}
       >
-        <Text variant="muted">Preencha os campos para criar o exercício.</Text>
+        <Text variant="muted">
+          {isEdit
+            ? t('exerciseListScreen.editExercise.subtitle')
+            : t('exerciseListScreen.addExercise.subtitle')}
+        </Text>
 
         <Field
           label={t('exerciseListScreen.addExercise.fields.name')}
@@ -356,7 +458,13 @@ export default function AddExerciseScreen() {
           />
         </Field>
 
-        <ExerciseVideoPicker value={video} onChange={handleVideoChange} disabled={busy} />
+        <ExerciseVideoPicker
+          value={video}
+          onChange={handleVideoChange}
+          disabled={busy}
+          existingVideoUrl={removedExisting ? null : (existingVideo?.url ?? null)}
+          onRemoveExisting={() => setRemovedExisting(true)}
+        />
 
         {uploadProgress !== null ? (
           <UploadProgressBar
@@ -367,24 +475,71 @@ export default function AddExerciseScreen() {
           />
         ) : null}
 
-        <View className="mt-2 flex-row gap-3">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onPress={() => router.back()}
-            disabled={busy}
-          >
-            <Text>Cancelar</Text>
-          </Button>
-          <Button className="flex-1" onPress={onSubmit} disabled={busy}>
-            <Text>{busy ? 'Salvando...' : 'Salvar'}</Text>
-          </Button>
-        </View>
+        <Button className="mt-2" onPress={onSubmit} disabled={busy}>
+          <Text>{busy ? 'Salvando...' : 'Salvar'}</Text>
+        </Button>
       </KeyboardAwareScrollView>
 
       {/* Renders the name autocomplete's suggestion list above the form. */}
       <PortalHost name={SUGGESTIONS_PORTAL_HOST} />
     </>
+  );
+}
+
+/** Loading / error states shown while the edit data is being fetched. */
+function ExerciseFormFallback({
+  state,
+  onRetry,
+}: {
+  state: 'loading' | 'error';
+  onRetry?: () => void;
+}) {
+  const { t } = useTranslation();
+  const navTheme = useNavTheme();
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: '',
+          headerLeft: () => <HeaderCloseButton color={navTheme.colors.text} />,
+          headerBackVisible: false,
+        }}
+      />
+      {state === 'loading' ? (
+        <View className="flex-1 gap-5 bg-background p-5" testID="exercise-form.loading">
+          {LOADING_FIELD_KEYS.map((key) => (
+            <View key={key} className="gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-11 w-full rounded-md" />
+            </View>
+          ))}
+        </View>
+      ) : (
+        <RequestErrorState
+          title={t('exerciseDetailScreen.error.title')}
+          subtitle={t('exerciseDetailScreen.error.subtitle')}
+          retry={{ label: t('exerciseDetailScreen.error.retry'), onPress: () => onRetry?.() }}
+          testID="exercise-form.error"
+        />
+      )}
+    </>
+  );
+}
+
+const LOADING_FIELD_KEYS = ['name', 'type', 'variation', 'muscle', 'equipment'] as const;
+
+function HeaderCloseButton({ color }: { color: string }) {
+  return (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel="Fechar"
+      className="px-2"
+    >
+      <X size={22} color={color} />
+    </Pressable>
   );
 }
 

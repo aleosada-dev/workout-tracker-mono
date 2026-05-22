@@ -6,7 +6,7 @@ import {
 import type { Database } from '../supabase/types';
 
 type ListExerciseItemRpcReturn =
-  Database['public']['Functions']['list_variation_views_for_mobile']['Returns'][number];
+  Database['public']['Functions']['wt_list_exercises_summaries']['Returns'][number];
 
 type NullableField =
   | 'name'

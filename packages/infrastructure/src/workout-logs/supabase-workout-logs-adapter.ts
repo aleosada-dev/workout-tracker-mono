@@ -1,5 +1,6 @@
 import type { WorkoutLogRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
+import { supabaseError } from '../supabase/supabase-error';
 import { type SummaryRow, toWorkoutLogSummary } from './supabase-workout-logs-summary-mapper';
 
 const SUMMARIES_SELECT = `
@@ -32,7 +33,7 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
       const { data, error } = await query;
 
       if (error) {
-        throw new Error(`Failed to list workout log summaries: ${error.message}`);
+        throw supabaseError('Failed to list workout log summaries', error);
       }
 
       const rows = (data ?? []) as unknown as SummaryRow[];

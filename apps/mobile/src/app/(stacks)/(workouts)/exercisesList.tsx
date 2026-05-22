@@ -152,7 +152,7 @@ export default function ExercisesListScreen() {
     iosIcon: 'plus.circle.fill',
     androidIcon: 'add',
     label: t('exerciseListScreen.actions.addExercise'),
-    onPress: () => router.push('/addExercise'),
+    onPress: () => router.push('/exerciseForm'),
   };
 
   const selectionActions: ScreenActions.IconAction[] = [

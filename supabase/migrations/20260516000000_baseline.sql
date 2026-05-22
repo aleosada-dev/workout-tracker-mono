@@ -62,6 +62,20 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
 CREATE EXTENSION IF NOT EXISTS "pgmq";
 
 
+-- Fila PGMQ "r2_deletions": o trigger enqueue_variation_video_deletion e a
+-- edge function reap-r2-deletions a usam para apagar vídeos órfãos no R2.
+-- As tabelas da fila vivem no schema pgmq e não foram capturadas pelo
+-- pg_dump deste baseline; sem elas o trigger falha com 42P01. Guardado por
+-- pgmq.meta para ser idempotente onde a fila já exista.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pgmq.meta WHERE queue_name = 'r2_deletions') THEN
+    PERFORM pgmq.create('r2_deletions');
+  END IF;
+END;
+$$;
+
+
 
 
 

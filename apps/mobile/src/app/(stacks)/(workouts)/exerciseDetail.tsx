@@ -1,13 +1,17 @@
 import { RequestErrorState, Skeleton, Text } from '@workout-tracker/ui-mobile';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSession } from '@/features/auth/hooks/useSession';
 import { ExerciseDetail } from '@/features/exercises/components/ExerciseDetail';
 import { useExerciseDetail } from '@/features/exercises/hooks/use-exercise-detail';
 import { toExerciseDetailData } from '@/features/exercises/lib/detail';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
+import { useNavTheme } from '@/features/shared/lib/theme';
 
 type Params = {
   id?: string;
@@ -28,6 +32,16 @@ export default function ExerciseDetailScreen() {
     [data, i18n.language, t],
   );
 
+  const { session } = useSession();
+  const navTheme = useNavTheme();
+  const insets = useSafeAreaInsets();
+  // Caps the centered title so it never slides under the header buttons — iOS
+  // centers a custom headerTitle across the full width and ignores them.
+  const { width } = useWindowDimensions();
+  // The edit screen only accepts variations the user owns; the library is read-only.
+  const editable =
+    detail != null && detail.variationUserId != null && detail.variationUserId === session?.user.id;
+
   useEffect(() => {
     if (variationId)
       exerciseObservability.trackAction('open_exercise_detail', { exerciseId: variationId });
@@ -41,7 +55,7 @@ export default function ExerciseDetailScreen() {
           headerTitleAlign: 'center',
           headerTitle: () =>
             detail ? (
-              <View className="items-center">
+              <View className="items-center" style={{ maxWidth: width - 140 }}>
                 <Text numberOfLines={1} className="font-sans-semibold text-base">
                   {detail.name}
                 </Text>
@@ -52,6 +66,21 @@ export default function ExerciseDetailScreen() {
                 ) : null}
               </View>
             ) : null,
+          headerRight: editable
+            ? () => (
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/exerciseForm', params: { id: variationId } })
+                  }
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('exerciseDetailScreen.edit')}
+                  className="px-2"
+                >
+                  <Pencil size={20} color={navTheme.colors.text} />
+                </Pressable>
+              )
+            : undefined,
         }}
       />
       {isLoading ? (
@@ -60,6 +89,7 @@ export default function ExerciseDetailScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-4 p-4"
+          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
           contentInsetAdjustmentBehavior="automatic"
           testID="exercise-detail"
         >
@@ -78,10 +108,12 @@ export default function ExerciseDetailScreen() {
 }
 
 function ExerciseDetailLoading() {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       className="flex-1"
       contentContainerClassName="gap-4 p-4"
+      contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
       contentInsetAdjustmentBehavior="automatic"
       testID="exercise-detail.loading"
     >

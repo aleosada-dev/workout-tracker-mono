@@ -63,12 +63,16 @@ ALTER TABLE ONLY "public"."variations"
 
 
     -- ------------------------------------------------
-    -- list_variation_views_for_mobile: precisa de DROP porque o tipo de
-    -- retorno (RETURNS TABLE) muda — CREATE OR REPLACE não altera assinatura.
+    -- wt_list_exercises_summaries: criada com o prefixo wt_ (separa as
+    -- funções do app mobile das do PWA antigo). O DROP da função antiga, sem
+    -- prefixo, remove a cópia criada pela baseline; o DROP da nova é necessário
+    -- porque o tipo de retorno (RETURNS TABLE) muda e CREATE OR REPLACE não
+    -- altera a assinatura.
     -- ------------------------------------------------
     DROP FUNCTION IF EXISTS "public"."list_variation_views_for_mobile"("uuid", "uuid"[], "uuid"[], "text", "text"[]);
+    DROP FUNCTION IF EXISTS "public"."wt_list_exercises_summaries"("uuid", "uuid"[], "uuid"[], "text", "text"[]);
 
-    CREATE FUNCTION "public"."list_variation_views_for_mobile"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) RETURNS TABLE("id" "uuid", "name" "text", "exercise_id" "uuid", "exercise_name" "text", "exercise_type" "text", "muscle_id" "uuid", "muscle_name" "text", "muscle_slug" "text", "muscle_level2_name" "text", "muscle_level2_slug" "text", "secondary_muscle_id" "uuid", "secondary_muscle_name" "text", "secondary_muscle_slug" "text", "equipment_id" "uuid", "equipment_name" "text", "equipment_slug" "text", "equipment_preposition" "text", "video_url" "text", "image_url" "text", "user_id" "uuid", "video_object_key" "text", "video_thumbnail_key" "text", "video_duration_seconds" integer, "video_processing_status" "text", "variation_slug" "text", "exercise_slug" "text")
+    CREATE FUNCTION "public"."wt_list_exercises_summaries"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) RETURNS TABLE("id" "uuid", "name" "text", "exercise_id" "uuid", "exercise_name" "text", "exercise_type" "text", "muscle_id" "uuid", "muscle_name" "text", "muscle_slug" "text", "muscle_level2_name" "text", "muscle_level2_slug" "text", "secondary_muscle_id" "uuid", "secondary_muscle_name" "text", "secondary_muscle_slug" "text", "equipment_id" "uuid", "equipment_name" "text", "equipment_slug" "text", "equipment_preposition" "text", "video_url" "text", "image_url" "text", "user_id" "uuid", "video_object_key" "text", "video_thumbnail_key" "text", "video_duration_seconds" integer, "video_processing_status" "text", "variation_slug" "text", "exercise_slug" "text")
         LANGUAGE "sql" STABLE
         SET "search_path" TO 'public'
         AS $$
@@ -133,18 +137,18 @@ ALTER TABLE ONLY "public"."variations"
     $$;
 
 
-    ALTER FUNCTION "public"."list_variation_views_for_mobile"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) OWNER TO "postgres";
+    ALTER FUNCTION "public"."wt_list_exercises_summaries"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) OWNER TO "postgres";
 
-    GRANT ALL ON FUNCTION "public"."list_variation_views_for_mobile"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "anon";
-    GRANT ALL ON FUNCTION "public"."list_variation_views_for_mobile"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "authenticated";
-    GRANT ALL ON FUNCTION "public"."list_variation_views_for_mobile"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "service_role";
+    GRANT ALL ON FUNCTION "public"."wt_list_exercises_summaries"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "anon";
+    GRANT ALL ON FUNCTION "public"."wt_list_exercises_summaries"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "authenticated";
+    GRANT ALL ON FUNCTION "public"."wt_list_exercises_summaries"("p_user_id" "uuid", "p_muscle_ids" "uuid"[], "p_equipment_ids" "uuid"[], "p_visibility" "text", "p_exercise_types" "text"[]) TO "service_role";
 
 
     -- ------------------------------------------------
-    -- get_exercise_history: retorno continua jsonb, então CREATE OR REPLACE
+    -- wt_get_exercise_history: retorno continua jsonb, então CREATE OR REPLACE
     -- basta. Adiciona exercise_slug e variation_slug ao objeto da variação.
     -- ------------------------------------------------
-    CREATE OR REPLACE FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") RETURNS "jsonb"
+    CREATE OR REPLACE FUNCTION "public"."wt_get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") RETURNS "jsonb"
         LANGUAGE "plpgsql" STABLE SECURITY DEFINER
         SET "search_path" TO ''
         AS $$
@@ -261,17 +265,17 @@ ALTER TABLE ONLY "public"."variations"
     $$;
 
 
-    ALTER FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") OWNER TO "postgres";
+    ALTER FUNCTION "public"."wt_get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") OWNER TO "postgres";
 
-    GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "anon";
-    GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "authenticated";
-    GRANT ALL ON FUNCTION "public"."get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "service_role";
+    GRANT ALL ON FUNCTION "public"."wt_get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "anon";
+    GRANT ALL ON FUNCTION "public"."wt_get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "authenticated";
+    GRANT ALL ON FUNCTION "public"."wt_get_exercise_history"("p_user_id" "uuid", "p_variation_id" "uuid") TO "service_role";
 
 
 -- ================================================
 -- variations_user_dedup_uidx: a user cannot own two variations of the same
 -- exercise with the same equipment and name. Enforced as a constraint so
--- create_user_exercise can stay a plain INSERT — a collision surfaces as a
+-- wt_create_user_exercise can stay a plain INSERT — a collision surfaces as a
 -- native unique_violation (SQLSTATE 23505). NULLS NOT DISTINCT treats two
 -- unnamed variations as equal. Partial: the public library (user_id IS NULL)
 -- is exempt; variations.user_id is set by the variations_sync_scope trigger.
@@ -282,7 +286,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "variations_user_dedup_uidx"
 
 
 -- ================================================
--- create_user_exercise: cria exercício + variação + (opcionalmente) o vídeo
+-- wt_create_user_exercise: cria exercício + variação + (opcionalmente) o vídeo
 -- enviado pelo dispositivo, numa única transação atômica.
 --
 -- A variação usa o p_variation_id gerado no frontend — necessário porque o
@@ -292,9 +296,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS "variations_user_dedup_uidx"
 -- Retorna o número de linhas inseridas em variations (1 em caso de sucesso);
 -- o id já é conhecido pelo cliente, que o gerou.
 -- ================================================
-DROP FUNCTION IF EXISTS "public"."create_user_exercise"("uuid", "uuid", "text", "text", "text", "uuid", "uuid", "uuid", "text", "text", "text", smallint, integer, "text");
+DROP FUNCTION IF EXISTS "public"."wt_create_user_exercise"("uuid", "uuid", "text", "text", "text", "uuid", "uuid", "uuid", "text", "text", "text", smallint, integer, "text");
 
-CREATE FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid" DEFAULT NULL::"uuid", "p_youtube_video_url" "text" DEFAULT NULL::"text", "p_video_object_key" "text" DEFAULT NULL::"text", "p_video_thumbnail_key" "text" DEFAULT NULL::"text", "p_video_duration_secs" smallint DEFAULT NULL::smallint, "p_video_size_bytes" integer DEFAULT NULL::integer, "p_video_content_type" "text" DEFAULT NULL::"text") RETURNS integer
+CREATE FUNCTION "public"."wt_create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid" DEFAULT NULL::"uuid", "p_youtube_video_url" "text" DEFAULT NULL::"text", "p_video_object_key" "text" DEFAULT NULL::"text", "p_video_thumbnail_key" "text" DEFAULT NULL::"text", "p_video_duration_secs" smallint DEFAULT NULL::smallint, "p_video_size_bytes" integer DEFAULT NULL::integer, "p_video_content_type" "text" DEFAULT NULL::"text") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
@@ -306,7 +310,7 @@ BEGIN
   -- The one invariant no constraint can cover: without an identity the INSERTs
   -- below would silently create public-library rows. 28000 = not authenticated.
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'create_user_exercise called without an authenticated user'
+    RAISE EXCEPTION 'wt_create_user_exercise called without an authenticated user'
       USING ERRCODE = '28000';
   END IF;
 
@@ -352,8 +356,105 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."wt_create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") OWNER TO "postgres";
 
-GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "service_role";
+GRANT ALL ON FUNCTION "public"."wt_create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_create_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "service_role";
+
+
+-- ================================================
+-- wt_update_user_exercise: atualiza um exercício/variação já existente do
+-- usuário. Espelha wt_create_user_exercise, mas opera sobre a variação que o
+-- cliente já possui (p_variation_id). O dono é sempre auth.uid() e só o dono
+-- edita — caso contrário P0002 (a API traduz para 404). Find-or-create do
+-- exercício pelo (novo) nome, re-apontando a variação. O vídeo do dispositivo
+-- só é trocado quando o object_key muda, para não re-disparar o transcode à
+-- toa. Colisões de (exercise_id, equipment_id, name) surgem como 23505.
+-- Retorna o número de linhas atualizadas em variations (1 em caso de sucesso).
+-- ================================================
+DROP FUNCTION IF EXISTS "public"."wt_update_user_exercise"("uuid", "text", "text", "text", "uuid", "uuid", "uuid", "text", "text", "text", smallint, integer, "text");
+
+CREATE FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid" DEFAULT NULL::"uuid", "p_youtube_video_url" "text" DEFAULT NULL::"text", "p_video_object_key" "text" DEFAULT NULL::"text", "p_video_thumbnail_key" "text" DEFAULT NULL::"text", "p_video_duration_secs" smallint DEFAULT NULL::smallint, "p_video_size_bytes" integer DEFAULT NULL::integer, "p_video_content_type" "text" DEFAULT NULL::"text") RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_exercise_id uuid;
+  v_current_object_key text;
+  v_updated integer;
+BEGIN
+  -- Sem identidade não há como confirmar a posse da variação. 28000 = not authenticated.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'wt_update_user_exercise called without an authenticated user'
+      USING ERRCODE = '28000';
+  END IF;
+
+  -- A variação precisa existir e pertencer ao usuário. P0002 = no_data_found,
+  -- traduzido para 404 pela API.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.variations
+    WHERE id = p_variation_id AND user_id = v_user_id
+  ) THEN
+    RAISE EXCEPTION 'Variation not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Find-or-create do exercício pelo (novo) nome, deduplicado por usuário.
+  SELECT id INTO v_exercise_id
+  FROM public.exercises
+  WHERE user_id = v_user_id AND name = p_exercise_name;
+
+  IF v_exercise_id IS NULL THEN
+    INSERT INTO public.exercises (name, user_id, exercise_type)
+    VALUES (p_exercise_name, v_user_id, p_exercise_type)
+    RETURNING id INTO v_exercise_id;
+  ELSE
+    UPDATE public.exercises
+    SET exercise_type = p_exercise_type
+    WHERE id = v_exercise_id;
+  END IF;
+
+  -- Re-aponta e atualiza a variação. Uma colisão de (exercise_id, equipment_id,
+  -- name) raises unique_violation (23505).
+  UPDATE public.variations
+  SET exercise_id = v_exercise_id,
+      name = p_variation_name,
+      muscle_id = p_muscle_id,
+      equipment_id = p_equipment_id,
+      secondary_muscle_id = p_secondary_muscle_id,
+      video_url = p_youtube_video_url
+  WHERE id = p_variation_id;
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+
+  -- Sincroniza o vídeo do dispositivo. Só mexe em variation_videos quando o
+  -- object_key muda, para não re-disparar o trigger de transcode sem motivo.
+  SELECT object_key INTO v_current_object_key
+  FROM public.variation_videos
+  WHERE variation_id = p_variation_id;
+
+  IF p_video_object_key IS DISTINCT FROM v_current_object_key THEN
+    DELETE FROM public.variation_videos WHERE variation_id = p_variation_id;
+
+    IF p_video_object_key IS NOT NULL THEN
+      INSERT INTO public.variation_videos (
+        variation_id, object_key, thumbnail_key,
+        duration_seconds, size_bytes, content_type, uploaded_by
+      )
+      VALUES (
+        p_variation_id, p_video_object_key, p_video_thumbnail_key,
+        p_video_duration_secs, p_video_size_bytes, p_video_content_type, v_user_id
+      );
+    END IF;
+  END IF;
+
+  RETURN v_updated;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") OWNER TO "postgres";
+
+GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "service_role";

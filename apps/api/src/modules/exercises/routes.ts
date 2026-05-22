@@ -7,10 +7,12 @@ import {
 	CreateExerciseRequestSchema,
 	CreateExerciseResponseSchema,
 	ExerciseDetailResponseSchema,
+	ExerciseForEditResponseSchema,
 	ExerciseIdParamSchema,
 	ExerciseListResponseSchema,
 	ListExercisesQuerySchema,
 	toExerciseListItemResponse,
+	UpdateExerciseRequestSchema,
 } from "./schemas";
 
 /**
@@ -135,5 +137,76 @@ export const exercisesRouter = new Hono<AppBindings>()
 			const { getExerciseDetail } = c.get("container").exercises;
 			const detail = await getExerciseDetail({ userId, variationId });
 			return c.json(detail);
+		},
+	)
+	.get(
+		"/:id",
+		describeRoute({
+			summary: "Get an exercise variation for editing",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(ExerciseForEditResponseSchema),
+						},
+					},
+				},
+				401: { description: "Unauthorized" },
+				404: { description: "Exercise variation not found" },
+			},
+		}),
+		validator("param", ExerciseIdParamSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { id: variationId } = c.req.valid("param");
+			const { getExerciseForEdit } = c.get("container").exercises;
+			const exercise = await getExerciseForEdit({ userId, variationId });
+			return c.json(exercise);
+		},
+	)
+	.put(
+		"/:id",
+		describeRoute({
+			summary: "Update exercise",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(CreateExerciseResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Exercise variation not found" },
+				409: { description: "Exercise variation already exists" },
+			},
+		}),
+		validator("param", ExerciseIdParamSchema),
+		validator("json", UpdateExerciseRequestSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { id: variationId } = c.req.valid("param");
+			const body = c.req.valid("json");
+
+			if (body.video) {
+				const videoError = await validateUploadedVideo(
+					body.video,
+					userId,
+					variationId,
+					c.get("container").videoUploads,
+				);
+				if (videoError) {
+					return c.json({ error: videoError }, 400);
+				}
+			}
+
+			const { updateExercise } = c.get("container").exercises;
+			const { id } = await updateExercise({ userId, variationId, ...body });
+			return c.json({ id });
 		},
 	);

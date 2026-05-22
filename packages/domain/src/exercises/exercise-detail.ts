@@ -37,6 +37,8 @@ export type ExerciseDetailVariation = {
   secondaryMuscleSlug: string | null;
   youtubeUrl: string | null;
   videoUrl: string | null;
+  /** Owner of the variation; `null` for the public library. Drives editability. */
+  userId: string | null;
 };
 
 export type ExerciseDetail = {

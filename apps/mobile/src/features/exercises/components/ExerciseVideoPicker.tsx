@@ -23,6 +23,13 @@ export type ExerciseVideoPickerProps = {
   onChange: (video: SelectedVideo | null) => void;
   /** Locks picking and removing while an upload is in flight. */
   disabled?: boolean;
+  /**
+   * Playable URL of a video already uploaded to the server (edit mode). Shown
+   * when no new video has been picked; removing it calls `onRemoveExisting`.
+   */
+  existingVideoUrl?: string | null;
+  /** Called when the user removes the already-uploaded video. */
+  onRemoveExisting?: () => void;
 };
 
 /**
@@ -30,12 +37,14 @@ export type ExerciseVideoPickerProps = {
  *
  * Componente controlado: o vídeo escolhido vive no formulário pai, que o envia
  * ao R2 ao salvar. Aqui cuidamos apenas de escolher, validar (formato, tamanho
- * e duração) e pré-visualizar.
+ * e duração) e pré-visualizar. Na edição, também mostra o vídeo já enviado.
  */
 export function ExerciseVideoPicker({
   value,
   onChange,
   disabled = false,
+  existingVideoUrl = null,
+  onRemoveExisting,
 }: ExerciseVideoPickerProps) {
   const { t } = useTranslation();
 
@@ -88,7 +97,13 @@ export function ExerciseVideoPicker({
       <Text className="font-sans-semibold">{t('exerciseListScreen.addExercise.video.label')}</Text>
 
       {value ? (
-        <SelectedVideoPreview video={value} disabled={disabled} onRemove={() => onChange(null)} />
+        <VideoPreview uri={value.uri} disabled={disabled} onRemove={() => onChange(null)} />
+      ) : existingVideoUrl ? (
+        <VideoPreview
+          uri={existingVideoUrl}
+          disabled={disabled}
+          onRemove={() => onRemoveExisting?.()}
+        />
       ) : (
         <>
           <Text variant="muted">{t('exerciseListScreen.addExercise.video.hint')}</Text>
@@ -109,17 +124,17 @@ export function ExerciseVideoPicker({
   );
 }
 
-function SelectedVideoPreview({
-  video,
+function VideoPreview({
+  uri,
   disabled,
   onRemove,
 }: {
-  video: SelectedVideo;
+  uri: string;
   disabled: boolean;
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
-  const player = useVideoPlayer(video.uri, (p) => {
+  const player = useVideoPlayer(uri, (p) => {
     p.loop = true;
     p.muted = false;
   });

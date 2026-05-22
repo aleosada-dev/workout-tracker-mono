@@ -1,5 +1,6 @@
 export default {
   progress: 'Evolução',
+  edit: 'Editar exercício',
   error: {
     title: 'Não foi possível carregar este exercício.',
     subtitle: 'Verifique sua conexão e tente novamente.',

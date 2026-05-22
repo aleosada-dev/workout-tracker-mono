@@ -50,6 +50,7 @@ export function toExerciseDetailData(
   const lastSession = response.lastSession;
   return {
     id: response.variationId,
+    variationUserId: response.variation.userId,
     name: composeExerciseName(
       {
         exerciseName: resolveExerciseName(
