@@ -83,6 +83,9 @@ export function WorkoutLogList({ header }: { header?: ReactElement }) {
       ItemSeparatorComponent={() => <View className="h-3" />}
       ListHeaderComponent={header}
       contentContainerClassName="p-4"
+      // Let iOS inset the scroll content for the translucent native tab bar so
+      // the last card is not hidden behind it.
+      contentInsetAdjustmentBehavior="automatic"
       onEndReached={() => {
         if (hasNextPage && !isFetchingNextPage) fetchNextPage();
       }}
