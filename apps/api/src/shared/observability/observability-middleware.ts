@@ -72,7 +72,9 @@ export const observabilityMiddleware = createMiddleware<AppBindings>(async (c, n
 			data: requestData,
 		});
 	} else {
-		console.log(`[http.request] ${method} ${path}`, requestData);
+		// Stringify so nested data (validation issues, video metadata) is not
+		// collapsed to `[Object]` by the console's depth limit.
+		console.log(`[http.request] ${method} ${path}`, JSON.stringify(requestData, null, 2));
 	}
 
 	await next();
@@ -97,6 +99,9 @@ export const observabilityMiddleware = createMiddleware<AppBindings>(async (c, n
 			data: responseData,
 		});
 	} else {
-		console.log(`[http.response] ${status} ${method} ${path} ${durationMs}ms`, responseData);
+		console.log(
+			`[http.response] ${status} ${method} ${path} ${durationMs}ms`,
+			JSON.stringify(responseData, null, 2),
+		);
 	}
 });

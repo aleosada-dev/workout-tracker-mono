@@ -107,7 +107,6 @@ export default function RootLayout() {
                           name="(stacks)/(workouts)/addExercise"
                           options={{
                             title: t('exerciseListScreen.addExercise.title'),
-                            presentation: 'modal',
                           }}
                         />
                         <Stack.Screen name="(stacks)/(workouts)/workoutsList" />

@@ -75,6 +75,20 @@ describe('<ExerciseVideoPicker />', () => {
     expect(exerciseObservability.trackAction).toHaveBeenCalledWith('exercise_video_selected');
   });
 
+  test('forwards the picked file size to onChange', async () => {
+    launchImageLibraryAsync.mockResolvedValue({
+      canceled: false,
+      assets: [videoAsset({ fileSize: 3 * 1024 * 1024 })],
+    });
+    const onChange = jest.fn();
+
+    const { getByTestId } = render(<ExerciseVideoPicker value={null} onChange={onChange} />);
+    fireEvent.press(getByTestId('add-exercise.video.select'));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ sizeBytes: 3 * 1024 * 1024 }));
+  });
+
   test('rejects a video over the size limit with an error toast', async () => {
     launchImageLibraryAsync.mockResolvedValue({
       canceled: false,

@@ -44,6 +44,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true,
     },
   },
   android: {

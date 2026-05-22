@@ -26,4 +26,19 @@ describe('<UploadProgressBar />', () => {
     rerender(<UploadProgressBar progress={Number.NaN} />);
     expect(getByRole('progressbar').props.accessibilityValue.now).toBe(0);
   });
+
+  test('hides the percentage readout when indeterminate', () => {
+    const { getByText, queryByText } = render(
+      <UploadProgressBar progress={0} indeterminate label="Enviando vídeo…" />,
+    );
+
+    getByText('Enviando vídeo…');
+    expect(queryByText('0%')).toBeNull();
+  });
+
+  test('omits the accessibility value when indeterminate', () => {
+    const { getByRole } = render(<UploadProgressBar progress={0} indeterminate />);
+
+    expect(getByRole('progressbar').props.accessibilityValue).toBeUndefined();
+  });
 });

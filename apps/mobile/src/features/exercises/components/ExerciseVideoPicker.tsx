@@ -13,6 +13,8 @@ export type SelectedVideo = {
   fileName: string | null;
   /** Video length in milliseconds, or `null` when the device did not report it. */
   durationMs: number | null;
+  /** File size in bytes, or `null` when the device did not report it. */
+  sizeBytes: number | null;
   contentType: VideoContentType;
 };
 
@@ -67,6 +69,7 @@ export function ExerciseVideoPicker({
         uri: asset.uri,
         fileName: asset.fileName ?? null,
         durationMs: asset.duration ?? null,
+        sizeBytes: asset.fileSize ?? null,
         contentType: validation.contentType,
       });
       exerciseObservability.trackAction('exercise_video_selected');
@@ -118,7 +121,7 @@ function SelectedVideoPreview({
   const { t } = useTranslation();
   const player = useVideoPlayer(video.uri, (p) => {
     p.loop = true;
-    p.muted = true;
+    p.muted = false;
   });
 
   return (
@@ -131,11 +134,8 @@ function SelectedVideoPreview({
           nativeControls
         />
       </View>
-      <View className="flex-row items-center justify-between gap-2">
-        <Text variant="muted" numberOfLines={1} className="flex-1">
-          {video.fileName ?? t('exerciseListScreen.addExercise.video.selected')}
-        </Text>
-        {disabled ? null : (
+      {disabled ? null : (
+        <View className="flex-row justify-end">
           <Pressable
             onPress={onRemove}
             hitSlop={8}
@@ -147,8 +147,8 @@ function SelectedVideoPreview({
             <X size={16} color="#a1a1aa" />
             <Text variant="muted">{t('exerciseListScreen.addExercise.video.remove')}</Text>
           </Pressable>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }

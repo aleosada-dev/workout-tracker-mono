@@ -120,6 +120,7 @@ describe('uploadExerciseVideo', () => {
       fileUri: 'file:///tmp/video.mp4',
       contentType: 'video/mp4',
       durationMs: 12_400,
+      sizeBytes: 2_048_000,
       onProgress,
     });
 
@@ -131,7 +132,8 @@ describe('uploadExerciseVideo', () => {
       objectKey: 'user/var/upload-1.mp4',
       thumbnailKey: 'user/var/upload-1.jpg',
       durationSeconds: 12,
-      sizeBytes: 100,
+      // The picker's file size, not the byte count derived from XHR progress.
+      sizeBytes: 2_048_000,
       contentType: 'video/mp4',
     });
     // Two uploads in order: the video, then the JPG thumbnail.
@@ -153,9 +155,31 @@ describe('uploadExerciseVideo', () => {
       fileUri: 'file:///tmp/video.mp4',
       contentType: 'video/mp4',
       durationMs: null,
+      sizeBytes: 1024,
       onProgress: jest.fn(),
     });
 
     expect(result.durationSeconds).toBe(1);
+  });
+
+  test('falls back to the uploaded byte count when the picker reports no size', async () => {
+    getThumbnailAsync.mockResolvedValue({ uri: 'file:///tmp/thumb.jpg' });
+    mockCreateVideoUploadUrls.mockResolvedValue({
+      uploadId: 'upload-3',
+      video: { objectKey: 'k.mp4', uploadUrl: 'https://r2.example/v' },
+      thumbnail: { objectKey: 'k.jpg', uploadUrl: 'https://r2.example/t' },
+    });
+
+    const result = await uploadExerciseVideo({
+      variationId: 'var-3',
+      fileUri: 'file:///tmp/video.mp4',
+      contentType: 'video/mp4',
+      durationMs: 5_000,
+      sizeBytes: null,
+      onProgress: jest.fn(),
+    });
+
+    // No picker size, so the byte count from the MockXHR progress event wins.
+    expect(result.sizeBytes).toBe(100);
   });
 });

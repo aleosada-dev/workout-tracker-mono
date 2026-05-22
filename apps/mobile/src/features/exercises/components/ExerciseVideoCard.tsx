@@ -9,7 +9,7 @@ export type ExerciseVideoCardProps = {
 export function ExerciseVideoCard({ uri }: ExerciseVideoCardProps) {
   const player = useVideoPlayer(uri, (p) => {
     p.loop = true;
-    p.muted = true;
+    p.muted = false;
   });
 
   return (

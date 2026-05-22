@@ -16,6 +16,7 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (v: unknown) => ({ value: v }),
     withTiming: (v: unknown) => v,
     withSpring: (v: unknown) => v,
+    withRepeat: (v: unknown) => v,
     runOnJS: (fn: unknown) => fn,
     interpolate: () => 0,
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },

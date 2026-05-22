@@ -16,7 +16,7 @@ import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
@@ -157,6 +157,7 @@ export default function AddExerciseScreen() {
           fileUri: video.uri,
           contentType: video.contentType,
           durationMs: video.durationMs,
+          sizeBytes: video.sizeBytes,
           onProgress: setUploadProgress,
         });
         setUploadedVideo(videoPayload);
@@ -360,6 +361,7 @@ export default function AddExerciseScreen() {
         {uploadProgress !== null ? (
           <UploadProgressBar
             progress={uploadProgress}
+            indeterminate={Platform.OS === 'ios'}
             label={t('exerciseListScreen.addExercise.video.uploading')}
             testID="add-exercise.video.progress"
           />

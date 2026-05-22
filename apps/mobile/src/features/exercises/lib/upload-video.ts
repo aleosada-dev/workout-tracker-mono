@@ -24,7 +24,9 @@ type UploadToR2Options = {
  * React Native `fetch` does not expose. `XMLHttpRequest.upload.onprogress` is
  * the only RN API that reports upload progress.
  *
- * Resolves with the total bytes sent — the authoritative size to persist.
+ * Resolves with the byte count observed during the upload — a fallback file
+ * size only, since `lengthComputable` is unreliable on physical iOS devices
+ * (see `uploadExerciseVideo`).
  */
 export function uploadToR2({
   uploadUrl,
@@ -74,12 +76,15 @@ export async function uploadExerciseVideo({
   fileUri,
   contentType,
   durationMs,
+  sizeBytes,
   onProgress,
 }: {
   variationId: string;
   fileUri: string;
   contentType: VideoContentType;
   durationMs: number | null;
+  /** File size from the picker; `null` when the device did not report it. */
+  sizeBytes: number | null;
   onProgress: ProgressListener;
 }): Promise<ExerciseVideoUpload> {
   const thumbnail = await VideoThumbnails.getThumbnailAsync(fileUri, {
@@ -89,7 +94,7 @@ export async function uploadExerciseVideo({
 
   const urls = await createVideoUploadUrls({ variationId, videoContentType: contentType });
 
-  const { sizeBytes } = await uploadToR2({
+  const upload = await uploadToR2({
     uploadUrl: urls.video.uploadUrl,
     fileUri,
     contentType,
@@ -111,7 +116,11 @@ export async function uploadExerciseVideo({
     objectKey: urls.video.objectKey,
     thumbnailKey: urls.thumbnail.objectKey,
     durationSeconds,
-    sizeBytes,
+    // Prefer the picker's file size. React Native's XHR upload does not report
+    // `lengthComputable` reliably on physical iOS devices, so the byte count
+    // from progress events can be 0 — which fails the API's `min(1)` check.
+    // Fall back to it only when the picker gave no size (some Android devices).
+    sizeBytes: sizeBytes ?? upload.sizeBytes,
     contentType,
   };
 }
