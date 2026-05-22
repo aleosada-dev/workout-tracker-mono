@@ -1,5 +1,6 @@
 export default {
   progress: 'Progress',
+  edit: 'Edit exercise',
   error: {
     title: 'Could not load this exercise.',
     subtitle: 'Check your connection and try again.',

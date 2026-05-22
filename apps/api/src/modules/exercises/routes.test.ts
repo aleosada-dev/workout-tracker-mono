@@ -357,23 +357,23 @@ describe("GET /api/v1/exercises", () => {
 	});
 });
 
-describe("POST /api/v1/exercises", () => {
-	// Unique exercise name and variation id per run so the RPC duplicate /
-	// collision checks do not break re-runs.
-	function newExerciseBody(): CreateExerciseRequest {
-		return {
-			variationId: crypto.randomUUID(),
-			exerciseName: `Test Exercise ${crypto.randomUUID()}`,
-			exerciseType: "musculacao",
-			variationName: "Barra",
-			muscleId: SEED_MUSCLE_PEITO_ID,
-			secondaryMuscleId: null,
-			equipmentId: SEED_EQUIPMENT_BARRA,
-			youtubeVideoUrl: null,
-			video: null,
-		};
-	}
+// Unique exercise name and variation id per run so the RPC duplicate /
+// collision checks do not break re-runs.
+function newExerciseBody(): CreateExerciseRequest {
+	return {
+		variationId: crypto.randomUUID(),
+		exerciseName: `Test Exercise ${crypto.randomUUID()}`,
+		exerciseType: "musculacao",
+		variationName: "Barra",
+		muscleId: SEED_MUSCLE_PEITO_ID,
+		secondaryMuscleId: null,
+		equipmentId: SEED_EQUIPMENT_BARRA,
+		youtubeVideoUrl: null,
+		video: null,
+	};
+}
 
+describe("POST /api/v1/exercises", () => {
 	test("creates an exercise and returns the client-supplied variation id", async () => {
 		const client = getTestClient();
 		const body = newExerciseBody();
@@ -471,5 +471,196 @@ describe("POST /api/v1/exercises", () => {
 		);
 		// The error handler's 409 is a runtime response not modeled in the client type.
 		expect(second.status as number).toBe(409);
+	});
+});
+
+describe("GET /api/v1/exercises/:id", () => {
+	test("returns the exercise for editing when owned by the user", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		const created = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(created.status).toBe(201);
+
+		const res = await client.api.v1.exercises[":id"].$get(
+			{ param: { id: body.variationId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data).toMatchObject({
+			variationId: body.variationId,
+			exerciseName: body.exerciseName,
+			exerciseType: body.exerciseType,
+			variationName: body.variationName,
+			muscleId: body.muscleId,
+			equipmentId: body.equipmentId,
+			video: null,
+		});
+	});
+
+	test("returns 404 for a variation the user does not own", async () => {
+		const client = getTestClient();
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "public" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const publicVariationId = list[0]?.variations[0]?.id;
+		expect(publicVariationId).toBeDefined();
+
+		const res = await client.api.v1.exercises[":id"].$get(
+			{ param: { id: publicVariationId as string } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		// A public-library variation is not owned by the user — surfaces as 404.
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 400 when id is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises[":id"].$get(
+			{ param: { id: "not-a-uuid" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises[":id"].$get({
+			param: { id: "00000000-0000-4000-8000-000000000000" },
+		});
+
+		expect(res.status as number).toBe(401);
+	});
+});
+
+describe("PUT /api/v1/exercises/:id", () => {
+	test("updates the exercise fields", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		const created = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(created.status).toBe(201);
+
+		const res = await client.api.v1.exercises[":id"].$put(
+			{
+				param: { id: body.variationId },
+				json: {
+					exerciseName: body.exerciseName,
+					exerciseType: body.exerciseType,
+					variationName: "Halteres",
+					muscleId: body.muscleId,
+					secondaryMuscleId: null,
+					equipmentId: SEED_EQUIPMENT_HALTERES,
+					youtubeVideoUrl: null,
+					video: null,
+				},
+			},
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as { id: string };
+		expect(data.id).toBe(body.variationId);
+
+		const after = await client.api.v1.exercises[":id"].$get(
+			{ param: { id: body.variationId } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(await after.json()).toMatchObject({
+			variationName: "Halteres",
+			equipmentId: SEED_EQUIPMENT_HALTERES,
+		});
+	});
+
+	test("returns 404 for a variation the user does not own", async () => {
+		const client = getTestClient();
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "public" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const publicVariationId = list[0]?.variations[0]?.id as string;
+
+		const res = await client.api.v1.exercises[":id"].$put(
+			{
+				param: { id: publicVariationId },
+				json: {
+					exerciseName: "Hacked",
+					exerciseType: "musculacao",
+					variationName: null,
+					muscleId: SEED_MUSCLE_PEITO_ID,
+					secondaryMuscleId: null,
+					equipmentId: SEED_EQUIPMENT_BARRA,
+					youtubeVideoUrl: null,
+					video: null,
+				},
+			},
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 400 when exerciseName is empty", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: body }, { headers: authHeaders("athlete") });
+
+		const res = await client.api.v1.exercises[":id"].$put(
+			{
+				param: { id: body.variationId },
+				json: {
+					exerciseName: "",
+					exerciseType: "musculacao",
+					variationName: null,
+					muscleId: SEED_MUSCLE_PEITO_ID,
+					secondaryMuscleId: null,
+					equipmentId: SEED_EQUIPMENT_BARRA,
+					youtubeVideoUrl: null,
+					video: null,
+				},
+			},
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 409 when the update collides with an existing variation", async () => {
+		const client = getTestClient();
+		const first = newExerciseBody();
+		const second = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: first }, { headers: authHeaders("athlete") });
+		await client.api.v1.exercises.$post({ json: second }, { headers: authHeaders("athlete") });
+
+		// Renaming `second` onto `first`'s name + equipment + variation collides.
+		const res = await client.api.v1.exercises[":id"].$put(
+			{
+				param: { id: second.variationId },
+				json: {
+					exerciseName: first.exerciseName,
+					exerciseType: first.exerciseType,
+					variationName: first.variationName,
+					muscleId: first.muscleId,
+					secondaryMuscleId: null,
+					equipmentId: first.equipmentId,
+					youtubeVideoUrl: null,
+					video: null,
+				},
+			},
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(409);
 	});
 });

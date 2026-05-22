@@ -2561,24 +2561,6 @@ export type Database = {
         Args: { p_athlete_id: string; p_coach_id: string }
         Returns: undefined
       }
-      create_user_exercise: {
-        Args: {
-          p_equipment_id: string
-          p_exercise_name: string
-          p_exercise_type: string
-          p_muscle_id: string
-          p_secondary_muscle_id?: string
-          p_variation_id: string
-          p_variation_name?: string
-          p_video_content_type?: string
-          p_video_duration_secs?: number
-          p_video_object_key?: string
-          p_video_size_bytes?: number
-          p_video_thumbnail_key?: string
-          p_youtube_video_url?: string
-        }
-        Returns: number
-      }
       delete_exercise_variation:
         | {
             Args: { p_user_id: string; p_variation_id: string }
@@ -2626,10 +2608,6 @@ export type Database = {
           average_rating: number
           testimonial_count: number
         }[]
-      }
-      get_exercise_history: {
-        Args: { p_user_id: string; p_variation_id: string }
-        Returns: Json
       }
       get_previous_workout_log_for_summary: {
         Args: { p_user_id: string; p_workout_id: string }
@@ -2699,43 +2677,6 @@ export type Database = {
         Returns: boolean
       }
       list_periodizations: { Args: { p_created_by: string }; Returns: Json }
-      list_variation_views_for_mobile: {
-        Args: {
-          p_equipment_ids: string[]
-          p_exercise_types: string[]
-          p_muscle_ids: string[]
-          p_user_id: string
-          p_visibility: string
-        }
-        Returns: {
-          equipment_id: string
-          equipment_name: string
-          equipment_preposition: string
-          equipment_slug: string
-          exercise_id: string
-          exercise_name: string
-          exercise_slug: string
-          exercise_type: string
-          id: string
-          image_url: string
-          muscle_id: string
-          muscle_level2_name: string
-          muscle_level2_slug: string
-          muscle_name: string
-          muscle_slug: string
-          name: string
-          secondary_muscle_id: string
-          secondary_muscle_name: string
-          secondary_muscle_slug: string
-          user_id: string
-          variation_slug: string
-          video_duration_seconds: number
-          video_object_key: string
-          video_processing_status: string
-          video_thumbnail_key: string
-          video_url: string
-        }[]
-      }
       list_workouts_with_summary: {
         Args: { p_folder_id?: string; p_user_id: string }
         Returns: Json
@@ -2849,6 +2790,83 @@ export type Database = {
         Returns: Json
       }
       upsert_workout: { Args: { payload: Json }; Returns: string }
+      wt_create_user_exercise: {
+        Args: {
+          p_equipment_id: string
+          p_exercise_name: string
+          p_exercise_type: string
+          p_muscle_id: string
+          p_secondary_muscle_id?: string
+          p_variation_id: string
+          p_variation_name: string
+          p_video_content_type?: string
+          p_video_duration_secs?: number
+          p_video_object_key?: string
+          p_video_size_bytes?: number
+          p_video_thumbnail_key?: string
+          p_youtube_video_url?: string
+        }
+        Returns: number
+      }
+      wt_get_exercise_history: {
+        Args: { p_user_id: string; p_variation_id: string }
+        Returns: Json
+      }
+      wt_list_exercises_summaries: {
+        Args: {
+          p_equipment_ids: string[]
+          p_exercise_types: string[]
+          p_muscle_ids: string[]
+          p_user_id: string
+          p_visibility: string
+        }
+        Returns: {
+          equipment_id: string
+          equipment_name: string
+          equipment_preposition: string
+          equipment_slug: string
+          exercise_id: string
+          exercise_name: string
+          exercise_slug: string
+          exercise_type: string
+          id: string
+          image_url: string
+          muscle_id: string
+          muscle_level2_name: string
+          muscle_level2_slug: string
+          muscle_name: string
+          muscle_slug: string
+          name: string
+          secondary_muscle_id: string
+          secondary_muscle_name: string
+          secondary_muscle_slug: string
+          user_id: string
+          variation_slug: string
+          video_duration_seconds: number
+          video_object_key: string
+          video_processing_status: string
+          video_thumbnail_key: string
+          video_url: string
+        }[]
+      }
+      wt_update_user_exercise: {
+        Args: {
+          p_equipment_id: string
+          p_exercise_name: string
+          p_exercise_type: string
+          p_muscle_id: string
+          p_secondary_muscle_id?: string
+          p_variation_id: string
+          p_variation_name: string
+          p_video_content_type?: string
+          p_video_duration_secs?: number
+          p_video_object_key?: string
+          p_video_size_bytes?: number
+          p_video_thumbnail_key?: string
+          p_youtube_video_url?: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       user_role: "coach" | "athlete"

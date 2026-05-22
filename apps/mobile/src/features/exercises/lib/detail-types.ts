@@ -30,6 +30,8 @@ export type ExerciseMetricSeries = {
 /** Everything the exercise detail screen renders (mocked for now). */
 export type ExerciseDetailData = {
   id: string;
+  /** Owner of the variation; `null` for the public library. Drives editability. */
+  variationUserId: string | null;
   name: string;
   variationName: string | null;
   primaryMuscle: string;

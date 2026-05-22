@@ -3,7 +3,9 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 
 const $get = honoClient.api.v1.exercises.$get;
 const $getDetail = honoClient.api.v1.exercises[':id'].detail.$get;
+const $getEdit = honoClient.api.v1.exercises[':id'].$get;
 const $post = honoClient.api.v1.exercises.$post;
+const $put = honoClient.api.v1.exercises[':id'].$put;
 const $videoUploadUrls = honoClient.api.v1.medias['video-upload-urls'].$post;
 
 export type ListExercisesResponse = InferResponseType<typeof $get, 200>;
@@ -13,6 +15,10 @@ export type ListExercisesResponseVariation = ListExercisesResponseExercise['vari
 
 export type CreateExerciseRequest = InferRequestType<typeof $post>['json'];
 export type CreateExerciseResponse = InferResponseType<typeof $post, 201>;
+
+export type ExerciseForEditResponse = InferResponseType<typeof $getEdit, 200>;
+export type UpdateExerciseRequest = InferRequestType<typeof $put>['json'];
+export type UpdateExerciseResponse = InferResponseType<typeof $put, 200>;
 
 export type VideoUploadUrlsRequest = InferRequestType<typeof $videoUploadUrls>['json'];
 export type VideoUploadUrlsResponse = InferResponseType<typeof $videoUploadUrls, 200>;
@@ -44,6 +50,24 @@ export async function fetchExerciseDetail(
 
 export async function createExercise(body: CreateExerciseRequest): Promise<CreateExerciseResponse> {
   const response = await $post({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function fetchExerciseForEdit(
+  variationId: string,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<ExerciseForEditResponse> {
+  const response = await $getEdit({ param: { id: variationId } }, { init: { signal } });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function updateExercise(
+  variationId: string,
+  body: UpdateExerciseRequest,
+): Promise<UpdateExerciseResponse> {
+  const response = await $put({ param: { id: variationId }, json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

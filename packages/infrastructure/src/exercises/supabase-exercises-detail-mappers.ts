@@ -43,6 +43,7 @@ export type GetExerciseDetailRpcResponseVariation = {
   secondary_muscle_slug: string | null;
   youtube_url: string | null;
   uploaded_video_object_key: string | null;
+  variation_user_id: string | null;
 };
 
 export type GetExerciseDetailRpcResponse = {
@@ -92,6 +93,7 @@ export const toExerciseDetail = async (
       secondaryMuscleSlug: raw.variation.secondary_muscle_slug,
       youtubeUrl: raw.variation.youtube_url,
       videoUrl,
+      userId: raw.variation.variation_user_id,
     },
     sessions: raw.sessions.map(toSession),
     lastSession: raw.last_session ? toSession(raw.last_session) : null,

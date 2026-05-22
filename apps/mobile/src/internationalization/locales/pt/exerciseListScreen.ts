@@ -20,6 +20,7 @@ export default {
   },
   addExercise: {
     title: 'Adicionar exercício',
+    subtitle: 'Preencha os campos para criar o exercício.',
     success: {
       title: 'Exercício criado.',
       message: 'O exercício já aparece na sua lista.',
@@ -71,6 +72,13 @@ export default {
           message: 'Não foi possível enviar o vídeo. Tente novamente.',
         },
       },
+    },
+  },
+  editExercise: {
+    subtitle: 'Atualize as informações do exercício.',
+    success: {
+      title: 'Exercício atualizado.',
+      message: 'As alterações já estão salvas.',
     },
   },
   filter: {
