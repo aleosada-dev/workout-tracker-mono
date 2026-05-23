@@ -12,11 +12,15 @@ import {
   Checkbox,
   cn,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Text,
-  ToggleGroup,
-  ToggleGroupItem,
 } from '@workout-tracker/ui-mobile';
 import { router } from 'expo-router';
+import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -158,34 +162,42 @@ export default function ExercisesFilterScreen() {
           <Label className="uppercase tracking-wider">
             {t('exerciseListScreen.filter.sections.visibility')}
           </Label>
-          <ToggleGroup
-            type="single"
-            value={typeof draft.query.visibility === 'string' ? draft.query.visibility : 'all'}
-            onValueChange={(value) => {
-              if (value === 'all' || value === 'public' || value === 'private') {
+          <Select
+            value={(() => {
+              const raw = draft.query.visibility;
+              const v: Visibility = VISIBILITIES.includes(raw as Visibility)
+                ? (raw as Visibility)
+                : 'all';
+              return { value: v, label: visibilityLabel(v, t) };
+            })()}
+            onValueChange={(opt) => {
+              const value = opt?.value;
+              if (
+                value === 'all' ||
+                value === 'public' ||
+                value === 'shared' ||
+                value === 'owned'
+              ) {
                 setVisibility(value);
               }
             }}
-            variant="outline"
-            size="sm"
           >
-            {VISIBILITIES.map((v, i) => (
-              <ToggleGroupItem
-                key={v}
-                value={v}
-                isFirst={i === 0}
-                isLast={i === VISIBILITIES.length - 1}
-                className="flex-1"
-                testID={`exercises-filter.visibility.${v}`}
-              >
-                <Text>
-                  {v === 'all'
-                    ? t('exerciseListScreen.filter.visibility.all')
-                    : t(`exercises.visibility.${v}`)}
-                </Text>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+            <SelectTrigger testID="exercises-filter.visibility">
+              <SelectValue placeholder={t('exerciseListScreen.filter.visibility.all')} />
+            </SelectTrigger>
+            <SelectContent>
+              {VISIBILITIES.map((v) => (
+                <SelectItem
+                  key={v}
+                  value={v}
+                  label={visibilityLabel(v, t)}
+                  testID={`exercises-filter.visibility.${v}`}
+                >
+                  {visibilityLabel(v, t)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </View>
 
         <View className="gap-2">
@@ -241,6 +253,12 @@ export default function ExercisesFilterScreen() {
       </View>
     </View>
   );
+}
+
+function visibilityLabel(v: Visibility, t: TFunction): string {
+  return v === 'all'
+    ? t('exerciseListScreen.filter.visibility.all')
+    : t(`exercises.visibility.${v}`);
 }
 
 function CheckboxRow({

@@ -98,10 +98,25 @@ describe("GET /api/v1/exercises", () => {
 			}
 		});
 
-		test("visibility=private returns only exercises owned by the athlete or coach", async () => {
+		test("visibility=owned returns only exercises created by the athlete", async () => {
 			const client = getTestClient();
 			const res = await client.api.v1.exercises.$get(
-				{ query: { visibility: "private" } },
+				{ query: { visibility: "owned" } },
+				{ headers: authHeaders("athlete") },
+			);
+
+			const data = (await res.json()) as ExerciseListItemResponse[];
+			const athleteId = getTestUserAuth("athlete").userId;
+
+			expect(res.status).toBe(200);
+			expect(data).toBeArray();
+			expect(data.every((e) => e.userId === athleteId)).toBeTrue();
+		});
+
+		test("visibility=shared returns only exercises shared with the athlete by another user", async () => {
+			const client = getTestClient();
+			const res = await client.api.v1.exercises.$get(
+				{ query: { visibility: "shared" } },
 				{ headers: authHeaders("athlete") },
 			);
 
@@ -111,15 +126,14 @@ describe("GET /api/v1/exercises", () => {
 
 			expect(res.status).toBe(200);
 			expect(data).toBeArray();
-			expect(data.every((e) => e.userId === athleteId || e.userId === coachId)).toBeTrue();
-			expect(data.some((e) => e.userId === athleteId)).toBeTrue();
+			expect(data.every((e) => e.userId !== null && e.userId !== athleteId)).toBeTrue();
 			expect(data.some((e) => e.userId === coachId)).toBeTrue();
 		});
 
 		test("athlete sees coach exercises shared via shared_variations", async () => {
 			const client = getTestClient();
 			const res = await client.api.v1.exercises.$get(
-				{ query: { visibility: "private" } },
+				{ query: { visibility: "shared" } },
 				{ headers: authHeaders("athlete") },
 			);
 
@@ -420,7 +434,7 @@ describe("POST /api/v1/exercises", () => {
 
 		// The new exercise is persisted and owned by the creating user.
 		const listRes = await client.api.v1.exercises.$get(
-			{ query: { visibility: "private" } },
+			{ query: { visibility: "owned" } },
 			{ headers: authHeaders("athlete") },
 		);
 		const list = (await listRes.json()) as ExerciseListItemResponse[];
@@ -715,7 +729,7 @@ describe("DELETE /api/v1/exercises", () => {
 		expect(data.deletedCount).toBe(1);
 
 		const listRes = await client.api.v1.exercises.$get(
-			{ query: { visibility: "private" } },
+			{ query: { visibility: "owned" } },
 			{ headers: authHeaders("athlete") },
 		);
 		const list = (await listRes.json()) as ExerciseListItemResponse[];
@@ -794,7 +808,7 @@ describe("DELETE /api/v1/exercises", () => {
 		);
 
 		const listRes = await client.api.v1.exercises.$get(
-			{ query: { visibility: "private" } },
+			{ query: { visibility: "owned" } },
 			{ headers: authHeaders("athlete") },
 		);
 		const list = (await listRes.json()) as ExerciseListItemResponse[];
@@ -820,7 +834,7 @@ describe("DELETE /api/v1/exercises", () => {
 		);
 
 		const listRes = await client.api.v1.exercises.$get(
-			{ query: { visibility: "private" } },
+			{ query: { visibility: "owned" } },
 			{ headers: authHeaders("athlete") },
 		);
 		const list = (await listRes.json()) as ExerciseListItemResponse[];
@@ -880,7 +894,7 @@ describe("DELETE /api/v1/exercises/:id", () => {
 		expect(data.id).toBe(body.variationId);
 
 		const listRes = await client.api.v1.exercises.$get(
-			{ query: { visibility: "private" } },
+			{ query: { visibility: "owned" } },
 			{ headers: authHeaders("athlete") },
 		);
 		const list = (await listRes.json()) as ExerciseListItemResponse[];

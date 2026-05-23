@@ -89,7 +89,7 @@ describe('fetchExercises', () => {
 
     await fetchExercises({
       query: {
-        visibility: 'private',
+        visibility: 'owned',
         exerciseTypes: ['musculacao'],
         muscleIds: ['m1', 'm2'],
       },
@@ -98,7 +98,7 @@ describe('fetchExercises', () => {
     const [url] = mockFetch.mock.calls[0];
     const u = new URL(String(url));
     expect(u.pathname).toMatch(/\/exercises$/);
-    expect(u.searchParams.get('visibility')).toBe('private');
+    expect(u.searchParams.get('visibility')).toBe('owned');
     expect(u.searchParams.getAll('exerciseTypes')).toEqual(['musculacao']);
     expect(u.searchParams.getAll('muscleIds')).toEqual(['m1', 'm2']);
   });

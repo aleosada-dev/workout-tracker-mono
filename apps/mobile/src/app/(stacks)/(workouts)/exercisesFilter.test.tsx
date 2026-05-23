@@ -78,18 +78,19 @@ describe('<ExercisesFilterScreen />', () => {
     });
   });
 
-  test('Apply forwards visibility change', () => {
+  test('Apply preserves the visibility coming from the store', () => {
+    exerciseFilters$.set({ query: { visibility: 'owned' } });
     const { getByTestId } = render(<ExercisesFilterScreen />);
-    fireEvent.press(getByTestId('exercises-filter.visibility.private'));
+
     fireEvent.press(getByTestId('exercises-filter.apply'));
 
     expect(exerciseFilters$.get()).toEqual<ExerciseListParams>({
-      query: { visibility: 'private' },
+      query: { visibility: 'owned' },
     });
   });
 
   test('Clear applies an empty filter and closes the screen', () => {
-    exerciseFilters$.set({ query: { visibility: 'private', exerciseTypes: ['musculacao'] } });
+    exerciseFilters$.set({ query: { visibility: 'owned', exerciseTypes: ['musculacao'] } });
     const { getByTestId } = render(<ExercisesFilterScreen />);
 
     fireEvent.press(getByTestId('exercises-filter.clear'));

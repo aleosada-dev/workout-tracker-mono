@@ -1,7 +1,7 @@
 export const EXERCISE_TYPES = ['preparatorio', 'musculacao'] as const;
 export type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
-export const VISIBILITIES = ['all', 'private', 'public'] as const;
+export const VISIBILITIES = ['all', 'public', 'shared', 'owned'] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
 
 export type ExerciseVideoProps = {

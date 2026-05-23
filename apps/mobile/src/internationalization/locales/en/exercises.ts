@@ -5,6 +5,7 @@ export default {
   },
   visibility: {
     public: 'Public',
-    private: 'Private',
+    shared: 'Shared',
+    owned: 'Owned',
   },
 };

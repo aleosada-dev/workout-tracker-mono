@@ -127,15 +127,35 @@ ALTER TABLE "public"."exercises" ADD COLUMN "deleted_by" "uuid";
         vv.exercise_slug
       FROM public.variations_view vv
       WHERE
-        (p_visibility <> 'public' OR vv.user_id IS NULL)
-        AND (
-          p_visibility <> 'private'
-          OR vv.user_id = p_user_id
-          OR EXISTS (
-            SELECT 1
-            FROM public.shared_variations sv
-            WHERE sv.variation_id = vv.id
-              AND sv.shared_with_id = p_user_id
+        -- p_visibility separa a biblioteca pública (sem dono), as variações
+        -- próprias do usuário (owned) e as criadas por outro e compartilhadas
+        -- com ele (shared). 'all' devolve a união das três.
+        (
+          (p_visibility = 'public' AND vv.user_id IS NULL)
+          OR (p_visibility = 'owned' AND vv.user_id = p_user_id)
+          OR (
+            p_visibility = 'shared'
+            AND vv.user_id IS NOT NULL
+            AND vv.user_id <> p_user_id
+            AND EXISTS (
+              SELECT 1
+              FROM public.shared_variations sv
+              WHERE sv.variation_id = vv.id
+                AND sv.shared_with_id = p_user_id
+            )
+          )
+          OR (
+            p_visibility = 'all'
+            AND (
+              vv.user_id IS NULL
+              OR vv.user_id = p_user_id
+              OR EXISTS (
+                SELECT 1
+                FROM public.shared_variations sv
+                WHERE sv.variation_id = vv.id
+                  AND sv.shared_with_id = p_user_id
+              )
+            )
           )
         )
         AND (

@@ -93,53 +93,93 @@ describe('composeExerciseName', () => {
 });
 
 describe('toExercise', () => {
+  const CURRENT_USER_ID = 'current-user';
+
   test('pt: maps an API exercise + variation to the UI shape', () => {
-    expect(toExercise(makeExercise(), makeVariation(), 'pt', makeT('pt'))).toEqual({
-      id: 'id-1',
-      name: 'Abdominal na Máquina',
-      variationName: null,
-      primaryMuscle: 'Reto Abdominal',
-      type: 'musculacao',
-      visibility: 'public',
-      userId: null,
-    });
+    expect(toExercise(makeExercise(), makeVariation(), 'pt', makeT('pt'), CURRENT_USER_ID)).toEqual(
+      {
+        id: 'id-1',
+        name: 'Abdominal na Máquina',
+        variationName: null,
+        primaryMuscle: 'Reto Abdominal',
+        type: 'musculacao',
+        visibility: 'public',
+        userId: null,
+      },
+    );
   });
 
   test('en: translates the primary muscle and reorders the display name', () => {
-    expect(toExercise(makeExercise(), makeVariation(), 'en', makeT('en'))).toEqual({
-      id: 'id-1',
-      name: 'Machine Abdominal',
-      variationName: null,
-      primaryMuscle: 'Rectus Abdominis',
-      type: 'musculacao',
-      visibility: 'public',
-      userId: null,
-    });
+    expect(toExercise(makeExercise(), makeVariation(), 'en', makeT('en'), CURRENT_USER_ID)).toEqual(
+      {
+        id: 'id-1',
+        name: 'Machine Abdominal',
+        variationName: null,
+        primaryMuscle: 'Rectus Abdominis',
+        type: 'musculacao',
+        visibility: 'public',
+        userId: null,
+      },
+    );
   });
 
-  test('marks items that have a userId as private', () => {
+  test('marks items owned by the current user as owned', () => {
     expect(
-      toExercise(makeExercise({ userId: 'user-123' }), makeVariation(), 'pt', makeT('pt'))
-        .visibility,
-    ).toBe('private');
+      toExercise(
+        makeExercise({ userId: CURRENT_USER_ID }),
+        makeVariation(),
+        'pt',
+        makeT('pt'),
+        CURRENT_USER_ID,
+      ).visibility,
+    ).toBe('owned');
+  });
+
+  test('marks items owned by another user as shared', () => {
+    expect(
+      toExercise(
+        makeExercise({ userId: 'other-user' }),
+        makeVariation(),
+        'pt',
+        makeT('pt'),
+        CURRENT_USER_ID,
+      ).visibility,
+    ).toBe('shared');
   });
 
   test('keeps the exercise type as a slug for the UI to translate', () => {
     expect(
-      toExercise(makeExercise({ type: 'preparatorio' }), makeVariation(), 'pt', makeT('pt')).type,
+      toExercise(
+        makeExercise({ type: 'preparatorio' }),
+        makeVariation(),
+        'pt',
+        makeT('pt'),
+        CURRENT_USER_ID,
+      ).type,
     ).toBe('preparatorio');
   });
 
   test('translates the exercise name from its slug', () => {
     expect(
-      toExercise(makeExercise({ slug: 'benchPress' }), makeVariation(), 'pt', makeT('pt')).name,
+      toExercise(
+        makeExercise({ slug: 'benchPress' }),
+        makeVariation(),
+        'pt',
+        makeT('pt'),
+        CURRENT_USER_ID,
+      ).name,
     ).toBe('Supino na Máquina');
   });
 
   test('translates the variation name from its slug', () => {
     expect(
-      toExercise(makeExercise(), makeVariation({ slug: 'inclineBench' }), 'en', makeT('en'))
-        .variationName,
+      toExercise(
+        makeExercise(),
+        makeVariation({ slug: 'inclineBench' }),
+        'en',
+        makeT('en'),
+        CURRENT_USER_ID,
+      ).variationName,
     ).toBe('Incline Bench');
   });
 
@@ -149,6 +189,7 @@ describe('toExercise', () => {
       makeVariation({ slug: 'unknownVariation', name: 'Pegada Fechada' }),
       'pt',
       makeT('pt'),
+      CURRENT_USER_ID,
     );
     expect(item.name).toBe('Abdominal na Máquina');
     expect(item.variationName).toBe('Pegada Fechada');

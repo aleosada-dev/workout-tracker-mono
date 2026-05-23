@@ -57,21 +57,24 @@ export default function ExercisesListScreen() {
       exerciseFilters$.set(EMPTY_EXERCISE_LIST_PARAMS);
     };
   }, []);
+  const { session } = useSession();
+  const currentUserId = session?.user.id ?? null;
   const exercises = useMemo<ExerciseListItem[]>(
     () =>
       (data ?? [])
         .flatMap((exercise) =>
-          exercise.variations.map((variation) => toExercise(exercise, variation, i18n.language, t)),
+          exercise.variations.map((variation) =>
+            toExercise(exercise, variation, i18n.language, t, currentUserId),
+          ),
         )
         .sort((a, b) => a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base' })),
-    [data, i18n.language, t],
+    [data, i18n.language, t, currentUserId],
   );
 
   const [mode, setMode] = useState<Mode>('browse');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const { session } = useSession();
   const { mutate: bulkDelete } = useBulkDeleteExercises();
 
   const filteredExercises = useMemo(() => {

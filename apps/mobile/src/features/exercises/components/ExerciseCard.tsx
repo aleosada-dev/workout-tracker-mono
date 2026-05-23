@@ -1,12 +1,21 @@
 import { Card, CardContent, Icon, Text } from '@workout-tracker/ui-mobile';
-import { CheckCircle2, Circle, Dumbbell, Globe, Lock, type LucideIcon } from 'lucide-react-native';
+import {
+  CheckCircle2,
+  Circle,
+  Dumbbell,
+  Globe,
+  type LucideIcon,
+  User,
+  Users,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import type { ExerciseListItem } from '@/features/exercises/lib/list.types';
 
 const VISIBILITY_META: Record<string, { icon: LucideIcon; labelKey: string }> = {
   public: { icon: Globe, labelKey: 'exercises.visibility.public' },
-  private: { icon: Lock, labelKey: 'exercises.visibility.private' },
+  shared: { icon: Users, labelKey: 'exercises.visibility.shared' },
+  owned: { icon: User, labelKey: 'exercises.visibility.owned' },
 };
 
 export type ExerciseCardProps = {

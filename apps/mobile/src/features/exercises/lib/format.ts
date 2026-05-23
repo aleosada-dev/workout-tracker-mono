@@ -58,6 +58,7 @@ export function toExercise(
   variation: ListExercisesResponseVariation,
   language: string,
   t: TFunction,
+  currentUserId: string | null,
 ): ExerciseListItem {
   return {
     id: variation.id,
@@ -72,7 +73,8 @@ export function toExercise(
     variationName: resolveVariationName(variation.slug, variation.name, t),
     primaryMuscle: t(`muscles.${variation.muscle.slug}`),
     type: exercise.type.toString(),
-    visibility: exercise.userId == null ? 'public' : 'private',
+    visibility:
+      exercise.userId == null ? 'public' : exercise.userId === currentUserId ? 'owned' : 'shared',
     userId: exercise.userId,
   };
 }
