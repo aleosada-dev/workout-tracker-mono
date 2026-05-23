@@ -3,6 +3,8 @@ import {
   type CreateExerciseInput,
   type ExerciseListItem,
   type ExerciseRepository,
+  type ListExerciseName,
+  type ListExerciseNamesFilter,
   type ListExercisesFilter,
   NotFoundError,
   type UpdateExerciseInput,
@@ -29,6 +31,37 @@ export function makeSupabaseExerciseRepository(
   deps: SupabaseExerciseRepositoryDeps,
 ): ExerciseRepository {
   return {
+    async listNames(_filter: ListExerciseNamesFilter): Promise<ListExerciseName[]> {
+      // RLS em variations_view (security_invoker) já limita as linhas ao que o
+      // usuário pode ver — biblioteca pública + suas variações + compartilhadas.
+      // A view não filtra soft-deletes (preserva histórico), por isso o IS NULL
+      // explícito em deleted_at. Como cada exercício tem N variações, deduplica
+      // por exercise_id no mapper.
+      const { data, error } = await supabase
+        .from('variations_view')
+        .select('exercise_id, exercise_name, exercise_slug')
+        .is('deleted_at', null);
+
+      if (error) {
+        throw supabaseError('Failed to list exercise names', error);
+      }
+
+      // exercise_id / exercise_name vêm de colunas NOT NULL com INNER JOIN, mas o
+      // generator de tipos do Supabase marca toda coluna de view como nullable.
+      const byId = new Map<string, ListExerciseName>();
+      for (const row of data ?? []) {
+        if (row.exercise_id === null || row.exercise_name === null) continue;
+        if (!byId.has(row.exercise_id)) {
+          byId.set(row.exercise_id, {
+            id: row.exercise_id,
+            name: row.exercise_name,
+            slug: row.exercise_slug,
+          });
+        }
+      }
+      return Array.from(byId.values());
+    },
+
     async list(filter: ListExercisesFilter): Promise<ExerciseListItem[]> {
       const { data, error } = await supabase.rpc('wt_list_exercises_summaries', {
         p_user_id: filter.userId,

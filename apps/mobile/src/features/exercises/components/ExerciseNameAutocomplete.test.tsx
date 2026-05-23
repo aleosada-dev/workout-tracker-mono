@@ -1,5 +1,5 @@
-jest.mock('@/features/exercises/hooks/use-exercises', () => ({
-  useExercises: jest.fn(),
+jest.mock('@/features/exercises/hooks/use-exercise-names', () => ({
+  useExerciseNames: jest.fn(),
 }));
 
 jest.mock('react-i18next', () => ({
@@ -16,9 +16,9 @@ jest.mock('react-i18next', () => ({
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
-import { useExercises } from '@/features/exercises/hooks/use-exercises';
+import { useExerciseNames } from '@/features/exercises/hooks/use-exercise-names';
 
-const mockUseExercises = useExercises as jest.Mock;
+const mockUseExerciseNames = useExerciseNames as jest.Mock;
 
 function Harness() {
   const [value, setValue] = useState('');
@@ -31,7 +31,7 @@ describe('<ExerciseNameAutocomplete />', () => {
   });
 
   test('suggests existing exercises matching the typed text', async () => {
-    mockUseExercises.mockReturnValue({
+    mockUseExerciseNames.mockReturnValue({
       data: [
         { id: '1', name: 'Supino Reto' },
         { id: '2', name: 'Agachamento Livre' },
@@ -49,7 +49,7 @@ describe('<ExerciseNameAutocomplete />', () => {
   });
 
   test('shows the translated name for exercises that have a slug', async () => {
-    mockUseExercises.mockReturnValue({
+    mockUseExerciseNames.mockReturnValue({
       data: [{ id: '1', name: 'Supino', slug: 'benchPress' }],
     });
 

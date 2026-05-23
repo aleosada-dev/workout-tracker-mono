@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
-import type { CreateExerciseRequest, ExerciseListItemResponse } from "./schemas";
+import type {
+	CreateExerciseRequest,
+	ExerciseListItemResponse,
+	ExerciseNameResponse,
+} from "./schemas";
 
 const SEED_MUSCLE_PEITO_ID = "dc2d2b99-eff0-4a81-b949-c23e6cf61b75";
 const SEED_MUSCLE_PEITO_SLUG = "chest";
@@ -354,6 +358,32 @@ describe("GET /api/v1/exercises", () => {
 
 			expect(res.status).toBe(400);
 		});
+	});
+});
+
+describe("GET /api/v1/exercises/names", () => {
+	test("returns one entry per visible exercise (own + public + coach-shared)", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.names.$get({}, { headers: authHeaders("athlete") });
+
+		const data = (await res.json()) as ExerciseNameResponse[];
+		const ids = data.map((e) => e.id);
+
+		expect(res.status).toBe(200);
+		expect(data).toBeArray();
+		expect(new Set(ids).size).toBe(ids.length);
+		for (const exerciseName of PUBLIC_PREPARATORY_EXERCISES) {
+			expect(data.map((e) => e.name)).toContain(exerciseName);
+		}
+		for (const exerciseName of COACH_SHARED_EXERCISES) {
+			expect(data.map((e) => e.name)).toContain(exerciseName);
+		}
+	});
+
+	test("requires authentication", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.names.$get({});
+		expect(res.status as number).toBe(401);
 	});
 });
 

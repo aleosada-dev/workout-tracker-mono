@@ -1,7 +1,7 @@
 import { Autocomplete } from '@workout-tracker/ui-mobile';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useExercises } from '@/features/exercises/hooks/use-exercises';
+import { useExerciseNames } from '@/features/exercises/hooks/use-exercise-names';
 import { resolveExerciseName } from '@/features/exercises/lib/format';
 import { normalizeString } from '@/features/shared/lib/utils';
 
@@ -26,7 +26,7 @@ export function ExerciseNameAutocomplete({
   testID,
   portalHost,
 }: Props) {
-  const { data } = useExercises();
+  const { data } = useExerciseNames();
   const { t } = useTranslation();
 
   const names = useMemo(() => {

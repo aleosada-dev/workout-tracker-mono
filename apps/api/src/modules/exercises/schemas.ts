@@ -73,6 +73,16 @@ export const ExerciseListItemResponseSchema = z.object({
 
 export const ExerciseListResponseSchema = z.array(ExerciseListItemResponseSchema);
 
+export const ExerciseNameResponseSchema = z.object({
+	id: z.uuid(),
+	name: z.string(),
+	slug: z.string().nullable(),
+});
+
+export const ExerciseNamesResponseSchema = z.array(ExerciseNameResponseSchema);
+
+export type ExerciseNameResponse = z.infer<typeof ExerciseNameResponseSchema>;
+
 export type VariationResponse = z.infer<typeof VariationResponseSchema>;
 export type ExerciseListItemResponse = z.infer<typeof ExerciseListItemResponseSchema>;
 

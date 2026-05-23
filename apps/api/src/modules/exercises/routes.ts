@@ -14,6 +14,7 @@ import {
 	ExerciseForEditResponseSchema,
 	ExerciseIdParamSchema,
 	ExerciseListResponseSchema,
+	ExerciseNamesResponseSchema,
 	ListExercisesQuerySchema,
 	toExerciseListItemResponse,
 	UpdateExerciseRequestSchema,
@@ -114,6 +115,30 @@ export const exercisesRouter = new Hono<AppBindings>()
 			const { createExercise } = c.get("container").exercises;
 			const { id } = await createExercise({ userId, ...body });
 			return c.json({ id }, 201);
+		},
+	)
+	.get(
+		"/names",
+		describeRoute({
+			summary: "List exercise names (for autocomplete)",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(ExerciseNamesResponseSchema),
+						},
+					},
+				},
+				401: { description: "Unauthorized" },
+			},
+		}),
+		async (c) => {
+			const userId = c.get("userId");
+			const { listNames } = c.get("container").exercises;
+			const names = await listNames({ userId });
+			return c.json(names);
 		},
 	)
 	.get(

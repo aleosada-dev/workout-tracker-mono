@@ -9,6 +9,7 @@ export function useUpdateExercise(variationId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['exercises', 'list'] });
       void queryClient.invalidateQueries({ queryKey: ['exercises', 'detail', variationId] });
+      queryClient.removeQueries({ queryKey: ['exercises', 'names'] });
     },
   });
 }

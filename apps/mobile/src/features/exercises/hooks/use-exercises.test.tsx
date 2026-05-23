@@ -2,6 +2,10 @@ jest.mock('@/features/exercises/api/exercises', () => ({
   fetchExercises: jest.fn(),
 }));
 
+jest.mock('@/features/auth/hooks/useSession', () => ({
+  useSession: () => ({ session: { user: { id: 'test-user' } }, loading: false }),
+}));
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';

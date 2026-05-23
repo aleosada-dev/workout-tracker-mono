@@ -8,6 +8,7 @@ export function useCreateExercise() {
     mutationFn: createExercise,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['exercises', 'list'] });
+      queryClient.removeQueries({ queryKey: ['exercises', 'names'] });
     },
   });
 }
