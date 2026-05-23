@@ -734,6 +734,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           exercise_type: string
           id: string
           name: string
@@ -745,6 +747,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           exercise_type?: string
           id?: string
           name: string
@@ -756,6 +760,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           exercise_type?: string
           id?: string
           name?: string
@@ -1737,6 +1743,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           equipment_id: string
           exercise_id: string
           id: string
@@ -1753,6 +1761,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           equipment_id: string
           exercise_id: string
           id?: string
@@ -1769,6 +1779,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           equipment_id?: string
           exercise_id?: string
           id?: string
@@ -2475,6 +2487,7 @@ export type Database = {
       }
       variations_view: {
         Row: {
+          deleted_at: string | null
           equipment_id: string | null
           equipment_name: string | null
           equipment_preposition: string | null
@@ -2806,6 +2819,10 @@ export type Database = {
           p_video_thumbnail_key?: string
           p_youtube_video_url?: string
         }
+        Returns: number
+      }
+      wt_delete_user_exercises: {
+        Args: { p_variation_ids: string[] }
         Returns: number
       }
       wt_get_exercise_history: {

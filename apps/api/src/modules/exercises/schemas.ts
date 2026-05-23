@@ -137,6 +137,24 @@ export const UpdateExerciseRequestSchema = z.object({
 
 export type UpdateExerciseRequest = z.infer<typeof UpdateExerciseRequestSchema>;
 
+export const DeleteExercisesRequestSchema = z.object({
+	variationIds: z.array(z.uuid()).min(1),
+});
+
+export type DeleteExercisesRequest = z.infer<typeof DeleteExercisesRequestSchema>;
+
+export const DeleteExercisesResponseSchema = z.object({
+	deletedCount: z.number().int().nonnegative(),
+});
+
+export type DeleteExercisesResponse = z.infer<typeof DeleteExercisesResponseSchema>;
+
+export const DeleteExerciseResponseSchema = z.object({
+	id: z.uuid(),
+});
+
+export type DeleteExerciseResponse = z.infer<typeof DeleteExerciseResponseSchema>;
+
 /** Uploaded device video of a variation, as returned for the edit form. */
 const ExerciseForEditVideoSchema = z.object({
 	objectKey: z.string(),
@@ -203,8 +221,8 @@ const DetailVariationSchema = z.object({
 	secondaryMuscleSlug: z.string().trim().min(1).nullable(),
 	youtubeUrl: z.url().nullable(),
 	videoUrl: z.url().nullable(),
-	/** Owner of the variation; null for the public library. Drives editability. */
 	userId: z.uuid().nullable(),
+	deletedAt: z.iso.datetime({ offset: true }).nullable(),
 });
 
 export const ExerciseDetailResponseSchema = z.object({

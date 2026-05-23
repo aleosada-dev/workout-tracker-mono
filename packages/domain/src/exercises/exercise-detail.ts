@@ -39,6 +39,8 @@ export type ExerciseDetailVariation = {
   videoUrl: string | null;
   /** Owner of the variation; `null` for the public library. Drives editability. */
   userId: string | null;
+  /** Soft-delete timestamp; `null` while active, set once the user deletes it. */
+  deletedAt: string | null;
 };
 
 export type ExerciseDetail = {

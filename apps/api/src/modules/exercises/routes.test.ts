@@ -664,3 +664,251 @@ describe("PUT /api/v1/exercises/:id", () => {
 		expect(res.status as number).toBe(409);
 	});
 });
+
+describe("DELETE /api/v1/exercises", () => {
+	test("soft-deletes the user's variations and drops them from the list", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		const created = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(created.status).toBe(201);
+
+		const res = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [body.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as { deletedCount: number };
+		expect(data.deletedCount).toBe(1);
+
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "private" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		expect(list.some((e) => e.variations.some((v) => v.id === body.variationId))).toBeFalse();
+	});
+
+	test("is idempotent — deleting an already-deleted variation reports zero", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: body }, { headers: authHeaders("athlete") });
+
+		const first = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [body.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(((await first.json()) as { deletedCount: number }).deletedCount).toBe(1);
+
+		const second = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [body.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(second.status).toBe(200);
+		expect(((await second.json()) as { deletedCount: number }).deletedCount).toBe(0);
+	});
+
+	test("ignores variations the user does not own", async () => {
+		const client = getTestClient();
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "public" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const publicVariationId = list[0]?.variations[0]?.id as string;
+		expect(publicVariationId).toBeDefined();
+
+		const res = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [publicVariationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		expect(((await res.json()) as { deletedCount: number }).deletedCount).toBe(0);
+
+		const afterRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "public" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const after = (await afterRes.json()) as ExerciseListItemResponse[];
+		expect(after.some((e) => e.variations.some((v) => v.id === publicVariationId))).toBeTrue();
+	});
+
+	test("frees the name for reuse once the variation is deleted", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: body }, { headers: authHeaders("athlete") });
+		await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [body.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		const recreated = await client.api.v1.exercises.$post(
+			{ json: { ...body, variationId: crypto.randomUUID() } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(recreated.status as number).toBe(201);
+	});
+
+	test("cascades — soft-deletes the parent exercise once its last variation is gone", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: body }, { headers: authHeaders("athlete") });
+
+		await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [body.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "private" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		expect(list.some((e) => e.name === body.exerciseName)).toBeFalse();
+	});
+
+	test("keeps the parent exercise while another variation stays active", async () => {
+		const client = getTestClient();
+		const first = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: first }, { headers: authHeaders("athlete") });
+
+		const second = {
+			...first,
+			variationId: crypto.randomUUID(),
+			variationName: "Halteres",
+			equipmentId: SEED_EQUIPMENT_HALTERES,
+		};
+		await client.api.v1.exercises.$post({ json: second }, { headers: authHeaders("athlete") });
+
+		await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [first.variationId] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "private" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const exercise = list.find((e) => e.name === first.exerciseName);
+		expect(exercise).toBeDefined();
+		expect(exercise?.variations.some((v) => v.id === second.variationId)).toBeTrue();
+		expect(exercise?.variations.some((v) => v.id === first.variationId)).toBeFalse();
+	});
+
+	test("returns 400 when variationIds is empty", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: [] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 400 when variationIds contains a non-UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$delete(
+			{ json: { variationIds: ["not-a-uuid"] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$delete({
+			json: { variationIds: ["00000000-0000-4000-8000-000000000000"] },
+		});
+
+		expect(res.status as number).toBe(401);
+	});
+});
+
+describe("DELETE /api/v1/exercises/:id", () => {
+	test("soft-deletes the exercise and drops it from the list", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		const created = await client.api.v1.exercises.$post(
+			{ json: body },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(created.status).toBe(201);
+
+		const res = await client.api.v1.exercises[":id"].$delete(
+			{ param: { id: body.variationId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as { id: string };
+		expect(data.id).toBe(body.variationId);
+
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "private" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		expect(list.some((e) => e.variations.some((v) => v.id === body.variationId))).toBeFalse();
+	});
+
+	test("returns 404 for a variation the user does not own", async () => {
+		const client = getTestClient();
+		const listRes = await client.api.v1.exercises.$get(
+			{ query: { visibility: "public" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const list = (await listRes.json()) as ExerciseListItemResponse[];
+		const publicVariationId = list[0]?.variations[0]?.id as string;
+		expect(publicVariationId).toBeDefined();
+
+		const res = await client.api.v1.exercises[":id"].$delete(
+			{ param: { id: publicVariationId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 404 when the variation is already deleted", async () => {
+		const client = getTestClient();
+		const body = newExerciseBody();
+		await client.api.v1.exercises.$post({ json: body }, { headers: authHeaders("athlete") });
+
+		const first = await client.api.v1.exercises[":id"].$delete(
+			{ param: { id: body.variationId } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(first.status).toBe(200);
+
+		const second = await client.api.v1.exercises[":id"].$delete(
+			{ param: { id: body.variationId } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(second.status as number).toBe(404);
+	});
+
+	test("returns 400 when id is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises[":id"].$delete(
+			{ param: { id: "not-a-uuid" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises[":id"].$delete({
+			param: { id: "00000000-0000-4000-8000-000000000000" },
+		});
+
+		expect(res.status as number).toBe(401);
+	});
+});

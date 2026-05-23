@@ -66,10 +66,6 @@ export function makeSupabaseExerciseRepository(
     },
 
     async getExerciseForEdit({ userId, variationId }) {
-      // Plain query (no RPC): the form needs the variation's ids and the video
-      // metadata, composed straight from the tables. `.eq('user_id', userId)` is
-      // the ownership guard — a library variation (user_id NULL) or another
-      // user's variation simply does not match and surfaces as a 404.
       const { data, error } = await supabase
         .from('variations')
         .select(
@@ -80,6 +76,7 @@ export function makeSupabaseExerciseRepository(
         )
         .eq('id', variationId)
         .eq('user_id', userId)
+        .is('deleted_at', null)
         .maybeSingle();
 
       if (error) {
@@ -153,6 +150,18 @@ export function makeSupabaseExerciseRepository(
       }
 
       return { id: input.variationId };
+    },
+
+    async deleteExercises({ variationIds }) {
+      const { data, error } = await supabase.rpc('wt_delete_user_exercises', {
+        p_variation_ids: variationIds,
+      });
+
+      if (error) {
+        throw supabaseError('Failed to delete exercises', error);
+      }
+
+      return { deletedCount: data ?? 0 };
     },
   };
 }

@@ -1,3 +1,4 @@
+import { NotFoundError } from "@workout-tracker/domain";
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { Container } from "../../container";
@@ -6,6 +7,9 @@ import {
 	type CreateExerciseRequest,
 	CreateExerciseRequestSchema,
 	CreateExerciseResponseSchema,
+	DeleteExerciseResponseSchema,
+	DeleteExercisesRequestSchema,
+	DeleteExercisesResponseSchema,
 	ExerciseDetailResponseSchema,
 	ExerciseForEditResponseSchema,
 	ExerciseIdParamSchema,
@@ -208,5 +212,63 @@ export const exercisesRouter = new Hono<AppBindings>()
 			const { updateExercise } = c.get("container").exercises;
 			const { id } = await updateExercise({ userId, variationId, ...body });
 			return c.json({ id });
+		},
+	)
+	.delete(
+		"/",
+		describeRoute({
+			summary: "Delete exercises",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(DeleteExercisesResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("json", DeleteExercisesRequestSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { variationIds } = c.req.valid("json");
+			const { deleteExercises } = c.get("container").exercises;
+			const result = await deleteExercises({ userId, variationIds });
+			return c.json(result);
+		},
+	)
+	.delete(
+		"/:id",
+		describeRoute({
+			summary: "Delete an exercise",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(DeleteExerciseResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Exercise variation not found" },
+			},
+		}),
+		validator("param", ExerciseIdParamSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { id: variationId } = c.req.valid("param");
+			const { deleteExercises } = c.get("container").exercises;
+			const { deletedCount } = await deleteExercises({ userId, variationIds: [variationId] });
+			if (deletedCount === 0) {
+				throw new NotFoundError("variation");
+			}
+			return c.json({ id: variationId });
 		},
 	);

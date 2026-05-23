@@ -22,6 +22,21 @@ ALTER TABLE ONLY "public"."exercises"
 ALTER TABLE ONLY "public"."variations"
     ADD CONSTRAINT "variations_slug_unique" UNIQUE ("slug");
 
+
+-- ================================================
+-- Soft-delete de exercícios/variações próprios do usuário. deleted_at marca a
+-- exclusão lógica e deleted_by registra quem excluiu; NULL = ativa. O padrão
+-- espelha workout_logs e preserva o histórico — workout logs antigos continuam
+-- resolvendo a variação. O exercício é excluído junto quando sua última
+-- variação ativa some (cascata em wt_delete_user_exercises). Não é um DELETE
+-- real: a FK variations.exercise_id é ON DELETE CASCADE e apagaria as variações
+-- soft-deletadas, quebrando o histórico.
+-- ================================================
+ALTER TABLE "public"."variations" ADD COLUMN "deleted_at" timestamp with time zone;
+ALTER TABLE "public"."variations" ADD COLUMN "deleted_by" "uuid";
+ALTER TABLE "public"."exercises" ADD COLUMN "deleted_at" timestamp with time zone;
+ALTER TABLE "public"."exercises" ADD COLUMN "deleted_by" "uuid";
+
     -- ------------------------------------------------
     -- variations_view: novas colunas anexadas ao final
     -- (CREATE OR REPLACE VIEW só permite adicionar colunas no fim).
@@ -52,7 +67,8 @@ ALTER TABLE ONLY "public"."variations"
         "vv"."duration_seconds" AS "video_duration_seconds",
         "vv"."processing_status" AS "video_processing_status",
         "v"."slug" AS "variation_slug",
-        "e"."slug" AS "exercise_slug"
+        "e"."slug" AS "exercise_slug",
+        "v"."deleted_at"
        FROM (((((("public"."variations" "v"
          JOIN "public"."exercises" "e" ON (("e"."id" = "v"."exercise_id")))
          JOIN "public"."muscles" "m" ON (("m"."id" = "v"."muscle_id")))
@@ -133,7 +149,8 @@ ALTER TABLE ONLY "public"."variations"
         AND (
           COALESCE(array_length(p_exercise_types, 1), 0) = 0
           OR vv.exercise_type = ANY(p_exercise_types)
-        );
+        )
+        AND vv.deleted_at IS NULL;
     $$;
 
 
@@ -181,9 +198,8 @@ ALTER TABLE ONLY "public"."variations"
         'secondary_muscle_slug', sm.slug,
         'youtube_url', v.video_url,
         'uploaded_video_object_key', vv.object_key,
-        -- NULL for global library variations, the owner's id for user-created ones.
-        -- The API uses this to decide between a public URL and a presigned one.
-        'variation_user_id', v.user_id
+        'variation_user_id', v.user_id,
+        'variation_deleted_at', v.deleted_at
       )
       INTO v_variation
       FROM public.variations v
@@ -278,11 +294,13 @@ ALTER TABLE ONLY "public"."variations"
 -- wt_create_user_exercise can stay a plain INSERT — a collision surfaces as a
 -- native unique_violation (SQLSTATE 23505). NULLS NOT DISTINCT treats two
 -- unnamed variations as equal. Partial: the public library (user_id IS NULL)
--- is exempt; variations.user_id is set by the variations_sync_scope trigger.
+-- and soft-deleted rows (deleted_at IS NOT NULL) are exempt — so a name frees up
+-- once its variation is deleted; variations.user_id is set by the
+-- variations_sync_scope trigger.
 -- ================================================
 CREATE UNIQUE INDEX IF NOT EXISTS "variations_user_dedup_uidx"
     ON "public"."variations" ("exercise_id", "equipment_id", "name") NULLS NOT DISTINCT
-    WHERE ("user_id" IS NOT NULL);
+    WHERE ("deleted_at" IS NULL);
 
 
 -- ================================================
@@ -318,7 +336,7 @@ BEGIN
   -- sends only a name, so exercises are deduplicated per user by name.
   SELECT id INTO v_exercise_id
   FROM public.exercises
-  WHERE user_id = v_user_id AND name = p_exercise_name;
+  WHERE user_id = v_user_id AND name = p_exercise_name AND deleted_at IS NULL;
 
   IF v_exercise_id IS NULL THEN
     INSERT INTO public.exercises (name, user_id, exercise_type)
@@ -395,7 +413,7 @@ BEGIN
   -- traduzido para 404 pela API.
   IF NOT EXISTS (
     SELECT 1 FROM public.variations
-    WHERE id = p_variation_id AND user_id = v_user_id
+    WHERE id = p_variation_id AND user_id = v_user_id AND deleted_at IS NULL
   ) THEN
     RAISE EXCEPTION 'Variation not found' USING ERRCODE = 'P0002';
   END IF;
@@ -403,7 +421,7 @@ BEGIN
   -- Find-or-create do exercício pelo (novo) nome, deduplicado por usuário.
   SELECT id INTO v_exercise_id
   FROM public.exercises
-  WHERE user_id = v_user_id AND name = p_exercise_name;
+  WHERE user_id = v_user_id AND name = p_exercise_name AND deleted_at IS NULL;
 
   IF v_exercise_id IS NULL THEN
     INSERT INTO public.exercises (name, user_id, exercise_type)
@@ -458,3 +476,66 @@ ALTER FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_ex
 GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."wt_update_user_exercise"("p_variation_id" "uuid", "p_exercise_name" "text", "p_exercise_type" "text", "p_variation_name" "text", "p_muscle_id" "uuid", "p_equipment_id" "uuid", "p_secondary_muscle_id" "uuid", "p_youtube_video_url" "text", "p_video_object_key" "text", "p_video_thumbnail_key" "text", "p_video_duration_secs" smallint, "p_video_size_bytes" integer, "p_video_content_type" "text") TO "service_role";
+
+
+-- ================================================
+-- wt_delete_user_exercises: exclui logicamente (soft-delete) as variações
+-- próprias do usuário e, em cascata, o exercício pai que ficar sem nenhuma
+-- variação ativa. Atômica: as duas etapas rodam na mesma transação, e a
+-- segunda enxerga o efeito da primeira — CTEs de um único comando não
+-- enxergariam (compartilham o mesmo snapshot). Só o dono exclui: variações de
+-- outro usuário ou da biblioteca pública, e as já excluídas, são ignoradas.
+-- Retorna o número de variações efetivamente excluídas.
+-- ================================================
+CREATE OR REPLACE FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_deleted_count integer;
+  v_exercise_ids uuid[];
+BEGIN
+  -- Sem identidade não há como confirmar a posse das variações. 28000 = not authenticated.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'wt_delete_user_exercises called without an authenticated user'
+      USING ERRCODE = '28000';
+  END IF;
+
+  -- Etapa 1: soft-delete das variações próprias ainda ativas, guardando os
+  -- exercícios pais afetados.
+  WITH deleted AS (
+    UPDATE public.variations
+    SET deleted_at = now(), deleted_by = v_user_id
+    WHERE id = ANY(p_variation_ids)
+      AND user_id = v_user_id
+      AND deleted_at IS NULL
+    RETURNING exercise_id
+  )
+  SELECT count(*), array_agg(DISTINCT exercise_id)
+  INTO v_deleted_count, v_exercise_ids
+  FROM deleted;
+
+  -- Etapa 2 (comando separado, enxerga o efeito da etapa 1): soft-delete dos
+  -- exercícios pais que ficaram sem nenhuma variação ativa.
+  IF v_exercise_ids IS NOT NULL THEN
+    UPDATE public.exercises e
+    SET deleted_at = now(), deleted_by = v_user_id
+    WHERE e.id = ANY(v_exercise_ids)
+      AND e.deleted_at IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM public.variations v
+        WHERE v.exercise_id = e.id AND v.deleted_at IS NULL
+      );
+  END IF;
+
+  RETURN v_deleted_count;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) OWNER TO "postgres";
+
+GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "service_role";
