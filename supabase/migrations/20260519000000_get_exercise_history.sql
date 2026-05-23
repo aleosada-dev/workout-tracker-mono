@@ -199,7 +199,9 @@ ALTER TABLE "public"."exercises" ADD COLUMN "deleted_by" "uuid";
         'youtube_url', v.video_url,
         'uploaded_video_object_key', vv.object_key,
         'variation_user_id', v.user_id,
-        'variation_deleted_at', v.deleted_at
+        'variation_deleted_at', v.deleted_at,
+        'variation_deleted_by', v.deleted_by,
+        'variation_deleted_by_name', p.full_name
       )
       INTO v_variation
       FROM public.variations v
@@ -208,6 +210,7 @@ ALTER TABLE "public"."exercises" ADD COLUMN "deleted_by" "uuid";
       JOIN public.muscles m ON m.id = v.muscle_id
       LEFT JOIN public.muscles sm ON sm.id = v.secondary_muscle_id
       LEFT JOIN public.variation_videos vv ON vv.variation_id = v.id
+      LEFT JOIN public.profiles p ON p.id = v.deleted_by
       WHERE v.id = p_variation_id;
 
       IF v_variation IS NULL THEN

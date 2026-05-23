@@ -27,16 +27,16 @@ export type ExerciseMetricSeries = {
   points: MetricChartPoint[];
 };
 
-/** Everything the exercise detail screen renders (mocked for now). */
 export type ExerciseDetailData = {
   id: string;
-  /** Owner of the variation; `null` for the public library. Drives editability. */
   variationUserId: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  deletedByName: string | null;
   name: string;
   variationName: string | null;
   primaryMuscle: string;
   secondaryMuscle: string | null;
-  /** URL of the demonstration video, or `null` when the exercise has none. */
   videoUrl: string | null;
   youtubeUrl: string | null;
   metrics: Record<ExerciseMetricKey, ExerciseMetricSeries>;

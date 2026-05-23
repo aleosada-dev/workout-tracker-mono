@@ -1,6 +1,10 @@
 export default {
   progress: 'Evolução',
   edit: 'Editar exercício',
+  archived: {
+    at: 'Arquivado em {{when}}.',
+    byUserAt: 'Arquivado por {{name}} em {{when}}.',
+  },
   error: {
     title: 'Não foi possível carregar este exercício.',
     subtitle: 'Verifique sua conexão e tente novamente.',

@@ -2,6 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PortalHost } from '@rn-primitives/portal';
 import { EXERCISE_TYPES } from '@workout-tracker/domain';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   Field,
   Input,
@@ -14,7 +22,7 @@ import {
 } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { X } from 'lucide-react-native';
+import { Trash2, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +40,7 @@ import {
 } from '@/features/exercises/components/ExerciseVideoPicker';
 import { ExerciseYouTubeCard } from '@/features/exercises/components/ExerciseYouTubeCard';
 import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
+import { useDeleteExercise } from '@/features/exercises/hooks/use-delete-exercise';
 import { useExerciseForEdit } from '@/features/exercises/hooks/use-exercise-for-edit';
 import { useUpdateExercise } from '@/features/exercises/hooks/use-update-exercise';
 import { composeExerciseName } from '@/features/exercises/lib/format';
@@ -154,6 +163,8 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
   // variation exists. Edit: the variation already exists, so use its id.
   const [variationId] = useState(() => editData?.variationId ?? Crypto.randomUUID());
   const { mutate: updateExercise, isPending: isUpdating } = useUpdateExercise(variationId);
+  const { mutate: deleteExercise, isPending: isDeleting } = useDeleteExercise(variationId);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const [video, setVideo] = useState<SelectedVideo | null>(null);
   // Holds the result of a successful upload so a retry (e.g. after a 409 on the
@@ -165,7 +176,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
   const [existingVideo] = useState(() => editData?.video ?? null);
   const [removedExisting, setRemovedExisting] = useState(false);
 
-  const busy = isCreating || isUpdating || uploadProgress !== null;
+  const busy = isCreating || isUpdating || isDeleting || uploadProgress !== null;
 
   const headerName = editData
     ? composeExerciseName(
@@ -204,6 +215,29 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
       text2: t('errors.unexpected.message'),
     });
   });
+
+  function handleConfirmDelete() {
+    setConfirmDeleteOpen(false);
+    deleteExercise(undefined, {
+      onSuccess: () => {
+        exerciseObservability.trackAction('exercise_deleted');
+        Toast.show({
+          type: 'success',
+          text1: t('exerciseListScreen.deleteExercise.success.title'),
+          text2: t('exerciseListScreen.deleteExercise.success.message'),
+        });
+        router.back();
+      },
+      onError: handleLocalError((error) => {
+        exerciseObservability.captureError(error, { action: 'delete_exercise' });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      }),
+    });
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     // Resolve the video to persist: a freshly-picked video is uploaded now; an
@@ -313,6 +347,19 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                       </Text>
                     ) : null}
                   </View>
+                ),
+                headerRight: () => (
+                  <Pressable
+                    onPress={() => setConfirmDeleteOpen(true)}
+                    disabled={busy}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('exerciseListScreen.deleteExercise.action')}
+                    className="px-2"
+                    testID="exercise-form.delete"
+                  >
+                    <Trash2 size={20} color={navTheme.colors.notification} />
+                  </Pressable>
                 ),
               }
             : { title: t('exerciseListScreen.addExercise.title') }),
@@ -482,6 +529,31 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
 
       {/* Renders the name autocomplete's suggestion list above the form. */}
       <PortalHost name={SUGGESTIONS_PORTAL_HOST} />
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('exerciseListScreen.deleteExercise.confirm.title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('exerciseListScreen.deleteExercise.confirm.message')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              <Text>{t('exerciseListScreen.deleteExercise.confirm.cancel')}</Text>
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onPress={handleConfirmDelete}
+              className="bg-destructive"
+              testID="exercise-form.delete.confirm"
+            >
+              <Text>{t('exerciseListScreen.deleteExercise.confirm.confirm')}</Text>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

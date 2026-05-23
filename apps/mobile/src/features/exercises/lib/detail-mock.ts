@@ -33,6 +33,9 @@ export function getMockExerciseDetail(
   return {
     id,
     variationUserId: null,
+    isDeleted: false,
+    deletedAt: null,
+    deletedByName: null,
     name: name?.trim() || 'Abdução de Quadril no Cabo',
     variationName: variationName ?? 'c/ banco inclinado',
     primaryMuscle: 'Glúteos',

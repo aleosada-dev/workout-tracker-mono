@@ -35,12 +35,12 @@ export default function ExerciseDetailScreen() {
   const { session } = useSession();
   const navTheme = useNavTheme();
   const insets = useSafeAreaInsets();
-  // Caps the centered title so it never slides under the header buttons — iOS
-  // centers a custom headerTitle across the full width and ignores them.
   const { width } = useWindowDimensions();
-  // The edit screen only accepts variations the user owns; the library is read-only.
   const editable =
-    detail != null && detail.variationUserId != null && detail.variationUserId === session?.user.id;
+    detail != null &&
+    !detail.isDeleted &&
+    detail.variationUserId != null &&
+    detail.variationUserId === session?.user.id;
 
   useEffect(() => {
     if (variationId)

@@ -1,6 +1,6 @@
 import { Badge, Card, cn, EmptyState, SectionHeading, Text } from '@workout-tracker/ui-mobile';
 import { format } from 'date-fns';
-import { Dumbbell, LineChart, Trophy } from 'lucide-react-native';
+import { Archive, Dumbbell, LineChart, Trophy } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -40,6 +40,9 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
 
   return (
     <View className="gap-4" testID="exercise-detail.content">
+      {data.isDeleted && data.deletedAt ? (
+        <ArchivedBanner deletedAt={data.deletedAt} deletedByName={data.deletedByName} />
+      ) : null}
       <View className="px-1">
         <View className="flex-row items-center gap-3 self-start rounded-full bg-success/5 px-3 py-2">
           <View
@@ -216,6 +219,33 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
           />
         )}
       </View>
+    </View>
+  );
+}
+
+function ArchivedBanner({
+  deletedAt,
+  deletedByName,
+}: {
+  deletedAt: string;
+  deletedByName: string | null;
+}) {
+  const { t, i18n } = useTranslation();
+  const locale = useDateFnsLocale();
+  const when = format(new Date(deletedAt), 'PPp', { locale });
+  const message = deletedByName
+    ? t('exerciseDetailScreen.archived.byUserAt', { name: deletedByName, when })
+    : t('exerciseDetailScreen.archived.at', { when });
+  return (
+    <View
+      accessible
+      accessibilityLabel={message}
+      accessibilityLanguage={i18n.language}
+      className="flex-row items-center gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2"
+      testID="exercise-detail.archived"
+    >
+      <Archive size={16} className="text-warning" />
+      <Text className="flex-1 text-warning text-xs">{message}</Text>
     </View>
   );
 }

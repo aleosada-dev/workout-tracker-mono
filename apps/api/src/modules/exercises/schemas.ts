@@ -233,6 +233,8 @@ const DetailVariationSchema = z.object({
 	videoUrl: z.url().nullable(),
 	userId: z.uuid().nullable(),
 	deletedAt: z.iso.datetime({ offset: true }).nullable(),
+	deletedBy: z.uuid().nullable(),
+	deletedByName: z.string().nullable(),
 });
 
 export const ExerciseDetailResponseSchema = z.object({

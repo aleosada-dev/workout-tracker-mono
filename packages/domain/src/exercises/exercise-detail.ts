@@ -41,6 +41,10 @@ export type ExerciseDetailVariation = {
   userId: string | null;
   /** Soft-delete timestamp; `null` while active, set once the user deletes it. */
   deletedAt: string | null;
+  /** Id of the user who archived the variation; `null` while active. */
+  deletedBy: string | null;
+  /** Full name of the deleter (from `profiles`); `null` while active or no profile. */
+  deletedByName: string | null;
 };
 
 export type ExerciseDetail = {

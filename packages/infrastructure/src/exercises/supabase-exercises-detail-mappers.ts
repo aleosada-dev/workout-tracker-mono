@@ -45,6 +45,8 @@ export type GetExerciseDetailRpcResponseVariation = {
   uploaded_video_object_key: string | null;
   variation_user_id: string | null;
   variation_deleted_at: string | null;
+  variation_deleted_by: string | null;
+  variation_deleted_by_name: string | null;
 };
 
 export type GetExerciseDetailRpcResponse = {
@@ -96,6 +98,8 @@ export const toExerciseDetail = async (
       videoUrl,
       userId: raw.variation.variation_user_id,
       deletedAt: raw.variation.variation_deleted_at,
+      deletedBy: raw.variation.variation_deleted_by,
+      deletedByName: raw.variation.variation_deleted_by_name,
     },
     sessions: raw.sessions.map(toSession),
     lastSession: raw.last_session ? toSession(raw.last_session) : null,

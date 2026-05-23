@@ -51,6 +51,9 @@ export function toExerciseDetailData(
   return {
     id: response.variationId,
     variationUserId: response.variation.userId,
+    isDeleted: response.variation.deletedAt !== null,
+    deletedAt: response.variation.deletedAt,
+    deletedByName: response.variation.deletedByName,
     name: composeExerciseName(
       {
         exerciseName: resolveExerciseName(

@@ -81,6 +81,19 @@ export default {
       message: 'Your changes are saved.',
     },
   },
+  deleteExercise: {
+    action: 'Delete exercise',
+    confirm: {
+      title: 'Delete exercise?',
+      message: 'This exercise will be removed from your list. Workout history is preserved.',
+      cancel: 'Cancel',
+      confirm: 'Delete',
+    },
+    success: {
+      title: 'Exercise deleted.',
+      message: 'The exercise was removed from your list.',
+    },
+  },
   filter: {
     title: 'Filter exercises',
     apply: 'Apply',

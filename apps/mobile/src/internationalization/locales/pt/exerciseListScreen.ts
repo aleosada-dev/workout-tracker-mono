@@ -81,6 +81,19 @@ export default {
       message: 'As alterações já estão salvas.',
     },
   },
+  deleteExercise: {
+    action: 'Excluir exercício',
+    confirm: {
+      title: 'Excluir exercício?',
+      message: 'Este exercício será removido da sua lista. O histórico de treinos é preservado.',
+      cancel: 'Cancelar',
+      confirm: 'Excluir',
+    },
+    success: {
+      title: 'Exercício excluído.',
+      message: 'O Exercício foi removido da sua lista.',
+    },
+  },
   filter: {
     title: 'Filtrar exercícios',
     apply: 'Aplicar',

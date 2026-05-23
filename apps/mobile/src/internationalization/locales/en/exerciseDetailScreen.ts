@@ -1,6 +1,10 @@
 export default {
   progress: 'Progress',
   edit: 'Edit exercise',
+  archived: {
+    at: 'Archived on {{when}}.',
+    byUserAt: 'Archived by {{name}} on {{when}}.',
+  },
   error: {
     title: 'Could not load this exercise.',
     subtitle: 'Check your connection and try again.',

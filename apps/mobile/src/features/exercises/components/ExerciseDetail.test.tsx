@@ -75,6 +75,9 @@ describe('<ExerciseDetail />', () => {
     const emptyData: ExerciseDetailData = {
       id: 'ex-empty',
       variationUserId: null,
+      isDeleted: false,
+      deletedAt: null,
+      deletedByName: null,
       name: 'New Exercise',
       variationName: null,
       primaryMuscle: 'Costas',
@@ -104,6 +107,9 @@ describe('<ExerciseDetail />', () => {
   const unloadedData: ExerciseDetailData = {
     id: 'ex-bw',
     variationUserId: null,
+    isDeleted: false,
+    deletedAt: null,
+    deletedByName: null,
     name: 'Barra Fixa',
     variationName: null,
     primaryMuscle: 'Costas',
