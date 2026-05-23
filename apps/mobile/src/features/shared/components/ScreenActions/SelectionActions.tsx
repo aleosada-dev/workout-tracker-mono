@@ -96,20 +96,21 @@ function MenuItem({
       onPress={onPick}
       disabled={action.disabled}
       style={({ pressed }) => [
-        styles.menuItem,
         !first && styles.menuItemBorder,
         pressed && styles.menuItemPressed,
         action.disabled && styles.menuItemDisabled,
       ]}
     >
-      <Ionicons
-        name={action.androidIcon}
-        size={20}
-        color={action.destructive ? '#ef4444' : '#f3f4f6'}
-      />
-      <Text style={[styles.menuLabel, action.destructive && styles.menuLabelDestructive]}>
-        {action.label}
-      </Text>
+      <View style={styles.menuItemRow}>
+        <Ionicons
+          name={action.androidIcon}
+          size={20}
+          color={action.destructive ? '#ef4444' : '#f3f4f6'}
+        />
+        <Text style={[styles.menuLabel, action.destructive && styles.menuLabelDestructive]}>
+          {action.label}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -135,12 +136,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 10,
   },
-  menuItem: {
+  menuItemRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
   menuItemBorder: {
     borderTopWidth: 1,

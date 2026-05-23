@@ -101,6 +101,7 @@ describe('toExercise', () => {
       primaryMuscle: 'Reto Abdominal',
       type: 'musculacao',
       visibility: 'public',
+      userId: null,
     });
   });
 
@@ -112,6 +113,7 @@ describe('toExercise', () => {
       primaryMuscle: 'Rectus Abdominis',
       type: 'musculacao',
       visibility: 'public',
+      userId: null,
     });
   });
 

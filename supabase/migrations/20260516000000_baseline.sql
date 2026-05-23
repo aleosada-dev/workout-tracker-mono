@@ -5851,6 +5851,11 @@ CREATE OR REPLACE TRIGGER "on_profile_created_subscription" AFTER INSERT ON "pub
 
 
 
+DROP TRIGGER IF EXISTS "on_auth_user_created" ON "auth"."users";
+CREATE TRIGGER "on_auth_user_created" AFTER INSERT ON "auth"."users" FOR EACH ROW EXECUTE FUNCTION "public"."handle_new_user"();
+
+
+
 CREATE OR REPLACE TRIGGER "payments_set_timestamps" BEFORE INSERT OR UPDATE ON "public"."payments" FOR EACH ROW EXECUTE FUNCTION "public"."set_timestamps"();
 
 

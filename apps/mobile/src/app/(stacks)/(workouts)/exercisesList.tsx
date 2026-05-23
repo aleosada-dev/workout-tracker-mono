@@ -1,14 +1,23 @@
 import { FlashList } from '@shopify/flash-list';
-import { Button, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
+import {
+  Button,
+  ConfirmDestructiveDialog,
+  EmptyState,
+  Input,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { useSession } from '@/features/auth/hooks/useSession';
 import {
   EMPTY_EXERCISE_LIST_PARAMS,
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
+import { useBulkDeleteExercises } from '@/features/exercises/hooks/use-bulk-delete-exercises';
 import { useExercises } from '@/features/exercises/hooks/use-exercises';
 import { toExercise } from '@/features/exercises/lib/format';
 import { countActiveFilters } from '@/features/exercises/lib/list.helpers';
@@ -16,6 +25,7 @@ import type { ExerciseListItem } from '@/features/exercises/lib/list.types';
 import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
 import * as ScreenActions from '@/features/shared/components/ScreenActions';
 import { normalizeString } from '@/features/shared/lib/utils';
 
@@ -60,6 +70,9 @@ export default function ExercisesListScreen() {
   const [mode, setMode] = useState<Mode>('browse');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const { session } = useSession();
+  const { mutate: bulkDelete } = useBulkDeleteExercises();
 
   const filteredExercises = useMemo(() => {
     const q = normalizeString(query.trim());
@@ -86,6 +99,48 @@ export default function ExercisesListScreen() {
     setSelected(new Set());
   };
   const selectAll = () => setSelected(new Set(filteredExercises.map((e) => e.id)));
+
+  const handleDeletePress = () => {
+    const currentUserId = session?.user.id;
+    const selectedItems = exercises.filter((e) => selected.has(e.id));
+    if (selectedItems.length === 0) return;
+    const hasNonOwned =
+      !currentUserId || selectedItems.some((e) => e.userId == null || e.userId !== currentUserId);
+    if (hasNonOwned) {
+      Toast.show({
+        type: 'error',
+        text1: t('exerciseListScreen.bulkDelete.onlyOwn.title'),
+        text2: t('exerciseListScreen.bulkDelete.onlyOwn.message'),
+      });
+      return;
+    }
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setConfirmDeleteOpen(false);
+    const ids = Array.from(selected);
+    bulkDelete(ids, {
+      onSuccess: () => {
+        exerciseObservability.trackAction('exercises_bulk_deleted');
+        Toast.show({
+          type: 'success',
+          text1: t('exerciseListScreen.bulkDelete.success.title'),
+          text2: t('exerciseListScreen.bulkDelete.success.message', { count: ids.length }),
+        });
+        setMode('browse');
+        setSelected(new Set());
+      },
+      onError: handleLocalError((error) => {
+        exerciseObservability.captureError(error, { action: 'bulk_delete_exercises' });
+        Toast.show({
+          type: 'error',
+          text1: t('exerciseListScreen.bulkDelete.error.title'),
+          text2: t('exerciseListScreen.bulkDelete.error.message'),
+        });
+      }),
+    });
+  };
 
   // FlashList memoizes cells; bump this whenever selection state the cells read changes.
   const listExtraData = useMemo(() => ({ mode, selected }), [mode, selected]);
@@ -157,20 +212,11 @@ export default function ExercisesListScreen() {
 
   const selectionActions: ScreenActions.IconAction[] = [
     {
-      iosIcon: 'square.and.arrow.up',
-      androidIcon: 'share-outline',
-      label: t('exerciseListScreen.actions.share'),
-    },
-    {
-      iosIcon: 'folder',
-      androidIcon: 'folder-outline',
-      label: t('exerciseListScreen.actions.move'),
-    },
-    {
       iosIcon: 'trash',
       androidIcon: 'trash-outline',
       label: t('exerciseListScreen.actions.delete'),
       destructive: true,
+      onPress: handleDeletePress,
     },
   ];
 
@@ -245,6 +291,17 @@ export default function ExercisesListScreen() {
           actions={selectionActions}
         />
       )}
+
+      <ConfirmDestructiveDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title={t('exerciseListScreen.bulkDelete.confirm.title')}
+        description={t('exerciseListScreen.bulkDelete.confirm.message', { count: selected.size })}
+        cancelLabel={t('exerciseListScreen.bulkDelete.confirm.cancel')}
+        confirmLabel={t('exerciseListScreen.bulkDelete.confirm.confirm')}
+        onConfirm={handleConfirmDelete}
+        confirmTestID="exercises-list.bulk-delete.confirm"
+      />
     </>
   );
 }

@@ -2,15 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PortalHost } from '@rn-primitives/portal';
 import { EXERCISE_TYPES } from '@workout-tracker/domain';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
+  ConfirmDestructiveDialog,
   Field,
   Input,
   RequestErrorState,
@@ -530,30 +523,16 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
       {/* Renders the name autocomplete's suggestion list above the form. */}
       <PortalHost name={SUGGESTIONS_PORTAL_HOST} />
 
-      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('exerciseListScreen.deleteExercise.confirm.title')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('exerciseListScreen.deleteExercise.confirm.message')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              <Text>{t('exerciseListScreen.deleteExercise.confirm.cancel')}</Text>
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onPress={handleConfirmDelete}
-              className="bg-destructive"
-              testID="exercise-form.delete.confirm"
-            >
-              <Text>{t('exerciseListScreen.deleteExercise.confirm.confirm')}</Text>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDestructiveDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title={t('exerciseListScreen.deleteExercise.confirm.title')}
+        description={t('exerciseListScreen.deleteExercise.confirm.message')}
+        cancelLabel={t('exerciseListScreen.deleteExercise.confirm.cancel')}
+        confirmLabel={t('exerciseListScreen.deleteExercise.confirm.confirm')}
+        onConfirm={handleConfirmDelete}
+        confirmTestID="exercise-form.delete.confirm"
+      />
     </>
   );
 }

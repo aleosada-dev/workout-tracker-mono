@@ -73,6 +73,7 @@ export function toExercise(
     primaryMuscle: t(`muscles.${variation.muscle.slug}`),
     type: exercise.type.toString(),
     visibility: exercise.userId == null ? 'public' : 'private',
+    userId: exercise.userId,
   };
 }
 

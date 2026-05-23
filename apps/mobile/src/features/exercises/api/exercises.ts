@@ -8,6 +8,7 @@ const $getEdit = honoClient.api.v1.exercises[':id'].$get;
 const $post = honoClient.api.v1.exercises.$post;
 const $put = honoClient.api.v1.exercises[':id'].$put;
 const $delete = honoClient.api.v1.exercises[':id'].$delete;
+const $bulkDelete = honoClient.api.v1.exercises.$delete;
 const $videoUploadUrls = honoClient.api.v1.medias['video-upload-urls'].$post;
 
 export type ListExercisesResponse = InferResponseType<typeof $get, 200>;
@@ -26,6 +27,8 @@ export type UpdateExerciseRequest = InferRequestType<typeof $put>['json'];
 export type UpdateExerciseResponse = InferResponseType<typeof $put, 200>;
 
 export type DeleteExerciseResponse = InferResponseType<typeof $delete, 200>;
+
+export type BulkDeleteExercisesResponse = InferResponseType<typeof $bulkDelete, 200>;
 
 export type VideoUploadUrlsRequest = InferRequestType<typeof $videoUploadUrls>['json'];
 export type VideoUploadUrlsResponse = InferResponseType<typeof $videoUploadUrls, 200>;
@@ -91,6 +94,14 @@ export async function updateExercise(
 
 export async function deleteExercise(variationId: string): Promise<DeleteExerciseResponse> {
   const response = await $delete({ param: { id: variationId } });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function bulkDeleteExercises(
+  variationIds: string[],
+): Promise<BulkDeleteExercisesResponse> {
+  const response = await $bulkDelete({ json: { variationIds } });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

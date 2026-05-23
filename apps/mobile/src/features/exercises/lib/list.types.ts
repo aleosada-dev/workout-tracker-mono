@@ -5,4 +5,5 @@ export type ExerciseListItem = {
   primaryMuscle: string;
   type: string;
   visibility: string;
+  userId: string | null;
 };

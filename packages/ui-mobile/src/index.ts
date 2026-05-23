@@ -7,6 +7,7 @@ export * from './components/ui/bottom-sheet';
 export * from './components/ui/button';
 export * from './components/ui/card';
 export * from './components/ui/checkbox';
+export * from './components/ui/confirm-destructive-dialog';
 export * from './components/ui/dialog';
 export * from './components/ui/empty-state';
 export * from './components/ui/field';

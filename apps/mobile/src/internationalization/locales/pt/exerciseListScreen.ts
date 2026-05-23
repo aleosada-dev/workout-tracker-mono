@@ -94,6 +94,30 @@ export default {
       message: 'O Exercício foi removido da sua lista.',
     },
   },
+  bulkDelete: {
+    onlyOwn: {
+      title: 'Seleção inválida',
+      message: 'Só é possível excluir exercícios que você criou.',
+    },
+    confirm: {
+      title: 'Excluir exercícios?',
+      message:
+        '{{count}} exercícios serão removidos da sua lista. O histórico de treinos é preservado.',
+      message_one:
+        '{{count}} exercício será removido da sua lista. O histórico de treinos é preservado.',
+      cancel: 'Cancelar',
+      confirm: 'Excluir',
+    },
+    success: {
+      title: 'Exercícios excluídos.',
+      message: '{{count}} exercícios foram removidos da sua lista.',
+      message_one: '{{count}} exercício foi removido da sua lista.',
+    },
+    error: {
+      title: 'Não foi possível excluir',
+      message: 'Tente novamente em alguns instantes.',
+    },
+  },
   filter: {
     title: 'Filtrar exercícios',
     apply: 'Aplicar',

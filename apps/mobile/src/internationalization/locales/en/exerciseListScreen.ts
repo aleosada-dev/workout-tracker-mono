@@ -94,6 +94,29 @@ export default {
       message: 'The exercise was removed from your list.',
     },
   },
+  bulkDelete: {
+    onlyOwn: {
+      title: 'Invalid selection',
+      message: 'You can only delete exercises you created.',
+    },
+    confirm: {
+      title: 'Delete exercises?',
+      message: '{{count}} exercises will be removed from your list. Workout history is preserved.',
+      message_one:
+        '{{count}} exercise will be removed from your list. Workout history is preserved.',
+      cancel: 'Cancel',
+      confirm: 'Delete',
+    },
+    success: {
+      title: 'Exercises deleted.',
+      message: '{{count}} exercises were removed from your list.',
+      message_one: '{{count}} exercise was removed from your list.',
+    },
+    error: {
+      title: 'Could not delete',
+      message: 'Please try again in a moment.',
+    },
+  },
   filter: {
     title: 'Filter exercises',
     apply: 'Apply',
