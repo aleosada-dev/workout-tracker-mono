@@ -11,9 +11,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { IconAction, ScreenActionsProps } from './types';
+import type { BrowseToolbarProps, IconAction } from './types';
 
-export function ScreenActions({ primary, overflow }: ScreenActionsProps) {
+export function BrowseToolbar({ primary, overflow }: BrowseToolbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const theme = useTheme();

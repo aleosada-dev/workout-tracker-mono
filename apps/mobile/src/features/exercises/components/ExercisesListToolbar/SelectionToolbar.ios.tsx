@@ -1,13 +1,13 @@
 import { Stack } from 'expo-router';
-import type { SelectionActionsProps } from './types';
+import type { SelectionToolbarProps } from './types';
 
-export function SelectionActions({
+export function SelectionToolbar({
   count,
   onCancel,
   allSelected,
   onToggleSelectAll,
   actions,
-}: SelectionActionsProps) {
+}: SelectionToolbarProps) {
   const empty = count === 0;
   const leading = actions.filter((a) => !a.destructive);
   const trailing = actions.filter((a) => a.destructive);

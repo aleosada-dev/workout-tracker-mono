@@ -10,17 +10,15 @@ export interface IconAction {
   destructive?: boolean;
 }
 
-export interface ScreenActionsProps {
+export interface BrowseToolbarProps {
   primary: IconAction;
   overflow?: IconAction[];
 }
 
-export interface SelectionActionsProps {
+export interface SelectionToolbarProps {
   count: number;
   onCancel: () => void;
-  /** Whether every selectable item is currently selected — drives the toggle icon. */
   allSelected?: boolean;
-  /** Toggles between selecting all items and clearing the selection. */
   onToggleSelectAll?: () => void;
   actions: IconAction[];
 }

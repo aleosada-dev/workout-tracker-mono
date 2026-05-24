@@ -1,6 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { Button, ConfirmDialog, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
 import { router, useFocusEffect } from 'expo-router';
+import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
@@ -11,8 +12,14 @@ import {
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
+import {
+  BrowseToolbar,
+  type IconAction,
+  SelectionToolbar,
+} from '@/features/exercises/components/ExercisesListToolbar';
 import { useBulkCopyExercises } from '@/features/exercises/hooks/use-bulk-copy-exercises';
 import { useBulkDeleteExercises } from '@/features/exercises/hooks/use-bulk-delete-exercises';
+import { useExerciseSelection } from '@/features/exercises/hooks/use-exercise-selection';
 import { useExercises } from '@/features/exercises/hooks/use-exercises';
 import { toExercise } from '@/features/exercises/lib/format';
 import { countActiveFilters } from '@/features/exercises/lib/list.helpers';
@@ -21,24 +28,19 @@ import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filte
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
-import * as ScreenActions from '@/features/shared/components/ScreenActions';
 import { normalizeString } from '@/features/shared/lib/utils';
-
-type Mode = 'browse' | 'select';
 
 export default function ExercisesListScreen() {
   const { t, i18n } = useTranslation();
+  const { session } = useSession();
+  const currentUserId = session?.user.id ?? null;
+
   const [filters, setFilters] = useState<ExerciseListParams>(() => exerciseFilters$.get());
   useFocusEffect(
     useCallback(() => {
       setFilters(exerciseFilters$.get());
     }, []),
   );
-  const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useExercises(filters);
-  const activeFilterCount = countActiveFilters(filters);
-  useReportRequestError({ isError, error }, exerciseObservability.captureError, {
-    action: 'load_exercises',
-  });
 
   // The filter is scoped to this screen — drop it when the list unmounts.
   useEffect(() => {
@@ -46,8 +48,12 @@ export default function ExercisesListScreen() {
       exerciseFilters$.set(EMPTY_EXERCISE_LIST_PARAMS);
     };
   }, []);
-  const { session } = useSession();
-  const currentUserId = session?.user.id ?? null;
+
+  const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useExercises(filters);
+  useReportRequestError({ isError, error }, exerciseObservability.captureError, {
+    action: 'load_exercises',
+  });
+
   const exercises = useMemo<ExerciseListItem[]>(
     () =>
       (data ?? [])
@@ -60,52 +66,30 @@ export default function ExercisesListScreen() {
     [data, i18n.language, t, currentUserId],
   );
 
-  const [mode, setMode] = useState<Mode>('browse');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
+  const filteredExercises = useMemo(() => {
+    const q = normalizeString(query.trim());
+    if (!q) return exercises;
+    return exercises.filter(
+      (e) =>
+        normalizeString(e.name).includes(q) ||
+        (e.variationName ? normalizeString(e.variationName).includes(q) : false),
+    );
+  }, [exercises, query]);
+
+  const { mode, selected, allSelected, enterSelect, exitSelect, toggle, toggleSelectAll } =
+    useExerciseSelection(filteredExercises.map((e) => e.id));
+
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [confirmCopyOpen, setConfirmCopyOpen] = useState(false);
   const { mutate: bulkDelete } = useBulkDeleteExercises();
   const { mutate: bulkCopy } = useBulkCopyExercises();
 
-  const filteredExercises = useMemo(() => {
-    const q = normalizeString(query.trim());
-    if (!q) return exercises;
-    return exercises.filter((e) => {
-      if (normalizeString(e.name).includes(q)) return true;
-      return e.variationName ? normalizeString(e.variationName).includes(q) : false;
-    });
-  }, [exercises, query]);
-
-  const enterSelect = (id: string) => {
-    setMode('select');
-    setSelected(new Set([id]));
-  };
-  const toggle = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  const exitSelect = () => {
-    setMode('browse');
-    setSelected(new Set());
-  };
-  const toggleSelectAll = () =>
-    setSelected((prev) =>
-      prev.size === filteredExercises.length
-        ? new Set()
-        : new Set(filteredExercises.map((e) => e.id)),
-    );
-  const allSelected = filteredExercises.length > 0 && selected.size === filteredExercises.length;
-
-  const handleDeletePress = () => {
-    const currentUserId = session?.user.id;
-    const selectedItems = exercises.filter((e) => selected.has(e.id));
-    if (selectedItems.length === 0) return;
+  const requestDelete = () => {
+    const items = exercises.filter((e) => selected.has(e.id));
+    if (items.length === 0) return;
     const hasNonOwned =
-      !currentUserId || selectedItems.some((e) => e.userId == null || e.userId !== currentUserId);
+      !currentUserId || items.some((e) => e.userId == null || e.userId !== currentUserId);
     if (hasNonOwned) {
       Toast.show({
         type: 'error',
@@ -117,7 +101,7 @@ export default function ExercisesListScreen() {
     setConfirmDeleteOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const confirmDelete = () => {
     setConfirmDeleteOpen(false);
     const ids = Array.from(selected);
     bulkDelete(ids, {
@@ -128,11 +112,10 @@ export default function ExercisesListScreen() {
           text1: t('exerciseListScreen.bulkDelete.success.title'),
           text2: t('exerciseListScreen.bulkDelete.success.message', { count: ids.length }),
         });
-        setMode('browse');
-        setSelected(new Set());
+        exitSelect();
       },
-      onError: handleLocalError((error) => {
-        exerciseObservability.captureError(error, { action: 'bulk_delete_exercises' });
+      onError: handleLocalError((err) => {
+        exerciseObservability.captureError(err, { action: 'bulk_delete_exercises' });
         Toast.show({
           type: 'error',
           text1: t('exerciseListScreen.bulkDelete.error.title'),
@@ -142,10 +125,10 @@ export default function ExercisesListScreen() {
     });
   };
 
-  const handleCopyPress = () => {
-    const selectedItems = exercises.filter((e) => selected.has(e.id));
-    if (selectedItems.length === 0) return;
-    const hasOwned = selectedItems.some((e) => e.userId != null && e.userId === currentUserId);
+  const requestCopy = () => {
+    const items = exercises.filter((e) => selected.has(e.id));
+    if (items.length === 0) return;
+    const hasOwned = items.some((e) => e.userId != null && e.userId === currentUserId);
     if (hasOwned) {
       Toast.show({
         type: 'error',
@@ -157,7 +140,7 @@ export default function ExercisesListScreen() {
     setConfirmCopyOpen(true);
   };
 
-  const handleConfirmCopy = () => {
+  const confirmCopy = () => {
     setConfirmCopyOpen(false);
     const ids = Array.from(selected);
     bulkCopy(ids, {
@@ -168,11 +151,10 @@ export default function ExercisesListScreen() {
           text1: t('exerciseListScreen.bulkCopy.success.title'),
           text2: t('exerciseListScreen.bulkCopy.success.message', { count: ids.length }),
         });
-        setMode('browse');
-        setSelected(new Set());
+        exitSelect();
       },
-      onError: handleLocalError((error) => {
-        exerciseObservability.captureError(error, { action: 'bulk_copy_exercises' });
+      onError: handleLocalError((err) => {
+        exerciseObservability.captureError(err, { action: 'bulk_copy_exercises' });
         Toast.show({
           type: 'error',
           text1: t('exerciseListScreen.bulkCopy.error.title'),
@@ -194,77 +176,16 @@ export default function ExercisesListScreen() {
     [filters, dataUpdatedAt],
   );
 
-  if (isLoading) {
-    return (
-      <ScrollView
-        className="flex-1 bg-background"
-        contentContainerClassName="p-4 gap-3"
-        contentInsetAdjustmentBehavior="automatic"
-        testID="exercises-list.loading"
-      >
-        <ExerciseCardSkeleton />
-        <ExerciseCardSkeleton />
-        <ExerciseCardSkeleton />
-        <ExerciseCardSkeleton />
-        <ExerciseCardSkeleton />
-      </ScrollView>
-    );
-  }
-
+  if (isLoading) return <ExercisesListLoading />;
   if (isError && exercises.length === 0) {
     return (
-      <View
-        className="flex-1 items-center justify-center gap-4 bg-background p-6"
-        testID="exercises-list.error"
-      >
-        <Text variant="muted">{t('exerciseListScreen.error.title')}</Text>
-        <Button onPress={() => refetch()}>
-          <Text>{t('exerciseListScreen.error.retry')}</Text>
-        </Button>
-      </View>
+      <ExercisesListError
+        onRetry={refetch}
+        message={t('exerciseListScreen.error.title')}
+        retryLabel={t('exerciseListScreen.error.retry')}
+      />
     );
   }
-
-  const browseOverflow: ScreenActions.IconAction[] = [
-    {
-      iosIcon: 'checkmark.circle',
-      androidIcon: 'checkmark-circle-outline',
-      label: t('exerciseListScreen.actions.select'),
-      onPress: () => setMode('select'),
-    },
-    {
-      iosIcon: 'line.3.horizontal.decrease',
-      androidIcon: 'filter',
-      label:
-        activeFilterCount > 0
-          ? t('exerciseListScreen.actions.filterWithCount', { count: activeFilterCount })
-          : t('exerciseListScreen.actions.filter'),
-      onPress: () => router.push('/exercisesFilter'),
-    },
-  ];
-
-  const browsePrimary: ScreenActions.IconAction = {
-    iosIcon: 'plus.circle.fill',
-    androidIcon: 'add',
-    label: t('exerciseListScreen.actions.addExercise'),
-    onPress: () => router.push('/exerciseForm'),
-  };
-
-  const selectionActions: ScreenActions.IconAction[] = [
-    {
-      iosIcon: 'doc.on.doc',
-      androidIcon: 'copy-outline',
-      label: t('exerciseListScreen.actions.copy'),
-      onPress: handleCopyPress,
-    },
-    {
-      iosIcon: 'trash',
-      androidIcon: 'trash-outline',
-      label: t('exerciseListScreen.actions.delete'),
-      destructive: true,
-      onPress: handleDeletePress,
-    },
-  ];
 
   return (
     <>
@@ -308,34 +229,36 @@ export default function ExercisesListScreen() {
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
-            query.trim() ? (
-              <EmptyState
-                title={t('exerciseListScreen.searchEmptyTitle')}
-                subtitle={t('exerciseListScreen.searchEmptySubtitle')}
-                testID="exercises-list.search-empty"
-              />
-            ) : (
-              <EmptyState
-                title={t('exerciseListScreen.emptyTitle')}
-                subtitle={t('exerciseListScreen.emptySubtitle')}
-                testID="exercises-list.empty"
-              />
-            )
+            <EmptyState
+              title={t(
+                query.trim()
+                  ? 'exerciseListScreen.searchEmptyTitle'
+                  : 'exerciseListScreen.emptyTitle',
+              )}
+              subtitle={t(
+                query.trim()
+                  ? 'exerciseListScreen.searchEmptySubtitle'
+                  : 'exerciseListScreen.emptySubtitle',
+              )}
+              testID={query.trim() ? 'exercises-list.search-empty' : 'exercises-list.empty'}
+            />
           }
           ListFooterComponent={<View className="h-28" />}
         />
       </View>
 
-      {mode === 'browse' && (
-        <ScreenActions.ScreenActions primary={browsePrimary} overflow={browseOverflow} />
-      )}
-      {mode === 'select' && (
-        <ScreenActions.SelectionActions
+      {mode === 'browse' ? (
+        <BrowseToolbar
+          primary={browsePrimary(t)}
+          overflow={browseOverflow(t, countActiveFilters(filters), () => enterSelect())}
+        />
+      ) : (
+        <SelectionToolbar
           count={selected.size}
           onCancel={exitSelect}
           allSelected={allSelected}
           onToggleSelectAll={toggleSelectAll}
-          actions={selectionActions}
+          actions={selectionActions(t, requestCopy, requestDelete)}
         />
       )}
 
@@ -346,7 +269,7 @@ export default function ExercisesListScreen() {
         description={t('exerciseListScreen.bulkDelete.confirm.message', { count: selected.size })}
         cancelLabel={t('exerciseListScreen.bulkDelete.confirm.cancel')}
         confirmLabel={t('exerciseListScreen.bulkDelete.confirm.confirm')}
-        onConfirm={handleConfirmDelete}
+        onConfirm={confirmDelete}
         confirmTestID="exercises-list.bulk-delete.confirm"
       />
 
@@ -358,9 +281,99 @@ export default function ExercisesListScreen() {
         description={t('exerciseListScreen.bulkCopy.confirm.message', { count: selected.size })}
         cancelLabel={t('exerciseListScreen.bulkCopy.confirm.cancel')}
         confirmLabel={t('exerciseListScreen.bulkCopy.confirm.confirm')}
-        onConfirm={handleConfirmCopy}
+        onConfirm={confirmCopy}
         confirmTestID="exercises-list.bulk-copy.confirm"
       />
     </>
   );
+}
+
+function ExercisesListLoading() {
+  return (
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="p-4 gap-3"
+      contentInsetAdjustmentBehavior="automatic"
+      testID="exercises-list.loading"
+    >
+      <ExerciseCardSkeleton />
+      <ExerciseCardSkeleton />
+      <ExerciseCardSkeleton />
+      <ExerciseCardSkeleton />
+      <ExerciseCardSkeleton />
+    </ScrollView>
+  );
+}
+
+function ExercisesListError({
+  onRetry,
+  message,
+  retryLabel,
+}: {
+  onRetry: () => void;
+  message: string;
+  retryLabel: string;
+}) {
+  return (
+    <View
+      className="flex-1 items-center justify-center gap-4 bg-background p-6"
+      testID="exercises-list.error"
+    >
+      <Text variant="muted">{message}</Text>
+      <Button onPress={onRetry}>
+        <Text>{retryLabel}</Text>
+      </Button>
+    </View>
+  );
+}
+
+function browsePrimary(t: TFunction): IconAction {
+  return {
+    iosIcon: 'plus.circle.fill',
+    androidIcon: 'add',
+    label: t('exerciseListScreen.actions.addExercise'),
+    onPress: () => router.push('/exerciseForm'),
+  };
+}
+
+function browseOverflow(
+  t: TFunction,
+  activeFilterCount: number,
+  onSelectMode: () => void,
+): IconAction[] {
+  return [
+    {
+      iosIcon: 'checkmark.circle',
+      androidIcon: 'checkmark-circle-outline',
+      label: t('exerciseListScreen.actions.select'),
+      onPress: onSelectMode,
+    },
+    {
+      iosIcon: 'line.3.horizontal.decrease',
+      androidIcon: 'filter',
+      label:
+        activeFilterCount > 0
+          ? t('exerciseListScreen.actions.filterWithCount', { count: activeFilterCount })
+          : t('exerciseListScreen.actions.filter'),
+      onPress: () => router.push('/exercisesFilter'),
+    },
+  ];
+}
+
+function selectionActions(t: TFunction, onCopy: () => void, onDelete: () => void): IconAction[] {
+  return [
+    {
+      iosIcon: 'doc.on.doc',
+      androidIcon: 'copy-outline',
+      label: t('exerciseListScreen.actions.copy'),
+      onPress: onCopy,
+    },
+    {
+      iosIcon: 'trash',
+      androidIcon: 'trash-outline',
+      label: t('exerciseListScreen.actions.delete'),
+      destructive: true,
+      onPress: onDelete,
+    },
+  ];
 }

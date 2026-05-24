@@ -3,9 +3,9 @@ import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { ScreenActionsProps } from './types';
+import type { BrowseToolbarProps } from './types';
 
-export function ScreenActions({ primary, overflow }: ScreenActionsProps) {
+export function BrowseToolbar({ primary, overflow }: BrowseToolbarProps) {
   const insets = useSafeAreaInsets();
 
   return (

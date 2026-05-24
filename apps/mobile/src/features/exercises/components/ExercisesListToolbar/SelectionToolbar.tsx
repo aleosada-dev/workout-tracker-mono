@@ -5,15 +5,15 @@ import { CheckCircle2, Circle } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { IconAction, SelectionActionsProps } from './types';
+import type { IconAction, SelectionToolbarProps } from './types';
 
-export function SelectionActions({
+export function SelectionToolbar({
   count,
   onCancel,
   allSelected,
   onToggleSelectAll,
   actions,
-}: SelectionActionsProps) {
+}: SelectionToolbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const theme = useTheme();
