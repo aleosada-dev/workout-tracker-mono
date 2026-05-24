@@ -19,7 +19,7 @@ import { Trash2, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import { type ColorValue, Platform, Pressable, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
@@ -365,6 +365,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={20}
+        testID="exercise-form"
       >
         <Text variant="muted">
           {isEdit
@@ -385,6 +386,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 onChangeText={field.onChange}
                 placeholder="Ex: Supino"
                 portalHost={SUGGESTIONS_PORTAL_HOST}
+                testID="exercise-form.name"
               />
             )}
           />
@@ -430,6 +432,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 value={field.value}
                 onValueChange={(value) => field.onChange(value ?? '')}
                 placeholder="Selecione um músculo"
+                testID="exercise-form.primaryMuscle"
               />
             )}
           />
@@ -444,6 +447,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 value={field.value}
                 onValueChange={(value) => field.onChange(value ?? '')}
                 placeholder="Nenhum"
+                testID="exercise-form.secondaryMuscle"
               />
             )}
           />
@@ -461,6 +465,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 value={field.value}
                 onValueChange={(value) => field.onChange(value ?? '')}
                 placeholder="Selecione um equipamento"
+                testID="exercise-form.equipment"
               />
             )}
           />
@@ -515,7 +520,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
           />
         ) : null}
 
-        <Button className="mt-2" onPress={onSubmit} disabled={busy}>
+        <Button className="mt-2" onPress={onSubmit} disabled={busy} testID="exercise-form.submit">
           <Text>{busy ? 'Salvando...' : 'Salvar'}</Text>
         </Button>
       </KeyboardAwareScrollView>
@@ -580,7 +585,7 @@ function ExerciseFormFallback({
 
 const LOADING_FIELD_KEYS = ['name', 'type', 'variation', 'muscle', 'equipment'] as const;
 
-function HeaderCloseButton({ color }: { color: string }) {
+function HeaderCloseButton({ color }: { color: ColorValue }) {
   return (
     <Pressable
       onPress={() => router.back()}

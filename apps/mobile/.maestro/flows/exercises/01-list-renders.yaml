@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 name: 01 - Lista de exercícios renderiza
 ---
-- runFlow: ../../subflows/open-exercises-list.yaml
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
 - assertNotVisible:
     id: "exercises-list.loading"
 - assertNotVisible:

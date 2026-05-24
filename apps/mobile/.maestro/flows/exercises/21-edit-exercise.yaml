@@ -1,0 +1,64 @@
+appId: ${MAESTRO_APP_ID}
+name: 21 - Editar exercício próprio
+# Edita o nome de E2E_EXERCISE_OWNED e reverte ao final para manter o seed
+# estável entre runs (outros flows consomem essa mesma var).
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${E2E_EXERCISE_OWNED}
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+# Pencil no header abre o form em modo edição.
+- tapOn: "Editar exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+# Limpa o nome e aplica o sufixo (edited).
+- tapOn:
+    id: "exercise-form.name"
+- eraseText: 50
+- inputText: ${E2E_EXERCISE_OWNED} (edited)
+- hideKeyboard
+- tapOn:
+    id: "exercise-form.submit"
+- extendedWaitUntil:
+    visible: "Exercício atualizado."
+    timeout: 15000
+- assertVisible:
+    id: "exercises-list"
+# Revert: abre o exercício editado, volta o nome original.
+- tapOn:
+    id: "exercises-list.search"
+- eraseText: 80
+- inputText: ${E2E_EXERCISE_OWNED} (edited)
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- tapOn: "Editar exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+- tapOn:
+    id: "exercise-form.name"
+- eraseText: 80
+- inputText: ${E2E_EXERCISE_OWNED}
+- hideKeyboard
+- tapOn:
+    id: "exercise-form.submit"
+- extendedWaitUntil:
+    visible: "Exercício atualizado."
+    timeout: 15000
+- assertVisible:
+    id: "exercises-list"

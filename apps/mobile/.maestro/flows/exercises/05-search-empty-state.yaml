@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 name: 05 - Busca sem resultados exibe empty state
 ---
-- runFlow: ../../subflows/open-exercises-list.yaml
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
 - tapOn:
     id: "exercises-list.search"
 - inputText: "zzqqxx-nao-existe"

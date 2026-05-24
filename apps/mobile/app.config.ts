@@ -68,6 +68,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-localization',
     'expo-notifications',
     'expo-video',
+    'expo-image',
+    'expo-status-bar',
+    'expo-web-browser',
     [
       'expo-image-picker',
       {

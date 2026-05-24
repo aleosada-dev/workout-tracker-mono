@@ -1,0 +1,18 @@
+appId: ${MAESTRO_APP_ID}
+name: 27 - Bulk copy bloqueado em exercício próprio
+# Validação: só públicos/compartilhados podem ser copiados. Selecionar um
+# exercício próprio e tentar copiar deve mostrar toast de erro.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${E2E_EXERCISE_OWNED}
+- longPressOn:
+    id: "exercise-card"
+    index: 0
+- assertVisible: "Cancelar"
+- tapOn: "Copiar"
+- extendedWaitUntil:
+    visible: "Seleção inválida"
+    timeout: 5000
+- tapOn: "Cancelar"

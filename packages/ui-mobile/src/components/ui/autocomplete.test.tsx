@@ -8,12 +8,14 @@ function Harness({
   maxOptions,
   minChars,
   animated,
+  debounceMs,
 }: {
   options: string[];
   onSelect?: (option: string) => void;
   maxOptions?: number;
   minChars?: number;
   animated?: boolean;
+  debounceMs?: number;
 }) {
   const [value, setValue] = useState('');
   return (
@@ -26,6 +28,7 @@ function Harness({
       maxOptions={maxOptions}
       minChars={minChars}
       animated={animated}
+      debounceMs={debounceMs}
     />
   );
 }
@@ -47,7 +50,13 @@ describe('<Autocomplete />', () => {
 
   test('does not show suggestions below minChars', async () => {
     const user = userEvent.setup();
-    const { getByTestId, getByText, queryByTestId } = render(<Harness options={OPTIONS} />);
+    // `animated={false}` evita o fade-out do reanimated, que mantém o nó
+    // montado durante a saída. `debounceMs={0}` torna a atualização do filtro
+    // síncrona — sob carga (workers paralelos), o debounce padrão de 300ms
+    // pode estourar o timeout do waitFor e o portal não chega a desmontar.
+    const { getByTestId, getByText, queryByTestId } = render(
+      <Harness options={OPTIONS} animated={false} debounceMs={0} />,
+    );
 
     const input = getByTestId('ac');
     await user.type(input, 'sup', { skipBlur: true });

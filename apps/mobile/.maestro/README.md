@@ -53,6 +53,26 @@ Os flows de 07 a 11 validam o caminho feliz — escolha exercícios que a conta 
 
 Os flows 16 e 17 abrem os dropdowns de músculo e equipamento e selecionam um item por rótulo fixo no flow ("Peito" e "Anilha"). São dados de referência — iguais para qualquer conta — e ambos aparecem no topo do dropdown sem rolar. Se o seed mudar esses rótulos, ajuste o `tapOn` direto no flow.
 
+### Flows de CRUD/bulk (20-28)
+
+Cobrem criação, edição, delete (via form), e seleção em massa (delete e copy). Três env vars novas, todas apontando para exercícios da conta atleta:
+
+```
+# .maestro/.env
+E2E_EXERCISE_OWNED=...      # flow 21, 27: exercício criado pela atleta (deletável e editável)
+E2E_EXERCISE_PUBLIC=...     # flow 25, 26: exercício público/shared, NÃO-owned (copiável)
+E2E_EXERCISE_PUBLIC_2=...   # flow 26: segundo público/shared para bulk copy com >1 item
+```
+
+**Estratégia de seed sem cleanup automático:**
+
+- Flows 20, 22, 24 criam exercícios com nome único (timestamp via `evalScript`). Idempotentes — podem rodar várias vezes. O flow 20 deixa o exercício no banco; 22 e 24 deletam o que acabaram de criar.
+- Flow 21 edita `E2E_EXERCISE_OWNED` e **reverte** o nome ao final — mantém o seed estável.
+- Flow 26 gera uma nova cópia a cada run dos dois exercícios públicos. Cópias acumulam no banco; quando ficar poluído, limpe manualmente pelo app.
+- Flows 25, 27, 28 são read-only do ponto de vista do banco.
+
+Recomendação para a primeira vez: criar manualmente os 3 exercícios de referência no app de teste, salvar os nomes no `.env`, rodar a suíte completa.
+
 ## Comandos
 
 Rodar a suíte completa contra development build:
@@ -137,7 +157,16 @@ O handler é gated por variant ≠ `production` — em build de produção é no
         ├── 16-filter-by-muscle.yaml
         ├── 17-filter-by-equipment.yaml
         ├── 18-filter-count-and-clear.yaml
-        └── 19-filter-type-min-one-warning.yaml
+        ├── 19-filter-type-min-one-warning.yaml
+        ├── 20-create-exercise.yaml
+        ├── 21-edit-exercise.yaml
+        ├── 22-delete-via-form.yaml
+        ├── 23-selection-mode-toggle.yaml
+        ├── 24-bulk-delete-success.yaml
+        ├── 25-bulk-delete-blocked.yaml
+        ├── 26-bulk-copy-success.yaml
+        ├── 27-bulk-copy-blocked.yaml
+        └── 28-select-all.yaml
 ```
 
 ## Convenções de testID

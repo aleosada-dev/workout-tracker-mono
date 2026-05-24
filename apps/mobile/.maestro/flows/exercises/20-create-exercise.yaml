@@ -1,0 +1,37 @@
+appId: ${MAESTRO_APP_ID}
+name: 20 - Criar exercício
+# Cria um exercício com nome único (timestamp). Sem cleanup — o exercício
+# fica no banco como crescimento aceito do seed.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- evalScript: ${output.name = "E2E Create " + Date.now()}
+- tapOn: "Adicionar Exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+- tapOn:
+    id: "exercise-form.name"
+- inputText: ${output.name}
+# Tipo de exercício já vem com "Musculação" pré-selecionado.
+# Sem hideKeyboard: o autocomplete do nome renderiza sugestões em portal e
+# intercepta o tap externo do hideKeyboard. keyboardShouldPersistTaps="handled"
+# garante que o próximo tapOn já blureia o input e dismissa o teclado.
+- tapOn:
+    id: "exercise-form.primaryMuscle"
+- tapOn: "Peito"
+- tapOn:
+    id: "exercise-form.equipment"
+- tapOn: "Anilha"
+- tapOn:
+    id: "exercise-form.submit"
+- extendedWaitUntil:
+    visible: "Exercício criado."
+    timeout: 15000
+- assertVisible:
+    id: "exercises-list"
+# O novo exercício aparece na lista (busca pelo nome único).
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${output.name}
+- assertVisible: ${output.name}

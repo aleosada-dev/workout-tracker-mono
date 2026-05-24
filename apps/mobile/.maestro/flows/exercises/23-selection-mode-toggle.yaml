@@ -1,0 +1,12 @@
+appId: ${MAESTRO_APP_ID}
+name: 23 - Entrar e sair do modo seleção
+# Long-press em um card entra no modo seleção; "Cancelar" volta ao modo browse.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- longPressOn:
+    id: "exercise-card"
+    index: 0
+- assertVisible: "Cancelar"
+- assertNotVisible: "Adicionar Exercício"
+- tapOn: "Cancelar"
+- assertVisible: "Adicionar Exercício"

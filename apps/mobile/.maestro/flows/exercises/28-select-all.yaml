@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+name: 28 - Selecionar Todos / Limpar seleção
+# Valida o toggle de "Selecionar Todos" / "Limpar seleção" no header da
+# toolbar de seleção.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- longPressOn:
+    id: "exercise-card"
+    index: 0
+- assertVisible: "Selecionar Todos"
+- tapOn: "Selecionar Todos"
+- assertVisible: "Limpar seleção"
+- tapOn: "Limpar seleção"
+- assertVisible: "Selecionar Todos"
+- tapOn: "Cancelar"
+- assertVisible: "Adicionar Exercício"

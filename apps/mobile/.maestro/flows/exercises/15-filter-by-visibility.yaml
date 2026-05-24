@@ -2,7 +2,10 @@ appId: ${MAESTRO_APP_ID}
 name: 15 - Filtrar por visibilidade soma no badge
 ---
 - runFlow: ../../subflows/open-exercises-filter-athlete.yaml
+# Agora é um Select (popover). Abrir o trigger e escolher a opção.
 # "Todos" é o padrão (não conta); qualquer outro valor conta como filtro ativo.
+- tapOn:
+    id: "exercises-filter.visibility"
 - tapOn:
     id: "exercises-filter.visibility.public"
 - tapOn:

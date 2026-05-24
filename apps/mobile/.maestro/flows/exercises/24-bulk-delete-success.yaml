@@ -1,0 +1,44 @@
+appId: ${MAESTRO_APP_ID}
+name: 24 - Bulk delete (próprio, sucesso)
+# Cria um exercício dedicado, entra em modo seleção via long-press e deleta
+# via toolbar de seleção. Self-contained.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- evalScript: ${output.name = "E2E BulkDel " + Date.now()}
+- tapOn: "Adicionar Exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+- tapOn:
+    id: "exercise-form.name"
+- inputText: ${output.name}
+- hideKeyboard
+- tapOn: "Selecione um músculo"
+- tapOn: "Peito"
+- tapOn: "Selecione um equipamento"
+- tapOn: "Anilha"
+- tapOn:
+    id: "exercise-form.submit"
+- extendedWaitUntil:
+    visible: "Exercício criado."
+    timeout: 15000
+# Busca, long-press para entrar em seleção, depois bulk delete.
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${output.name}
+- longPressOn:
+    id: "exercise-card"
+    index: 0
+- assertVisible: "Cancelar"
+- tapOn: "Excluir"
+- extendedWaitUntil:
+    visible: "Excluir exercícios?"
+    timeout: 5000
+- tapOn:
+    id: "exercises-list.bulk-delete.confirm"
+- extendedWaitUntil:
+    visible: "Exercícios excluídos."
+    timeout: 15000
+- assertVisible: "Adicionar Exercício"
+- assertNotVisible: ${output.name}

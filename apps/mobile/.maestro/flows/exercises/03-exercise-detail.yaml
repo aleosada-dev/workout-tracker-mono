@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 name: 03 - Detalhes do exercício
 ---
-- runFlow: ../../subflows/open-exercises-list.yaml
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
 - tapOn:
     id: "exercises-list.search"
 - inputText: "Leg Press 45"

@@ -1,0 +1,54 @@
+appId: ${MAESTRO_APP_ID}
+name: 22 - Deletar exercício via form (single)
+# Cria um exercício dedicado e o deleta via tela de detalhe → form → lixeira.
+# Self-contained — não consome o seed.
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- evalScript: ${output.name = "E2E Delete " + Date.now()}
+- tapOn: "Adicionar Exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+- tapOn:
+    id: "exercise-form.name"
+- inputText: ${output.name}
+- hideKeyboard
+- tapOn: "Selecione um músculo"
+- tapOn: "Peito"
+- tapOn: "Selecione um equipamento"
+- tapOn: "Anilha"
+- tapOn:
+    id: "exercise-form.submit"
+- extendedWaitUntil:
+    visible: "Exercício criado."
+    timeout: 15000
+# Abre o exercício recém criado.
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${output.name}
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "exercise-detail"
+    timeout: 15000
+- tapOn: "Editar exercício"
+- extendedWaitUntil:
+    visible:
+      id: "exercise-form"
+    timeout: 10000
+- tapOn:
+    id: "exercise-form.delete"
+- extendedWaitUntil:
+    visible: "Excluir exercício?"
+    timeout: 5000
+- tapOn:
+    id: "exercise-form.delete.confirm"
+- extendedWaitUntil:
+    visible: "Exercício excluído."
+    timeout: 15000
+- assertVisible:
+    id: "exercises-list"
+- assertNotVisible: ${output.name}

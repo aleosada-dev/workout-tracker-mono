@@ -4,10 +4,10 @@ name: 11 - Detalhe - vídeo demonstrativo visível
 - runFlow: ../../subflows/open-exercises-list-coach.yaml
 - tapOn:
     id: "exercises-list.search"
-- inputText: "abdominal na maquina"
+- inputText: ${E2E_EXERCISE_VIDEO}
 - tapOn:
     id: "exercise-card"
-    index: 0
+    index: 1
 - extendedWaitUntil:
     visible:
       id: "exercise-detail"

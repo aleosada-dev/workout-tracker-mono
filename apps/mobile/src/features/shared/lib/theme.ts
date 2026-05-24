@@ -1,8 +1,8 @@
-import { DefaultTheme, type Theme as NavTheme } from '@react-navigation/native';
 import { darkTheme, lightTheme, rgb } from '@workout-tracker/ui-mobile';
+import { DefaultTheme } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 
-export function useNavTheme(): NavTheme {
+export function useNavTheme(): ReactNavigation.Theme {
   const { colorScheme } = useColorScheme();
   const t = colorScheme === 'dark' ? darkTheme : lightTheme;
   return {

@@ -1,0 +1,32 @@
+appId: ${MAESTRO_APP_ID}
+name: 26 - Bulk copy (público, sucesso)
+# Seleciona dois exercícios públicos e copia para a biblioteca da atleta.
+# As cópias acumulam no banco entre runs — aceitável (limpar manualmente
+# quando o seed ficar poluído).
+---
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
+- tapOn:
+    id: "exercises-list.search"
+- inputText: ${E2E_EXERCISE_PUBLIC}
+- longPressOn:
+    id: "exercise-card"
+    index: 0
+- assertVisible: "Cancelar"
+# Limpa busca para encontrar o segundo público.
+- tapOn:
+    id: "exercises-list.search"
+- eraseText: 80
+- inputText: ${E2E_EXERCISE_PUBLIC_2}
+- tapOn:
+    id: "exercise-card"
+    index: 0
+- tapOn: "Copiar"
+- extendedWaitUntil:
+    visible: "Copiar exercícios?"
+    timeout: 5000
+- tapOn:
+    id: "exercises-list.bulk-copy.confirm"
+- extendedWaitUntil:
+    visible: "Exercícios copiados."
+    timeout: 15000
+- assertVisible: "Adicionar Exercício"

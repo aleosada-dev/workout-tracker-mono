@@ -17,9 +17,10 @@ type Props = {
   onValueChange: (value: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  testID?: string;
 };
 
-export function MuscleSelect({ value, onValueChange, placeholder, disabled }: Props) {
+export function MuscleSelect({ value, onValueChange, placeholder, disabled, testID }: Props) {
   const { t } = useTranslation();
   const { sections, labels } = useMuscleSections();
 
@@ -31,7 +32,7 @@ export function MuscleSelect({ value, onValueChange, placeholder, disabled }: Pr
       onValueChange={(opt) => onValueChange(opt?.value ?? null)}
       disabled={disabled}
     >
-      <SelectTrigger>
+      <SelectTrigger testID={testID}>
         <SelectValue placeholder={placeholder ?? t('muscles.placeholder')} />
       </SelectTrigger>
       <SelectContent>

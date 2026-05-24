@@ -110,7 +110,7 @@ function ThemeOption({ mode, icon, label, isActive, showLabel, onLayout }: Theme
     >
       <View>
         <Icon as={icon} size={16} className="text-foreground" />
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, overlayStyle]}>
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, overlayStyle]}>
           <Icon as={icon} size={16} className="text-primary-foreground" />
         </Animated.View>
       </View>
@@ -119,7 +119,7 @@ function ThemeOption({ mode, icon, label, isActive, showLabel, onLayout }: Theme
           <Text variant="small" className="text-foreground">
             {label}
           </Text>
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, overlayStyle]}>
+          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, overlayStyle]}>
             <Text variant="small" className="text-primary-foreground">
               {label}
             </Text>

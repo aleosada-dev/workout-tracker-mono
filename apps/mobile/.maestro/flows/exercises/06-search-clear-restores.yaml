@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 name: 06 - Limpar a busca restaura a lista
 ---
-- runFlow: ../../subflows/open-exercises-list.yaml
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
 - tapOn:
     id: "exercises-list.search"
 - inputText: "zzqqxx-nao-existe"

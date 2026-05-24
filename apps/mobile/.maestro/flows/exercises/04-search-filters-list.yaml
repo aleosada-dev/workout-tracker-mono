@@ -1,7 +1,7 @@
 appId: ${MAESTRO_APP_ID}
 name: 04 - Busca filtra a lista
 ---
-- runFlow: ../../subflows/open-exercises-list.yaml
+- runFlow: ../../subflows/open-exercises-list-athlete.yaml
 - tapOn:
     id: "exercises-list.search"
 # "Sup" deve casar com Supino (exercício comum no seed). Trocar caso a base de
