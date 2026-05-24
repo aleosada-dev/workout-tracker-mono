@@ -3,13 +3,7 @@
 	"name": "workout-tracker-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-05-14",
-	"compatibility_flags": ["nodejs_compat"]
-	// R2 video storage. Reaches `c.env` to presign playable variation video URLs.
-	// The bucket is private — all four values are secrets, set with `wrangler secret put`:
-	//   wrangler secret put R2_ACCOUNT_ID
-	//   wrangler secret put R2_ACCESS_KEY_ID
-	//   wrangler secret put R2_SECRET_ACCESS_KEY
-	//   wrangler secret put R2_BUCKET_NAME
+	"compatibility_flags": ["nodejs_compat"],
 	// For local `wrangler dev`, put all four in apps/api/.dev.vars.
 	// "kv_namespaces": [
 	//   {
@@ -33,8 +27,9 @@
 	// "ai": {
 	//   "binding": "AI"
 	// },
-	// "observability": {
-	//   "enabled": true,
-	//   "head_sampling_rate": 1
-	// }
+	"routes": [{ "pattern": "workout-tracker-api.osadainc.com.br", "custom_domain": true }],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
 }
