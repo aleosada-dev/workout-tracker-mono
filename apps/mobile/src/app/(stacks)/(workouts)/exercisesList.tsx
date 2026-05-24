@@ -1,11 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import {
-  Button,
-  ConfirmDestructiveDialog,
-  EmptyState,
-  Input,
-  Text,
-} from '@workout-tracker/ui-mobile';
+import { Button, ConfirmDialog, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +11,7 @@ import {
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
+import { useBulkCopyExercises } from '@/features/exercises/hooks/use-bulk-copy-exercises';
 import { useBulkDeleteExercises } from '@/features/exercises/hooks/use-bulk-delete-exercises';
 import { useExercises } from '@/features/exercises/hooks/use-exercises';
 import { toExercise } from '@/features/exercises/lib/format';
@@ -33,12 +28,6 @@ type Mode = 'browse' | 'select';
 
 export default function ExercisesListScreen() {
   const { t, i18n } = useTranslation();
-  // The filter lives in a separate modal screen that writes to exerciseFilters$
-  // while this list is hidden behind it. On Android, changing the FlashList data
-  // in place while it's off-screen leaves the list blank until a manual scroll,
-  // so re-read the filter when the screen regains focus and remount the
-  // FlashList via `key` — a fresh mount measures correctly, an in-place swap
-  // doesn't.
   const [filters, setFilters] = useState<ExerciseListParams>(() => exerciseFilters$.get());
   useFocusEffect(
     useCallback(() => {
@@ -75,7 +64,9 @@ export default function ExercisesListScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmCopyOpen, setConfirmCopyOpen] = useState(false);
   const { mutate: bulkDelete } = useBulkDeleteExercises();
+  const { mutate: bulkCopy } = useBulkCopyExercises();
 
   const filteredExercises = useMemo(() => {
     const q = normalizeString(query.trim());
@@ -101,7 +92,13 @@ export default function ExercisesListScreen() {
     setMode('browse');
     setSelected(new Set());
   };
-  const selectAll = () => setSelected(new Set(filteredExercises.map((e) => e.id)));
+  const toggleSelectAll = () =>
+    setSelected((prev) =>
+      prev.size === filteredExercises.length
+        ? new Set()
+        : new Set(filteredExercises.map((e) => e.id)),
+    );
+  const allSelected = filteredExercises.length > 0 && selected.size === filteredExercises.length;
 
   const handleDeletePress = () => {
     const currentUserId = session?.user.id;
@@ -140,6 +137,46 @@ export default function ExercisesListScreen() {
           type: 'error',
           text1: t('exerciseListScreen.bulkDelete.error.title'),
           text2: t('exerciseListScreen.bulkDelete.error.message'),
+        });
+      }),
+    });
+  };
+
+  const handleCopyPress = () => {
+    const selectedItems = exercises.filter((e) => selected.has(e.id));
+    if (selectedItems.length === 0) return;
+    const hasOwned = selectedItems.some((e) => e.userId != null && e.userId === currentUserId);
+    if (hasOwned) {
+      Toast.show({
+        type: 'error',
+        text1: t('exerciseListScreen.bulkCopy.onlyPublicOrShared.title'),
+        text2: t('exerciseListScreen.bulkCopy.onlyPublicOrShared.message'),
+      });
+      return;
+    }
+    setConfirmCopyOpen(true);
+  };
+
+  const handleConfirmCopy = () => {
+    setConfirmCopyOpen(false);
+    const ids = Array.from(selected);
+    bulkCopy(ids, {
+      onSuccess: () => {
+        exerciseObservability.trackAction('exercises_bulk_copied');
+        Toast.show({
+          type: 'success',
+          text1: t('exerciseListScreen.bulkCopy.success.title'),
+          text2: t('exerciseListScreen.bulkCopy.success.message', { count: ids.length }),
+        });
+        setMode('browse');
+        setSelected(new Set());
+      },
+      onError: handleLocalError((error) => {
+        exerciseObservability.captureError(error, { action: 'bulk_copy_exercises' });
+        Toast.show({
+          type: 'error',
+          text1: t('exerciseListScreen.bulkCopy.error.title'),
+          text2: t('exerciseListScreen.bulkCopy.error.message'),
         });
       }),
     });
@@ -214,6 +251,12 @@ export default function ExercisesListScreen() {
   };
 
   const selectionActions: ScreenActions.IconAction[] = [
+    {
+      iosIcon: 'doc.on.doc',
+      androidIcon: 'copy-outline',
+      label: t('exerciseListScreen.actions.copy'),
+      onPress: handleCopyPress,
+    },
     {
       iosIcon: 'trash',
       androidIcon: 'trash-outline',
@@ -290,12 +333,13 @@ export default function ExercisesListScreen() {
         <ScreenActions.SelectionActions
           count={selected.size}
           onCancel={exitSelect}
-          onSelectAll={selectAll}
+          allSelected={allSelected}
+          onToggleSelectAll={toggleSelectAll}
           actions={selectionActions}
         />
       )}
 
-      <ConfirmDestructiveDialog
+      <ConfirmDialog
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         title={t('exerciseListScreen.bulkDelete.confirm.title')}
@@ -304,6 +348,18 @@ export default function ExercisesListScreen() {
         confirmLabel={t('exerciseListScreen.bulkDelete.confirm.confirm')}
         onConfirm={handleConfirmDelete}
         confirmTestID="exercises-list.bulk-delete.confirm"
+      />
+
+      <ConfirmDialog
+        open={confirmCopyOpen}
+        onOpenChange={setConfirmCopyOpen}
+        destructive={false}
+        title={t('exerciseListScreen.bulkCopy.confirm.title')}
+        description={t('exerciseListScreen.bulkCopy.confirm.message', { count: selected.size })}
+        cancelLabel={t('exerciseListScreen.bulkCopy.confirm.cancel')}
+        confirmLabel={t('exerciseListScreen.bulkCopy.confirm.confirm')}
+        onConfirm={handleConfirmCopy}
+        confirmTestID="exercises-list.bulk-copy.confirm"
       />
     </>
   );

@@ -312,17 +312,19 @@ ALTER TABLE "public"."exercises" ADD COLUMN "deleted_by" "uuid";
 
 
 -- ================================================
--- variations_user_dedup_uidx: a user cannot own two variations of the same
--- exercise with the same equipment and name. Enforced as a constraint so
--- wt_create_user_exercise can stay a plain INSERT — a collision surfaces as a
--- native unique_violation (SQLSTATE 23505). NULLS NOT DISTINCT treats two
--- unnamed variations as equal. Partial: the public library (user_id IS NULL)
--- and soft-deleted rows (deleted_at IS NOT NULL) are exempt — so a name frees up
--- once its variation is deleted; variations.user_id is set by the
--- variations_sync_scope trigger.
+-- variations_user_dedup_uidx: dentro do escopo (user_id, exercise_id,
+-- equipment_id, name) uma combinação só existe uma vez. Enforced como índice
+-- para wt_create_user_exercise / wt_copy_user_exercises ficarem plain INSERT —
+-- colisão surge como unique_violation (SQLSTATE 23505). NULLS NOT DISTINCT
+-- equipara duas linhas com o mesmo NULL (variações sem nome são tratadas como
+-- iguais; duas variações públicas idênticas também colidem entre si). O
+-- user_id explícito garante o escopo per-usuário sem depender de exercise_id
+-- carregar implicitamente o dono. Partial em deleted_at IS NULL — soft-deletes
+-- liberam o nome novamente; variations.user_id é setado pelo trigger
+-- variations_sync_scope.
 -- ================================================
 CREATE UNIQUE INDEX IF NOT EXISTS "variations_user_dedup_uidx"
-    ON "public"."variations" ("exercise_id", "equipment_id", "name") NULLS NOT DISTINCT
+    ON "public"."variations" ("user_id", "exercise_id", "equipment_id", "name") NULLS NOT DISTINCT
     WHERE ("deleted_at" IS NULL);
 
 
@@ -562,3 +564,108 @@ ALTER FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) O
 GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "anon";
 GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."wt_delete_user_exercises"("p_variation_ids" "uuid"[]) TO "service_role";
+
+
+-- ================================================
+-- wt_copy_user_exercises: copia variações públicas (user_id IS NULL) ou
+-- compartilhadas com o usuário para a biblioteca pessoal dele. Variações
+-- próprias ou de outro usuário sem share são silenciosamente puladas — mesma
+-- política do wt_delete_user_exercises. Conflitos da variations_user_dedup_uidx
+-- (mesma combinação user+exercise+equipment+nome já existe) também são
+-- silenciosamente pulados, permitindo bulk parcial. Find-or-create do
+-- exercício pelo nome evita duplicar o pai quando o usuário copia várias
+-- variações do mesmo exercício. Retorna o número de variações efetivamente
+-- copiadas.
+-- ================================================
+CREATE OR REPLACE FUNCTION "public"."wt_copy_user_exercises"("p_source_variation_ids" "uuid"[]) RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_copied integer := 0;
+  v_target_exercise_id uuid;
+  src record;
+BEGIN
+  -- Sem identidade não há como atribuir a cópia. 28000 = not authenticated.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'wt_copy_user_exercises called without an authenticated user'
+      USING ERRCODE = '28000';
+  END IF;
+
+  FOR src IN
+    SELECT
+      v.id,
+      v.name AS variation_name,
+      v.muscle_id,
+      v.secondary_muscle_id,
+      v.equipment_id,
+      v.video_url,
+      v.image_url,
+      v.user_id,
+      e.name AS exercise_name,
+      e.exercise_type
+    FROM public.variations v
+    JOIN public.exercises e ON e.id = v.exercise_id
+    WHERE v.id = ANY(p_source_variation_ids)
+      AND v.deleted_at IS NULL
+      AND e.deleted_at IS NULL
+  LOOP
+    -- Visibilidade: pula tudo que não seja pública (user_id IS NULL) ou
+    -- compartilhada explicitamente com o usuário atual. Própria também pula
+    -- — copiar a própria variação não faz sentido.
+    IF src.user_id IS NOT NULL THEN
+      IF src.user_id = v_user_id THEN
+        CONTINUE;
+      END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM public.shared_variations sv
+        WHERE sv.variation_id = src.id AND sv.shared_with_id = v_user_id
+      ) THEN
+        CONTINUE;
+      END IF;
+    END IF;
+
+    -- Find-or-create do exercício do usuário pelo nome — mesma lógica de
+    -- wt_create_user_exercise para não duplicar o pai quando o usuário copia
+    -- várias variações de um mesmo exercício.
+    SELECT id INTO v_target_exercise_id
+    FROM public.exercises
+    WHERE user_id = v_user_id
+      AND name = src.exercise_name
+      AND deleted_at IS NULL;
+
+    IF v_target_exercise_id IS NULL THEN
+      INSERT INTO public.exercises (name, user_id, exercise_type)
+      VALUES (src.exercise_name, v_user_id, src.exercise_type)
+      RETURNING id INTO v_target_exercise_id;
+    END IF;
+
+    -- Sub-bloco para capturar a unique_violation da variations_user_dedup_uidx
+    -- sem abortar o loop. variations.user_id é preenchido pelo trigger
+    -- variations_sync_scope a partir do exercises.user_id.
+    BEGIN
+      INSERT INTO public.variations (
+        name, exercise_id, muscle_id, secondary_muscle_id,
+        equipment_id, video_url, image_url
+      )
+      VALUES (
+        src.variation_name, v_target_exercise_id, src.muscle_id, src.secondary_muscle_id,
+        src.equipment_id, src.video_url, src.image_url
+      );
+      v_copied := v_copied + 1;
+    EXCEPTION WHEN unique_violation THEN
+      CONTINUE;
+    END;
+  END LOOP;
+
+  RETURN v_copied;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."wt_copy_user_exercises"("p_source_variation_ids" "uuid"[]) OWNER TO "postgres";
+
+GRANT ALL ON FUNCTION "public"."wt_copy_user_exercises"("p_source_variation_ids" "uuid"[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_copy_user_exercises"("p_source_variation_ids" "uuid"[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_copy_user_exercises"("p_source_variation_ids" "uuid"[]) TO "service_role";

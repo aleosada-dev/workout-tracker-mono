@@ -1,3 +1,4 @@
+import type { CopyExercisesInput, CopyExercisesResult } from './copy-exercises';
 import type { CreateExerciseInput } from './create-exercise';
 import type { DeleteExercisesInput, DeleteExercisesResult } from './delete-exercises';
 import type { ExerciseDetail, GetExerciseDetailFilter } from './exercise-detail';
@@ -14,4 +15,5 @@ export interface ExerciseRepository {
   createExercise(input: CreateExerciseInput): Promise<{ id: string }>;
   updateExercise(input: UpdateExerciseInput): Promise<{ id: string }>;
   deleteExercises(input: DeleteExercisesInput): Promise<DeleteExercisesResult>;
+  copyExercises(input: CopyExercisesInput): Promise<CopyExercisesResult>;
 }

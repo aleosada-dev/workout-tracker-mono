@@ -1,7 +1,13 @@
 import { Stack } from 'expo-router';
 import type { SelectionActionsProps } from './types';
 
-export function SelectionActions({ count, onCancel, onSelectAll, actions }: SelectionActionsProps) {
+export function SelectionActions({
+  count,
+  onCancel,
+  allSelected,
+  onToggleSelectAll,
+  actions,
+}: SelectionActionsProps) {
   const empty = count === 0;
   const leading = actions.filter((a) => !a.destructive);
   const trailing = actions.filter((a) => a.destructive);
@@ -12,10 +18,13 @@ export function SelectionActions({ count, onCancel, onSelectAll, actions }: Sele
           Cancelar
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
-      {onSelectAll && (
+      {onToggleSelectAll && (
         <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Button icon="checklist" onPress={onSelectAll}>
-            Selecionar Todos
+          <Stack.Toolbar.Button
+            icon={allSelected ? 'checkmark.circle.fill' : 'circle'}
+            onPress={onToggleSelectAll}
+          >
+            {allSelected ? 'Limpar seleção' : 'Selecionar Todos'}
           </Stack.Toolbar.Button>
         </Stack.Toolbar>
       )}

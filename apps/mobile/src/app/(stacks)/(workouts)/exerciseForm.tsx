@@ -3,7 +3,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { EXERCISE_TYPES } from '@workout-tracker/domain';
 import {
   Button,
-  ConfirmDestructiveDialog,
+  ConfirmDialog,
   Field,
   Input,
   RequestErrorState,
@@ -523,7 +523,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
       {/* Renders the name autocomplete's suggestion list above the form. */}
       <PortalHost name={SUGGESTIONS_PORTAL_HOST} />
 
-      <ConfirmDestructiveDialog
+      <ConfirmDialog
         open={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         title={t('exerciseListScreen.deleteExercise.confirm.title')}

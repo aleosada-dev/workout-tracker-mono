@@ -16,6 +16,7 @@ export default {
     addExercise: 'Add exercise',
     share: 'Share',
     move: 'Move',
+    copy: 'Copy',
     delete: 'Delete',
   },
   addExercise: {
@@ -114,6 +115,28 @@ export default {
     },
     error: {
       title: 'Could not delete',
+      message: 'Please try again in a moment.',
+    },
+  },
+  bulkCopy: {
+    onlyPublicOrShared: {
+      title: 'Invalid selection',
+      message: 'You can only copy public exercises or ones shared with you.',
+    },
+    confirm: {
+      title: 'Copy exercises?',
+      message: '{{count}} exercises will be copied to your library.',
+      message_one: '{{count}} exercise will be copied to your library.',
+      cancel: 'Cancel',
+      confirm: 'Copy',
+    },
+    success: {
+      title: 'Exercises copied.',
+      message: '{{count}} exercises were added to your library.',
+      message_one: '{{count}} exercise was added to your library.',
+    },
+    error: {
+      title: 'Could not copy',
       message: 'Please try again in a moment.',
     },
   },

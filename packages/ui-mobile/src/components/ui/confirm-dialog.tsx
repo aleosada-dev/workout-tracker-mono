@@ -10,7 +10,7 @@ import {
 } from './alert-dialog';
 import { Text } from './text';
 
-export type ConfirmDestructiveDialogProps = {
+export type ConfirmDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -19,9 +19,10 @@ export type ConfirmDestructiveDialogProps = {
   cancelLabel: string;
   onConfirm: () => void;
   confirmTestID?: string;
+  destructive?: boolean;
 };
 
-export function ConfirmDestructiveDialog({
+export function ConfirmDialog({
   open,
   onOpenChange,
   title,
@@ -30,7 +31,8 @@ export function ConfirmDestructiveDialog({
   cancelLabel,
   onConfirm,
   confirmTestID,
-}: ConfirmDestructiveDialogProps) {
+  destructive = true,
+}: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -42,7 +44,11 @@ export function ConfirmDestructiveDialog({
           <AlertDialogCancel>
             <Text>{cancelLabel}</Text>
           </AlertDialogCancel>
-          <AlertDialogAction onPress={onConfirm} className="bg-destructive" testID={confirmTestID}>
+          <AlertDialogAction
+            onPress={onConfirm}
+            className={destructive ? 'bg-destructive' : undefined}
+            testID={confirmTestID}
+          >
             <Text>{confirmLabel}</Text>
           </AlertDialogAction>
         </AlertDialogFooter>

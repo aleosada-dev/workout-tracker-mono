@@ -1,5 +1,6 @@
 export * from './equipments/equipment';
 export * from './equipments/equipment-repo';
+export * from './exercises/copy-exercises';
 export * from './exercises/create-exercise';
 export * from './exercises/delete-exercises';
 export * from './exercises/exercise-detail';

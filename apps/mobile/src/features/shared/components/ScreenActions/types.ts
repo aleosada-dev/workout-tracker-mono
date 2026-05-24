@@ -18,6 +18,9 @@ export interface ScreenActionsProps {
 export interface SelectionActionsProps {
   count: number;
   onCancel: () => void;
-  onSelectAll?: () => void;
+  /** Whether every selectable item is currently selected — drives the toggle icon. */
+  allSelected?: boolean;
+  /** Toggles between selecting all items and clearing the selection. */
+  onToggleSelectAll?: () => void;
   actions: IconAction[];
 }

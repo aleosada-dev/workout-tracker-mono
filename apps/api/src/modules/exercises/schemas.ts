@@ -165,6 +165,18 @@ export const DeleteExerciseResponseSchema = z.object({
 
 export type DeleteExerciseResponse = z.infer<typeof DeleteExerciseResponseSchema>;
 
+export const CopyExercisesRequestSchema = z.object({
+	variationIds: z.array(z.uuid()).min(1),
+});
+
+export type CopyExercisesRequest = z.infer<typeof CopyExercisesRequestSchema>;
+
+export const CopyExercisesResponseSchema = z.object({
+	copiedCount: z.number().int().nonnegative(),
+});
+
+export type CopyExercisesResponse = z.infer<typeof CopyExercisesResponseSchema>;
+
 /** Uploaded device video of a variation, as returned for the edit form. */
 const ExerciseForEditVideoSchema = z.object({
 	objectKey: z.string(),

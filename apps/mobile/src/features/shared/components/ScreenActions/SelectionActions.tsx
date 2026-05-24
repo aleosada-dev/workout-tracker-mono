@@ -1,12 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Button, rgb, useTheme } from '@workout-tracker/ui-mobile';
+import { Button, Icon, rgb, useTheme } from '@workout-tracker/ui-mobile';
 import { Stack } from 'expo-router';
+import { CheckCircle2, Circle } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IconAction, SelectionActionsProps } from './types';
 
-export function SelectionActions({ count, onCancel, onSelectAll, actions }: SelectionActionsProps) {
+export function SelectionActions({
+  count,
+  onCancel,
+  allSelected,
+  onToggleSelectAll,
+  actions,
+}: SelectionActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -30,15 +37,19 @@ export function SelectionActions({ count, onCancel, onSelectAll, actions }: Sele
           ),
           headerRight: () => (
             <View style={styles.headerRight}>
-              {onSelectAll && (
+              {onToggleSelectAll && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onPress={onSelectAll}
+                  onPress={onToggleSelectAll}
                   hitSlop={12}
-                  accessibilityLabel="Selecionar Todos"
+                  accessibilityLabel={allSelected ? 'Limpar seleção' : 'Selecionar Todos'}
                 >
-                  <Ionicons name="checkmark-done" size={22} color={headerIconColor} />
+                  <Icon
+                    as={allSelected ? CheckCircle2 : Circle}
+                    size={22}
+                    className={allSelected ? 'text-primary' : 'text-foreground'}
+                  />
                 </Button>
               )}
               <Button

@@ -1,4 +1,5 @@
 import type { ExerciseRepository } from '@workout-tracker/domain';
+import { makeCopyExercises } from './copy-exercises';
 import { makeCreateExercise } from './create-exercise';
 import { makeDeleteExercises } from './delete-exercises';
 import { makeGetExerciseDetail } from './get-exercise-detail';
@@ -16,9 +17,11 @@ export function makeExerciseApp(repository: ExerciseRepository) {
     createExercise: makeCreateExercise(repository),
     updateExercise: makeUpdateExercise(repository),
     deleteExercises: makeDeleteExercises(repository),
+    copyExercises: makeCopyExercises(repository),
   };
 }
 
+export * from './copy-exercises';
 export * from './create-exercise';
 export * from './delete-exercises';
 export * from './get-exercise-for-edit';

@@ -2803,6 +2803,10 @@ export type Database = {
         Returns: Json
       }
       upsert_workout: { Args: { payload: Json }; Returns: string }
+      wt_copy_user_exercises: {
+        Args: { p_source_variation_ids: string[] }
+        Returns: number
+      }
       wt_create_user_exercise: {
         Args: {
           p_equipment_id: string

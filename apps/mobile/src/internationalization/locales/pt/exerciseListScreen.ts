@@ -16,6 +16,7 @@ export default {
     addExercise: 'Adicionar Exercício',
     share: 'Compartilhar',
     move: 'Mover',
+    copy: 'Copiar',
     delete: 'Excluir',
   },
   addExercise: {
@@ -115,6 +116,28 @@ export default {
     },
     error: {
       title: 'Não foi possível excluir',
+      message: 'Tente novamente em alguns instantes.',
+    },
+  },
+  bulkCopy: {
+    onlyPublicOrShared: {
+      title: 'Seleção inválida',
+      message: 'Só é possível copiar exercícios públicos ou compartilhados com você.',
+    },
+    confirm: {
+      title: 'Copiar exercícios?',
+      message: '{{count}} exercícios serão copiados para a sua biblioteca.',
+      message_one: '{{count}} exercício será copiado para a sua biblioteca.',
+      cancel: 'Cancelar',
+      confirm: 'Copiar',
+    },
+    success: {
+      title: 'Exercícios copiados.',
+      message: '{{count}} exercícios foram adicionados à sua biblioteca.',
+      message_one: '{{count}} exercício foi adicionado à sua biblioteca.',
+    },
+    error: {
+      title: 'Não foi possível copiar',
       message: 'Tente novamente em alguns instantes.',
     },
   },

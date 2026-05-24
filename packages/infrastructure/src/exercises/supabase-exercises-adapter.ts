@@ -196,5 +196,17 @@ export function makeSupabaseExerciseRepository(
 
       return { deletedCount: data ?? 0 };
     },
+
+    async copyExercises({ variationIds }) {
+      const { data, error } = await supabase.rpc('wt_copy_user_exercises', {
+        p_source_variation_ids: variationIds,
+      });
+
+      if (error) {
+        throw supabaseError('Failed to copy exercises', error);
+      }
+
+      return { copiedCount: data ?? 0 };
+    },
   };
 }

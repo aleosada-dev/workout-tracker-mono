@@ -4,6 +4,8 @@ import { describeRoute, resolver, validator } from "hono-openapi";
 import type { Container } from "../../container";
 import type { AppBindings } from "../../shared/http/types";
 import {
+	CopyExercisesRequestSchema,
+	CopyExercisesResponseSchema,
 	type CreateExerciseRequest,
 	CreateExerciseRequestSchema,
 	CreateExerciseResponseSchema,
@@ -295,5 +297,32 @@ export const exercisesRouter = new Hono<AppBindings>()
 				throw new NotFoundError("variation");
 			}
 			return c.json({ id: variationId });
+		},
+	)
+	.post(
+		"/copy",
+		describeRoute({
+			summary: "Copy exercises into the user's library",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(CopyExercisesResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("json", CopyExercisesRequestSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { variationIds } = c.req.valid("json");
+			const { copyExercises } = c.get("container").exercises;
+			const result = await copyExercises({ userId, variationIds });
+			return c.json(result);
 		},
 	);
