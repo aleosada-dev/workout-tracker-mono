@@ -2422,6 +2422,7 @@ export type Database = {
       workouts: {
         Row: {
           archived_at: string | null
+          arquived_by: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -2434,6 +2435,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          arquived_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2446,6 +2448,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          arquived_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -3025,4 +3028,3 @@ export const Constants = {
     },
   },
 } as const
-

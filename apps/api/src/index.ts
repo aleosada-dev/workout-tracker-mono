@@ -8,6 +8,7 @@ import { exercisesRouter } from "./modules/exercises/routes";
 import { mediasRouter } from "./modules/medias/routes";
 import { musclesRouter } from "./modules/muscles/routes";
 import { workoutLogsRouter } from "./modules/workout-logs/routes";
+import { workoutsRouter } from "./modules/workouts/routes";
 import { bearerAuthMiddleware } from "./shared/http/auth-middleware";
 import { buildOpenApiSpec, registerOpenApiRoutes } from "./shared/http/openapi";
 import type { AppBindings } from "./shared/http/types";
@@ -28,6 +29,7 @@ const apiApp = new Hono<AppBindings>()
 	.route("/exercises", exercisesRouter)
 	.route("/medias", mediasRouter)
 	.route("/equipments", equipmentsRouter)
+	.route("/workouts", workoutsRouter)
 	.route("/workout-logs", workoutLogsRouter);
 
 const openApiSpec = await buildOpenApiSpec(apiApp, "/api/v1");

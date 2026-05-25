@@ -666,21 +666,34 @@ BEGIN
 
   -- Novos treinos
   INSERT INTO public.workouts
-    (id, user_id, name, description, folder_id, created_by, updated_by)
+    (id, user_id, name, description, folder_id, created_by, updated_by, archived_at, arquived_by)
   VALUES
     (wk_c,  athlete1_id, 'Treino C — Quadríceps',
      'Quadríceps dominante com biset posterior finalizador',
-     folder_hiper, coach1_id, coach1_id),
+     folder_hiper, coach1_id, coach1_id, NULL, NULL),
     (wk_d,  athlete1_id, 'Treino D — Posterior e Glúteos',
      'Posteriores de coxa e glúteos com volume moderado',
-     folder_hiper, coach1_id, coach1_id),
+     folder_hiper, coach1_id, coach1_id, '2026-05-23 13:21:48+00'::timestamptz, coach1_id),
     (wk_f1, athlete1_id, 'Força — Agachamento 5x5',
      'Bloco de força de membros inferiores com progressão linear',
-     folder_forca, coach1_id, coach1_id),
+     folder_forca, coach1_id, coach1_id, NULL, NULL),
     (wk_f2, athlete1_id, 'Força — Supino 5x5',
      'Bloco de força de empurrar com progressão linear',
-     folder_forca, coach1_id, coach1_id)
+     folder_forca, coach1_id, coach1_id, '2026-05-23 13:21:48+00'::timestamptz, coach1_id)
   ON CONFLICT DO NOTHING;
+
+  UPDATE public.workouts
+    SET archived_at = NULL, arquived_by = NULL
+  WHERE id IN (
+    'd94823aa-e98d-4516-9088-eee775693846'::uuid,
+    wk_c,
+    wk_f1
+  );
+
+  UPDATE public.workouts
+    SET archived_at = '2026-05-23 13:21:48+00'::timestamptz,
+        arquived_by = coach1_id
+  WHERE id IN (wk_d, wk_f2);
 
   -- workout_exercises
   INSERT INTO public.workout_exercises
