@@ -30,3 +30,8 @@ export type CreateWorkoutFolderInput = {
   name: string;
   color: WorkoutFolderColor;
 };
+
+export type DeleteWorkoutFolderInput = {
+  userId: string;
+  folderId: string;
+};

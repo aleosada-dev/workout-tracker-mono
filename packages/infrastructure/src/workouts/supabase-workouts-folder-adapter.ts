@@ -42,5 +42,20 @@ export function makeSupabaseWorkoutFolderRepository(supabase: Supabase): Workout
 
       return toWorkoutFolder(data as WorkoutFolderRow, 0);
     },
+
+    async deleteFolder({ userId, folderId }) {
+      const { data, error } = await supabase
+        .from('workout_folders')
+        .delete()
+        .eq('id', folderId)
+        .eq('user_id', userId)
+        .select('id');
+
+      if (error) {
+        throw supabaseError('Failed to delete workout folder', error);
+      }
+
+      return { deleted: (data ?? []).length > 0 };
+    },
   };
 }

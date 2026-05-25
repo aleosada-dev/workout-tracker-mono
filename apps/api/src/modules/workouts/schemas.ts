@@ -28,6 +28,16 @@ export const CreateWorkoutFolderRequestSchema = z.object({
 
 export type CreateWorkoutFolderRequest = z.infer<typeof CreateWorkoutFolderRequestSchema>;
 
+export const WorkoutFolderIdParamSchema = z.object({
+	id: z.uuid(),
+});
+
+export const DeleteWorkoutFolderResponseSchema = z.object({
+	id: z.uuid(),
+});
+
+export type DeleteWorkoutFolderResponse = z.infer<typeof DeleteWorkoutFolderResponseSchema>;
+
 export const ListWorkoutsQuerySchema = z.object({
 	userId: z.uuid(),
 	folderId: z

@@ -1,12 +1,15 @@
+import { NotFoundError } from "@workout-tracker/domain";
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { AppBindings } from "../../shared/http/types";
 import {
 	CreateWorkoutFolderRequestSchema,
+	DeleteWorkoutFolderResponseSchema,
 	ListWorkoutFoldersQuerySchema,
 	ListWorkoutsQuerySchema,
 	toWorkoutFolderResponse,
 	toWorkoutResponse,
+	WorkoutFolderIdParamSchema,
 	WorkoutFolderListResponseSchema,
 	WorkoutFolderResponseSchema,
 	WorkoutListResponseSchema,
@@ -91,5 +94,36 @@ export const workoutsRouter = new Hono<AppBindings>()
 			const { createFolder } = c.get("container").workouts;
 			const folder = await createFolder({ userId, ...body });
 			return c.json(toWorkoutFolderResponse(folder), 201);
+		},
+	)
+	.delete(
+		"/folders/:id",
+		describeRoute({
+			summary: "Delete a workout folder",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(DeleteWorkoutFolderResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Workout folder not found" },
+			},
+		}),
+		validator("param", WorkoutFolderIdParamSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { id: folderId } = c.req.valid("param");
+			const { deleteFolder } = c.get("container").workouts;
+			const { deleted } = await deleteFolder({ userId, folderId });
+			if (!deleted) {
+				throw new NotFoundError("workout folder");
+			}
+			return c.json({ id: folderId });
 		},
 	);

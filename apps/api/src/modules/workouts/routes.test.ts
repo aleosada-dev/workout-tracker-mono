@@ -1,7 +1,24 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
 import type { WorkoutFolderResponse, WorkoutResponse } from "./schemas";
+
+const createdFolderIds = new Set<string>();
+
+async function deleteFolderById(id: string) {
+	const client = getTestClient();
+	await client.api.v1.workouts.folders[":id"].$delete(
+		{ param: { id } },
+		{ headers: authHeaders("athlete") },
+	);
+}
+
+afterEach(async () => {
+	for (const id of createdFolderIds) {
+		await deleteFolderById(id);
+	}
+	createdFolderIds.clear();
+});
 
 const SEED_FOLDER_HIPERTROFIA = "1a111111-aaaa-4aaa-aaaa-000000000001";
 const SEED_FOLDER_FORCA = "2a222222-bbbb-4bbb-bbbb-000000000002";
@@ -195,6 +212,7 @@ describe("POST /api/v1/workouts/folders", () => {
 
 		expect(res.status).toBe(201);
 		const folder = (await res.json()) as WorkoutFolderResponse;
+		createdFolderIds.add(folder.id);
 		expect(folder).toMatchObject({
 			id: expect.any(String),
 			userId: athleteId,
@@ -215,6 +233,8 @@ describe("POST /api/v1/workouts/folders", () => {
 			{ headers: authHeaders("athlete") },
 		);
 		expect(first.status).toBe(201);
+		const firstFolder = (await first.json()) as WorkoutFolderResponse;
+		createdFolderIds.add(firstFolder.id);
 
 		const second = await client.api.v1.workouts.folders.$post(
 			{ json: { name, color: "blue" } },
@@ -246,6 +266,72 @@ describe("POST /api/v1/workouts/folders", () => {
 		const client = getTestClient();
 		const res = await client.api.v1.workouts.folders.$post({
 			json: { name: "x", color: "blue" },
+		});
+		expect(res.status as number).toBe(401);
+	});
+});
+
+describe("DELETE /api/v1/workouts/folders/:id", () => {
+	test("deletes a folder owned by the authenticated user", async () => {
+		const client = getTestClient();
+		const name = `Del-${Date.now().toString(36)}`;
+
+		const created = await client.api.v1.workouts.folders.$post(
+			{ json: { name, color: "slate" } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(created.status).toBe(201);
+		const folder = (await created.json()) as WorkoutFolderResponse;
+
+		const res = await client.api.v1.workouts.folders[":id"].$delete(
+			{ param: { id: folder.id } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { id: string };
+		expect(body.id).toBe(folder.id);
+
+		const list = await client.api.v1.workouts.folders.$get(
+			{ query: { userId: getTestUserAuth("athlete").userId } },
+			{ headers: authHeaders("athlete") },
+		);
+		const folders = (await list.json()) as WorkoutFolderResponse[];
+		expect(folders.find((f) => f.id === folder.id)).toBeUndefined();
+	});
+
+	test("returns 404 when the folder does not exist", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders[":id"].$delete(
+			{ param: { id: "00000000-0000-4000-8000-000000000000" } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 404 when the folder belongs to another user", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders[":id"].$delete(
+			{ param: { id: SEED_FOLDER_HIPERTROFIA } },
+			{ headers: authHeaders("coach") },
+		);
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 400 when id is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders[":id"].$delete(
+			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			{ param: { id: "not-a-uuid" as any } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders[":id"].$delete({
+			param: { id: "00000000-0000-4000-8000-000000000000" },
 		});
 		expect(res.status as number).toBe(401);
 	});
