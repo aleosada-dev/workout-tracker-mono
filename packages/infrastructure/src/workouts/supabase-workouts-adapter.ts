@@ -1,46 +1,41 @@
-import { ConflictError, type WorkoutFolderRepository } from '@workout-tracker/domain';
+import type { WorkoutRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
-import {
-  toWorkoutFolder,
-  toWorkoutFolderWithCount,
-  type WorkoutFolderRow,
-  type WorkoutFolderWithCountRow,
-} from './supabase-workout-folders-mapper';
+import { toWorkout, type WorkoutListRow } from './supabase-workouts-mapper';
 
-export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutFolderRepository {
+const LIST_SELECT = `
+  id, user_id, name, folder_id, created_at, updated_at,
+  folder:workout_folders ( name ),
+  workout_exercises (
+    variation:variations (
+      muscle:muscles!muscle_id ( slug, level, parent:muscles!parent_id ( slug, level ) )
+    )
+  )
+`;
+
+export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutRepository {
   return {
-    async listFolders({ userId }) {
-      const { data, error } = await supabase
-        .from('workout_folders')
-        .select('id, user_id, name, color, created_at, updated_at, workouts(count)')
+    async listWorkouts({ userId, folderId }) {
+      let query = supabase
+        .from('workouts')
+        .select(LIST_SELECT)
         .eq('user_id', userId)
-        .is('workouts.archived_at', null)
-        .order('created_at', { ascending: true });
+        .is('archived_at', null)
+        .order('name', { ascending: true });
 
-      if (error) {
-        throw supabaseError('Failed to list workout folders', error);
+      if (folderId === null) {
+        query = query.is('folder_id', null);
+      } else if (typeof folderId === 'string') {
+        query = query.eq('folder_id', folderId);
       }
 
-      const rows = (data ?? []) as WorkoutFolderWithCountRow[];
-      return rows.map(toWorkoutFolderWithCount);
-    },
-
-    async createFolder({ userId, name, color }) {
-      const { data, error } = await supabase
-        .from('workout_folders')
-        .insert({ user_id: userId, name, color })
-        .select('id, user_id, name, color, created_at, updated_at')
-        .single();
-
+      const { data, error } = await query;
       if (error) {
-        if (error.code === '23505') {
-          throw new ConflictError('workout folder already exists');
-        }
-        throw supabaseError('Failed to create workout folder', error);
+        throw supabaseError('Failed to list workouts', error);
       }
 
-      return toWorkoutFolder(data as WorkoutFolderRow, 0);
+      const rows = (data ?? []) as unknown as WorkoutListRow[];
+      return rows.map(toWorkout);
     },
   };
 }

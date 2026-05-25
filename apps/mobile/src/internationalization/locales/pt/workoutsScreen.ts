@@ -24,4 +24,17 @@ export default {
     subtitle: 'Verifique sua conexão e tente novamente.',
     retry: 'Tentar novamente',
   },
+  emptyTitle: 'Nenhum treino',
+  emptySubtitle: 'Crie um treino ou abra uma pasta para ver os treinos lá dentro.',
+  card: {
+    exerciseCount_one: '{{count}} exercício',
+    exerciseCount_other: '{{count}} exercícios',
+    start: 'Iniciar treino',
+  },
+  folderDetail: {
+    workoutCount_one: '{{count}} treino',
+    workoutCount_other: '{{count}} treinos',
+    emptyTitle: 'Nenhum treino aqui ainda',
+    emptySubtitle: 'Treinos que você mover para essa pasta vão aparecer aqui.',
+  },
 };

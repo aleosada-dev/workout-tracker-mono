@@ -13,6 +13,7 @@ import {
 	makeSupabaseEquipmentRepository,
 	makeSupabaseExerciseRepository,
 	makeSupabaseMuscleRepository,
+	makeSupabaseWorkoutFolderRepository,
 	makeSupabaseWorkoutLogRepository,
 	makeSupabaseWorkoutRepository,
 } from "@workout-tracker/infrastructure";
@@ -26,13 +27,14 @@ export function buildContainer(env: Env, accessToken?: string) {
 	});
 	const equipmentRepository = makeSupabaseEquipmentRepository(supabase);
 	const workoutLogRepository = makeSupabaseWorkoutLogRepository(supabase);
+	const workoutFolderRepository = makeSupabaseWorkoutFolderRepository(supabase);
 	const workoutRepository = makeSupabaseWorkoutRepository(supabase);
 
 	return {
 		muscles: makeMuscleApp(muscleRepository),
 		exercises: makeExerciseApp(exerciseRepository),
 		equipments: makeEquipmentApp(equipmentRepository),
-		workouts: makeWorkoutApp(workoutRepository),
+		workouts: makeWorkoutApp(workoutFolderRepository, workoutRepository),
 		workoutLogs: makeWorkoutLogApp(workoutLogRepository),
 		videoUploads: {
 			buildUploadUrls: makeBuildVideoUploadUrls(env),

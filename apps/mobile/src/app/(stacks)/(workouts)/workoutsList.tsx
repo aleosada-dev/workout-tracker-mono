@@ -1,11 +1,12 @@
-import { RequestErrorState, Text } from '@workout-tracker/ui-mobile';
+import { EmptyState, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
+import { router } from 'expo-router';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
 import type { WorkoutFolderResponse } from '@/features/workouts/api/workouts';
-import { WorkoutCard, type WorkoutCardData } from '@/features/workouts/components/WorkoutCard';
+import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
 import {
   WorkoutFolderFormSheet,
   type WorkoutFolderFormSheetRef,
@@ -16,43 +17,44 @@ import {
   WorkoutFolderItemSkeleton,
 } from '@/features/workouts/components/WorkoutFolderItem';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
+import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import { resolveFolderColor } from '@/features/workouts/lib/folder-colors';
-
-const MOCK_WORKOUTS: WorkoutCardData[] = [
-  {
-    id: '1',
-    name: 'Lower 1',
-    muscleGroups: ['Panturrilhas', 'Posterior de Coxa', 'Quadríceps'],
-    exerciseCount: 6,
-  },
-  {
-    id: '2',
-    name: 'Upper 1',
-    muscleGroups: ['Peito', 'Tríceps', 'Ombros'],
-    exerciseCount: 7,
-  },
-  {
-    id: '3',
-    name: 'Lower 2',
-    muscleGroups: ['Glúteos', 'Posterior de Coxa', 'Panturrilhas'],
-    exerciseCount: 5,
-  },
-];
+import { toWorkoutCardData } from '@/features/workouts/lib/workout-mappers';
 
 export default function WorkoutListScreen() {
   const { t } = useTranslation();
-  const { data: folders, isLoading, isError, error, refetch } = useWorkoutFolders();
+  const {
+    data: folders,
+    isLoading: foldersLoading,
+    isError: foldersError,
+    error: foldersErrorObj,
+    refetch: refetchFolders,
+  } = useWorkoutFolders();
+  const {
+    data: workouts,
+    isLoading: workoutsLoading,
+    isError: workoutsError,
+    error: workoutsErrorObj,
+    refetch: refetchWorkouts,
+  } = useWorkouts({ folderId: null });
   const folderFormSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
-  useReportRequestError({ isError, error }, workoutObservability.captureError, {
-    action: 'load_workout_folders',
-  });
+  useReportRequestError(
+    { isError: foldersError, error: foldersErrorObj },
+    workoutObservability.captureError,
+    { action: 'load_workout_folders' },
+  );
+  useReportRequestError(
+    { isError: workoutsError, error: workoutsErrorObj },
+    workoutObservability.captureError,
+    { action: 'load_workouts' },
+  );
 
-  if (isError && !folders) {
+  if (foldersError && !folders) {
     return (
       <RequestErrorState
         title={t('workoutsScreen.error.title')}
         subtitle={t('workoutsScreen.error.subtitle')}
-        retry={{ label: t('workoutsScreen.error.retry'), onPress: refetch }}
+        retry={{ label: t('workoutsScreen.error.retry'), onPress: refetchFolders }}
         testID="workouts-list.error"
       />
     );
@@ -67,11 +69,20 @@ export default function WorkoutListScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="gap-4 py-4"
         >
-          {isLoading ? (
+          {foldersLoading ? (
             <WorkoutFoldersLoading />
           ) : (
-            folders?.map((folder) => (
-              <WorkoutFolderItem key={folder.id} folder={toFolderViewModel(folder)} />
+            folders?.map((folder: WorkoutFolderResponse) => (
+              <WorkoutFolderItem
+                key={folder.id}
+                folder={toFolderViewModel(folder)}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(stacks)/(workouts)/workoutFolderDetail',
+                    params: { id: folder.id, name: folder.name, color: folder.color },
+                  })
+                }
+              />
             ))
           )}
           <AddWorkoutFolderItem
@@ -81,12 +92,29 @@ export default function WorkoutListScreen() {
         </ScrollView>
 
         <Text variant="h5" className="mt-4">
-          Treinos
+          {t('workoutsScreen.workouts')}
         </Text>
         <View className="gap-3 py-4">
-          {MOCK_WORKOUTS.map((workout) => (
-            <WorkoutCard key={workout.id} workout={workout} />
-          ))}
+          {workoutsLoading ? (
+            <WorkoutsLoading />
+          ) : workoutsError && !workouts ? (
+            <RequestErrorState
+              title={t('workoutsScreen.error.title')}
+              subtitle={t('workoutsScreen.error.subtitle')}
+              retry={{ label: t('workoutsScreen.error.retry'), onPress: refetchWorkouts }}
+              testID="workouts-list.workouts-error"
+            />
+          ) : workouts && workouts.length === 0 ? (
+            <EmptyState
+              title={t('workoutsScreen.emptyTitle')}
+              subtitle={t('workoutsScreen.emptySubtitle')}
+              testID="workouts-list.empty"
+            />
+          ) : (
+            workouts?.map((workout) => (
+              <WorkoutCard key={workout.id} workout={toWorkoutCardData(workout, t)} />
+            ))
+          )}
         </View>
       </ScrollView>
       <WorkoutFolderFormSheet ref={folderFormSheetRef} />

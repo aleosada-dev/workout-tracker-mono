@@ -24,4 +24,17 @@ export default {
     subtitle: 'Check your connection and try again.',
     retry: 'Try again',
   },
+  emptyTitle: 'No workouts',
+  emptySubtitle: 'Create a workout or open a folder to see the workouts inside.',
+  card: {
+    exerciseCount_one: '{{count}} exercise',
+    exerciseCount_other: '{{count}} exercises',
+    start: 'Start workout',
+  },
+  folderDetail: {
+    workoutCount_one: '{{count}} workout',
+    workoutCount_other: '{{count}} workouts',
+    emptyTitle: 'No workouts here yet',
+    emptySubtitle: 'Workouts you move into this folder will show up here.',
+  },
 };

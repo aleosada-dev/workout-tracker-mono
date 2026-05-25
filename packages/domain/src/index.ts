@@ -21,5 +21,7 @@ export * from './shared/type-helpers';
 export * from './shared/validation-error';
 export * from './workout-logs/workout-log-repo';
 export * from './workout-logs/workout-log-summary';
+export * from './workouts/workout';
 export * from './workouts/workout-folder';
 export * from './workouts/workout-folder-repo';
+export * from './workouts/workout-repo';

@@ -4,12 +4,41 @@ import type { AppBindings } from "../../shared/http/types";
 import {
 	CreateWorkoutFolderRequestSchema,
 	ListWorkoutFoldersQuerySchema,
+	ListWorkoutsQuerySchema,
 	toWorkoutFolderResponse,
+	toWorkoutResponse,
 	WorkoutFolderListResponseSchema,
 	WorkoutFolderResponseSchema,
+	WorkoutListResponseSchema,
 } from "./schemas";
 
 export const workoutsRouter = new Hono<AppBindings>()
+	.get(
+		"/",
+		describeRoute({
+			summary: "List workouts for a user",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(WorkoutListResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("query", ListWorkoutsQuerySchema),
+		async (c) => {
+			const { userId, folderId } = c.req.valid("query");
+			const { listWorkouts } = c.get("container").workouts;
+			const workouts = await listWorkouts({ userId, folderId });
+			return c.json(workouts.map(toWorkoutResponse));
+		},
+	)
 	.get(
 		"/folders",
 		describeRoute({
