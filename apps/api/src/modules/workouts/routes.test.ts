@@ -94,3 +94,72 @@ describe("GET /api/v1/workouts/folders", () => {
 		expect(res.status).toBe(401);
 	});
 });
+
+describe("POST /api/v1/workouts/folders", () => {
+	test("creates a folder for the authenticated user", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const name = `T-${Date.now().toString(36)}`;
+
+		const res = await client.api.v1.workouts.folders.$post(
+			{ json: { name, color: "purple" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(201);
+		const folder = (await res.json()) as WorkoutFolderResponse;
+		expect(folder).toMatchObject({
+			id: expect.any(String),
+			userId: athleteId,
+			name,
+			color: "purple",
+			workoutCount: 0,
+			createdAt: expect.any(String),
+			updatedAt: expect.any(String),
+		});
+	});
+
+	test("returns 409 when a folder with the same name already exists", async () => {
+		const client = getTestClient();
+		const name = `D-${Date.now().toString(36)}`;
+
+		const first = await client.api.v1.workouts.folders.$post(
+			{ json: { name, color: "blue" } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(first.status).toBe(201);
+
+		const second = await client.api.v1.workouts.folders.$post(
+			{ json: { name, color: "blue" } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(second.status as number).toBe(409);
+	});
+
+	test("returns 400 when name is empty", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders.$post(
+			{ json: { name: "", color: "blue" } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 400 when color is not allowed", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders.$post(
+			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			{ json: { name: "x", color: "neon" as any } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts.folders.$post({
+			json: { name: "x", color: "blue" },
+		});
+		expect(res.status as number).toBe(401);
+	});
+});

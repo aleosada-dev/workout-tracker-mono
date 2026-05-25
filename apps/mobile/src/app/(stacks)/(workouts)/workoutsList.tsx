@@ -1,9 +1,14 @@
 import { RequestErrorState, Text } from '@workout-tracker/ui-mobile';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
 import type { WorkoutFolderResponse } from '@/features/workouts/api/workouts';
+import {
+  WorkoutFolderFormSheet,
+  type WorkoutFolderFormSheetRef,
+} from '@/features/workouts/components/WorkoutFolderFormSheet';
 import {
   AddWorkoutFolderItem,
   WorkoutFolderItem,
@@ -15,6 +20,7 @@ import { resolveFolderColor } from '@/features/workouts/lib/folder-colors';
 export default function WorkoutListScreen() {
   const { t } = useTranslation();
   const { data: folders, isLoading, isError, error, refetch } = useWorkoutFolders();
+  const folderFormSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
   useReportRequestError({ isError, error }, workoutObservability.captureError, {
     action: 'load_workout_folders',
   });
@@ -36,7 +42,7 @@ export default function WorkoutListScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-4 py-2"
+        contentContainerClassName="gap-4 py-4"
       >
         {isLoading ? (
           <WorkoutFoldersLoading />
@@ -45,8 +51,12 @@ export default function WorkoutListScreen() {
             <WorkoutFolderItem key={folder.id} folder={toFolderViewModel(folder)} />
           ))
         )}
-        <AddWorkoutFolderItem label={t('workoutsScreen.newFolder')} />
+        <AddWorkoutFolderItem
+          label={t('workoutsScreen.newFolder')}
+          onPress={() => folderFormSheetRef.current?.present()}
+        />
       </ScrollView>
+      <WorkoutFolderFormSheet ref={folderFormSheetRef} />
     </View>
   );
 }
