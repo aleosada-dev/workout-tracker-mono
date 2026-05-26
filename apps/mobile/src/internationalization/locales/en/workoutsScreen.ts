@@ -58,6 +58,15 @@ export default {
     emptyTitle: 'No workouts here yet',
     emptySubtitle: 'Workouts you move into this folder will show up here.',
   },
+  deleteWorkoutsDialog: {
+    title_one: 'Delete workout?',
+    title_other: 'Delete {{count}} workouts?',
+    message: 'This action cannot be undone.',
+    cancel: 'Cancel',
+    confirm: 'Delete',
+    success_one: 'Workout deleted',
+    success_other: 'Workouts deleted',
+  },
   deleteFolderDialog: {
     trigger: 'Delete folder',
     title: 'Delete "{{name}}"?',

@@ -6,6 +6,10 @@ import {
 	CreateWorkoutFolderRequestSchema,
 	DeleteWorkoutFolderRequestSchema,
 	DeleteWorkoutFolderResponseSchema,
+	DeleteWorkoutQuerySchema,
+	DeleteWorkoutResponseSchema,
+	DeleteWorkoutsRequestSchema,
+	DeleteWorkoutsResponseSchema,
 	ListWorkoutFoldersQuerySchema,
 	ListWorkoutsQuerySchema,
 	toWorkoutFolderResponse,
@@ -14,6 +18,7 @@ import {
 	WorkoutFolderIdParamSchema,
 	WorkoutFolderListResponseSchema,
 	WorkoutFolderResponseSchema,
+	WorkoutIdParamSchema,
 	WorkoutListResponseSchema,
 } from "./schemas";
 
@@ -165,5 +170,65 @@ export const workoutsRouter = new Hono<AppBindings>()
 				throw new NotFoundError("workout folder");
 			}
 			return c.json({ id: folderId });
+		},
+	)
+	.delete(
+		"/:id",
+		describeRoute({
+			summary: "Soft-delete a workout",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(DeleteWorkoutResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Workout not found" },
+			},
+		}),
+		validator("param", WorkoutIdParamSchema),
+		validator("query", DeleteWorkoutQuerySchema),
+		async (c) => {
+			const { id: workoutId } = c.req.valid("param");
+			const { userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
+			const { deleteWorkouts } = c.get("container").workouts;
+			const { deletedIds } = await deleteWorkouts({ userId, workoutIds: [workoutId] });
+			if (!deletedIds.includes(workoutId)) {
+				throw new NotFoundError("workout");
+			}
+			return c.json({ id: workoutId });
+		},
+	)
+	.delete(
+		"/",
+		describeRoute({
+			summary: "Soft-delete multiple workouts",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(DeleteWorkoutsResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("json", DeleteWorkoutsRequestSchema),
+		async (c) => {
+			const { userId: bodyUserId, workoutIds } = c.req.valid("json");
+			const userId = bodyUserId ?? c.get("userId");
+			const { deleteWorkouts } = c.get("container").workouts;
+			const { deletedIds } = await deleteWorkouts({ userId, workoutIds });
+			return c.json({ deletedIds });
 		},
 	);

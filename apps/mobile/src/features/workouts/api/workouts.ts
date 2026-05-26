@@ -6,6 +6,7 @@ const $postFolder = honoClient.api.v1.workouts.folders.$post;
 const $patchFolder = honoClient.api.v1.workouts.folders[':id'].$patch;
 const $deleteFolder = honoClient.api.v1.workouts.folders[':id'].$delete;
 const $getWorkouts = honoClient.api.v1.workouts.$get;
+const $deleteWorkouts = honoClient.api.v1.workouts.$delete;
 
 export type ListWorkoutFoldersParams = InferRequestType<typeof $getFolders>;
 export type ListWorkoutFoldersResponse = InferResponseType<typeof $getFolders, 200>;
@@ -64,6 +65,15 @@ export async function fetchWorkouts(
   { signal }: { signal?: AbortSignal } = {},
 ): Promise<ListWorkoutsResponse> {
   const response = await $getWorkouts({ query: params.query }, { init: { signal } });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export type DeleteWorkoutsRequest = InferRequestType<typeof $deleteWorkouts>['json'];
+export type DeleteWorkoutsResponse = InferResponseType<typeof $deleteWorkouts, 200>;
+
+export async function deleteWorkouts(body: DeleteWorkoutsRequest): Promise<DeleteWorkoutsResponse> {
+  const response = await $deleteWorkouts({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

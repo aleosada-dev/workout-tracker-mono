@@ -43,5 +43,25 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
       const rows = (data ?? []) as unknown as WorkoutListRow[];
       return rows.map(toWorkout);
     },
+
+    async deleteWorkouts({ userId, workoutIds }) {
+      if (workoutIds.length === 0) {
+        return { deletedIds: [] };
+      }
+
+      const { data, error } = await supabase
+        .from('workouts')
+        .update({ archived_at: new Date().toISOString() })
+        .in('id', workoutIds)
+        .eq('user_id', userId)
+        .is('archived_at', null)
+        .select('id');
+
+      if (error) {
+        throw supabaseError('Failed to delete workouts', error);
+      }
+
+      return { deletedIds: (data ?? []).map((row) => row.id) };
+    },
   };
 }

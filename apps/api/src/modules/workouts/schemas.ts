@@ -63,6 +63,35 @@ export const DeleteWorkoutFolderResponseSchema = z.object({
 
 export type DeleteWorkoutFolderResponse = z.infer<typeof DeleteWorkoutFolderResponseSchema>;
 
+export const WorkoutIdParamSchema = z.object({
+	id: z.uuid(),
+});
+
+export const DeleteWorkoutQuerySchema = z.object({
+	userId: z.uuid().optional(),
+});
+
+export type DeleteWorkoutQuery = z.infer<typeof DeleteWorkoutQuerySchema>;
+
+export const DeleteWorkoutResponseSchema = z.object({
+	id: z.uuid(),
+});
+
+export type DeleteWorkoutResponse = z.infer<typeof DeleteWorkoutResponseSchema>;
+
+export const DeleteWorkoutsRequestSchema = z.object({
+	userId: z.uuid().optional(),
+	workoutIds: z.array(z.uuid()).min(1),
+});
+
+export type DeleteWorkoutsRequest = z.infer<typeof DeleteWorkoutsRequestSchema>;
+
+export const DeleteWorkoutsResponseSchema = z.object({
+	deletedIds: z.array(z.uuid()),
+});
+
+export type DeleteWorkoutsResponse = z.infer<typeof DeleteWorkoutsResponseSchema>;
+
 export const ListWorkoutsQuerySchema = z.object({
 	userId: z.uuid().optional(),
 	folderId: z

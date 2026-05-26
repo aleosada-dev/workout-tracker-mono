@@ -19,8 +19,13 @@ import {
   WorkoutFolderFormSheet,
   type WorkoutFolderFormSheetRef,
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
+import {
+  WorkoutsDeleteSheet,
+  type WorkoutsDeleteSheetRef,
+} from '@/features/workouts/components/WorkoutsDeleteSheet';
 import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
+import { useDeleteWorkouts } from '@/features/workouts/hooks/use-delete-workouts';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import {
@@ -51,6 +56,7 @@ export default function WorkoutFolderDetailScreen() {
   const folderColor = resolveFolderColor(folderColorName);
   const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
   const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
+  const deleteWorkoutsSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
 
   const {
     data: workouts,
@@ -71,6 +77,46 @@ export default function WorkoutFolderDetailScreen() {
   const workoutIds = useMemo(() => workouts?.map((w) => w.id) ?? [], [workouts]);
   const { mode, selected, allSelected, enterSelect, exitSelect, toggle, toggleSelectAll } =
     useWorkoutSelection(workoutIds);
+  const { mutate: deleteSelected, isPending: isDeletingWorkouts } = useDeleteWorkouts({
+    userId: userId ?? null,
+  });
+
+  const openDeleteWorkoutsSheet = () => {
+    if (selected.size === 0) return;
+    deleteWorkoutsSheetRef.current?.present();
+  };
+
+  const handleConfirmDeleteWorkouts = () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    deleteSelected(ids, {
+      onSuccess: ({ deletedIds }) => {
+        workoutObservability.trackAction('workouts_deleted', {
+          count: deletedIds.length,
+          folderId,
+        });
+        deleteWorkoutsSheetRef.current?.dismiss();
+        exitSelect();
+        Toast.show({
+          type: 'success',
+          text1: t('workoutsScreen.deleteWorkoutsDialog.success', {
+            count: deletedIds.length,
+          }),
+        });
+      },
+      onError: handleLocalError((err) => {
+        workoutObservability.captureError(err, {
+          action: 'delete_workouts',
+          extra: { folderId, count: ids.length },
+        });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      }),
+    });
+  };
 
   const handleConfirmDelete = (action: Parameters<typeof deleteFolder>[0]) => {
     deleteFolder(action, {
@@ -188,9 +234,17 @@ export default function WorkoutFolderDetailScreen() {
             onCancel={exitSelect}
             allSelected={allSelected}
             onToggleSelectAll={toggleSelectAll}
+            onDelete={isDeletingWorkouts ? undefined : openDeleteWorkoutsSheet}
           />
         )}
       </View>
+
+      <WorkoutsDeleteSheet
+        ref={deleteWorkoutsSheetRef}
+        count={selected.size}
+        onConfirm={handleConfirmDeleteWorkouts}
+        isPending={isDeletingWorkouts}
+      />
 
       <WorkoutFolderDeleteSheet
         ref={deleteSheetRef}

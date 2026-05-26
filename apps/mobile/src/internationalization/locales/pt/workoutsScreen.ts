@@ -58,6 +58,15 @@ export default {
     emptyTitle: 'Nenhum treino aqui ainda',
     emptySubtitle: 'Treinos que você mover para essa pasta vão aparecer aqui.',
   },
+  deleteWorkoutsDialog: {
+    title_one: 'Excluir treino?',
+    title_other: 'Excluir {{count}} treinos?',
+    message: 'Esta ação não pode ser desfeita.',
+    cancel: 'Cancelar',
+    confirm: 'Excluir',
+    success_one: 'Treino excluído',
+    success_other: 'Treinos excluídos',
+  },
   deleteFolderDialog: {
     trigger: 'Excluir pasta',
     title: 'Excluir "{{name}}"?',

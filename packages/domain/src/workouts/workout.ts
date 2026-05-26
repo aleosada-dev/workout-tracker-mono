@@ -25,3 +25,8 @@ export type ListWorkoutsFilter = {
   userId: string;
   folderId?: string | null;
 };
+
+export type DeleteWorkoutsInput = {
+  userId: string;
+  workoutIds: string[];
+};
