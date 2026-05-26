@@ -7,10 +7,16 @@ const LIST_SELECT = `
   id, user_id, name, folder_id, created_at, updated_at,
   folder:workout_folders ( name ),
   workout_exercises (
+    position,
     variation:variations (
+      slug,
+      name,
+      exercise:exercises ( slug, name ),
+      equipment:equipments ( slug, preposition ),
       muscle:muscles!muscle_id ( slug, level, parent:muscles!parent_id ( slug, level ) )
     )
-  )
+  ),
+  workout_logs ( started_at, deleted_at )
 `;
 
 export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutRepository {

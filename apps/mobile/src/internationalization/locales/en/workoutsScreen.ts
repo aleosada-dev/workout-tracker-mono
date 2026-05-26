@@ -27,9 +27,13 @@ export default {
   emptyTitle: 'No workouts',
   emptySubtitle: 'Create a workout or open a folder to see the workouts inside.',
   card: {
-    exerciseCount_one: '{{count}} exercise',
-    exerciseCount_other: '{{count}} exercises',
     start: 'Start workout',
+    exerciseExtra_one: '+{{count}} more',
+    exerciseExtra_other: '+{{count}} more',
+    lastPerformed: {
+      never: 'Never performed',
+      prefix: 'Last performed: {{date}}',
+    },
   },
   folderDetail: {
     workoutCount_one: '{{count}} workout',

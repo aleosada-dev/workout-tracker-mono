@@ -1,3 +1,12 @@
+export type WorkoutTopExercise = {
+  slug: string | null;
+  name: string;
+  variationSlug: string | null;
+  variationName: string | null;
+  equipmentSlug: string;
+  equipmentPreposition: string;
+};
+
 export type Workout = {
   id: string;
   userId: string;
@@ -6,6 +15,8 @@ export type Workout = {
   folderName: string | null;
   exerciseCount: number;
   muscleSlugs: string[];
+  topExercises: WorkoutTopExercise[];
+  lastPerformedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };

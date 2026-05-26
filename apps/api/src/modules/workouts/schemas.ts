@@ -48,6 +48,17 @@ export const ListWorkoutsQuerySchema = z.object({
 
 export type ListWorkoutsQuery = z.infer<typeof ListWorkoutsQuerySchema>;
 
+export const WorkoutTopExerciseSchema = z.object({
+	slug: z.string().nullable(),
+	name: z.string(),
+	variationSlug: z.string().nullable(),
+	variationName: z.string().nullable(),
+	equipmentSlug: z.string(),
+	equipmentPreposition: z.string(),
+});
+
+export type WorkoutTopExerciseResponse = z.infer<typeof WorkoutTopExerciseSchema>;
+
 export const WorkoutResponseSchema = z.object({
 	id: z.uuid(),
 	userId: z.uuid(),
@@ -56,6 +67,8 @@ export const WorkoutResponseSchema = z.object({
 	folderName: z.string().nullable(),
 	exerciseCount: z.int().nonnegative(),
 	muscleSlugs: z.array(z.string()),
+	topExercises: z.array(WorkoutTopExerciseSchema).max(2),
+	lastPerformedAt: z.iso.datetime({ offset: true }).nullable(),
 	createdAt: z.iso.datetime({ offset: true }),
 	updatedAt: z.iso.datetime({ offset: true }),
 });
@@ -73,6 +86,8 @@ export function toWorkoutResponse(workout: Workout): WorkoutResponse {
 		folderName: workout.folderName,
 		exerciseCount: workout.exerciseCount,
 		muscleSlugs: workout.muscleSlugs,
+		topExercises: workout.topExercises,
+		lastPerformedAt: workout.lastPerformedAt ? workout.lastPerformedAt.toISOString() : null,
 		createdAt: workout.createdAt.toISOString(),
 		updatedAt: workout.updatedAt.toISOString(),
 	};

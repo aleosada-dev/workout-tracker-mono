@@ -271,6 +271,71 @@ describe("POST /api/v1/workouts/folders", () => {
 	});
 });
 
+const SEED_WORKOUT_C_HIPER = "cc111101-1111-4aaa-9aaa-000000000101";
+
+describe("GET /api/v1/workouts — topExercises and lastPerformedAt", () => {
+	test("lastPerformedAt is a non-null string for a workout that has logs", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const res = await client.api.v1.workouts.$get(
+			{ query: { userId: athleteId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as WorkoutResponse[];
+		const workout = data.find((w) => w.id === SEED_WORKOUT_A_ROOT);
+		if (!workout) throw new Error("expected SEED_WORKOUT_A_ROOT in response");
+
+		expect(workout.lastPerformedAt).not.toBeNull();
+		expect(typeof workout.lastPerformedAt).toBe("string");
+	});
+
+	test("lastPerformedAt is null for a workout with no logs", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const res = await client.api.v1.workouts.$get(
+			{ query: { userId: athleteId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as WorkoutResponse[];
+		const workout = data.find((w) => w.id === SEED_WORKOUT_C_HIPER);
+		if (!workout) throw new Error("expected SEED_WORKOUT_C_HIPER in response");
+
+		expect(workout.lastPerformedAt).toBeNull();
+	});
+
+	test("topExercises has at most 2 entries, ordered by position, each with a non-empty name", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const res = await client.api.v1.workouts.$get(
+			{ query: { userId: athleteId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as WorkoutResponse[];
+
+		for (const workout of data) {
+			expect(workout.topExercises.length).toBeLessThanOrEqual(2);
+			for (const ex of workout.topExercises) {
+				expect(typeof ex.name).toBe("string");
+				expect(ex.name.length).toBeGreaterThan(0);
+			}
+		}
+
+		const wkA = data.find((w) => w.id === SEED_WORKOUT_A_ROOT);
+		if (!wkA) throw new Error("expected SEED_WORKOUT_A_ROOT in response");
+
+		expect(wkA.topExercises.length).toBe(2);
+		const [first, second] = wkA.topExercises;
+		expect(first.name).toBe("Supino");
+		expect(second.name).toBe("Supino Inclinado");
+	});
+});
+
 describe("DELETE /api/v1/workouts/folders/:id", () => {
 	test("deletes a folder owned by the authenticated user", async () => {
 		const client = getTestClient();

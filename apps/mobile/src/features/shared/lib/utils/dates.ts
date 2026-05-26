@@ -28,6 +28,14 @@ export function formatRelativeDate(
   return out ? out.charAt(0).toLocaleUpperCase() + out.slice(1) : out;
 }
 
+export function formatRelativeDays(date: Date | string, t: TFunction): string | null {
+  const days = differenceInCalendarDays(new Date(), toDate(date));
+  if (days < 0) return null;
+  if (days === 0) return t('common.relativeDays.today');
+  if (days === 1) return t('common.relativeDays.yesterday');
+  return t('common.relativeDays.daysAgo', { count: days });
+}
+
 export function formatDateAtTime(date: Date | string, t: TFunction, locale: Locale): string {
   const d = toDate(date);
   return t('common.dateAtTime', {

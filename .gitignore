@@ -74,3 +74,6 @@ apps/mobile/android/
 # Supabase
 supabase/.branches
 supabase/.temp
+
+# Superpowers
+.superpowers

@@ -27,9 +27,13 @@ export default {
   emptyTitle: 'Nenhum treino',
   emptySubtitle: 'Crie um treino ou abra uma pasta para ver os treinos lá dentro.',
   card: {
-    exerciseCount_one: '{{count}} exercício',
-    exerciseCount_other: '{{count}} exercícios',
     start: 'Iniciar treino',
+    exerciseExtra_one: '+{{count}} mais',
+    exerciseExtra_other: '+{{count}} mais',
+    lastPerformed: {
+      never: 'Nunca executado',
+      prefix: 'Último treino: {{date}}',
+    },
   },
   folderDetail: {
     workoutCount_one: '{{count}} treino',

@@ -3,6 +3,7 @@ import {
   formatDateAtTime,
   formatDurationSeconds,
   formatRelativeDate,
+  formatRelativeDays,
 } from '@/features/shared/lib/utils/dates';
 
 const REFERENCE = new Date('2026-05-09T15:00:00Z');
@@ -54,6 +55,41 @@ describe('formatRelativeDate', () => {
   test('accepts a Date object as input', () => {
     const out = formatRelativeDate(new Date('2026-05-08T14:00:00Z'), ptBR);
     expect((out as string).toLowerCase()).toContain('ontem');
+  });
+});
+
+describe('formatRelativeDays', () => {
+  const relT = ((key: string, opts?: { count?: number }) => {
+    if (key === 'common.relativeDays.today') return 'Hoje';
+    if (key === 'common.relativeDays.yesterday') return 'Ontem';
+    if (key === 'common.relativeDays.daysAgo') {
+      return opts?.count === 1 ? `há ${opts.count} dia` : `há ${opts?.count} dias`;
+    }
+    return key;
+  }) as unknown as Parameters<typeof formatRelativeDays>[1];
+
+  test('returns "Hoje" for the same calendar day', () => {
+    expect(formatRelativeDays('2026-05-09T09:00:00Z', relT)).toBe('Hoje');
+  });
+
+  test('returns "Ontem" for the previous calendar day', () => {
+    expect(formatRelativeDays('2026-05-08T09:00:00Z', relT)).toBe('Ontem');
+  });
+
+  test('returns "há N dias" for older dates', () => {
+    expect(formatRelativeDays('2026-04-29T09:00:00Z', relT)).toBe('há 10 dias');
+  });
+
+  test('uses singular form when N === 1 calendar diff means yesterday — sanity at 2', () => {
+    expect(formatRelativeDays('2026-05-07T09:00:00Z', relT)).toBe('há 2 dias');
+  });
+
+  test('returns null for future dates', () => {
+    expect(formatRelativeDays('2026-05-10T09:00:00Z', relT)).toBeNull();
+  });
+
+  test('accepts a Date object as input', () => {
+    expect(formatRelativeDays(new Date('2026-05-08T09:00:00Z'), relT)).toBe('Ontem');
   });
 });
 

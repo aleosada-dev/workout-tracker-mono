@@ -63,7 +63,7 @@ export default function WorkoutFolderDetailScreen() {
               />
             ) : (
               workouts?.map((workout) => (
-                <WorkoutCard key={workout.id} workout={toWorkoutCardData(workout, t)} />
+                <WorkoutCard key={workout.id} workout={toWorkoutCardData(workout)} />
               ))
             )}
           </View>
