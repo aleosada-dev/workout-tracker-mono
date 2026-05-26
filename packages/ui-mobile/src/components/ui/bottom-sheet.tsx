@@ -22,6 +22,7 @@ type BottomSheetProps = Omit<BottomSheetModalProps, 'backgroundStyle' | 'handleI
 
 function BottomSheet({ children, enableDynamicSizing = true, ref, ...props }: BottomSheetProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const renderBackdrop = useCallback(
     (backdropProps: BottomSheetBackdropProps) => (
@@ -42,6 +43,7 @@ function BottomSheet({ children, enableDynamicSizing = true, ref, ...props }: Bo
       keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustPan"
+      bottomInset={insets.bottom}
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: rgb(theme.background) }}
       handleIndicatorStyle={{ backgroundColor: rgb(theme.mutedForeground, 0.6) }}
@@ -75,40 +77,13 @@ function BottomSheetFooter({ className, style, ...props }: ViewProps) {
 }
 
 type GorhomBottomSheetViewProps = ComponentProps<typeof GorhomBottomSheetView>;
-function BottomSheetView({ style, ...props }: GorhomBottomSheetViewProps) {
-  const insets = useSafeAreaInsets();
-  return (
-    <GorhomBottomSheetView
-      style={
-        [
-          { paddingBottom: Math.max(insets.bottom, 8) },
-          style,
-        ] as GorhomBottomSheetViewProps['style']
-      }
-      {...props}
-    />
-  );
+function BottomSheetView(props: GorhomBottomSheetViewProps) {
+  return <GorhomBottomSheetView {...props} />;
 }
 
 type GorhomBottomSheetScrollViewProps = ComponentProps<typeof GorhomBottomSheetScrollView>;
-function BottomSheetScrollView({
-  style,
-  contentContainerStyle,
-  ...props
-}: GorhomBottomSheetScrollViewProps) {
-  const insets = useSafeAreaInsets();
-  return (
-    <GorhomBottomSheetScrollView
-      style={style}
-      contentContainerStyle={
-        [
-          { paddingBottom: Math.max(insets.bottom, 8) },
-          contentContainerStyle,
-        ] as GorhomBottomSheetScrollViewProps['contentContainerStyle']
-      }
-      {...props}
-    />
-  );
+function BottomSheetScrollView(props: GorhomBottomSheetScrollViewProps) {
+  return <GorhomBottomSheetScrollView {...props} />;
 }
 
 type BottomSheetInputProps = ComponentProps<typeof GorhomBottomSheetTextInput> &
