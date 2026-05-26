@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BottomSheet,
+  BottomSheetInput,
   type BottomSheetRef,
   BottomSheetView,
   Button,
   Field,
-  Input,
   Text,
 } from '@workout-tracker/ui-mobile';
 import { type Ref, useEffect, useImperativeHandle, useRef } from 'react';
@@ -162,13 +162,12 @@ export function WorkoutFolderFormSheet({ ref, folder, userId, onUpdated }: Props
             control={control}
             name="name"
             render={({ field }) => (
-              <Input
+              <BottomSheetInput
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 placeholder={t('workoutsScreen.newFolderSheet.namePlaceholder')}
                 maxLength={20}
-                autoFocus
               />
             )}
           />

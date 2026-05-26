@@ -1,41 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Button, rgb, Text, useTheme } from '@workout-tracker/ui-mobile';
+import { Button, Icon, rgb, Text, useTheme } from '@workout-tracker/ui-mobile';
 import { Stack } from 'expo-router';
-import { useState } from 'react';
-import {
-  Modal,
-  Pressable as RNPressable,
-  Text as RNText,
-  View as RNView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BrowseToolbarProps, IconAction } from './types';
+import type { IconAction } from '@/features/shared/components/SelectionToolbar';
+import type { BrowseToolbarProps } from './types';
 
-export function BrowseToolbar({ primary, overflow }: BrowseToolbarProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+export function BrowseToolbar({ primary, headerAction }: BrowseToolbarProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const hasOverflow = overflow && overflow.length > 0;
 
   return (
     <>
       <Stack.Screen
         options={{
           headerLeft: undefined,
-          headerRight: hasOverflow
-            ? () => (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onPress={() => setMenuOpen(true)}
-                  hitSlop={12}
-                  accessibilityLabel="Mais opções"
-                >
-                  <Ionicons name="ellipsis-vertical" size={22} color={rgb(theme.foreground)} />
-                </Button>
-              )
+          headerRight: headerAction
+            ? () => <HeaderActionButton action={headerAction} />
             : undefined,
         }}
       />
@@ -62,107 +43,53 @@ export function BrowseToolbar({ primary, overflow }: BrowseToolbarProps) {
           </Text>
         </Button>
       </View>
-
-      {hasOverflow && (
-        <DropdownMenu
-          visible={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          actions={overflow}
-          topInset={insets.top}
-        />
-      )}
     </>
   );
 }
 
-interface DropdownProps {
-  visible: boolean;
-  onClose: () => void;
-  actions: IconAction[];
-  topInset: number;
-}
-
-function DropdownMenu({ visible, onClose, actions, topInset }: DropdownProps) {
+function HeaderActionButton({ action }: { action: IconAction }) {
+  const theme = useTheme();
+  const showBadge = (action.badge ?? 0) > 0;
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <RNPressable style={styles.backdrop} onPress={onClose}>
-        <RNView style={[styles.menu, { top: topInset + 56 }]}>
-          {actions.map((a, i) => (
-            <RNPressable
-              key={a.label}
-              onPress={() => {
-                onClose();
-                a.onPress?.();
-              }}
-              disabled={a.disabled}
-              android_ripple={{ color: '#262b2f' }}
-              style={[
-                styles.menuItem,
-                i > 0 && styles.menuItemBorder,
-                a.disabled && styles.menuItemDisabled,
-              ]}
-            >
-              <RNView style={styles.menuItemRow}>
-                <Ionicons
-                  name={a.androidIcon}
-                  size={20}
-                  color={a.destructive ? '#ef4444' : '#f3f4f6'}
-                  style={styles.menuIcon}
-                />
-                <RNText style={[styles.menuLabel, a.destructive && styles.menuLabelDestructive]}>
-                  {a.label}
-                </RNText>
-              </RNView>
-            </RNPressable>
-          ))}
-        </RNView>
-      </RNPressable>
-    </Modal>
+    <Button
+      variant="ghost"
+      size="icon"
+      onPress={action.onPress}
+      hitSlop={12}
+      disabled={action.disabled}
+      accessibilityLabel={action.label}
+    >
+      <View style={{ overflow: 'visible' }}>
+        {action.lucideIcon ? (
+          <Icon as={action.lucideIcon} size={22} className="text-foreground" />
+        ) : (
+          <Ionicons name={action.androidIcon} size={22} color={rgb(theme.foreground)} />
+        )}
+        {showBadge && <Badge count={action.badge ?? 0} />}
+      </View>
+    </Button>
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  menu: {
-    position: 'absolute',
-    right: 8,
-    minWidth: 220,
-    backgroundColor: '#1f2326',
-    borderRadius: 8,
-    paddingVertical: 6,
-    elevation: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-  },
-  menuItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  menuItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuIcon: {
-    marginRight: 14,
-  },
-  menuItemBorder: {
-    borderTopWidth: 1,
-    borderTopColor: '#2a2f33',
-  },
-  menuItemDisabled: {
-    opacity: 0.4,
-  },
-  menuLabel: {
-    color: '#f3f4f6',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  menuLabelDestructive: {
-    color: '#ef4444',
-  },
-});
+function Badge({ count }: { count: number }) {
+  return (
+    <View
+      className="items-center justify-center rounded-full bg-primary"
+      style={{
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        minWidth: 14,
+        height: 14,
+        paddingHorizontal: 3,
+      }}
+    >
+      <Text
+        className="font-sans-semibold text-primary-foreground"
+        style={{ fontSize: 10, lineHeight: 12 }}
+      >
+        {count}
+      </Text>
+    </View>
+  );
+}

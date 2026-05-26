@@ -15,6 +15,7 @@ import {
 } from '@expo-google-fonts/geist-mono';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PortalHost } from '@rn-primitives/portal';
+import { NavigationBar } from 'expo-navigation-bar';
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -80,6 +81,7 @@ export default function RootLayout() {
         <QueryProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
+              <NavigationBar />
               <StatusBar style={statusBarStyle} />
               <ThemeBridge />
               <LanguageBridge />

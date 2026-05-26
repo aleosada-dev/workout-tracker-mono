@@ -2,6 +2,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Button, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
 import { router, useFocusEffect } from 'expo-router';
 import type { TFunction } from 'i18next';
+import { Funnel } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
@@ -258,7 +259,7 @@ export default function ExercisesListScreen() {
       {mode === 'browse' ? (
         <BrowseToolbar
           primary={browsePrimary(t)}
-          overflow={browseOverflow(t, countActiveFilters(filters), () => enterSelect())}
+          headerAction={browseFilterAction(t, countActiveFilters(filters))}
         />
       ) : (
         <SelectionToolbar
@@ -335,28 +336,18 @@ function browsePrimary(t: TFunction): IconAction {
   };
 }
 
-function browseOverflow(
-  t: TFunction,
-  activeFilterCount: number,
-  onSelectMode: () => void,
-): IconAction[] {
-  return [
-    {
-      iosIcon: 'checkmark.circle',
-      androidIcon: 'checkmark-circle-outline',
-      label: t('exerciseListScreen.actions.select'),
-      onPress: onSelectMode,
-    },
-    {
-      iosIcon: 'line.3.horizontal.decrease',
-      androidIcon: 'filter',
-      label:
-        activeFilterCount > 0
-          ? t('exerciseListScreen.actions.filterWithCount', { count: activeFilterCount })
-          : t('exerciseListScreen.actions.filter'),
-      onPress: () => router.push('/exercisesFilter'),
-    },
-  ];
+function browseFilterAction(t: TFunction, activeFilterCount: number): IconAction {
+  return {
+    iosIcon: 'line.3.horizontal.decrease',
+    androidIcon: 'funnel-outline',
+    lucideIcon: Funnel,
+    badge: activeFilterCount,
+    label:
+      activeFilterCount > 0
+        ? t('exerciseListScreen.actions.filterWithCount', { count: activeFilterCount })
+        : t('exerciseListScreen.actions.filter'),
+    onPress: () => router.push('/exercisesFilter'),
+  };
 }
 
 function selectionActions(t: TFunction, onCopy: () => void, onDelete: () => void): IconAction[] {

@@ -1,9 +1,9 @@
 import { EmptyState, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
-import type { TFunction } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCoachAthletes } from '@/features/coaches/hooks/use-coach-athletes';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
@@ -20,10 +20,7 @@ import {
   WorkoutFolderItem,
   WorkoutFolderItemSkeleton,
 } from '@/features/workouts/components/WorkoutFolderItem';
-import {
-  type IconAction,
-  SelectionToolbar,
-} from '@/features/workouts/components/WorkoutsListToolbar';
+import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
@@ -32,6 +29,7 @@ import { toWorkoutCardData } from '@/features/workouts/lib/workout-mappers';
 
 export default function WorkoutListScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const { data: profile } = useProfile();
   const isCoach = profile?.role === 'coach';
@@ -81,7 +79,10 @@ export default function WorkoutListScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4 pb-8">
+      <ScrollView
+        contentContainerClassName="p-4"
+        contentContainerStyle={{ paddingBottom: insets.bottom + (mode === 'select' ? 96 : 32) }}
+      >
         {showAthleteSelect && (
           <View className="pb-4">
             <AthleteContextSelect
@@ -162,12 +163,11 @@ export default function WorkoutListScreen() {
         </View>
       </ScrollView>
       {mode === 'select' ? (
-        <SelectionToolbar
+        <WorkoutsSelectionToolbar
           count={selected.size}
           onCancel={exitSelect}
           allSelected={allSelected}
           onToggleSelectAll={toggleSelectAll}
-          actions={workoutSelectionActions(t)}
         />
       ) : (
         <Stack.Screen options={{ headerLeft: undefined, headerRight: undefined }} />
@@ -175,30 +175,6 @@ export default function WorkoutListScreen() {
       <WorkoutFolderFormSheet ref={folderFormSheetRef} userId={queryUserId} />
     </View>
   );
-}
-
-function workoutSelectionActions(t: TFunction): IconAction[] {
-  return [
-    {
-      iosIcon: 'square.and.arrow.up',
-      androidIcon: 'share-outline',
-      label: t('workoutsScreen.actions.share'),
-      onPress: () => {},
-    },
-    {
-      iosIcon: 'folder',
-      androidIcon: 'folder-outline',
-      label: t('workoutsScreen.actions.move'),
-      onPress: () => {},
-    },
-    {
-      iosIcon: 'trash',
-      androidIcon: 'trash-outline',
-      label: t('workoutsScreen.actions.delete'),
-      destructive: true,
-      onPress: () => {},
-    },
-  ];
 }
 
 function WorkoutFoldersLoading() {

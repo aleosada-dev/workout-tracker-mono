@@ -1,30 +1,48 @@
-import { Button, Text } from '@workout-tracker/ui-mobile';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, rgb, Text, useTheme } from '@workout-tracker/ui-mobile';
 import { Stack } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { type ImageSourcePropType, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BrowseToolbarProps } from './types';
 
-export function BrowseToolbar({ primary, overflow }: BrowseToolbarProps) {
+export function BrowseToolbar({ primary, headerAction }: BrowseToolbarProps) {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const badge = headerAction?.badge ?? 0;
+  const [iconSrc, setIconSrc] = useState<ImageSourcePropType | null>(null);
+
+  useEffect(() => {
+    if (!headerAction) return;
+    let cancelled = false;
+    Ionicons.getImageSource(headerAction.androidIcon, 22, rgb(theme.foreground)).then((src) => {
+      if (!cancelled) setIconSrc(src);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [headerAction, theme.foreground]);
 
   return (
     <>
-      {overflow && overflow.length > 0 && (
+      {headerAction && (
         <Stack.Toolbar placement="right">
-          <Stack.Toolbar.Menu icon="ellipsis.circle" accessibilityLabel="Mais opções">
-            {overflow.map((a) => (
-              <Stack.Toolbar.MenuAction
-                key={a.label}
-                icon={a.iosIcon}
-                onPress={a.onPress}
-                destructive={a.destructive}
-                disabled={a.disabled}
+          <Stack.Toolbar.Button onPress={headerAction.onPress} disabled={headerAction.disabled}>
+            {iconSrc ? (
+              <Stack.Toolbar.Icon src={iconSrc} renderingMode="template" />
+            ) : (
+              <Stack.Toolbar.Icon sf={headerAction.iosIcon} />
+            )}
+            <Stack.Toolbar.Label>{headerAction.label}</Stack.Toolbar.Label>
+            {badge > 0 && (
+              <Stack.Toolbar.Badge
+                style={{ backgroundColor: rgb(theme.primary), color: '#ffffff' }}
               >
-                {a.label}
-              </Stack.Toolbar.MenuAction>
-            ))}
-          </Stack.Toolbar.Menu>
+                {String(badge)}
+              </Stack.Toolbar.Badge>
+            )}
+          </Stack.Toolbar.Button>
         </Stack.Toolbar>
       )}
 

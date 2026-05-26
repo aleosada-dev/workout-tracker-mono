@@ -4,49 +4,53 @@ import {
   BottomSheetModal,
   type BottomSheetModalProps,
   BottomSheetScrollView as GorhomBottomSheetScrollView,
+  BottomSheetTextInput as GorhomBottomSheetTextInput,
   BottomSheetView as GorhomBottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { forwardRef, useCallback } from 'react';
-import { View, type ViewProps } from 'react-native';
+import { type ComponentProps, type Ref, useCallback } from 'react';
+import { Platform, type TextInput, View, type ViewProps } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rgb, useTheme } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 import { Text } from './text';
 
 export type BottomSheetRef = BottomSheetModal;
 
-type BottomSheetProps = Omit<BottomSheetModalProps, 'backgroundStyle' | 'handleIndicatorStyle'>;
+type BottomSheetProps = Omit<BottomSheetModalProps, 'backgroundStyle' | 'handleIndicatorStyle'> & {
+  ref?: Ref<BottomSheetModal>;
+};
 
-const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
-  ({ children, enableDynamicSizing = true, ...props }, ref) => {
-    const theme = useTheme();
+function BottomSheet({ children, enableDynamicSizing = true, ref, ...props }: BottomSheetProps) {
+  const theme = useTheme();
 
-    const renderBackdrop = useCallback(
-      (backdropProps: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...backdropProps}
-          appearsOnIndex={0}
-          disappearsOnIndex={-1}
-          pressBehavior="close"
-        />
-      ),
-      [],
-    );
+  const renderBackdrop = useCallback(
+    (backdropProps: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...backdropProps}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
 
-    return (
-      <BottomSheetModal
-        ref={ref}
-        enableDynamicSizing={enableDynamicSizing}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: rgb(theme.background) }}
-        handleIndicatorStyle={{ backgroundColor: rgb(theme.mutedForeground, 0.6) }}
-        {...props}
-      >
-        {children}
-      </BottomSheetModal>
-    );
-  },
-);
-BottomSheet.displayName = 'BottomSheet';
+  return (
+    <BottomSheetModal
+      ref={ref}
+      enableDynamicSizing={enableDynamicSizing}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustPan"
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: rgb(theme.background) }}
+      handleIndicatorStyle={{ backgroundColor: rgb(theme.mutedForeground, 0.6) }}
+      {...props}
+    >
+      {children}
+    </BottomSheetModal>
+  );
+}
 
 function BottomSheetHeader({ title, className, ...props }: ViewProps & { title: string }) {
   return (
@@ -56,11 +60,79 @@ function BottomSheetHeader({ title, className, ...props }: ViewProps & { title: 
   );
 }
 
-function BottomSheetFooter({ className, ...props }: ViewProps) {
+function BottomSheetFooter({ className, style, ...props }: ViewProps) {
+  const insets = useSafeAreaInsets();
   return (
     <View
       className={cn(
         'flex-row gap-3 border-border border-t bg-background px-4 pt-3 pb-6',
+        className,
+      )}
+      style={[{ paddingBottom: insets.bottom + 24 }, style]}
+      {...props}
+    />
+  );
+}
+
+type GorhomBottomSheetViewProps = ComponentProps<typeof GorhomBottomSheetView>;
+function BottomSheetView({ style, ...props }: GorhomBottomSheetViewProps) {
+  const insets = useSafeAreaInsets();
+  return (
+    <GorhomBottomSheetView
+      style={
+        [
+          { paddingBottom: Math.max(insets.bottom, 8) },
+          style,
+        ] as GorhomBottomSheetViewProps['style']
+      }
+      {...props}
+    />
+  );
+}
+
+type GorhomBottomSheetScrollViewProps = ComponentProps<typeof GorhomBottomSheetScrollView>;
+function BottomSheetScrollView({
+  style,
+  contentContainerStyle,
+  ...props
+}: GorhomBottomSheetScrollViewProps) {
+  const insets = useSafeAreaInsets();
+  return (
+    <GorhomBottomSheetScrollView
+      style={style}
+      contentContainerStyle={
+        [
+          { paddingBottom: Math.max(insets.bottom, 8) },
+          contentContainerStyle,
+        ] as GorhomBottomSheetScrollViewProps['contentContainerStyle']
+      }
+      {...props}
+    />
+  );
+}
+
+type BottomSheetInputProps = ComponentProps<typeof GorhomBottomSheetTextInput> &
+  React.RefAttributes<TextInput> & { 'aria-invalid'?: boolean };
+
+function BottomSheetInput({ className, ...props }: BottomSheetInputProps) {
+  return (
+    <GorhomBottomSheetTextInput
+      className={cn(
+        'flex h-10 w-full min-w-0 flex-row items-center rounded-md border border-input bg-background px-3 py-1 font-sans text-base text-foreground leading-5 shadow-black/5 shadow-sm sm:h-9 dark:bg-input/30',
+        props.editable === false &&
+          cn(
+            'opacity-50',
+            Platform.select({ web: 'disabled:pointer-events-none disabled:cursor-not-allowed' }),
+          ),
+        props['aria-invalid'] && Platform.select({ native: 'border-destructive' }),
+        Platform.select({
+          web: cn(
+            'outline-none transition-[color,box-shadow] selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground md:text-sm',
+            'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+          ),
+          native: 'placeholder:text-muted-foreground/50',
+        }),
         className,
       )}
       {...props}
@@ -72,6 +144,7 @@ export {
   BottomSheet,
   BottomSheetFooter,
   BottomSheetHeader,
-  GorhomBottomSheetScrollView as BottomSheetScrollView,
-  GorhomBottomSheetView as BottomSheetView,
+  BottomSheetInput,
+  BottomSheetScrollView,
+  BottomSheetView,
 };

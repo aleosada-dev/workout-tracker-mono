@@ -1,10 +1,10 @@
 import { EmptyState, Icon, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import type { TFunction } from 'i18next';
 import { Folder, Pencil, Trash2 } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
@@ -19,10 +19,7 @@ import {
   WorkoutFolderFormSheet,
   type WorkoutFolderFormSheetRef,
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
-import {
-  type IconAction,
-  SelectionToolbar,
-} from '@/features/workouts/components/WorkoutsListToolbar';
+import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
@@ -42,6 +39,7 @@ type Params = {
 
 export default function WorkoutFolderDetailScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const navTheme = useNavTheme();
   const { id, name, color, userId } = useLocalSearchParams<Params>();
   const folderId = id ?? '';
@@ -134,15 +132,6 @@ export default function WorkoutFolderDetailScreen() {
           }}
         />
       )}
-      {mode === 'select' && (
-        <SelectionToolbar
-          count={selected.size}
-          onCancel={exitSelect}
-          allSelected={allSelected}
-          onToggleSelectAll={toggleSelectAll}
-          actions={workoutSelectionActions(t)}
-        />
-      )}
       <View className="flex-1 bg-background">
         <View className="flex-row items-center gap-3 px-4 pt-4">
           <View className={`h-10 w-10 items-center justify-center rounded-xl ${folderColor.color}`}>
@@ -155,7 +144,10 @@ export default function WorkoutFolderDetailScreen() {
           </Text>
         </View>
 
-        <ScrollView contentContainerClassName="p-4 pb-8">
+        <ScrollView
+          contentContainerClassName="p-4"
+          contentContainerStyle={{ paddingBottom: insets.bottom + (mode === 'select' ? 96 : 32) }}
+        >
           <View className="gap-3">
             {isLoading ? (
               <WorkoutsLoading />
@@ -190,6 +182,14 @@ export default function WorkoutFolderDetailScreen() {
             )}
           </View>
         </ScrollView>
+        {mode === 'select' && (
+          <WorkoutsSelectionToolbar
+            count={selected.size}
+            onCancel={exitSelect}
+            allSelected={allSelected}
+            onToggleSelectAll={toggleSelectAll}
+          />
+        )}
       </View>
 
       <WorkoutFolderDeleteSheet
@@ -216,28 +216,4 @@ export default function WorkoutFolderDetailScreen() {
       />
     </>
   );
-}
-
-function workoutSelectionActions(t: TFunction): IconAction[] {
-  return [
-    {
-      iosIcon: 'square.and.arrow.up',
-      androidIcon: 'share-outline',
-      label: t('workoutsScreen.actions.share'),
-      onPress: () => {},
-    },
-    {
-      iosIcon: 'folder',
-      androidIcon: 'folder-outline',
-      label: t('workoutsScreen.actions.move'),
-      onPress: () => {},
-    },
-    {
-      iosIcon: 'trash',
-      androidIcon: 'trash-outline',
-      label: t('workoutsScreen.actions.delete'),
-      destructive: true,
-      onPress: () => {},
-    },
-  ];
 }

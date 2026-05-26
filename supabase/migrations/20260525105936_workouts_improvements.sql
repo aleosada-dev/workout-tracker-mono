@@ -3,9 +3,18 @@
 ALTER TABLE "public"."workouts"
   ADD COLUMN IF NOT EXISTS "arquived_by" "uuid";
 
-ALTER TABLE ONLY "public"."workouts"
-  ADD CONSTRAINT "workouts_arquived_by_fkey"
-  FOREIGN KEY ("arquived_by") REFERENCES "auth"."users"("id");
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'workouts_arquived_by_fkey'
+       AND conrelid = 'public.workouts'::regclass
+  ) THEN
+    ALTER TABLE ONLY "public"."workouts"
+      ADD CONSTRAINT "workouts_arquived_by_fkey"
+      FOREIGN KEY ("arquived_by") REFERENCES "auth"."users"("id");
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "workouts_active_folder_idx"
   ON "public"."workouts" USING "btree" ("user_id", "folder_id")

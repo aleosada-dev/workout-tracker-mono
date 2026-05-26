@@ -1,9 +1,12 @@
 import type { Ionicons } from '@expo/vector-icons';
+import type { LucideIcon } from 'lucide-react-native';
 import type { SFSymbol } from 'sf-symbols-typescript';
 
 export interface IconAction {
   iosIcon: SFSymbol;
   androidIcon: keyof typeof Ionicons.glyphMap;
+  lucideIcon?: LucideIcon;
+  badge?: number;
   label: string;
   onPress?: () => void;
   disabled?: boolean;
