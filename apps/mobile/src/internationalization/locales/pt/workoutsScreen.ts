@@ -35,6 +35,13 @@ export default {
       prefix: 'Último treino: {{date}}',
     },
   },
+  editFolderSheet: {
+    title: 'Editar pasta',
+    subtitle: 'Atualize o nome ou a cor desta pasta.',
+    submit: 'Salvar',
+    trigger: 'Editar pasta',
+    success: 'Pasta atualizada',
+  },
   folderDetail: {
     workoutCount_one: '{{count}} treino',
     workoutCount_other: '{{count}} treinos',

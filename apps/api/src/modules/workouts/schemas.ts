@@ -32,6 +32,17 @@ export const WorkoutFolderIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+export const UpdateWorkoutFolderRequestSchema = z
+	.object({
+		name: z.string().trim().min(1).max(20).optional(),
+		color: z.enum(WORKOUT_FOLDER_COLORS).optional(),
+	})
+	.refine((v) => v.name !== undefined || v.color !== undefined, {
+		message: "At least one of name or color must be provided",
+	});
+
+export type UpdateWorkoutFolderRequest = z.infer<typeof UpdateWorkoutFolderRequestSchema>;
+
 export const DeleteWorkoutFolderRequestSchema = z.discriminatedUnion("mode", [
 	z.object({ mode: z.literal("delete-folder-only") }),
 	z.object({ mode: z.literal("delete-with-workouts") }),

@@ -35,6 +35,13 @@ export default {
       prefix: 'Last performed: {{date}}',
     },
   },
+  editFolderSheet: {
+    title: 'Edit folder',
+    subtitle: 'Update the name or color of this folder.',
+    submit: 'Save',
+    trigger: 'Edit folder',
+    success: 'Folder updated',
+  },
   folderDetail: {
     workoutCount_one: '{{count}} workout',
     workoutCount_other: '{{count}} workouts',

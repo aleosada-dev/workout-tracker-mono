@@ -43,6 +43,33 @@ export function makeSupabaseWorkoutFolderRepository(supabase: Supabase): Workout
       return toWorkoutFolder(data as WorkoutFolderRow, 0);
     },
 
+    async updateFolder({ userId, folderId, name, color }) {
+      const patch: { name?: string; color?: string; updated_at: string } = {
+        updated_at: new Date().toISOString(),
+      };
+      if (name !== undefined) patch.name = name;
+      if (color !== undefined) patch.color = color;
+
+      const { data, error } = await supabase
+        .from('workout_folders')
+        .update(patch)
+        .eq('id', folderId)
+        .eq('user_id', userId)
+        .select('id, user_id, name, color, created_at, updated_at, workouts(count)')
+        .is('workouts.archived_at', null)
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new ConflictError('workout folder already exists');
+        }
+        throw supabaseError('Failed to update workout folder', error);
+      }
+
+      if (!data) return null;
+      return toWorkoutFolderWithCount(data as WorkoutFolderWithCountRow);
+    },
+
     async deleteFolder(input) {
       const { error } = await supabase.rpc('wt_delete_workout_folder', {
         p_folder_id: input.folderId,

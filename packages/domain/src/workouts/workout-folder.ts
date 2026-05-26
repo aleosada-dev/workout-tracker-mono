@@ -31,6 +31,13 @@ export type CreateWorkoutFolderInput = {
   color: WorkoutFolderColor;
 };
 
+export type UpdateWorkoutFolderInput = {
+  userId: string;
+  folderId: string;
+  name?: string;
+  color?: WorkoutFolderColor;
+};
+
 export type DeleteWorkoutFolderMode =
   | 'delete-folder-only'
   | 'delete-with-workouts'

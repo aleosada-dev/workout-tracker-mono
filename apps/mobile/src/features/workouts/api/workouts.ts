@@ -3,6 +3,7 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 
 const $getFolders = honoClient.api.v1.workouts.folders.$get;
 const $postFolder = honoClient.api.v1.workouts.folders.$post;
+const $patchFolder = honoClient.api.v1.workouts.folders[':id'].$patch;
 const $deleteFolder = honoClient.api.v1.workouts.folders[':id'].$delete;
 const $getWorkouts = honoClient.api.v1.workouts.$get;
 
@@ -30,6 +31,18 @@ export async function createWorkoutFolder(
   body: CreateWorkoutFolderRequest,
 ): Promise<CreateWorkoutFolderResponse> {
   const response = await $postFolder({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export type UpdateWorkoutFolderRequest = InferRequestType<typeof $patchFolder>['json'];
+export type UpdateWorkoutFolderResponse = InferResponseType<typeof $patchFolder, 200>;
+
+export async function updateWorkoutFolder(
+  folderId: string,
+  body: UpdateWorkoutFolderRequest,
+): Promise<UpdateWorkoutFolderResponse> {
+  const response = await $patchFolder({ param: { id: folderId }, json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

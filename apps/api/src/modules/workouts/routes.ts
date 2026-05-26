@@ -10,6 +10,7 @@ import {
 	ListWorkoutsQuerySchema,
 	toWorkoutFolderResponse,
 	toWorkoutResponse,
+	UpdateWorkoutFolderRequestSchema,
 	WorkoutFolderIdParamSchema,
 	WorkoutFolderListResponseSchema,
 	WorkoutFolderResponseSchema,
@@ -95,6 +96,40 @@ export const workoutsRouter = new Hono<AppBindings>()
 			const { createFolder } = c.get("container").workouts;
 			const folder = await createFolder({ userId, ...body });
 			return c.json(toWorkoutFolderResponse(folder), 201);
+		},
+	)
+	.patch(
+		"/folders/:id",
+		describeRoute({
+			summary: "Update a workout folder",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(WorkoutFolderResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Workout folder not found" },
+				409: { description: "Workout folder already exists" },
+			},
+		}),
+		validator("param", WorkoutFolderIdParamSchema),
+		validator("json", UpdateWorkoutFolderRequestSchema),
+		async (c) => {
+			const userId = c.get("userId");
+			const { id: folderId } = c.req.valid("param");
+			const body = c.req.valid("json");
+			const { updateFolder } = c.get("container").workouts;
+			const folder = await updateFolder({ userId, folderId, ...body });
+			if (!folder) {
+				throw new NotFoundError("workout folder");
+			}
+			return c.json(toWorkoutFolderResponse(folder));
 		},
 	)
 	.delete(

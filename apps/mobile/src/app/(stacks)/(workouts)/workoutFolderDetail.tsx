@@ -1,7 +1,7 @@
 import { EmptyState, Icon, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Folder, Trash2 } from 'lucide-react-native';
-import { useRef } from 'react';
+import { Folder, Pencil, Trash2 } from 'lucide-react-native';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -14,9 +14,17 @@ import {
   WorkoutFolderDeleteSheet,
   type WorkoutFolderDeleteSheetRef,
 } from '@/features/workouts/components/WorkoutFolderDeleteSheet';
+import {
+  WorkoutFolderFormSheet,
+  type WorkoutFolderFormSheetRef,
+} from '@/features/workouts/components/WorkoutFolderFormSheet';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
-import { resolveFolderColor } from '@/features/workouts/lib/folder-colors';
+import {
+  resolveFolderColor,
+  WORKOUT_FOLDER_COLORS,
+  type WorkoutFolderColor,
+} from '@/features/workouts/lib/folder-colors';
 import { toWorkoutCardData } from '@/features/workouts/lib/workout-mappers';
 
 type Params = {
@@ -30,9 +38,14 @@ export default function WorkoutFolderDetailScreen() {
   const navTheme = useNavTheme();
   const { id, name, color } = useLocalSearchParams<Params>();
   const folderId = id ?? '';
-  const folderName = name ?? '';
-  const folderColor = resolveFolderColor(color ?? '');
+  const initialColor = (WORKOUT_FOLDER_COLORS as readonly string[]).includes(color ?? '')
+    ? (color as WorkoutFolderColor)
+    : WORKOUT_FOLDER_COLORS[0];
+  const [folderName, setFolderName] = useState(name ?? '');
+  const [folderColorName, setFolderColorName] = useState<WorkoutFolderColor>(initialColor);
+  const folderColor = resolveFolderColor(folderColorName);
   const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
+  const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
 
   const { data: workouts, isLoading, isError, error, refetch } = useWorkouts({ folderId });
   useReportRequestError({ isError, error }, workoutObservability.captureError, {
@@ -73,17 +86,29 @@ export default function WorkoutFolderDetailScreen() {
         options={{
           title: folderName,
           headerRight: () => (
-            <Pressable
-              onPress={() => deleteSheetRef.current?.present()}
-              disabled={isDeleting}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel={t('workoutsScreen.deleteFolderDialog.trigger')}
-              className="px-2"
-              testID="workout-folder-detail.delete"
-            >
-              <Trash2 size={20} color={navTheme.colors.notification} />
-            </Pressable>
+            <View className="flex-row items-center gap-1">
+              <Pressable
+                onPress={() => editSheetRef.current?.present()}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t('workoutsScreen.editFolderSheet.trigger')}
+                className="px-2"
+                testID="workout-folder-detail.edit"
+              >
+                <Pencil size={20} color={navTheme.colors.text} />
+              </Pressable>
+              <Pressable
+                onPress={() => deleteSheetRef.current?.present()}
+                disabled={isDeleting}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t('workoutsScreen.deleteFolderDialog.trigger')}
+                className="px-2"
+                testID="workout-folder-detail.delete"
+              >
+                <Trash2 size={20} color={navTheme.colors.notification} />
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -132,6 +157,19 @@ export default function WorkoutFolderDetailScreen() {
         workoutCount={workouts?.length ?? 0}
         onConfirm={handleConfirmDelete}
         isPending={isDeleting}
+      />
+
+      <WorkoutFolderFormSheet
+        ref={editSheetRef}
+        folder={{ id: folderId, name: folderName, color: folderColorName }}
+        onUpdated={(updated) => {
+          setFolderName(updated.name);
+          setFolderColorName(updated.color);
+          Toast.show({
+            type: 'success',
+            text1: t('workoutsScreen.editFolderSheet.success'),
+          });
+        }}
       />
     </>
   );

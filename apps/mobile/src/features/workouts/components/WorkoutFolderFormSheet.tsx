@@ -1,7 +1,7 @@
 import { type BottomSheetMethods, BottomSheetModal } from '@expo/ui/community/bottom-sheet';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Field, Input, Text } from '@workout-tracker/ui-mobile';
-import { type Ref, useImperativeHandle, useRef } from 'react';
+import { type Ref, useEffect, useImperativeHandle, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -11,11 +11,22 @@ import { ApiError } from '@/features/api/lib/errors';
 import { workoutObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useCreateWorkoutFolder } from '@/features/workouts/hooks/use-create-workout-folder';
-import { resolveFolderColor, WORKOUT_FOLDER_COLORS } from '@/features/workouts/lib/folder-colors';
+import { useUpdateWorkoutFolder } from '@/features/workouts/hooks/use-update-workout-folder';
+import {
+  resolveFolderColor,
+  WORKOUT_FOLDER_COLORS,
+  type WorkoutFolderColor,
+} from '@/features/workouts/lib/folder-colors';
 
 export type WorkoutFolderFormSheetRef = {
   present: () => void;
   dismiss: () => void;
+};
+
+export type WorkoutFolderFormSheetFolder = {
+  id: string;
+  name: string;
+  color: WorkoutFolderColor;
 };
 
 const folderFormSchema = z.object({
@@ -31,10 +42,19 @@ const folderFormSchema = z.object({
 
 type FolderFormValues = z.infer<typeof folderFormSchema>;
 
-export function WorkoutFolderFormSheet({ ref }: { ref?: Ref<WorkoutFolderFormSheetRef> }) {
+type Props = {
+  ref?: Ref<WorkoutFolderFormSheetRef>;
+  folder?: WorkoutFolderFormSheetFolder;
+  onUpdated?: (folder: { id: string; name: string; color: WorkoutFolderColor }) => void;
+};
+
+export function WorkoutFolderFormSheet({ ref, folder, onUpdated }: Props) {
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetMethods>(null);
-  const { mutate: createFolder, isPending } = useCreateWorkoutFolder();
+  const isEdit = folder != null;
+  const { mutate: createFolder, isPending: isCreating } = useCreateWorkoutFolder();
+  const { mutate: updateFolder, isPending: isUpdating } = useUpdateWorkoutFolder(folder?.id ?? '');
+  const isPending = isEdit ? isUpdating : isCreating;
 
   const {
     control,
@@ -45,17 +65,24 @@ export function WorkoutFolderFormSheet({ ref }: { ref?: Ref<WorkoutFolderFormShe
   } = useForm<FolderFormValues>({
     resolver: zodResolver(folderFormSchema),
     defaultValues: {
-      name: '',
-      color: WORKOUT_FOLDER_COLORS[0],
+      name: folder?.name ?? '',
+      color: folder?.color ?? WORKOUT_FOLDER_COLORS[0],
     },
   });
+
+  useEffect(() => {
+    reset({
+      name: folder?.name ?? '',
+      color: folder?.color ?? WORKOUT_FOLDER_COLORS[0],
+    });
+  }, [folder?.name, folder?.color, reset]);
 
   useImperativeHandle(ref, () => ({
     present: () => sheetRef.current?.present(),
     dismiss: () => sheetRef.current?.dismiss(),
   }));
 
-  const handleCreateError = handleLocalError((error) => {
+  const handleSubmitError = handleLocalError((error) => {
     if (error instanceof ApiError && error.status === 409) {
       setError('name', {
         type: 'conflict',
@@ -64,7 +91,9 @@ export function WorkoutFolderFormSheet({ ref }: { ref?: Ref<WorkoutFolderFormShe
       return;
     }
 
-    workoutObservability.captureError(error, { action: 'create_workout_folder' });
+    workoutObservability.captureError(error, {
+      action: isEdit ? 'update_workout_folder' : 'create_workout_folder',
+    });
     Toast.show({
       type: 'error',
       text1: t('errors.unexpected.title'),
@@ -73,23 +102,45 @@ export function WorkoutFolderFormSheet({ ref }: { ref?: Ref<WorkoutFolderFormShe
   });
 
   const onSubmit = handleSubmit((values) => {
+    if (isEdit) {
+      updateFolder(values, {
+        onSuccess: (updated) => {
+          workoutObservability.trackAction('workout_folder_updated');
+          sheetRef.current?.dismiss();
+          onUpdated?.({ id: updated.id, name: updated.name, color: updated.color });
+        },
+        onError: handleSubmitError,
+      });
+      return;
+    }
+
     createFolder(values, {
       onSuccess: () => {
         workoutObservability.trackAction('workout_folder_created');
         sheetRef.current?.dismiss();
         reset();
       },
-      onError: handleCreateError,
+      onError: handleSubmitError,
     });
   });
+
+  const titleKey = isEdit
+    ? 'workoutsScreen.editFolderSheet.title'
+    : 'workoutsScreen.newFolderSheet.title';
+  const subtitleKey = isEdit
+    ? 'workoutsScreen.editFolderSheet.subtitle'
+    : 'workoutsScreen.newFolderSheet.subtitle';
+  const submitKey = isEdit
+    ? 'workoutsScreen.editFolderSheet.submit'
+    : 'workoutsScreen.newFolderSheet.submit';
 
   return (
     <BottomSheetModal ref={sheetRef} enablePanDownToClose enableDynamicSizing>
       <View className="gap-5 px-5 pt-2 pb-8">
         <View className="items-center gap-1">
-          <Text variant="h4">{t('workoutsScreen.newFolderSheet.title')}</Text>
+          <Text variant="h4">{t(titleKey)}</Text>
           <Text variant="muted" className="text-center">
-            {t('workoutsScreen.newFolderSheet.subtitle')}
+            {t(subtitleKey)}
           </Text>
         </View>
 
@@ -146,7 +197,7 @@ export function WorkoutFolderFormSheet({ ref }: { ref?: Ref<WorkoutFolderFormShe
         </Field>
 
         <Button onPress={onSubmit} disabled={isPending}>
-          <Text>{t('workoutsScreen.newFolderSheet.submit')}</Text>
+          <Text>{t(submitKey)}</Text>
         </Button>
       </View>
     </BottomSheetModal>
