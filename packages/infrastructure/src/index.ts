@@ -1,6 +1,8 @@
+export { makeSupabaseCoachRepository } from './coaches/supabase-coach-adapter';
 export { makeSupabaseEquipmentRepository } from './equipments/supabase-equipments-adapter';
 export { makeSupabaseExerciseRepository } from './exercises/supabase-exercises-adapter';
 export { makeSupabaseMuscleRepository } from './muscles/supabase-muscles-adapter';
+export { makeSupabaseProfileRepository } from './profiles/supabase-profile-adapter';
 export type {
   BuildUploadedVideoUrl,
   BuildVideoUploadUrls,

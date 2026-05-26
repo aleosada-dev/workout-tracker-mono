@@ -4,25 +4,26 @@ import { fetchWorkouts } from '@/features/workouts/api/workouts';
 
 type FolderScope = string | null | undefined;
 
-export function useWorkouts(options: { folderId?: FolderScope } = {}) {
+export function useWorkouts(options: { folderId?: FolderScope; userId?: string | null } = {}) {
   const { session } = useSession();
-  const userId = session?.user.id;
+  const sessionUserId = session?.user.id;
+  const targetUserId = options.userId ?? sessionUserId;
   const { folderId } = options;
 
   const folderKey = folderId === undefined ? 'any' : folderId === null ? 'root' : folderId;
 
   return useQuery({
-    queryKey: ['workouts', 'list', userId, folderKey] as const,
+    queryKey: ['workouts', 'list', targetUserId, folderKey] as const,
     queryFn: ({ signal }) =>
       fetchWorkouts(
         {
           query: {
-            userId: userId as string,
+            userId: targetUserId as string,
             ...(folderId === undefined ? {} : { folderId: folderId === null ? 'null' : folderId }),
           },
         },
         { signal },
       ),
-    enabled: !!userId,
+    enabled: !!targetUserId,
   });
 }

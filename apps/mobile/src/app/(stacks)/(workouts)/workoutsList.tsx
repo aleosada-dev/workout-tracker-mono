@@ -1,11 +1,14 @@
 import { EmptyState, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
+import { useCoachAthletes } from '@/features/coaches/hooks/use-coach-athletes';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
+import { useProfile } from '@/features/profiles/hooks/use-profile';
 import type { WorkoutFolderResponse } from '@/features/workouts/api/workouts';
+import { AthleteContextSelect } from '@/features/workouts/components/AthleteContextSelect';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
 import {
   WorkoutFolderFormSheet,
@@ -23,20 +26,26 @@ import { toWorkoutCardData } from '@/features/workouts/lib/workout-mappers';
 
 export default function WorkoutListScreen() {
   const { t } = useTranslation();
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const { data: profile } = useProfile();
+  const isCoach = profile?.role === 'coach';
+  const { data: athletes } = useCoachAthletes({ enabled: isCoach });
+  const showAthleteSelect = isCoach && (athletes?.length ?? 0) >= 1;
+  const queryUserId = showAthleteSelect ? selectedAthleteId : null;
   const {
     data: folders,
     isLoading: foldersLoading,
     isError: foldersError,
     error: foldersErrorObj,
     refetch: refetchFolders,
-  } = useWorkoutFolders();
+  } = useWorkoutFolders({ userId: queryUserId });
   const {
     data: workouts,
     isLoading: workoutsLoading,
     isError: workoutsError,
     error: workoutsErrorObj,
     refetch: refetchWorkouts,
-  } = useWorkouts({ folderId: null });
+  } = useWorkouts({ folderId: null, userId: queryUserId });
   const folderFormSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
   useReportRequestError(
     { isError: foldersError, error: foldersErrorObj },
@@ -63,6 +72,15 @@ export default function WorkoutListScreen() {
   return (
     <View className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 pb-8">
+        {showAthleteSelect && (
+          <View className="pb-4">
+            <AthleteContextSelect
+              athletes={athletes ?? []}
+              selectedAthleteId={selectedAthleteId}
+              onChange={setSelectedAthleteId}
+            />
+          </View>
+        )}
         <Text variant="h5">{t('workoutsScreen.folders')}</Text>
         <ScrollView
           horizontal
@@ -79,7 +97,12 @@ export default function WorkoutListScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/(stacks)/(workouts)/workoutFolderDetail',
-                    params: { id: folder.id, name: folder.name, color: folder.color },
+                    params: {
+                      id: folder.id,
+                      name: folder.name,
+                      color: folder.color,
+                      ...(queryUserId ? { userId: queryUserId } : {}),
+                    },
                   })
                 }
               />

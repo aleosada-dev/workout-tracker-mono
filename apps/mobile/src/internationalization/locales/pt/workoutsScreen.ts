@@ -5,6 +5,11 @@ export default {
   periodization: 'Programação',
   newFolder: 'Nova pasta',
   folders: 'Pastas',
+  athleteContext: {
+    label: 'Visualizando treinos de',
+    myself: 'Meus treinos',
+    placeholder: 'Selecione',
+  },
   newFolderSheet: {
     title: 'Nova pasta',
     subtitle: 'Escolha um nome e uma cor para organizar seus treinos.',

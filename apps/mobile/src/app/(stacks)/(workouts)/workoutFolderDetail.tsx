@@ -31,12 +31,13 @@ type Params = {
   id?: string;
   name?: string;
   color?: string;
+  userId?: string;
 };
 
 export default function WorkoutFolderDetailScreen() {
   const { t } = useTranslation();
   const navTheme = useNavTheme();
-  const { id, name, color } = useLocalSearchParams<Params>();
+  const { id, name, color, userId } = useLocalSearchParams<Params>();
   const folderId = id ?? '';
   const initialColor = (WORKOUT_FOLDER_COLORS as readonly string[]).includes(color ?? '')
     ? (color as WorkoutFolderColor)
@@ -47,7 +48,13 @@ export default function WorkoutFolderDetailScreen() {
   const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
   const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
 
-  const { data: workouts, isLoading, isError, error, refetch } = useWorkouts({ folderId });
+  const {
+    data: workouts,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useWorkouts({ folderId, userId: userId ?? null });
   useReportRequestError({ isError, error }, workoutObservability.captureError, {
     action: 'load_workouts_in_folder',
     extra: { folderId },

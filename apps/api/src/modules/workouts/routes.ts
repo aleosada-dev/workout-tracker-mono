@@ -38,7 +38,8 @@ export const workoutsRouter = new Hono<AppBindings>()
 		}),
 		validator("query", ListWorkoutsQuerySchema),
 		async (c) => {
-			const { userId, folderId } = c.req.valid("query");
+			const { userId: queryUserId, folderId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
 			const { listWorkouts } = c.get("container").workouts;
 			const workouts = await listWorkouts({ userId, folderId });
 			return c.json(workouts.map(toWorkoutResponse));
@@ -64,7 +65,8 @@ export const workoutsRouter = new Hono<AppBindings>()
 		}),
 		validator("query", ListWorkoutFoldersQuerySchema),
 		async (c) => {
-			const { userId } = c.req.valid("query");
+			const { userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
 			const { listFolders } = c.get("container").workouts;
 			const folders = await listFolders({ userId });
 			return c.json(folders.map(toWorkoutFolderResponse));

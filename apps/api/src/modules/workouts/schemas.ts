@@ -2,14 +2,14 @@ import { WORKOUT_FOLDER_COLORS, type Workout, type WorkoutFolder } from "@workou
 import { z } from "zod";
 
 export const ListWorkoutFoldersQuerySchema = z.object({
-	userId: z.uuid(),
+	userId: z.uuid().optional(),
 });
 
 export type ListWorkoutFoldersQuery = z.infer<typeof ListWorkoutFoldersQuerySchema>;
 
 export const WorkoutFolderResponseSchema = z.object({
 	id: z.uuid(),
-	userId: z.uuid(),
+	userId: z.uuid().optional(),
 	name: z.string().trim().min(1),
 	color: z.enum(WORKOUT_FOLDER_COLORS),
 	workoutCount: z.int().nonnegative(),
@@ -61,7 +61,7 @@ export const DeleteWorkoutFolderResponseSchema = z.object({
 export type DeleteWorkoutFolderResponse = z.infer<typeof DeleteWorkoutFolderResponseSchema>;
 
 export const ListWorkoutsQuerySchema = z.object({
-	userId: z.uuid(),
+	userId: z.uuid().optional(),
 	folderId: z
 		.union([z.uuid(), z.literal("null")])
 		.optional()
@@ -83,7 +83,7 @@ export type WorkoutTopExerciseResponse = z.infer<typeof WorkoutTopExerciseSchema
 
 export const WorkoutResponseSchema = z.object({
 	id: z.uuid(),
-	userId: z.uuid(),
+	userId: z.uuid().optional(),
 	name: z.string(),
 	folderId: z.uuid().nullable(),
 	folderName: z.string().nullable(),

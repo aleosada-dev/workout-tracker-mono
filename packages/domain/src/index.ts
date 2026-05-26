@@ -1,3 +1,5 @@
+export * from './coaches/coach-athlete';
+export * from './coaches/coach-repo';
 export * from './equipments/equipment';
 export * from './equipments/equipment-repo';
 export * from './exercises/copy-exercises';
@@ -13,8 +15,11 @@ export * from './exercises/update-exercise';
 export * from './media/video';
 export * from './muscles/muscle';
 export * from './muscles/muscle-repo';
+export * from './profiles/profile';
+export * from './profiles/profile-repo';
 export * from './set/sets';
 export * from './shared/conflict-error';
+export * from './shared/forbidden-error';
 export * from './shared/not-found-error';
 export * from './shared/numbers';
 export * from './shared/type-helpers';

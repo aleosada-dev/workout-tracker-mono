@@ -83,15 +83,19 @@ describe("GET /api/v1/workouts/folders", () => {
 		expect(data.find((folder) => folder.id === SEED_FOLDER_HIPERTROFIA)?.workoutCount).toBe(2);
 	});
 
-	test("returns 400 when userId is missing", async () => {
+	test("defaults to the requester when userId is omitted", async () => {
 		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
 		const res = await client.api.v1.workouts.folders.$get(
-			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			// biome-ignore lint/suspicious/noExplicitAny: testing default behavior
 			{ query: {} as any },
 			{ headers: authHeaders("athlete") },
 		);
 
-		expect(res.status).toBe(400);
+		expect(res.status).toBe(200);
+		if (res.status !== 200) throw new Error("unexpected status");
+		const data = await res.json();
+		expect(data.every((folder) => folder.userId === athleteId)).toBeTrue();
 	});
 
 	test("returns 400 when userId is not a UUID", async () => {
@@ -181,14 +185,18 @@ describe("GET /api/v1/workouts", () => {
 		expect(ids).not.toContain(SEED_WORKOUT_A_ROOT);
 	});
 
-	test("returns 400 when userId is missing", async () => {
+	test("defaults to the requester when userId is omitted", async () => {
 		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
 		const res = await client.api.v1.workouts.$get(
-			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			// biome-ignore lint/suspicious/noExplicitAny: testing default behavior
 			{ query: {} as any },
 			{ headers: authHeaders("athlete") },
 		);
-		expect(res.status).toBe(400);
+		expect(res.status).toBe(200);
+		if (res.status !== 200) throw new Error("unexpected status");
+		const data = await res.json();
+		expect(data.every((w) => w.userId === athleteId)).toBeTrue();
 	});
 
 	test("returns 401 when Authorization header is missing", async () => {

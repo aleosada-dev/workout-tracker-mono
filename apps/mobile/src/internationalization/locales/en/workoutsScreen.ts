@@ -5,6 +5,11 @@ export default {
   periodization: 'Periodization',
   newFolder: 'New folder',
   folders: 'Folders',
+  athleteContext: {
+    label: 'Viewing workouts of',
+    myself: 'My workouts',
+    placeholder: 'Select',
+  },
   newFolderSheet: {
     title: 'New folder',
     subtitle: 'Pick a name and a color to organize your workouts.',

@@ -1,12 +1,19 @@
 import * as Sentry from "@sentry/hono/cloudflare";
 import { sentry } from "@sentry/hono/cloudflare";
-import { ConflictError, NotFoundError, ValidationError } from "@workout-tracker/domain";
+import {
+	ConflictError,
+	ForbiddenError,
+	NotFoundError,
+	ValidationError,
+} from "@workout-tracker/domain";
 import { Hono } from "hono";
 import { buildContainer } from "./container";
+import { coachesRouter } from "./modules/coaches/routes";
 import { equipmentsRouter } from "./modules/equipments/routes";
 import { exercisesRouter } from "./modules/exercises/routes";
 import { mediasRouter } from "./modules/medias/routes";
 import { musclesRouter } from "./modules/muscles/routes";
+import { profilesRouter } from "./modules/profiles/routes";
 import { workoutLogsRouter } from "./modules/workout-logs/routes";
 import { workoutsRouter } from "./modules/workouts/routes";
 import { bearerAuthMiddleware } from "./shared/http/auth-middleware";
@@ -30,7 +37,9 @@ const apiApp = new Hono<AppBindings>()
 	.route("/medias", mediasRouter)
 	.route("/equipments", equipmentsRouter)
 	.route("/workouts", workoutsRouter)
-	.route("/workout-logs", workoutLogsRouter);
+	.route("/workout-logs", workoutLogsRouter)
+	.route("/profiles", profilesRouter)
+	.route("/coachs", coachesRouter);
 
 const openApiSpec = await buildOpenApiSpec(apiApp, "/api/v1");
 
@@ -53,6 +62,10 @@ const app = baseApp
 
 		if (err instanceof ConflictError) {
 			return c.json({ error: err.message }, 409);
+		}
+
+		if (err instanceof ForbiddenError) {
+			return c.json({ error: err.message }, 403);
 		}
 
 		if (err instanceof ValidationError) {
