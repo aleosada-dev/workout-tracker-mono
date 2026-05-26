@@ -42,7 +42,7 @@ export function AthleteContextSelect({ athletes, selectedAthleteId, onChange }: 
         <SelectTrigger className="h-12 w-full" testID="workouts-list.athlete-context">
           <SelectValue placeholder={t('workoutsScreen.athleteContext.placeholder')} />
         </SelectTrigger>
-        <SelectContent disableFullWindowOverlay>
+        <SelectContent>
           <SelectItem label={myselfLabel} value={SELF_VALUE}>
             {myselfLabel}
           </SelectItem>

@@ -1,5 +1,10 @@
-import { type BottomSheetMethods, BottomSheetModal } from '@expo/ui/community/bottom-sheet';
-import { Button, Text } from '@workout-tracker/ui-mobile';
+import {
+  BottomSheet,
+  type BottomSheetRef,
+  BottomSheetView,
+  Button,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { type Ref, useImperativeHandle, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -21,7 +26,7 @@ export function BulkDeleteExercisesSheet({
   isPending?: boolean;
 }) {
   const { t } = useTranslation();
-  const sheetRef = useRef<BottomSheetMethods>(null);
+  const sheetRef = useRef<BottomSheetRef>(null);
 
   useImperativeHandle(ref, () => ({
     present: () => sheetRef.current?.present(),
@@ -29,8 +34,8 @@ export function BulkDeleteExercisesSheet({
   }));
 
   return (
-    <BottomSheetModal ref={sheetRef} enablePanDownToClose enableDynamicSizing>
-      <View className="gap-5 px-5 pt-2 pb-8">
+    <BottomSheet ref={sheetRef}>
+      <BottomSheetView className="gap-5 px-5 pt-2 pb-8">
         <View className="items-center gap-1">
           <Text variant="h4">{t('exerciseListScreen.bulkDelete.confirm.title')}</Text>
           <Text variant="muted" className="text-center">
@@ -56,7 +61,7 @@ export function BulkDeleteExercisesSheet({
             <Text>{t('exerciseListScreen.bulkDelete.confirm.confirm')}</Text>
           </Button>
         </View>
-      </View>
-    </BottomSheetModal>
+      </BottomSheetView>
+    </BottomSheet>
   );
 }
