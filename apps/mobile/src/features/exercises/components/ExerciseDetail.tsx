@@ -1,4 +1,12 @@
-import { Badge, Card, cn, EmptyState, SectionHeading, Text } from '@workout-tracker/ui-mobile';
+import {
+  Badge,
+  Card,
+  cn,
+  EmptyState,
+  Icon,
+  SectionHeading,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { format } from 'date-fns';
 import { Archive, Dumbbell, LineChart, Trophy } from 'lucide-react-native';
 import { useState } from 'react';
@@ -244,7 +252,7 @@ function ArchivedBanner({
       className="flex-row items-center gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2"
       testID="exercise-detail.archived"
     >
-      <Archive size={16} className="text-warning" />
+      <Icon as={Archive} size={16} className="text-warning" />
       <Text className="flex-1 text-warning text-xs">{message}</Text>
     </View>
   );

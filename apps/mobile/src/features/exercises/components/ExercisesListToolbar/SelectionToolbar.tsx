@@ -3,7 +3,7 @@ import { Button, Icon, rgb, useTheme } from '@workout-tracker/ui-mobile';
 import { Stack } from 'expo-router';
 import { CheckCircle2, Circle } from 'lucide-react-native';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IconAction, SelectionToolbarProps } from './types';
 
@@ -19,6 +19,8 @@ export function SelectionToolbar({
   const theme = useTheme();
   const empty = count === 0;
   const headerIconColor = rgb(theme.foreground);
+  const isAndroid = Platform.OS === 'android';
+  const inlineActions = isAndroid ? [...actions].reverse() : null;
 
   return (
     <>
@@ -37,6 +39,25 @@ export function SelectionToolbar({
           ),
           headerRight: () => (
             <View style={styles.headerRight}>
+              {inlineActions
+                ? inlineActions.map((a) => (
+                    <Button
+                      key={a.label}
+                      variant="ghost"
+                      size="icon"
+                      onPress={a.onPress}
+                      hitSlop={12}
+                      disabled={empty || a.disabled}
+                      accessibilityLabel={a.label}
+                    >
+                      <Ionicons
+                        name={a.androidIcon}
+                        size={22}
+                        color={a.destructive ? '#ef4444' : headerIconColor}
+                      />
+                    </Button>
+                  ))
+                : null}
               {onToggleSelectAll && (
                 <Button
                   variant="ghost"
@@ -52,16 +73,18 @@ export function SelectionToolbar({
                   />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onPress={() => setMenuOpen(true)}
-                hitSlop={12}
-                disabled={empty}
-                accessibilityLabel="Mais opções"
-              >
-                <Ionicons name="ellipsis-vertical" size={22} color={headerIconColor} />
-              </Button>
+              {!inlineActions && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onPress={() => setMenuOpen(true)}
+                  hitSlop={12}
+                  disabled={empty}
+                  accessibilityLabel="Mais opções"
+                >
+                  <Ionicons name="ellipsis-vertical" size={22} color={headerIconColor} />
+                </Button>
+              )}
             </View>
           ),
         }}

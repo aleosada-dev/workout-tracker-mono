@@ -3,7 +3,6 @@ import { PortalHost } from '@rn-primitives/portal';
 import { EXERCISE_TYPES } from '@workout-tracker/domain';
 import {
   Button,
-  ConfirmDialog,
   Field,
   Input,
   RequestErrorState,
@@ -16,7 +15,7 @@ import {
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Trash2, X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type ColorValue, Platform, Pressable, useWindowDimensions, View } from 'react-native';
@@ -26,6 +25,10 @@ import { z } from 'zod';
 import { ApiError } from '@/features/api/lib/errors';
 import { EquipmentSelect } from '@/features/equipments/components/equipment-select';
 import type { ExerciseForEditResponse } from '@/features/exercises/api/exercises';
+import {
+  DeleteExerciseSheet,
+  type DeleteExerciseSheetRef,
+} from '@/features/exercises/components/DeleteExerciseSheet';
 import { ExerciseNameAutocomplete } from '@/features/exercises/components/ExerciseNameAutocomplete';
 import {
   ExerciseVideoPicker,
@@ -157,7 +160,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
   const [variationId] = useState(() => editData?.variationId ?? Crypto.randomUUID());
   const { mutate: updateExercise, isPending: isUpdating } = useUpdateExercise(variationId);
   const { mutate: deleteExercise, isPending: isDeleting } = useDeleteExercise(variationId);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const deleteSheetRef = useRef<DeleteExerciseSheetRef>(null);
 
   const [video, setVideo] = useState<SelectedVideo | null>(null);
   // Holds the result of a successful upload so a retry (e.g. after a 409 on the
@@ -210,7 +213,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
   });
 
   function handleConfirmDelete() {
-    setConfirmDeleteOpen(false);
+    deleteSheetRef.current?.dismiss();
     deleteExercise(undefined, {
       onSuccess: () => {
         exerciseObservability.trackAction('exercise_deleted');
@@ -343,7 +346,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 ),
                 headerRight: () => (
                   <Pressable
-                    onPress={() => setConfirmDeleteOpen(true)}
+                    onPress={() => deleteSheetRef.current?.present()}
                     disabled={busy}
                     hitSlop={12}
                     accessibilityRole="button"
@@ -528,15 +531,10 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
       {/* Renders the name autocomplete's suggestion list above the form. */}
       <PortalHost name={SUGGESTIONS_PORTAL_HOST} />
 
-      <ConfirmDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
-        title={t('exerciseListScreen.deleteExercise.confirm.title')}
-        description={t('exerciseListScreen.deleteExercise.confirm.message')}
-        cancelLabel={t('exerciseListScreen.deleteExercise.confirm.cancel')}
-        confirmLabel={t('exerciseListScreen.deleteExercise.confirm.confirm')}
+      <DeleteExerciseSheet
+        ref={deleteSheetRef}
         onConfirm={handleConfirmDelete}
-        confirmTestID="exercise-form.delete.confirm"
+        isPending={isDeleting}
       />
     </>
   );

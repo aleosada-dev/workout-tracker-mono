@@ -1,18 +1,16 @@
 import { darkTheme, lightTheme, rgb } from '@workout-tracker/ui-mobile';
 import * as SystemUI from 'expo-system-ui';
-import { useColorScheme } from 'nativewind';
+import { colorScheme as nwColorScheme, useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
 import { themeMode$ } from './settings-store';
 
-export function ThemeBridge() {
-  const { colorScheme, setColorScheme } = useColorScheme();
+nwColorScheme.set(themeMode$.get());
+themeMode$.onChange(({ value }) => {
+  nwColorScheme.set(value);
+});
 
-  useEffect(() => {
-    setColorScheme(themeMode$.get());
-    return themeMode$.onChange(({ value }) => {
-      setColorScheme(value);
-    });
-  }, [setColorScheme]);
+export function ThemeBridge() {
+  const { colorScheme } = useColorScheme();
 
   useEffect(() => {
     const t = colorScheme === 'dark' ? darkTheme : lightTheme;

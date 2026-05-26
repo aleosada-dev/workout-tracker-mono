@@ -1,8 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
-import { Button, ConfirmDialog, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
+import { Button, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
 import { router, useFocusEffect } from 'expo-router';
 import type { TFunction } from 'i18next';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -11,6 +11,14 @@ import {
   EMPTY_EXERCISE_LIST_PARAMS,
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
+import {
+  BulkCopyExercisesSheet,
+  type BulkCopyExercisesSheetRef,
+} from '@/features/exercises/components/BulkCopyExercisesSheet';
+import {
+  BulkDeleteExercisesSheet,
+  type BulkDeleteExercisesSheetRef,
+} from '@/features/exercises/components/BulkDeleteExercisesSheet';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
 import {
   BrowseToolbar,
@@ -80,10 +88,10 @@ export default function ExercisesListScreen() {
   const { mode, selected, allSelected, enterSelect, exitSelect, toggle, toggleSelectAll } =
     useExerciseSelection(filteredExercises.map((e) => e.id));
 
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [confirmCopyOpen, setConfirmCopyOpen] = useState(false);
-  const { mutate: bulkDelete } = useBulkDeleteExercises();
-  const { mutate: bulkCopy } = useBulkCopyExercises();
+  const deleteSheetRef = useRef<BulkDeleteExercisesSheetRef>(null);
+  const copySheetRef = useRef<BulkCopyExercisesSheetRef>(null);
+  const { mutate: bulkDelete, isPending: isDeleting } = useBulkDeleteExercises();
+  const { mutate: bulkCopy, isPending: isCopying } = useBulkCopyExercises();
 
   const requestDelete = () => {
     const items = exercises.filter((e) => selected.has(e.id));
@@ -98,11 +106,11 @@ export default function ExercisesListScreen() {
       });
       return;
     }
-    setConfirmDeleteOpen(true);
+    deleteSheetRef.current?.present();
   };
 
   const confirmDelete = () => {
-    setConfirmDeleteOpen(false);
+    deleteSheetRef.current?.dismiss();
     const ids = Array.from(selected);
     bulkDelete(ids, {
       onSuccess: () => {
@@ -137,11 +145,11 @@ export default function ExercisesListScreen() {
       });
       return;
     }
-    setConfirmCopyOpen(true);
+    copySheetRef.current?.present();
   };
 
   const confirmCopy = () => {
-    setConfirmCopyOpen(false);
+    copySheetRef.current?.dismiss();
     const ids = Array.from(selected);
     bulkCopy(ids, {
       onSuccess: () => {
@@ -262,27 +270,18 @@ export default function ExercisesListScreen() {
         />
       )}
 
-      <ConfirmDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
-        title={t('exerciseListScreen.bulkDelete.confirm.title')}
-        description={t('exerciseListScreen.bulkDelete.confirm.message', { count: selected.size })}
-        cancelLabel={t('exerciseListScreen.bulkDelete.confirm.cancel')}
-        confirmLabel={t('exerciseListScreen.bulkDelete.confirm.confirm')}
+      <BulkDeleteExercisesSheet
+        ref={deleteSheetRef}
+        count={selected.size}
         onConfirm={confirmDelete}
-        confirmTestID="exercises-list.bulk-delete.confirm"
+        isPending={isDeleting}
       />
 
-      <ConfirmDialog
-        open={confirmCopyOpen}
-        onOpenChange={setConfirmCopyOpen}
-        destructive={false}
-        title={t('exerciseListScreen.bulkCopy.confirm.title')}
-        description={t('exerciseListScreen.bulkCopy.confirm.message', { count: selected.size })}
-        cancelLabel={t('exerciseListScreen.bulkCopy.confirm.cancel')}
-        confirmLabel={t('exerciseListScreen.bulkCopy.confirm.confirm')}
+      <BulkCopyExercisesSheet
+        ref={copySheetRef}
+        count={selected.size}
         onConfirm={confirmCopy}
-        confirmTestID="exercises-list.bulk-copy.confirm"
+        isPending={isCopying}
       />
     </>
   );
