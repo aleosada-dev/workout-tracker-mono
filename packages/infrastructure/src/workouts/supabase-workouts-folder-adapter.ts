@@ -43,19 +43,22 @@ export function makeSupabaseWorkoutFolderRepository(supabase: Supabase): Workout
       return toWorkoutFolder(data as WorkoutFolderRow, 0);
     },
 
-    async deleteFolder({ userId, folderId }) {
-      const { data, error } = await supabase
-        .from('workout_folders')
-        .delete()
-        .eq('id', folderId)
-        .eq('user_id', userId)
-        .select('id');
+    async deleteFolder(input) {
+      const { error } = await supabase.rpc('wt_delete_workout_folder', {
+        p_folder_id: input.folderId,
+        p_mode: input.mode,
+        p_target_folder_id:
+          input.mode === 'move-workouts' ? (input.targetFolderId ?? undefined) : undefined,
+      });
 
       if (error) {
+        if (error.code === 'P0002') {
+          return { deleted: false };
+        }
         throw supabaseError('Failed to delete workout folder', error);
       }
 
-      return { deleted: (data ?? []).length > 0 };
+      return { deleted: true };
     },
   };
 }

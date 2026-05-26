@@ -1,11 +1,20 @@
 import { EmptyState, Icon, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { Folder } from 'lucide-react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Folder, Trash2 } from 'lucide-react-native';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
+import { useNavTheme } from '@/features/shared/lib/theme';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
+import {
+  WorkoutFolderDeleteSheet,
+  type WorkoutFolderDeleteSheetRef,
+} from '@/features/workouts/components/WorkoutFolderDeleteSheet';
+import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import { resolveFolderColor } from '@/features/workouts/lib/folder-colors';
 import { toWorkoutCardData } from '@/features/workouts/lib/workout-mappers';
@@ -18,10 +27,12 @@ type Params = {
 
 export default function WorkoutFolderDetailScreen() {
   const { t } = useTranslation();
+  const navTheme = useNavTheme();
   const { id, name, color } = useLocalSearchParams<Params>();
   const folderId = id ?? '';
   const folderName = name ?? '';
   const folderColor = resolveFolderColor(color ?? '');
+  const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
 
   const { data: workouts, isLoading, isError, error, refetch } = useWorkouts({ folderId });
   useReportRequestError({ isError, error }, workoutObservability.captureError, {
@@ -29,9 +40,53 @@ export default function WorkoutFolderDetailScreen() {
     extra: { folderId },
   });
 
+  const { mutate: deleteFolder, isPending: isDeleting } = useDeleteWorkoutFolder(folderId);
+
+  const handleConfirmDelete = (action: Parameters<typeof deleteFolder>[0]) => {
+    deleteFolder(action, {
+      onSuccess: () => {
+        workoutObservability.trackAction('workout_folder_deleted', { mode: action.mode });
+        deleteSheetRef.current?.dismiss();
+        Toast.show({
+          type: 'success',
+          text1: t('workoutsScreen.deleteFolderDialog.success'),
+        });
+        router.back();
+      },
+      onError: handleLocalError((err) => {
+        workoutObservability.captureError(err, {
+          action: 'delete_workout_folder',
+          extra: { folderId, mode: action.mode },
+        });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      }),
+    });
+  };
+
   return (
     <>
-      <Stack.Screen options={{ title: folderName }} />
+      <Stack.Screen
+        options={{
+          title: folderName,
+          headerRight: () => (
+            <Pressable
+              onPress={() => deleteSheetRef.current?.present()}
+              disabled={isDeleting}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={t('workoutsScreen.deleteFolderDialog.trigger')}
+              className="px-2"
+              testID="workout-folder-detail.delete"
+            >
+              <Trash2 size={20} color={navTheme.colors.notification} />
+            </Pressable>
+          ),
+        }}
+      />
       <View className="flex-1 bg-background">
         <View className="flex-row items-center gap-3 px-4 pt-4">
           <View className={`h-10 w-10 items-center justify-center rounded-xl ${folderColor.color}`}>
@@ -69,6 +124,15 @@ export default function WorkoutFolderDetailScreen() {
           </View>
         </ScrollView>
       </View>
+
+      <WorkoutFolderDeleteSheet
+        ref={deleteSheetRef}
+        folderId={folderId}
+        folderName={folderName}
+        workoutCount={workouts?.length ?? 0}
+        onConfirm={handleConfirmDelete}
+        isPending={isDeleting}
+      />
     </>
   );
 }

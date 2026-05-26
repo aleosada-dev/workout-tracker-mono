@@ -41,4 +41,20 @@ export default {
     emptyTitle: 'Nenhum treino aqui ainda',
     emptySubtitle: 'Treinos que você mover para essa pasta vão aparecer aqui.',
   },
+  deleteFolderDialog: {
+    trigger: 'Excluir pasta',
+    title: 'Excluir "{{name}}"?',
+    irreversible: 'Esta ação não pode ser desfeita.',
+    workoutsPrompt_one: 'Esta pasta contém {{count}} treino. O que fazer com ele?',
+    workoutsPrompt_other: 'Esta pasta contém {{count}} treinos. O que fazer com eles?',
+    options: {
+      deleteAll: 'Excluir todos os treinos',
+      move: 'Mover treinos para outra pasta',
+    },
+    movePlaceholder: 'Selecione uma pasta',
+    rootOption: 'Sem pasta',
+    cancel: 'Cancelar',
+    confirm: 'Excluir',
+    success: 'Pasta excluída',
+  },
 };

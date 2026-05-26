@@ -32,6 +32,17 @@ export const WorkoutFolderIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+export const DeleteWorkoutFolderRequestSchema = z.discriminatedUnion("mode", [
+	z.object({ mode: z.literal("delete-folder-only") }),
+	z.object({ mode: z.literal("delete-with-workouts") }),
+	z.object({
+		mode: z.literal("move-workouts"),
+		targetFolderId: z.uuid().nullable(),
+	}),
+]);
+
+export type DeleteWorkoutFolderRequest = z.infer<typeof DeleteWorkoutFolderRequestSchema>;
+
 export const DeleteWorkoutFolderResponseSchema = z.object({
 	id: z.uuid(),
 });

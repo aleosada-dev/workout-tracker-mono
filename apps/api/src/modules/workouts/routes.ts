@@ -4,6 +4,7 @@ import { describeRoute, resolver, validator } from "hono-openapi";
 import type { AppBindings } from "../../shared/http/types";
 import {
 	CreateWorkoutFolderRequestSchema,
+	DeleteWorkoutFolderRequestSchema,
 	DeleteWorkoutFolderResponseSchema,
 	ListWorkoutFoldersQuerySchema,
 	ListWorkoutsQuerySchema,
@@ -116,11 +117,13 @@ export const workoutsRouter = new Hono<AppBindings>()
 			},
 		}),
 		validator("param", WorkoutFolderIdParamSchema),
+		validator("json", DeleteWorkoutFolderRequestSchema),
 		async (c) => {
 			const userId = c.get("userId");
 			const { id: folderId } = c.req.valid("param");
+			const body = c.req.valid("json");
 			const { deleteFolder } = c.get("container").workouts;
-			const { deleted } = await deleteFolder({ userId, folderId });
+			const { deleted } = await deleteFolder({ userId, folderId, ...body });
 			if (!deleted) {
 				throw new NotFoundError("workout folder");
 			}

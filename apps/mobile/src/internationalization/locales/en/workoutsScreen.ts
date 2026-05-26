@@ -41,4 +41,20 @@ export default {
     emptyTitle: 'No workouts here yet',
     emptySubtitle: 'Workouts you move into this folder will show up here.',
   },
+  deleteFolderDialog: {
+    trigger: 'Delete folder',
+    title: 'Delete "{{name}}"?',
+    irreversible: 'This action cannot be undone.',
+    workoutsPrompt_one: 'This folder contains {{count}} workout. What should we do with it?',
+    workoutsPrompt_other: 'This folder contains {{count}} workouts. What should we do with them?',
+    options: {
+      deleteAll: 'Delete all workouts',
+      move: 'Move workouts to another folder',
+    },
+    movePlaceholder: 'Select a folder',
+    rootOption: 'No folder',
+    cancel: 'Cancel',
+    confirm: 'Delete',
+    success: 'Folder deleted',
+  },
 };

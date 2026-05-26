@@ -31,7 +31,25 @@ export type CreateWorkoutFolderInput = {
   color: WorkoutFolderColor;
 };
 
-export type DeleteWorkoutFolderInput = {
-  userId: string;
-  folderId: string;
-};
+export type DeleteWorkoutFolderMode =
+  | 'delete-folder-only'
+  | 'delete-with-workouts'
+  | 'move-workouts';
+
+export type DeleteWorkoutFolderInput =
+  | {
+      userId: string;
+      folderId: string;
+      mode: 'delete-folder-only';
+    }
+  | {
+      userId: string;
+      folderId: string;
+      mode: 'delete-with-workouts';
+    }
+  | {
+      userId: string;
+      folderId: string;
+      mode: 'move-workouts';
+      targetFolderId: string | null;
+    };

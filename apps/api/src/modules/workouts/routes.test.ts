@@ -8,7 +8,7 @@ const createdFolderIds = new Set<string>();
 async function deleteFolderById(id: string) {
 	const client = getTestClient();
 	await client.api.v1.workouts.folders[":id"].$delete(
-		{ param: { id } },
+		{ param: { id }, json: { mode: "delete-folder-only" } },
 		{ headers: authHeaders("athlete") },
 	);
 }
@@ -349,7 +349,7 @@ describe("DELETE /api/v1/workouts/folders/:id", () => {
 		const folder = (await created.json()) as WorkoutFolderResponse;
 
 		const res = await client.api.v1.workouts.folders[":id"].$delete(
-			{ param: { id: folder.id } },
+			{ param: { id: folder.id }, json: { mode: "delete-folder-only" } },
 			{ headers: authHeaders("athlete") },
 		);
 
@@ -368,7 +368,10 @@ describe("DELETE /api/v1/workouts/folders/:id", () => {
 	test("returns 404 when the folder does not exist", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.workouts.folders[":id"].$delete(
-			{ param: { id: "00000000-0000-4000-8000-000000000000" } },
+			{
+				param: { id: "00000000-0000-4000-8000-000000000000" },
+				json: { mode: "delete-folder-only" },
+			},
 			{ headers: authHeaders("athlete") },
 		);
 		expect(res.status as number).toBe(404);
@@ -377,7 +380,10 @@ describe("DELETE /api/v1/workouts/folders/:id", () => {
 	test("returns 404 when the folder belongs to another user", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.workouts.folders[":id"].$delete(
-			{ param: { id: SEED_FOLDER_HIPERTROFIA } },
+			{
+				param: { id: SEED_FOLDER_HIPERTROFIA },
+				json: { mode: "delete-folder-only" },
+			},
 			{ headers: authHeaders("coach") },
 		);
 		expect(res.status as number).toBe(404);
@@ -386,8 +392,11 @@ describe("DELETE /api/v1/workouts/folders/:id", () => {
 	test("returns 400 when id is not a UUID", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.workouts.folders[":id"].$delete(
-			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
-			{ param: { id: "not-a-uuid" as any } },
+			{
+				// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+				param: { id: "not-a-uuid" as any },
+				json: { mode: "delete-folder-only" },
+			},
 			{ headers: authHeaders("athlete") },
 		);
 		expect(res.status as number).toBe(400);
@@ -397,6 +406,7 @@ describe("DELETE /api/v1/workouts/folders/:id", () => {
 		const client = getTestClient();
 		const res = await client.api.v1.workouts.folders[":id"].$delete({
 			param: { id: "00000000-0000-4000-8000-000000000000" },
+			json: { mode: "delete-folder-only" },
 		});
 		expect(res.status as number).toBe(401);
 	});
