@@ -29,6 +29,11 @@ export default {
     subtitle: 'Verifique sua conexão e tente novamente.',
     retry: 'Tentar novamente',
   },
+  actions: {
+    share: 'Compartilhar',
+    move: 'Mover para pasta',
+    delete: 'Excluir',
+  },
   emptyTitle: 'Nenhum treino',
   emptySubtitle: 'Crie um treino ou abra uma pasta para ver os treinos lá dentro.',
   card: {

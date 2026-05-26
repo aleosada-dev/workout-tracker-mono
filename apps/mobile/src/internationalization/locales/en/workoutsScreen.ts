@@ -29,6 +29,11 @@ export default {
     subtitle: 'Check your connection and try again.',
     retry: 'Try again',
   },
+  actions: {
+    share: 'Share',
+    move: 'Move to folder',
+    delete: 'Delete',
+  },
   emptyTitle: 'No workouts',
   emptySubtitle: 'Create a workout or open a folder to see the workouts inside.',
   card: {

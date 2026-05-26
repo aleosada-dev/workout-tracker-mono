@@ -1,8 +1,8 @@
 import { Button, Card, CardContent, Icon, Skeleton, Text } from '@workout-tracker/ui-mobile';
 import { differenceInCalendarDays } from 'date-fns';
-import { Play } from 'lucide-react-native';
+import { CheckCircle2, Circle, Play } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   composeExerciseName,
   resolveExerciseName,
@@ -51,76 +51,96 @@ function resolveRecency(
 export function WorkoutCard({
   workout,
   onStart,
+  selectable = false,
+  selected = false,
+  onPress,
+  onLongPress,
 }: {
   workout: WorkoutCardData;
   onStart?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const recency = resolveRecency(workout.lastPerformedAt, t);
   const extra = workout.exerciseCount - workout.topExercises.length;
 
   return (
-    <Card className="py-0">
-      <CardContent className="flex-row items-start justify-between gap-3 px-4 py-3">
-        <View className="min-w-0 flex-1">
-          <Text className="font-sans-semibold text-base text-foreground">{workout.name}</Text>
-          <View className="mt-2">
-            {workout.topExercises.map((exercise, idx) => {
-              const exerciseLabel = composeExerciseName(
-                {
-                  exerciseName: resolveExerciseName(exercise.slug, exercise.name, t),
-                  equipmentName: t(`equipment.${exercise.equipmentSlug}`),
-                  equipmentPreposition: exercise.equipmentPreposition,
-                },
-                i18n.language,
-              );
-              const variationLabel = resolveVariationName(
-                exercise.variationSlug,
-                exercise.variationName,
-                t,
-              );
-              return (
-                <View key={exercise.slug ?? `${idx}-${exercise.name}`} className="flex-row">
-                  <Text className="text-muted-foreground leading-2" variant="small">
-                    ·{' '}
-                  </Text>
-                  <Text
-                    className="flex-1 text-foreground leading-2"
-                    variant="small"
-                    numberOfLines={1}
-                  >
-                    {exerciseLabel}
-                    {variationLabel ? <Text variant="muted"> · {variationLabel}</Text> : null}
-                  </Text>
-                </View>
-              );
-            })}
-            {extra > 0 ? (
-              <Text className="text-muted-foreground text-xs">
-                {t('workoutsScreen.card.exerciseExtra', { count: extra })}
-              </Text>
-            ) : null}
+    <Pressable onPress={onPress} onLongPress={onLongPress} delayLongPress={350}>
+      <Card className="py-0">
+        <CardContent className="flex-row items-start justify-between gap-3 px-4 py-3">
+          <View className="min-w-0 flex-1">
+            <Text className="font-sans-semibold text-base text-foreground">{workout.name}</Text>
+            <View className="mt-2">
+              {workout.topExercises.map((exercise, idx) => {
+                const exerciseLabel = composeExerciseName(
+                  {
+                    exerciseName: resolveExerciseName(exercise.slug, exercise.name, t),
+                    equipmentName: t(`equipment.${exercise.equipmentSlug}`),
+                    equipmentPreposition: exercise.equipmentPreposition,
+                  },
+                  i18n.language,
+                );
+                const variationLabel = resolveVariationName(
+                  exercise.variationSlug,
+                  exercise.variationName,
+                  t,
+                );
+                return (
+                  <View key={exercise.slug ?? `${idx}-${exercise.name}`} className="flex-row">
+                    <Text className="text-muted-foreground leading-2" variant="small">
+                      ·{' '}
+                    </Text>
+                    <Text
+                      className="flex-1 text-foreground leading-2"
+                      variant="small"
+                      numberOfLines={1}
+                    >
+                      {exerciseLabel}
+                      {variationLabel ? <Text variant="muted"> · {variationLabel}</Text> : null}
+                    </Text>
+                  </View>
+                );
+              })}
+              {extra > 0 ? (
+                <Text className="text-muted-foreground text-xs">
+                  {t('workoutsScreen.card.exerciseExtra', { count: extra })}
+                </Text>
+              ) : null}
+            </View>
+            <View className="mt-3 flex-row items-center gap-2">
+              <View
+                className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_CLASS[recency.status]}`}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              />
+              <Text className="text-muted-foreground text-xs">{recency.label}</Text>
+            </View>
           </View>
-          <View className="mt-3 flex-row items-center gap-2">
-            <View
-              className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_CLASS[recency.status]}`}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-            />
-            <Text className="text-muted-foreground text-xs">{recency.label}</Text>
-          </View>
-        </View>
-        <Button
-          onPress={onStart}
-          variant="default"
-          size="icon"
-          accessibilityLabel={t('workoutsScreen.card.start')}
-          className="rounded-full"
-        >
-          <Icon as={Play} size={18} className="text-white" />
-        </Button>
-      </CardContent>
-    </Card>
+          {selectable ? (
+            <View className="items-center justify-center self-center pr-1">
+              <Icon
+                as={selected ? CheckCircle2 : Circle}
+                size={22}
+                className={selected ? 'text-primary' : 'text-muted-foreground'}
+              />
+            </View>
+          ) : (
+            <Button
+              onPress={onStart}
+              variant="default"
+              size="icon"
+              accessibilityLabel={t('workoutsScreen.card.start')}
+              className="rounded-full"
+            >
+              <Icon as={Play} size={18} className="text-white" />
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </Pressable>
   );
 }
 

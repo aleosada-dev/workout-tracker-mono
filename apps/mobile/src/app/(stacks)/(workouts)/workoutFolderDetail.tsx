@@ -1,7 +1,8 @@
 import { EmptyState, Icon, RequestErrorState, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import type { TFunction } from 'i18next';
 import { Folder, Pencil, Trash2 } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -18,7 +19,12 @@ import {
   WorkoutFolderFormSheet,
   type WorkoutFolderFormSheetRef,
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
+import {
+  type IconAction,
+  SelectionToolbar,
+} from '@/features/workouts/components/WorkoutsListToolbar';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
+import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import {
   resolveFolderColor,
@@ -64,6 +70,10 @@ export default function WorkoutFolderDetailScreen() {
     userId: userId ?? null,
   });
 
+  const workoutIds = useMemo(() => workouts?.map((w) => w.id) ?? [], [workouts]);
+  const { mode, selected, allSelected, enterSelect, exitSelect, toggle, toggleSelectAll } =
+    useWorkoutSelection(workoutIds);
+
   const handleConfirmDelete = (action: Parameters<typeof deleteFolder>[0]) => {
     deleteFolder(action, {
       onSuccess: () => {
@@ -91,36 +101,48 @@ export default function WorkoutFolderDetailScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: folderName,
-          headerRight: () => (
-            <View className="flex-row items-center gap-1">
-              <Pressable
-                onPress={() => editSheetRef.current?.present()}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('workoutsScreen.editFolderSheet.trigger')}
-                className="px-2"
-                testID="workout-folder-detail.edit"
-              >
-                <Pencil size={20} color={navTheme.colors.text} />
-              </Pressable>
-              <Pressable
-                onPress={() => deleteSheetRef.current?.present()}
-                disabled={isDeleting}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('workoutsScreen.deleteFolderDialog.trigger')}
-                className="px-2"
-                testID="workout-folder-detail.delete"
-              >
-                <Trash2 size={20} color={navTheme.colors.notification} />
-              </Pressable>
-            </View>
-          ),
-        }}
-      />
+      {mode === 'browse' && (
+        <Stack.Screen
+          options={{
+            title: folderName,
+            headerLeft: undefined,
+            headerRight: () => (
+              <View className="flex-row items-center gap-1">
+                <Pressable
+                  onPress={() => editSheetRef.current?.present()}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workoutsScreen.editFolderSheet.trigger')}
+                  className="px-2"
+                  testID="workout-folder-detail.edit"
+                >
+                  <Pencil size={20} color={navTheme.colors.text} />
+                </Pressable>
+                <Pressable
+                  onPress={() => deleteSheetRef.current?.present()}
+                  disabled={isDeleting}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workoutsScreen.deleteFolderDialog.trigger')}
+                  className="px-2"
+                  testID="workout-folder-detail.delete"
+                >
+                  <Trash2 size={20} color={navTheme.colors.notification} />
+                </Pressable>
+              </View>
+            ),
+          }}
+        />
+      )}
+      {mode === 'select' && (
+        <SelectionToolbar
+          count={selected.size}
+          onCancel={exitSelect}
+          allSelected={allSelected}
+          onToggleSelectAll={toggleSelectAll}
+          actions={workoutSelectionActions(t)}
+        />
+      )}
       <View className="flex-1 bg-background">
         <View className="flex-row items-center gap-3 px-4 pt-4">
           <View className={`h-10 w-10 items-center justify-center rounded-xl ${folderColor.color}`}>
@@ -152,7 +174,18 @@ export default function WorkoutFolderDetailScreen() {
               />
             ) : (
               workouts?.map((workout) => (
-                <WorkoutCard key={workout.id} workout={toWorkoutCardData(workout)} />
+                <WorkoutCard
+                  key={workout.id}
+                  workout={toWorkoutCardData(workout)}
+                  selectable={mode === 'select'}
+                  selected={selected.has(workout.id)}
+                  onPress={() => {
+                    if (mode === 'select') toggle(workout.id);
+                  }}
+                  onLongPress={() => {
+                    if (mode === 'browse') enterSelect(workout.id);
+                  }}
+                />
               ))
             )}
           </View>
@@ -183,4 +216,28 @@ export default function WorkoutFolderDetailScreen() {
       />
     </>
   );
+}
+
+function workoutSelectionActions(t: TFunction): IconAction[] {
+  return [
+    {
+      iosIcon: 'square.and.arrow.up',
+      androidIcon: 'share-outline',
+      label: t('workoutsScreen.actions.share'),
+      onPress: () => {},
+    },
+    {
+      iosIcon: 'folder',
+      androidIcon: 'folder-outline',
+      label: t('workoutsScreen.actions.move'),
+      onPress: () => {},
+    },
+    {
+      iosIcon: 'trash',
+      androidIcon: 'trash-outline',
+      label: t('workoutsScreen.actions.delete'),
+      destructive: true,
+      onPress: () => {},
+    },
+  ];
 }
