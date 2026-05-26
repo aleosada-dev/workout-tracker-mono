@@ -17,7 +17,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean && rm -rf node_modules",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "postinstall": "node scripts/fix-expo-macros-symlink.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
