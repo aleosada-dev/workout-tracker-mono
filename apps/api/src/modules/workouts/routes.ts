@@ -93,8 +93,8 @@ export const workoutsRouter = new Hono<AppBindings>()
 		}),
 		validator("json", CreateWorkoutFolderRequestSchema),
 		async (c) => {
-			const userId = c.get("userId");
-			const body = c.req.valid("json");
+			const { userId: bodyUserId, ...body } = c.req.valid("json");
+			const userId = bodyUserId ?? c.get("userId");
 			const { createFolder } = c.get("container").workouts;
 			const folder = await createFolder({ userId, ...body });
 			return c.json(toWorkoutFolderResponse(folder), 201);
@@ -123,9 +123,9 @@ export const workoutsRouter = new Hono<AppBindings>()
 		validator("param", WorkoutFolderIdParamSchema),
 		validator("json", UpdateWorkoutFolderRequestSchema),
 		async (c) => {
-			const userId = c.get("userId");
 			const { id: folderId } = c.req.valid("param");
-			const body = c.req.valid("json");
+			const { userId: bodyUserId, ...body } = c.req.valid("json");
+			const userId = bodyUserId ?? c.get("userId");
 			const { updateFolder } = c.get("container").workouts;
 			const folder = await updateFolder({ userId, folderId, ...body });
 			if (!folder) {
@@ -156,9 +156,9 @@ export const workoutsRouter = new Hono<AppBindings>()
 		validator("param", WorkoutFolderIdParamSchema),
 		validator("json", DeleteWorkoutFolderRequestSchema),
 		async (c) => {
-			const userId = c.get("userId");
 			const { id: folderId } = c.req.valid("param");
-			const body = c.req.valid("json");
+			const { userId: bodyUserId, ...body } = c.req.valid("json");
+			const userId = bodyUserId ?? c.get("userId");
 			const { deleteFolder } = c.get("container").workouts;
 			const { deleted } = await deleteFolder({ userId, folderId, ...body });
 			if (!deleted) {

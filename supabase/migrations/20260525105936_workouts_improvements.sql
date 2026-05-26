@@ -16,9 +16,10 @@ CREATE INDEX IF NOT EXISTS "workouts_arquived_by_idx"
   WHERE ("arquived_by" IS NOT NULL);
 
 -- ================================================
--- wt_delete_workout_folder: remove uma pasta do usuário aplicando uma das três
+-- wt_delete_workout_folder: remove uma pasta de p_user_id aplicando uma das três
 -- estratégias para os treinos contidos. Todas as etapas rodam na mesma
--- transação; ownership é verificada via auth.uid().
+-- transação. O caller (auth.uid()) deve ser o próprio dono ou um coach ativo
+-- de p_user_id; demais casos retornam P0002.
 --   p_mode = 'delete-folder-only': só apaga a pasta (uso esperado quando não
 --     há treinos ativos; treinos arquivados remanescentes ficam com folder_id
 --     NULL pela FK ON DELETE SET NULL).
@@ -34,17 +35,23 @@ CREATE INDEX IF NOT EXISTS "workouts_arquived_by_idx"
 CREATE OR REPLACE FUNCTION "public"."wt_delete_workout_folder"(
   "p_folder_id" "uuid",
   "p_mode" "text",
+  "p_user_id" "uuid",
   "p_target_folder_id" "uuid" DEFAULT NULL
 ) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 DECLARE
-  v_user_id uuid := auth.uid();
+  v_auth_id uuid := auth.uid();
 BEGIN
-  IF v_user_id IS NULL THEN
+  IF v_auth_id IS NULL THEN
     RAISE EXCEPTION 'wt_delete_workout_folder called without an authenticated user'
       USING ERRCODE = '28000';
+  END IF;
+
+  IF v_auth_id <> p_user_id
+     AND NOT public.is_active_coach_of(v_auth_id, p_user_id) THEN
+    RAISE EXCEPTION 'workout folder not found' USING ERRCODE = 'P0002';
   END IF;
 
   IF p_mode NOT IN ('delete-folder-only', 'delete-with-workouts', 'move-workouts') THEN
@@ -52,7 +59,7 @@ BEGIN
   END IF;
 
   PERFORM 1 FROM public.workout_folders
-   WHERE id = p_folder_id AND user_id = v_user_id;
+   WHERE id = p_folder_id AND user_id = p_user_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'workout folder not found' USING ERRCODE = 'P0002';
   END IF;
@@ -60,10 +67,10 @@ BEGIN
   IF p_mode = 'delete-with-workouts' THEN
     UPDATE public.workouts
        SET archived_at = now(),
-           arquived_by = v_user_id,
+           arquived_by = v_auth_id,
            folder_id   = NULL
      WHERE folder_id = p_folder_id
-       AND user_id = v_user_id
+       AND user_id = p_user_id
        AND archived_at IS NULL;
   ELSIF p_mode = 'move-workouts' THEN
     IF p_target_folder_id IS NOT NULL THEN
@@ -72,7 +79,7 @@ BEGIN
           USING ERRCODE = '22023';
       END IF;
       PERFORM 1 FROM public.workout_folders
-       WHERE id = p_target_folder_id AND user_id = v_user_id;
+       WHERE id = p_target_folder_id AND user_id = p_user_id;
       IF NOT FOUND THEN
         RAISE EXCEPTION 'target workout folder not found' USING ERRCODE = 'P0002';
       END IF;
@@ -81,18 +88,18 @@ BEGIN
     UPDATE public.workouts
        SET folder_id = p_target_folder_id
      WHERE folder_id = p_folder_id
-       AND user_id = v_user_id
+       AND user_id = p_user_id
        AND archived_at IS NULL;
   END IF;
 
   DELETE FROM public.workout_folders
-   WHERE id = p_folder_id AND user_id = v_user_id;
+   WHERE id = p_folder_id AND user_id = p_user_id;
 END;
 $$;
 
 
-ALTER FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_target_folder_id" "uuid") OWNER TO "postgres";
+ALTER FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_user_id" "uuid", "p_target_folder_id" "uuid") OWNER TO "postgres";
 
-GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_target_folder_id" "uuid") TO "anon";
-GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_target_folder_id" "uuid") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_target_folder_id" "uuid") TO "service_role";
+GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_user_id" "uuid", "p_target_folder_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_user_id" "uuid", "p_target_folder_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_delete_workout_folder"("p_folder_id" "uuid", "p_mode" "text", "p_user_id" "uuid", "p_target_folder_id" "uuid") TO "service_role";

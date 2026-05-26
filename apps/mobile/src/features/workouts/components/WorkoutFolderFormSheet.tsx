@@ -1,6 +1,13 @@
-import { type BottomSheetMethods, BottomSheetModal } from '@expo/ui/community/bottom-sheet';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Field, Input, Text } from '@workout-tracker/ui-mobile';
+import {
+  BottomSheet,
+  type BottomSheetRef,
+  BottomSheetView,
+  Button,
+  Field,
+  Input,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { type Ref, useEffect, useImperativeHandle, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -45,15 +52,18 @@ type FolderFormValues = z.infer<typeof folderFormSchema>;
 type Props = {
   ref?: Ref<WorkoutFolderFormSheetRef>;
   folder?: WorkoutFolderFormSheetFolder;
+  userId?: string | null;
   onUpdated?: (folder: { id: string; name: string; color: WorkoutFolderColor }) => void;
 };
 
-export function WorkoutFolderFormSheet({ ref, folder, onUpdated }: Props) {
+export function WorkoutFolderFormSheet({ ref, folder, userId, onUpdated }: Props) {
   const { t } = useTranslation();
-  const sheetRef = useRef<BottomSheetMethods>(null);
+  const sheetRef = useRef<BottomSheetRef>(null);
   const isEdit = folder != null;
-  const { mutate: createFolder, isPending: isCreating } = useCreateWorkoutFolder();
-  const { mutate: updateFolder, isPending: isUpdating } = useUpdateWorkoutFolder(folder?.id ?? '');
+  const { mutate: createFolder, isPending: isCreating } = useCreateWorkoutFolder({ userId });
+  const { mutate: updateFolder, isPending: isUpdating } = useUpdateWorkoutFolder(folder?.id ?? '', {
+    userId,
+  });
   const isPending = isEdit ? isUpdating : isCreating;
 
   const {
@@ -135,8 +145,8 @@ export function WorkoutFolderFormSheet({ ref, folder, onUpdated }: Props) {
     : 'workoutsScreen.newFolderSheet.submit';
 
   return (
-    <BottomSheetModal ref={sheetRef} enablePanDownToClose enableDynamicSizing>
-      <View className="gap-5 px-5 pt-2 pb-8">
+    <BottomSheet ref={sheetRef}>
+      <BottomSheetView className="gap-5 px-5 pt-2 pb-8">
         <View className="items-center gap-1">
           <Text variant="h4">{t(titleKey)}</Text>
           <Text variant="muted" className="text-center">
@@ -199,7 +209,7 @@ export function WorkoutFolderFormSheet({ ref, folder, onUpdated }: Props) {
         <Button onPress={onSubmit} disabled={isPending}>
           <Text>{t(submitKey)}</Text>
         </Button>
-      </View>
-    </BottomSheetModal>
+      </BottomSheetView>
+    </BottomSheet>
   );
 }

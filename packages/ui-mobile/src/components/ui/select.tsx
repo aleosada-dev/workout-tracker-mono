@@ -73,14 +73,23 @@ function SelectContent({
   children,
   position = 'popper',
   portalHost,
+  disableFullWindowOverlay = false,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content> & {
   className?: string;
   portalHost?: string;
+  /**
+   * iOS: render dropdown without RNFullWindowOverlay. Use when the Select
+   * coexists with other native overlays (e.g. @expo/ui BottomSheetModal) that
+   * leave the iOS UIWindow stack in a state where the overlay no longer
+   * receives touches.
+   */
+  disableFullWindowOverlay?: boolean;
 }) {
+  const Wrapper = disableFullWindowOverlay ? React.Fragment : FullWindowOverlay;
   return (
     <SelectPrimitive.Portal hostName={portalHost}>
-      <FullWindowOverlay>
+      <Wrapper>
         <SelectPrimitive.Overlay style={Platform.select({ native: StyleSheet.absoluteFill })}>
           <TextClassContext.Provider value="text-popover-foreground">
             <NativeOnlyAnimatedView className="z-50" entering={FadeIn} exiting={FadeOut}>
@@ -127,7 +136,7 @@ function SelectContent({
             </NativeOnlyAnimatedView>
           </TextClassContext.Provider>
         </SelectPrimitive.Overlay>
-      </FullWindowOverlay>
+      </Wrapper>
     </SelectPrimitive.Portal>
   );
 }

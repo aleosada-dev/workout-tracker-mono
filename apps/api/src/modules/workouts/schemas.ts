@@ -22,6 +22,7 @@ export const WorkoutFolderListResponseSchema = z.array(WorkoutFolderResponseSche
 export type WorkoutFolderResponse = z.infer<typeof WorkoutFolderResponseSchema>;
 
 export const CreateWorkoutFolderRequestSchema = z.object({
+	userId: z.uuid().optional(),
 	name: z.string().trim().min(1).max(20),
 	color: z.enum(WORKOUT_FOLDER_COLORS),
 });
@@ -34,6 +35,7 @@ export const WorkoutFolderIdParamSchema = z.object({
 
 export const UpdateWorkoutFolderRequestSchema = z
 	.object({
+		userId: z.uuid().optional(),
 		name: z.string().trim().min(1).max(20).optional(),
 		color: z.enum(WORKOUT_FOLDER_COLORS).optional(),
 	})
@@ -44,10 +46,11 @@ export const UpdateWorkoutFolderRequestSchema = z
 export type UpdateWorkoutFolderRequest = z.infer<typeof UpdateWorkoutFolderRequestSchema>;
 
 export const DeleteWorkoutFolderRequestSchema = z.discriminatedUnion("mode", [
-	z.object({ mode: z.literal("delete-folder-only") }),
-	z.object({ mode: z.literal("delete-with-workouts") }),
+	z.object({ mode: z.literal("delete-folder-only"), userId: z.uuid().optional() }),
+	z.object({ mode: z.literal("delete-with-workouts"), userId: z.uuid().optional() }),
 	z.object({
 		mode: z.literal("move-workouts"),
+		userId: z.uuid().optional(),
 		targetFolderId: z.uuid().nullable(),
 	}),
 ]);

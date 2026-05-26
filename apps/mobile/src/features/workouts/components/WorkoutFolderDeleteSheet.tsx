@@ -1,6 +1,12 @@
-import { type BottomSheetMethods, BottomSheetModal } from '@expo/ui/community/bottom-sheet';
 import type { DeleteWorkoutFolderInput, DeleteWorkoutFolderMode } from '@workout-tracker/domain';
-import { Button, Icon, Text } from '@workout-tracker/ui-mobile';
+import {
+  BottomSheet,
+  type BottomSheetRef,
+  BottomSheetView,
+  Button,
+  Icon,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { Check } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +44,7 @@ export function WorkoutFolderDeleteSheet({
   isPending?: boolean;
 }) {
   const { t } = useTranslation();
-  const sheetRef = useRef<BottomSheetMethods>(null);
+  const sheetRef = useRef<BottomSheetRef>(null);
   const hasWorkouts = workoutCount > 0;
 
   const { data: folders } = useWorkoutFolders();
@@ -75,8 +81,8 @@ export function WorkoutFolderDeleteSheet({
   };
 
   return (
-    <BottomSheetModal ref={sheetRef} enablePanDownToClose enableDynamicSizing>
-      <View className="gap-5 px-5 pt-2 pb-8">
+    <BottomSheet ref={sheetRef}>
+      <BottomSheetView className="gap-5 px-5 pt-2 pb-8">
         <View className="items-center gap-1">
           <Text variant="h4">
             {t('workoutsScreen.deleteFolderDialog.title', { name: folderName })}
@@ -149,8 +155,8 @@ export function WorkoutFolderDeleteSheet({
             <Text>{t('workoutsScreen.deleteFolderDialog.confirm')}</Text>
           </Button>
         </View>
-      </View>
-    </BottomSheetModal>
+      </BottomSheetView>
+    </BottomSheet>
   );
 }
 

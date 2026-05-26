@@ -4,16 +4,16 @@ import {
   updateWorkoutFolder,
 } from '@/features/workouts/api/workouts';
 
-export function useUpdateWorkoutFolder(folderId: string) {
+export function useUpdateWorkoutFolder(folderId: string, options: { userId?: string | null } = {}) {
   const queryClient = useQueryClient();
+  const { userId } = options;
 
   return useMutation({
-    mutationFn: (body: UpdateWorkoutFolderRequest) => updateWorkoutFolder(folderId, body),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['workouts', 'folders'] }),
-        queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] }),
-      ]);
+    mutationFn: (body: Omit<UpdateWorkoutFolderRequest, 'userId'>) =>
+      updateWorkoutFolder(folderId, { ...body, ...(userId ? { userId } : {}) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workouts', 'folders'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts', 'list'] });
     },
   });
 }

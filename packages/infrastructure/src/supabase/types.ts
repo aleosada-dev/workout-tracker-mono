@@ -2836,6 +2836,7 @@ export type Database = {
         Args: {
           p_folder_id: string
           p_mode: string
+          p_user_id: string
           p_target_folder_id?: string
         }
         Returns: undefined

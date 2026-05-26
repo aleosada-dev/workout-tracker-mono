@@ -60,7 +60,9 @@ export default function WorkoutFolderDetailScreen() {
     extra: { folderId },
   });
 
-  const { mutate: deleteFolder, isPending: isDeleting } = useDeleteWorkoutFolder(folderId);
+  const { mutate: deleteFolder, isPending: isDeleting } = useDeleteWorkoutFolder(folderId, {
+    userId: userId ?? null,
+  });
 
   const handleConfirmDelete = (action: Parameters<typeof deleteFolder>[0]) => {
     deleteFolder(action, {
@@ -169,6 +171,7 @@ export default function WorkoutFolderDetailScreen() {
       <WorkoutFolderFormSheet
         ref={editSheetRef}
         folder={{ id: folderId, name: folderName, color: folderColorName }}
+        userId={userId ?? null}
         onUpdated={(updated) => {
           setFolderName(updated.name);
           setFolderColorName(updated.color);

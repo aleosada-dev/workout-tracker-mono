@@ -140,7 +140,7 @@ export default function WorkoutListScreen() {
           )}
         </View>
       </ScrollView>
-      <WorkoutFolderFormSheet ref={folderFormSheetRef} />
+      <WorkoutFolderFormSheet ref={folderFormSheetRef} userId={queryUserId} />
     </View>
   );
 }

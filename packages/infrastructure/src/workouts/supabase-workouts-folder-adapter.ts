@@ -74,6 +74,7 @@ export function makeSupabaseWorkoutFolderRepository(supabase: Supabase): Workout
       const { error } = await supabase.rpc('wt_delete_workout_folder', {
         p_folder_id: input.folderId,
         p_mode: input.mode,
+        p_user_id: input.userId,
         p_target_folder_id:
           input.mode === 'move-workouts' ? (input.targetFolderId ?? undefined) : undefined,
       });
