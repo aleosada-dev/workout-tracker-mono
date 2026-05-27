@@ -12,6 +12,8 @@ import {
 	DeleteWorkoutsResponseSchema,
 	ListWorkoutFoldersQuerySchema,
 	ListWorkoutsQuerySchema,
+	MoveWorkoutsRequestSchema,
+	MoveWorkoutsResponseSchema,
 	toWorkoutFolderResponse,
 	toWorkoutResponse,
 	UpdateWorkoutFolderRequestSchema,
@@ -230,5 +232,32 @@ export const workoutsRouter = new Hono<AppBindings>()
 			const { deleteWorkouts } = c.get("container").workouts;
 			const { deletedIds } = await deleteWorkouts({ userId, workoutIds });
 			return c.json({ deletedIds });
+		},
+	)
+	.patch(
+		"/",
+		describeRoute({
+			summary: "Move workouts to another folder",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(MoveWorkoutsResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("json", MoveWorkoutsRequestSchema),
+		async (c) => {
+			const { userId: bodyUserId, workoutIds, targetFolderId } = c.req.valid("json");
+			const userId = bodyUserId ?? c.get("userId");
+			const { moveWorkouts } = c.get("container").workouts;
+			const { movedIds } = await moveWorkouts({ userId, workoutIds, targetFolderId });
+			return c.json({ movedIds });
 		},
 	);

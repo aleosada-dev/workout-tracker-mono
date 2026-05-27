@@ -92,6 +92,20 @@ export const DeleteWorkoutsResponseSchema = z.object({
 
 export type DeleteWorkoutsResponse = z.infer<typeof DeleteWorkoutsResponseSchema>;
 
+export const MoveWorkoutsRequestSchema = z.object({
+	userId: z.uuid().optional(),
+	workoutIds: z.array(z.uuid()).min(1),
+	targetFolderId: z.uuid().nullable(),
+});
+
+export type MoveWorkoutsRequest = z.infer<typeof MoveWorkoutsRequestSchema>;
+
+export const MoveWorkoutsResponseSchema = z.object({
+	movedIds: z.array(z.uuid()),
+});
+
+export type MoveWorkoutsResponse = z.infer<typeof MoveWorkoutsResponseSchema>;
+
 export const ListWorkoutsQuerySchema = z.object({
 	userId: z.uuid().optional(),
 	folderId: z

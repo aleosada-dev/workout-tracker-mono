@@ -58,6 +58,16 @@ export default {
     emptyTitle: 'No workouts here yet',
     emptySubtitle: 'Workouts you move into this folder will show up here.',
   },
+  moveWorkoutsDialog: {
+    title_one: 'Move workout',
+    title_other: 'Move {{count}} workouts',
+    subtitle: 'Choose a destination folder.',
+    rootOption: 'No folder',
+    cancel: 'Cancel',
+    confirm: 'Move',
+    success_one: 'Workout moved',
+    success_other: 'Workouts moved',
+  },
   deleteWorkoutsDialog: {
     title_one: 'Delete workout?',
     title_other: 'Delete {{count}} workouts?',

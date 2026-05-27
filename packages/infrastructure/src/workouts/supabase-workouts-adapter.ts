@@ -63,5 +63,25 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
 
       return { deletedIds: (data ?? []).map((row) => row.id) };
     },
+
+    async moveWorkouts({ userId, workoutIds, targetFolderId }) {
+      if (workoutIds.length === 0) {
+        return { movedIds: [] };
+      }
+
+      const { data, error } = await supabase
+        .from('workouts')
+        .update({ folder_id: targetFolderId })
+        .in('id', workoutIds)
+        .eq('user_id', userId)
+        .is('archived_at', null)
+        .select('id');
+
+      if (error) {
+        throw supabaseError('Failed to move workouts', error);
+      }
+
+      return { movedIds: (data ?? []).map((row) => row.id) };
+    },
   };
 }

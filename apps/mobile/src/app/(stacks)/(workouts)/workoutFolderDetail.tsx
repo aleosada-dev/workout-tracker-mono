@@ -23,9 +23,14 @@ import {
   WorkoutsDeleteSheet,
   type WorkoutsDeleteSheetRef,
 } from '@/features/workouts/components/WorkoutsDeleteSheet';
+import {
+  WorkoutsMoveSheet,
+  type WorkoutsMoveSheetRef,
+} from '@/features/workouts/components/WorkoutsMoveSheet';
 import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useDeleteWorkouts } from '@/features/workouts/hooks/use-delete-workouts';
+import { useMoveWorkouts } from '@/features/workouts/hooks/use-move-workouts';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import {
@@ -57,6 +62,7 @@ export default function WorkoutFolderDetailScreen() {
   const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
   const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
   const deleteWorkoutsSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
+  const moveWorkoutsSheetRef = useRef<WorkoutsMoveSheetRef>(null);
 
   const {
     data: workouts,
@@ -80,10 +86,52 @@ export default function WorkoutFolderDetailScreen() {
   const { mutate: deleteSelected, isPending: isDeletingWorkouts } = useDeleteWorkouts({
     userId: userId ?? null,
   });
+  const { mutate: moveSelected, isPending: isMovingWorkouts } = useMoveWorkouts({
+    userId: userId ?? null,
+  });
 
   const openDeleteWorkoutsSheet = () => {
     if (selected.size === 0) return;
     deleteWorkoutsSheetRef.current?.present();
+  };
+
+  const openMoveWorkoutsSheet = () => {
+    if (selected.size === 0) return;
+    moveWorkoutsSheetRef.current?.present();
+  };
+
+  const handleConfirmMoveWorkouts = (targetFolderId: string | null) => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    moveSelected(
+      { workoutIds: ids, targetFolderId },
+      {
+        onSuccess: ({ movedIds }) => {
+          workoutObservability.trackAction('workouts_moved', {
+            count: movedIds.length,
+            folderId,
+            targetFolderId: targetFolderId ?? 'root',
+          });
+          moveWorkoutsSheetRef.current?.dismiss();
+          exitSelect();
+          Toast.show({
+            type: 'success',
+            text1: t('workoutsScreen.moveWorkoutsDialog.success', { count: movedIds.length }),
+          });
+        },
+        onError: handleLocalError((err) => {
+          workoutObservability.captureError(err, {
+            action: 'move_workouts',
+            extra: { folderId, count: ids.length, targetFolderId },
+          });
+          Toast.show({
+            type: 'error',
+            text1: t('errors.unexpected.title'),
+            text2: t('errors.unexpected.message'),
+          });
+        }),
+      },
+    );
   };
 
   const handleConfirmDeleteWorkouts = () => {
@@ -234,6 +282,7 @@ export default function WorkoutFolderDetailScreen() {
             onCancel={exitSelect}
             allSelected={allSelected}
             onToggleSelectAll={toggleSelectAll}
+            onMove={isMovingWorkouts ? undefined : openMoveWorkoutsSheet}
             onDelete={isDeletingWorkouts ? undefined : openDeleteWorkoutsSheet}
           />
         )}
@@ -246,11 +295,21 @@ export default function WorkoutFolderDetailScreen() {
         isPending={isDeletingWorkouts}
       />
 
+      <WorkoutsMoveSheet
+        ref={moveWorkoutsSheetRef}
+        count={selected.size}
+        userId={userId ?? null}
+        excludeFolderId={folderId}
+        onConfirm={handleConfirmMoveWorkouts}
+        isPending={isMovingWorkouts}
+      />
+
       <WorkoutFolderDeleteSheet
         ref={deleteSheetRef}
         folderId={folderId}
         folderName={folderName}
         workoutCount={workouts?.length ?? 0}
+        userId={userId ?? null}
         onConfirm={handleConfirmDelete}
         isPending={isDeleting}
       />

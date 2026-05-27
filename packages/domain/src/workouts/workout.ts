@@ -30,3 +30,9 @@ export type DeleteWorkoutsInput = {
   userId: string;
   workoutIds: string[];
 };
+
+export type MoveWorkoutsInput = {
+  userId: string;
+  workoutIds: string[];
+  targetFolderId: string | null;
+};

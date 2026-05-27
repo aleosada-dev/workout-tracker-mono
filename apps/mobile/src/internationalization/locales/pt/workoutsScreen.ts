@@ -58,6 +58,16 @@ export default {
     emptyTitle: 'Nenhum treino aqui ainda',
     emptySubtitle: 'Treinos que você mover para essa pasta vão aparecer aqui.',
   },
+  moveWorkoutsDialog: {
+    title_one: 'Mover treino',
+    title_other: 'Mover {{count}} treinos',
+    subtitle: 'Escolha a pasta de destino.',
+    rootOption: 'Sem pasta',
+    cancel: 'Cancelar',
+    confirm: 'Mover',
+    success_one: 'Treino movido',
+    success_other: 'Treinos movidos',
+  },
   deleteWorkoutsDialog: {
     title_one: 'Excluir treino?',
     title_other: 'Excluir {{count}} treinos?',

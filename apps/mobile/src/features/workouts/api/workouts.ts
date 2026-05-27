@@ -7,6 +7,7 @@ const $patchFolder = honoClient.api.v1.workouts.folders[':id'].$patch;
 const $deleteFolder = honoClient.api.v1.workouts.folders[':id'].$delete;
 const $getWorkouts = honoClient.api.v1.workouts.$get;
 const $deleteWorkouts = honoClient.api.v1.workouts.$delete;
+const $patchWorkouts = honoClient.api.v1.workouts.$patch;
 
 export type ListWorkoutFoldersParams = InferRequestType<typeof $getFolders>;
 export type ListWorkoutFoldersResponse = InferResponseType<typeof $getFolders, 200>;
@@ -74,6 +75,15 @@ export type DeleteWorkoutsResponse = InferResponseType<typeof $deleteWorkouts, 2
 
 export async function deleteWorkouts(body: DeleteWorkoutsRequest): Promise<DeleteWorkoutsResponse> {
   const response = await $deleteWorkouts({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export type MoveWorkoutsRequest = InferRequestType<typeof $patchWorkouts>['json'];
+export type MoveWorkoutsResponse = InferResponseType<typeof $patchWorkouts, 200>;
+
+export async function moveWorkouts(body: MoveWorkoutsRequest): Promise<MoveWorkoutsResponse> {
+  const response = await $patchWorkouts({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

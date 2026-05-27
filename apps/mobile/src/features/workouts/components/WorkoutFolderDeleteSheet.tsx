@@ -7,11 +7,13 @@ import {
   Icon,
   Text,
 } from '@workout-tracker/ui-mobile';
-import { Check } from 'lucide-react-native';
+import { Check, Folder, FolderMinus } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
+import { FolderTile } from '@/features/workouts/components/FolderTile';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
+import { resolveFolderColor } from '@/features/workouts/lib/folder-colors';
 
 const ROOT_VALUE = 'null';
 
@@ -33,6 +35,7 @@ export function WorkoutFolderDeleteSheet({
   folderId,
   folderName,
   workoutCount,
+  userId,
   onConfirm,
   isPending,
 }: {
@@ -40,6 +43,7 @@ export function WorkoutFolderDeleteSheet({
   folderId: string;
   folderName: string;
   workoutCount: number;
+  userId?: string | null;
   onConfirm: (action: DeleteFolderAction) => void;
   isPending?: boolean;
 }) {
@@ -47,7 +51,7 @@ export function WorkoutFolderDeleteSheet({
   const sheetRef = useRef<BottomSheetRef>(null);
   const hasWorkouts = workoutCount > 0;
 
-  const { data: folders } = useWorkoutFolders();
+  const { data: folders } = useWorkoutFolders({ userId: userId ?? null });
   const otherFolders = useMemo(
     () => (folders ?? []).filter((f) => f.id !== folderId),
     [folders, folderId],
@@ -115,22 +119,33 @@ export function WorkoutFolderDeleteSheet({
                 <Text variant="small" className="text-muted-foreground">
                   {t('workoutsScreen.deleteFolderDialog.movePlaceholder')}
                 </Text>
-                <ScrollView className="max-h-48" nestedScrollEnabled>
-                  <View className="gap-2">
-                    <RadioOption
-                      label={t('workoutsScreen.deleteFolderDialog.rootOption')}
-                      selected={target === ROOT_VALUE}
-                      onPress={() => setTarget(ROOT_VALUE)}
-                    />
-                    {otherFolders.map((folder) => (
-                      <RadioOption
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="gap-4 px-1 py-2"
+                >
+                  <FolderTile
+                    label={t('workoutsScreen.deleteFolderDialog.rootOption')}
+                    icon={FolderMinus}
+                    tileClassName="bg-muted"
+                    iconClassName="text-muted-foreground"
+                    selected={target === ROOT_VALUE}
+                    onPress={() => setTarget(ROOT_VALUE)}
+                  />
+                  {otherFolders.map((folder) => {
+                    const { color, iconColor } = resolveFolderColor(folder.color);
+                    return (
+                      <FolderTile
                         key={folder.id}
                         label={folder.name}
+                        icon={Folder}
+                        tileClassName={color}
+                        iconClassName={iconColor}
                         selected={target === folder.id}
                         onPress={() => setTarget(folder.id)}
                       />
-                    ))}
-                  </View>
+                    );
+                  })}
                 </ScrollView>
               </View>
             ) : null}
