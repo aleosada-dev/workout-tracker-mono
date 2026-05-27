@@ -1,4 +1,4 @@
-import type { WorkoutRepository } from '@workout-tracker/domain';
+import { ForbiddenError, NotFoundError, type WorkoutRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
 import { toWorkout, type WorkoutListRow } from './supabase-workouts-mapper';
@@ -82,6 +82,30 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
       }
 
       return { movedIds: (data ?? []).map((row) => row.id) };
+    },
+
+    async copyWorkouts({ workoutIds, targetUserId, targetFolderId }) {
+      if (workoutIds.length === 0) {
+        return { newWorkoutIds: [] };
+      }
+
+      const { data, error } = await supabase.rpc('wt_copy_workouts', {
+        p_source_workout_ids: workoutIds,
+        p_target_user_id: targetUserId,
+        p_target_folder_id: targetFolderId ?? undefined,
+      });
+
+      if (error) {
+        if (error.code === '42501') {
+          throw new ForbiddenError('not authorized to copy workouts for this athlete');
+        }
+        if (error.code === 'P0002') {
+          throw new NotFoundError('source workout or target folder');
+        }
+        throw supabaseError('Failed to copy workouts', error);
+      }
+
+      return { newWorkoutIds: (data as string[] | null) ?? [] };
     },
   };
 }

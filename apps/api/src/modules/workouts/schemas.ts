@@ -106,6 +106,30 @@ export const MoveWorkoutsResponseSchema = z.object({
 
 export type MoveWorkoutsResponse = z.infer<typeof MoveWorkoutsResponseSchema>;
 
+export const CopyWorkoutsTargetSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("root") }),
+	z.object({ kind: z.literal("existing"), folderId: z.uuid() }),
+	z.object({
+		kind: z.literal("new"),
+		name: z.string().trim().min(1).max(20),
+		color: z.enum(WORKOUT_FOLDER_COLORS),
+	}),
+]);
+
+export const CopyWorkoutsRequestSchema = z.object({
+	workoutIds: z.array(z.uuid()).min(1).max(50),
+	targetUserId: z.uuid(),
+	target: CopyWorkoutsTargetSchema,
+});
+
+export type CopyWorkoutsRequest = z.infer<typeof CopyWorkoutsRequestSchema>;
+
+export const CopyWorkoutsResponseSchema = z.object({
+	newWorkoutIds: z.array(z.uuid()),
+});
+
+export type CopyWorkoutsResponse = z.infer<typeof CopyWorkoutsResponseSchema>;
+
 export const ListWorkoutsQuerySchema = z.object({
 	userId: z.uuid().optional(),
 	folderId: z

@@ -2810,6 +2810,14 @@ export type Database = {
         Args: { p_source_variation_ids: string[] }
         Returns: number
       }
+      wt_copy_workouts: {
+        Args: {
+          p_source_workout_ids: string[]
+          p_target_folder_id?: string
+          p_target_user_id: string
+        }
+        Returns: string[]
+      }
       wt_create_user_exercise: {
         Args: {
           p_equipment_id: string
@@ -2836,8 +2844,8 @@ export type Database = {
         Args: {
           p_folder_id: string
           p_mode: string
-          p_user_id: string
           p_target_folder_id?: string
+          p_user_id: string
         }
         Returns: undefined
       }

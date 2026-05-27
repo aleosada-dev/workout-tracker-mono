@@ -23,6 +23,10 @@ import {
   WorkoutFolderItemSkeleton,
 } from '@/features/workouts/components/WorkoutFolderItem';
 import {
+  WorkoutsCopySheet,
+  type WorkoutsCopySheetRef,
+} from '@/features/workouts/components/WorkoutsCopySheet';
+import {
   WorkoutsDeleteSheet,
   type WorkoutsDeleteSheetRef,
 } from '@/features/workouts/components/WorkoutsDeleteSheet';
@@ -31,6 +35,7 @@ import {
   type WorkoutsMoveSheetRef,
 } from '@/features/workouts/components/WorkoutsMoveSheet';
 import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
+import { useCopyWorkouts } from '@/features/workouts/hooks/use-copy-workouts';
 import { useDeleteWorkouts } from '@/features/workouts/hooks/use-delete-workouts';
 import { useMoveWorkouts } from '@/features/workouts/hooks/use-move-workouts';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
@@ -65,6 +70,7 @@ export default function WorkoutListScreen() {
   const folderFormSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
   const deleteWorkoutsSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
   const moveWorkoutsSheetRef = useRef<WorkoutsMoveSheetRef>(null);
+  const copyWorkoutsSheetRef = useRef<WorkoutsCopySheetRef>(null);
   useReportRequestError(
     { isError: foldersError, error: foldersErrorObj },
     workoutObservability.captureError,
@@ -85,6 +91,12 @@ export default function WorkoutListScreen() {
   const { mutate: moveSelected, isPending: isMoving } = useMoveWorkouts({
     userId: queryUserId,
   });
+  const { mutate: copySelected, isPending: isCopying } = useCopyWorkouts();
+
+  const openCopySheet = () => {
+    if (selected.size === 0) return;
+    copyWorkoutsSheetRef.current?.present();
+  };
 
   const openDeleteSheet = () => {
     if (selected.size === 0) return;
@@ -118,6 +130,51 @@ export default function WorkoutListScreen() {
           workoutObservability.captureError(err, {
             action: 'move_workouts',
             extra: { count: ids.length, targetFolderId },
+          });
+          Toast.show({
+            type: 'error',
+            text1: t('errors.unexpected.title'),
+            text2: t('errors.unexpected.message'),
+          });
+        }),
+      },
+    );
+  };
+
+  const handleConfirmCopy = ({
+    targetUserId,
+    target,
+  }: {
+    targetUserId: string;
+    target:
+      | { kind: 'root' }
+      | { kind: 'existing'; folderId: string }
+      | { kind: 'new'; name: string; color: import('@workout-tracker/domain').WorkoutFolderColor };
+  }) => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    copySelected(
+      { workoutIds: ids, targetUserId, target },
+      {
+        onSuccess: ({ newWorkoutIds }) => {
+          workoutObservability.trackAction('workouts_copied', {
+            count: newWorkoutIds.length,
+            targetUserId,
+            targetKind: target.kind,
+          });
+          copyWorkoutsSheetRef.current?.dismiss();
+          exitSelect();
+          Toast.show({
+            type: 'success',
+            text1: t('workoutsScreen.copyWorkoutsDialog.success', {
+              count: newWorkoutIds.length,
+            }),
+          });
+        },
+        onError: handleLocalError((err) => {
+          workoutObservability.captureError(err, {
+            action: 'copy_workouts',
+            extra: { count: ids.length, targetUserId, targetKind: target.kind },
           });
           Toast.show({
             type: 'error',
@@ -260,6 +317,8 @@ export default function WorkoutListScreen() {
           onCancel={exitSelect}
           allSelected={allSelected}
           onToggleSelectAll={toggleSelectAll}
+          showCopy={showAthleteSelect}
+          onCopy={isCopying ? undefined : openCopySheet}
           onMove={isMoving ? undefined : openMoveSheet}
           onDelete={isDeleting ? undefined : openDeleteSheet}
         />
@@ -281,6 +340,15 @@ export default function WorkoutListScreen() {
         onConfirm={handleConfirmMove}
         isPending={isMoving}
       />
+      {showAthleteSelect ? (
+        <WorkoutsCopySheet
+          ref={copyWorkoutsSheetRef}
+          count={selected.size}
+          athletes={athletes ?? []}
+          onConfirm={handleConfirmCopy}
+          isPending={isCopying}
+        />
+      ) : null}
     </View>
   );
 }

@@ -7,7 +7,8 @@ export type WorkoutsSelectionToolbarProps = {
   onCancel: () => void;
   allSelected?: boolean;
   onToggleSelectAll?: () => void;
-  onShare?: () => void;
+  showCopy?: boolean;
+  onCopy?: () => void;
   onMove?: () => void;
   onDelete?: () => void;
 };
@@ -17,7 +18,8 @@ export function WorkoutsSelectionToolbar({
   onCancel,
   allSelected,
   onToggleSelectAll,
-  onShare,
+  showCopy,
+  onCopy,
   onMove,
   onDelete,
 }: WorkoutsSelectionToolbarProps) {
@@ -28,22 +30,32 @@ export function WorkoutsSelectionToolbar({
       onCancel={onCancel}
       allSelected={allSelected}
       onToggleSelectAll={onToggleSelectAll}
-      actions={workoutSelectionActions(t, { onShare, onMove, onDelete })}
+      actions={workoutSelectionActions(t, { showCopy, onCopy, onMove, onDelete })}
     />
   );
 }
 
 function workoutSelectionActions(
   t: TFunction,
-  handlers: { onShare?: () => void; onMove?: () => void; onDelete?: () => void },
+  handlers: {
+    showCopy?: boolean;
+    onCopy?: () => void;
+    onMove?: () => void;
+    onDelete?: () => void;
+  },
 ): IconAction[] {
-  return [
-    {
-      iosIcon: 'square.and.arrow.up',
-      androidIcon: 'share-outline',
-      label: t('workoutsScreen.actions.share'),
-      onPress: handlers.onShare ?? (() => {}),
-    },
+  const actions: IconAction[] = [];
+
+  if (handlers.showCopy) {
+    actions.push({
+      iosIcon: 'doc.on.doc',
+      androidIcon: 'copy-outline',
+      label: t('workoutsScreen.actions.copy'),
+      onPress: handlers.onCopy ?? (() => {}),
+    });
+  }
+
+  actions.push(
     {
       iosIcon: 'folder',
       androidIcon: 'folder-outline',
@@ -57,5 +69,7 @@ function workoutSelectionActions(
       destructive: true,
       onPress: handlers.onDelete ?? (() => {}),
     },
-  ];
+  );
+
+  return actions;
 }

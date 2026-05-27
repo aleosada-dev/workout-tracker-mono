@@ -6,7 +6,7 @@ import {
   Text,
 } from '@workout-tracker/ui-mobile';
 import { Folder, FolderMinus } from 'lucide-react-native';
-import { type Ref, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { FolderTile } from '@/features/workouts/components/FolderTile';
@@ -37,7 +37,7 @@ export function WorkoutsMoveSheet({
 }) {
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetRef>(null);
-  const [target, setTarget] = useState<string>(ROOT_VALUE);
+  const [target, setTarget] = useState<string | null>(null);
 
   const { data: folders } = useWorkoutFolders({ userId: userId ?? null });
   const availableFolders = useMemo(
@@ -45,19 +45,39 @@ export function WorkoutsMoveSheet({
     [folders, excludeFolderId],
   );
 
+  const showRootOption = excludeFolderId !== null;
+
+  // Default selection: when the root tile is visible, pre-select it (matches
+  // the previous behavior of the "move to root" flow from folder detail). When
+  // it is hidden (workouts list at root level), there is no sensible "root"
+  // option, so fall back to the first available folder. If neither exists, the
+  // confirm button stays disabled.
+  const defaultTarget: string | null = showRootOption
+    ? ROOT_VALUE
+    : (availableFolders[0]?.id ?? null);
+
   useImperativeHandle(ref, () => ({
     present: () => {
-      setTarget(ROOT_VALUE);
+      setTarget(defaultTarget);
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
   }));
 
+  // If folders load after the sheet was presented (target was null because
+  // there was nothing to pick), adopt the default once they arrive.
+  useEffect(() => {
+    if (target === null && defaultTarget !== null) {
+      setTarget(defaultTarget);
+    }
+  }, [target, defaultTarget]);
+
+  const canConfirm = target !== null;
+
   const handleConfirm = () => {
+    if (target === null) return;
     onConfirm(target === ROOT_VALUE ? null : target);
   };
-
-  const showRootOption = excludeFolderId !== null;
 
   return (
     <BottomSheet ref={sheetRef}>
@@ -101,7 +121,11 @@ export function WorkoutsMoveSheet({
         </ScrollView>
 
         <View className="gap-3">
-          <Button onPress={handleConfirm} disabled={isPending} testID="workouts-move.confirm">
+          <Button
+            onPress={handleConfirm}
+            disabled={!canConfirm || isPending}
+            testID="workouts-move.confirm"
+          >
             <Text>{t('workoutsScreen.moveWorkoutsDialog.confirm')}</Text>
           </Button>
           <Button

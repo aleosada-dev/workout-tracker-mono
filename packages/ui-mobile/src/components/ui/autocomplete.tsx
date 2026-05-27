@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, type TextInput, View } from 'react-native';
 import Animated, { FadeOut, withTiming } from 'react-native-reanimated';
 import { useDebouncedValue } from '../../hooks/use-debounced-value';
 import { cn } from '../../lib/utils';
+import { BottomSheetInput } from './bottom-sheet';
 import { Input } from './input';
 import { Text } from './text';
 
@@ -59,6 +60,13 @@ type Props = {
    * be mispositioned or hidden behind a modal.
    */
   portalHost?: string;
+  /**
+   * Swap the underlying text input for gorhom's `BottomSheetTextInput`. Required
+   * when the autocomplete lives inside a `BottomSheet` — otherwise focusing the
+   * field doesn't shift the sheet and the keyboard covers it. Outside a sheet
+   * the gorhom input throws, so this defaults to `false`.
+   */
+  inBottomSheet?: boolean;
 };
 
 /**
@@ -82,6 +90,7 @@ export function Autocomplete({
   debounceMs = DEBOUNCE_MS,
   animated = true,
   portalHost,
+  inBottomSheet = false,
 }: Props) {
   const [focused, setFocused] = useState(false);
   // The input's rect relative to the portal container; anchors the list.
@@ -134,16 +143,34 @@ export function Autocomplete({
 
   return (
     <View>
-      <Input
-        ref={inputRef}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        testID={testID}
-        onLayout={measureAnchor}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      />
+      {inBottomSheet ? (
+        <BottomSheetInput
+          // gorhom's BottomSheetTextInput is typed against gesture-handler's
+          // TextInput, which is nominally different from RN's even though they
+          // share the runtime API we need (measureInWindow, blur). Cast the
+          // shared inputRef rather than maintaining two refs.
+          // biome-ignore lint/suspicious/noExplicitAny: ref shape divergence between RN and gesture-handler TextInput
+          ref={inputRef as any}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          testID={testID}
+          onLayout={measureAnchor}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+      ) : (
+        <Input
+          ref={inputRef}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          testID={testID}
+          onLayout={measureAnchor}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+      )}
       {open ? (
         <Portal name={portalName} hostName={portalHost}>
           <View ref={portalRef} onLayout={measureAnchor} style={StyleSheet.absoluteFill}>

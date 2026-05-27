@@ -1,4 +1,5 @@
 import type { WorkoutFolderRepository, WorkoutRepository } from '@workout-tracker/domain';
+import { makeCopyWorkouts } from './copy-workouts';
 import { makeCreateWorkoutFolder } from './create-workout-folder';
 import { makeDeleteWorkouts } from './delete-workout';
 import { makeDeleteWorkoutFolder } from './delete-workout-folder';
@@ -19,9 +20,11 @@ export function makeWorkoutApp(
     listWorkouts: makeListWorkouts(workoutRepository),
     deleteWorkouts: makeDeleteWorkouts(workoutRepository),
     moveWorkouts: makeMoveWorkouts(workoutRepository),
+    copyWorkouts: makeCopyWorkouts(workoutRepository, folderRepository),
   };
 }
 
+export * from './copy-workouts';
 export * from './create-workout-folder';
 export * from './delete-workout';
 export * from './delete-workout-folder';

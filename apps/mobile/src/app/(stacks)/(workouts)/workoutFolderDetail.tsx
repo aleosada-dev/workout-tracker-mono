@@ -6,8 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import { useCoachAthletes } from '@/features/coaches/hooks/use-coach-athletes';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutObservability } from '@/features/observability/lib';
+import { useProfile } from '@/features/profiles/hooks/use-profile';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useNavTheme } from '@/features/shared/lib/theme';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
@@ -20,6 +22,10 @@ import {
   type WorkoutFolderFormSheetRef,
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
 import {
+  WorkoutsCopySheet,
+  type WorkoutsCopySheetRef,
+} from '@/features/workouts/components/WorkoutsCopySheet';
+import {
   WorkoutsDeleteSheet,
   type WorkoutsDeleteSheetRef,
 } from '@/features/workouts/components/WorkoutsDeleteSheet';
@@ -28,6 +34,7 @@ import {
   type WorkoutsMoveSheetRef,
 } from '@/features/workouts/components/WorkoutsMoveSheet';
 import { WorkoutsSelectionToolbar } from '@/features/workouts/components/WorkoutsSelectionToolbar';
+import { useCopyWorkouts } from '@/features/workouts/hooks/use-copy-workouts';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useDeleteWorkouts } from '@/features/workouts/hooks/use-delete-workouts';
 import { useMoveWorkouts } from '@/features/workouts/hooks/use-move-workouts';
@@ -63,6 +70,12 @@ export default function WorkoutFolderDetailScreen() {
   const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
   const deleteWorkoutsSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
   const moveWorkoutsSheetRef = useRef<WorkoutsMoveSheetRef>(null);
+  const copyWorkoutsSheetRef = useRef<WorkoutsCopySheetRef>(null);
+
+  const { data: profile } = useProfile();
+  const isCoach = profile?.role === 'coach';
+  const { data: athletes } = useCoachAthletes({ enabled: isCoach });
+  const showCopy = isCoach && (athletes?.length ?? 0) >= 1;
 
   const {
     data: workouts,
@@ -89,6 +102,12 @@ export default function WorkoutFolderDetailScreen() {
   const { mutate: moveSelected, isPending: isMovingWorkouts } = useMoveWorkouts({
     userId: userId ?? null,
   });
+  const { mutate: copySelected, isPending: isCopyingWorkouts } = useCopyWorkouts();
+
+  const openCopyWorkoutsSheet = () => {
+    if (selected.size === 0) return;
+    copyWorkoutsSheetRef.current?.present();
+  };
 
   const openDeleteWorkoutsSheet = () => {
     if (selected.size === 0) return;
@@ -123,6 +142,52 @@ export default function WorkoutFolderDetailScreen() {
           workoutObservability.captureError(err, {
             action: 'move_workouts',
             extra: { folderId, count: ids.length, targetFolderId },
+          });
+          Toast.show({
+            type: 'error',
+            text1: t('errors.unexpected.title'),
+            text2: t('errors.unexpected.message'),
+          });
+        }),
+      },
+    );
+  };
+
+  const handleConfirmCopyWorkouts = ({
+    targetUserId,
+    target,
+  }: {
+    targetUserId: string;
+    target:
+      | { kind: 'root' }
+      | { kind: 'existing'; folderId: string }
+      | { kind: 'new'; name: string; color: WorkoutFolderColor };
+  }) => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    copySelected(
+      { workoutIds: ids, targetUserId, target },
+      {
+        onSuccess: ({ newWorkoutIds }) => {
+          workoutObservability.trackAction('workouts_copied', {
+            count: newWorkoutIds.length,
+            folderId,
+            targetUserId,
+            targetKind: target.kind,
+          });
+          copyWorkoutsSheetRef.current?.dismiss();
+          exitSelect();
+          Toast.show({
+            type: 'success',
+            text1: t('workoutsScreen.copyWorkoutsDialog.success', {
+              count: newWorkoutIds.length,
+            }),
+          });
+        },
+        onError: handleLocalError((err) => {
+          workoutObservability.captureError(err, {
+            action: 'copy_workouts',
+            extra: { folderId, count: ids.length, targetUserId, targetKind: target.kind },
           });
           Toast.show({
             type: 'error',
@@ -282,6 +347,8 @@ export default function WorkoutFolderDetailScreen() {
             onCancel={exitSelect}
             allSelected={allSelected}
             onToggleSelectAll={toggleSelectAll}
+            showCopy={showCopy}
+            onCopy={isCopyingWorkouts ? undefined : openCopyWorkoutsSheet}
             onMove={isMovingWorkouts ? undefined : openMoveWorkoutsSheet}
             onDelete={isDeletingWorkouts ? undefined : openDeleteWorkoutsSheet}
           />
@@ -303,6 +370,16 @@ export default function WorkoutFolderDetailScreen() {
         onConfirm={handleConfirmMoveWorkouts}
         isPending={isMovingWorkouts}
       />
+
+      {showCopy ? (
+        <WorkoutsCopySheet
+          ref={copyWorkoutsSheetRef}
+          count={selected.size}
+          athletes={athletes ?? []}
+          onConfirm={handleConfirmCopyWorkouts}
+          isPending={isCopyingWorkouts}
+        />
+      ) : null}
 
       <WorkoutFolderDeleteSheet
         ref={deleteSheetRef}

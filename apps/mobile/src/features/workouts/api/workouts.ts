@@ -8,6 +8,7 @@ const $deleteFolder = honoClient.api.v1.workouts.folders[':id'].$delete;
 const $getWorkouts = honoClient.api.v1.workouts.$get;
 const $deleteWorkouts = honoClient.api.v1.workouts.$delete;
 const $patchWorkouts = honoClient.api.v1.workouts.$patch;
+const $copyWorkouts = honoClient.api.v1.workouts.copy.$post;
 
 export type ListWorkoutFoldersParams = InferRequestType<typeof $getFolders>;
 export type ListWorkoutFoldersResponse = InferResponseType<typeof $getFolders, 200>;
@@ -84,6 +85,15 @@ export type MoveWorkoutsResponse = InferResponseType<typeof $patchWorkouts, 200>
 
 export async function moveWorkouts(body: MoveWorkoutsRequest): Promise<MoveWorkoutsResponse> {
   const response = await $patchWorkouts({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export type CopyWorkoutsRequest = InferRequestType<typeof $copyWorkouts>['json'];
+export type CopyWorkoutsResponse = InferResponseType<typeof $copyWorkouts, 201>;
+
+export async function copyWorkouts(body: CopyWorkoutsRequest): Promise<CopyWorkoutsResponse> {
+  const response = await $copyWorkouts({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

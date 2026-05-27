@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { AppBindings } from "../../shared/http/types";
 import {
+	CopyWorkoutsRequestSchema,
+	CopyWorkoutsResponseSchema,
 	CreateWorkoutFolderRequestSchema,
 	DeleteWorkoutFolderRequestSchema,
 	DeleteWorkoutFolderResponseSchema,
@@ -259,5 +261,33 @@ export const workoutsRouter = new Hono<AppBindings>()
 			const { moveWorkouts } = c.get("container").workouts;
 			const { movedIds } = await moveWorkouts({ userId, workoutIds, targetFolderId });
 			return c.json({ movedIds });
+		},
+	)
+	.post(
+		"/copy",
+		describeRoute({
+			summary: "Copy workouts from coach to athlete (optionally into a folder)",
+			tags: ["Workouts"],
+			responses: {
+				201: {
+					description: "Created",
+					content: {
+						"application/json": {
+							schema: resolver(CopyWorkoutsResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				403: { description: "Not coach of target athlete" },
+				404: { description: "Source workout or target folder not found" },
+			},
+		}),
+		validator("json", CopyWorkoutsRequestSchema),
+		async (c) => {
+			const body = c.req.valid("json");
+			const { copyWorkouts } = c.get("container").workouts;
+			const { newWorkoutIds } = await copyWorkouts(body);
+			return c.json({ newWorkoutIds }, 201);
 		},
 	);

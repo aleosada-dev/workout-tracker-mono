@@ -1,3 +1,5 @@
+import type { WorkoutFolderColor } from './workout-folder';
+
 export type WorkoutTopExercise = {
   slug: string | null;
   name: string;
@@ -35,4 +37,21 @@ export type MoveWorkoutsInput = {
   userId: string;
   workoutIds: string[];
   targetFolderId: string | null;
+};
+
+export type CopyWorkoutsInput = {
+  workoutIds: string[];
+  targetUserId: string;
+  targetFolderId: string | null;
+};
+
+export type CopyWorkoutsTarget =
+  | { kind: 'root' }
+  | { kind: 'existing'; folderId: string }
+  | { kind: 'new'; name: string; color: WorkoutFolderColor };
+
+export type CopyWorkoutsCommand = {
+  workoutIds: string[];
+  targetUserId: string;
+  target: CopyWorkoutsTarget;
 };
