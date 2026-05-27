@@ -59,10 +59,21 @@ export function SelectionToolbar({
           left: 0,
           right: 0,
           bottom: 0,
-          paddingBottom: Math.max(insets.bottom, 8),
+          paddingBottom: insets.bottom + 4,
           alignItems: 'center',
         }}
       >
+        <View
+          pointerEvents="none"
+          className="bg-background"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: insets.bottom,
+          }}
+        />
         <View className="mx-4 flex-row items-stretch rounded-2xl border border-border bg-background/85 px-2 py-2 shadow-lg">
           {actions.map((a) => (
             <ToolbarButton key={a.label} action={a} disabled={empty || !!a.disabled} />
