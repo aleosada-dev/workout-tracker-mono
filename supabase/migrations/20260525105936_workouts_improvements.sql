@@ -475,6 +475,3 @@ $$;
 ALTER FUNCTION "public"."wt_copy_workouts"("p_source_workout_ids" "uuid"[], "p_target_user_id" "uuid", "p_target_folder_id" "uuid") OWNER TO "postgres";
 
 GRANT EXECUTE ON FUNCTION "public"."wt_copy_workouts"("p_source_workout_ids" "uuid"[], "p_target_user_id" "uuid", "p_target_folder_id" "uuid") TO "authenticated";
-
-COMMENT ON FUNCTION "public"."copy_workout"("p_source_workout_id" "uuid", "p_target_user_id" "uuid")
-  IS 'DEPRECATED: use public.wt_copy_workouts (batch, RLS-aware). Mantido até a remoção dos chamadores legados.';
