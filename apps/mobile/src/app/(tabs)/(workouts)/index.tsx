@@ -20,7 +20,7 @@ export default function WorkoutsScreen() {
               {t('workoutsScreen.exercises')}
             </Text>
           </MenuCard>
-          <MenuCard onPress={() => router.push('/workoutsList')}>
+          <MenuCard onPress={() => router.push('/workoutsList')} testID="workouts-menu.workouts">
             <Dumbbell color="white" size={36} />
             <Text variant="h4" className="text-center text-white">
               {t('workoutsScreen.workouts')}

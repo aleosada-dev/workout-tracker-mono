@@ -1,0 +1,25 @@
+appId: ${MAESTRO_APP_ID}
+name: 09 - Cancelar exclusão da pasta
+# Cria uma pasta, abre o sheet de delete, cancela, e depois deleta de fato.
+# Sheet (gorhom) opaco ao Maestro no iOS — interação por testID.
+---
+- runFlow: ../../subflows/create-and-open-workout-folder.yaml
+- tapOn:
+    id: "workout-folder-detail.delete"
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-delete.cancel"
+    timeout: 5000
+- tapOn:
+    id: "workout-folder-delete.cancel"
+- assertNotVisible:
+    id: "workout-folder-delete.cancel"
+- assertVisible: ${output.folderName}
+# Cleanup
+- tapOn:
+    id: "workout-folder-detail.delete"
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000

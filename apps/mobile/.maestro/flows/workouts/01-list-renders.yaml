@@ -1,0 +1,11 @@
+appId: ${MAESTRO_APP_ID}
+name: 01 - Lista de treinos renderiza pastas e treinos
+---
+- runFlow: ../../subflows/open-workouts-list-athlete.yaml
+- assertVisible: "Pastas"
+- assertVisible: "Treinos"
+- assertVisible: "Nova pasta"
+- assertVisible:
+    id: "workouts-list.new-folder"
+- assertNotVisible:
+    id: "workouts-list.error"

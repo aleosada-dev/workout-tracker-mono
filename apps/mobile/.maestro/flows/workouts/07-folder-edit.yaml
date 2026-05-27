@@ -1,0 +1,34 @@
+appId: ${MAESTRO_APP_ID}
+name: 07 - Editar nome da pasta
+# Cria uma pasta, renomeia para "<nome> Edit", valida toast e título,
+# e deleta no final. O sheet de edição reusa WorkoutFolderFormSheet — Maestro
+# não enxerga conteúdo do BottomSheet no iOS, então usamos testIDs.
+---
+- runFlow: ../../subflows/create-and-open-workout-folder.yaml
+- evalScript: ${output.renamed = output.folderName + " Edit"}
+- tapOn:
+    id: "workout-folder-detail.edit"
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-form.name"
+    timeout: 5000
+- tapOn:
+    id: "workout-folder-form.name"
+- eraseText: 64
+- inputText: ${output.renamed}
+- hideKeyboard
+- tapOn:
+    id: "workout-folder-form.submit"
+- extendedWaitUntil:
+    visible: "Pasta atualizada"
+    timeout: 10000
+- assertVisible: ${output.renamed}
+# Cleanup
+- tapOn:
+    id: "workout-folder-detail.delete"
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000
+- assertNotVisible: ${output.renamed}

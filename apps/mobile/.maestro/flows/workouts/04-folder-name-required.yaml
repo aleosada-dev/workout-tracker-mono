@@ -1,0 +1,17 @@
+appId: ${MAESTRO_APP_ID}
+name: 04 - Validação de nome obrigatório ao criar pasta
+# A mensagem de erro renderiza dentro do BottomSheet (gorhom) e o Maestro não
+# enxerga conteúdo lá dentro no iOS — então validamos por efeito: submeter sem
+# nome NÃO dismissa o sheet (o input continua presente).
+---
+- runFlow: ../../subflows/open-workouts-list-athlete.yaml
+- tapOn:
+    id: "workouts-list.new-folder"
+- assertVisible:
+    id: "workout-folder-form.name"
+- tapOn:
+    id: "workout-folder-form.submit"
+- assertVisible:
+    id: "workout-folder-form.name"
+- assertVisible:
+    id: "workout-folder-form.submit"

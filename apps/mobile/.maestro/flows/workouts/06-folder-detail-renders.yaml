@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+name: 06 - Detalhe da pasta renderiza (vazia)
+# Cria pasta vazia, abre o detalhe, assert no header + empty state, e deleta.
+---
+- runFlow: ../../subflows/create-and-open-workout-folder.yaml
+- assertVisible: ${output.folderName}
+- assertVisible: "0 treinos"
+- assertVisible: "Nenhum treino aqui ainda"
+- assertVisible:
+    id: "workout-folder-detail.edit"
+- assertVisible:
+    id: "workout-folder-detail.delete"
+# Cleanup
+- tapOn:
+    id: "workout-folder-detail.delete"
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000

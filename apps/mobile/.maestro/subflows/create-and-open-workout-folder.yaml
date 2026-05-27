@@ -1,0 +1,24 @@
+appId: ${MAESTRO_APP_ID}
+# Athlete sign-in + cria uma pasta com nome único e abre o detalhe dela.
+# Exporta o nome em `output.folderName` para uso pelo flow chamador.
+# Interage com o form sheet apenas por testID — o conteúdo do BottomSheet
+# (gorhom) não é indexado pelo Maestro no iOS.
+---
+- runFlow: open-workouts-list-athlete.yaml
+- evalScript: ${output.folderName = "E2E Folder " + Date.now()}
+- tapOn:
+    id: "workouts-list.new-folder"
+- tapOn:
+    id: "workout-folder-form.name"
+- inputText: ${output.folderName}
+- hideKeyboard
+- tapOn:
+    id: "workout-folder-form.submit"
+- extendedWaitUntil:
+    visible: ${output.folderName}
+    timeout: 10000
+- tapOn: ${output.folderName}
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-detail.delete"
+    timeout: 10000

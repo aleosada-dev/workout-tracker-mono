@@ -168,6 +168,7 @@ export function WorkoutFolderFormSheet({ ref, folder, userId, onUpdated }: Props
                 onBlur={field.onBlur}
                 placeholder={t('workoutsScreen.newFolderSheet.namePlaceholder')}
                 maxLength={20}
+                testID="workout-folder-form.name"
               />
             )}
           />
@@ -205,7 +206,7 @@ export function WorkoutFolderFormSheet({ ref, folder, userId, onUpdated }: Props
           />
         </Field>
 
-        <Button onPress={onSubmit} disabled={isPending}>
+        <Button onPress={onSubmit} disabled={isPending} testID="workout-folder-form.submit">
           <Text>{t(submitKey)}</Text>
         </Button>
       </BottomSheetView>

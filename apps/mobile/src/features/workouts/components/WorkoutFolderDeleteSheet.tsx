@@ -158,6 +158,7 @@ export function WorkoutFolderDeleteSheet({
             className="flex-1"
             onPress={() => sheetRef.current?.dismiss()}
             disabled={isPending}
+            testID="workout-folder-delete.cancel"
           >
             <Text>{t('workoutsScreen.deleteFolderDialog.cancel')}</Text>
           </Button>

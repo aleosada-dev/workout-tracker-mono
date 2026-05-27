@@ -1,0 +1,9 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: sign-in-athlete.yaml
+- tapOn: "Treinos"
+- tapOn:
+    id: "workouts-menu.workouts"
+- assertVisible: "Pastas"
+- assertVisible:
+    id: "workouts-list.new-folder"

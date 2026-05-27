@@ -1,0 +1,10 @@
+appId: ${MAESTRO_APP_ID}
+name: 02 - Voltar da lista de treinos para o menu
+---
+- runFlow: ../../subflows/open-workouts-list-athlete.yaml
+# Maestro `back` é Android-only; no iOS toca no botão de voltar do header.
+- tapOn:
+    id: "BackButton"
+- assertVisible: "Exercícios"
+- assertVisible: "Cardio"
+- assertVisible: "Programação"

@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+name: 05 - Entrar e sair do modo seleção de treinos
+# Long-press num card entra em modo seleção; "Cancelar" volta ao modo browse.
+# Requer pelo menos 1 treino solto (sem pasta) na conta atleta.
+---
+- runFlow: ../../subflows/open-workouts-list-athlete.yaml
+- extendedWaitUntil:
+    visible:
+      id: "workout-card"
+    timeout: 10000
+- longPressOn:
+    id: "workout-card"
+    index: 0
+- assertVisible: "Cancelar"
+- assertVisible: "Excluir"
+- assertVisible: "Mover para pasta"
+- tapOn: "Cancelar"
+- assertVisible: "Nova pasta"
+- assertNotVisible: "Mover para pasta"

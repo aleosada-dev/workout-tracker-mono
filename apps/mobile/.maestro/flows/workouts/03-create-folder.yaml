@@ -1,0 +1,36 @@
+appId: ${MAESTRO_APP_ID}
+name: 03 - Criar nova pasta de treinos
+# Cria uma pasta com nome único via timestamp, abre o detalhe da pasta vazia
+# e deleta ao final. Self-contained.
+---
+- runFlow: ../../subflows/open-workouts-list-athlete.yaml
+- evalScript: ${output.name = "E2E Folder " + Date.now()}
+- tapOn:
+    id: "workouts-list.new-folder"
+- assertVisible: "Nova pasta"
+- assertVisible: "Escolha um nome e uma cor para organizar seus treinos."
+- tapOn: "Ex: Hipertrofia"
+- inputText: ${output.name}
+- hideKeyboard
+- tapOn: "Criar"
+- extendedWaitUntil:
+    visible: ${output.name}
+    timeout: 10000
+- tapOn: ${output.name}
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-detail.delete"
+    timeout: 10000
+- assertVisible: "Nenhum treino aqui ainda"
+- tapOn:
+    id: "workout-folder-detail.delete"
+- extendedWaitUntil:
+    visible: "Excluir \"${output.name}\"?"
+    timeout: 5000
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000
+- assertVisible: "Pastas"
+- assertNotVisible: ${output.name}

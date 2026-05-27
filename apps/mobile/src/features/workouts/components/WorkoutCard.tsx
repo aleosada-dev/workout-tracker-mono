@@ -68,7 +68,12 @@ export function WorkoutCard({
   const extra = workout.exerciseCount - workout.topExercises.length;
 
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} delayLongPress={350}>
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      testID="workout-card"
+    >
       <Card className="py-0">
         <CardContent className="flex-row items-start justify-between gap-3 px-4 py-3">
           <View className="min-w-0 flex-1">

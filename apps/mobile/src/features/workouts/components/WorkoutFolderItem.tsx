@@ -18,7 +18,7 @@ export function WorkoutFolderItem({
   onPress?: () => void;
 }) {
   return (
-    <Pressable className="w-20 items-center gap-2" onPress={onPress}>
+    <Pressable className="w-20 items-center gap-2" onPress={onPress} testID="workout-folder-item">
       <View className="relative">
         <View className={`h-16 w-16 items-center justify-center rounded-2xl ${folder.color}`}>
           <Icon as={Folder} size={28} className={folder.iconColor} />
@@ -38,7 +38,11 @@ export function WorkoutFolderItem({
 
 export function AddWorkoutFolderItem({ label, onPress }: { label: string; onPress?: () => void }) {
   return (
-    <Pressable className="w-20 items-center gap-2" onPress={onPress}>
+    <Pressable
+      className="w-20 items-center gap-2"
+      onPress={onPress}
+      testID="workouts-list.new-folder"
+    >
       <View className="h-16 w-16 items-center justify-center rounded-2xl border-2 border-muted-foreground/40 border-dashed bg-muted/30">
         <Icon as={Plus} size={28} className="text-muted-foreground" />
       </View>

@@ -1,0 +1,22 @@
+appId: ${MAESTRO_APP_ID}
+name: 10 - Voltar do detalhe da pasta para a lista
+---
+- runFlow: ../../subflows/create-and-open-workout-folder.yaml
+# Maestro `back` é Android-only; no iOS toca no botão de voltar do header.
+- tapOn:
+    id: "BackButton"
+- assertVisible: "Pastas"
+- assertVisible: ${output.folderName}
+# Cleanup
+- tapOn: ${output.folderName}
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-detail.delete"
+    timeout: 10000
+- tapOn:
+    id: "workout-folder-detail.delete"
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000

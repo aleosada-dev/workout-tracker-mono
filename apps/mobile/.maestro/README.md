@@ -134,11 +134,14 @@ O handler é gated por variant ≠ `production` — em build de produção é no
 │   ├── sign-in-athlete.yaml               # login com a conta atleta
 │   ├── open-exercises-list-coach.yaml     # login coach + navega ate a lista de exercicios
 │   ├── open-exercises-list-athlete.yaml   # login atleta + navega ate a lista de exercicios
-│   └── open-exercises-filter-athlete.yaml # atleta + abre a tela de filtro pelo overflow
+│   ├── open-exercises-filter-athlete.yaml # atleta + abre a tela de filtro pelo overflow
+│   ├── open-workouts-list-athlete.yaml    # atleta + navega ate a lista de treinos (pastas + cards)
+│   └── create-and-open-workout-folder.yaml # cria pasta com nome unico e abre o detalhe
 └── flows/
     ├── auth/                   # telas de autenticacao
     ├── home/                   # tela inicial (lista de treinos)
-    └── exercises/              # lista, detalhes e filtro do exercicio
+    ├── exercises/              # lista, detalhes e filtro do exercicio
+    └── workouts/               # lista de treinos e detalhe da pasta
         ├── 01-list-renders.yaml
         ├── 02-back-to-workouts.yaml
         ├── 03-exercise-detail.yaml

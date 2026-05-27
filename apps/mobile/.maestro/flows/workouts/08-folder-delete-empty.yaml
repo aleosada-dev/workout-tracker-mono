@@ -1,0 +1,20 @@
+appId: ${MAESTRO_APP_ID}
+name: 08 - Excluir pasta vazia
+# Cria uma pasta vazia, abre o sheet de delete e confirma.
+# Maestro não enxerga conteúdo do BottomSheet no iOS — validamos por efeito
+# (toast "Pasta excluída" + voltar para a lista).
+---
+- runFlow: ../../subflows/create-and-open-workout-folder.yaml
+- tapOn:
+    id: "workout-folder-detail.delete"
+- extendedWaitUntil:
+    visible:
+      id: "workout-folder-delete.confirm"
+    timeout: 5000
+- tapOn:
+    id: "workout-folder-delete.confirm"
+- extendedWaitUntil:
+    visible: "Pasta excluída"
+    timeout: 15000
+- assertVisible: "Pastas"
+- assertNotVisible: ${output.folderName}
