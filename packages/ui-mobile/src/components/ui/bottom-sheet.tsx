@@ -40,7 +40,7 @@ function BottomSheet({ children, enableDynamicSizing = true, ref, ...props }: Bo
     <BottomSheetModal
       ref={ref}
       enableDynamicSizing={enableDynamicSizing}
-      keyboardBehavior="extend"
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustPan"
       bottomInset={insets.bottom}
