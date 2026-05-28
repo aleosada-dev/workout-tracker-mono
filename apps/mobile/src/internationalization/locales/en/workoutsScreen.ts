@@ -98,6 +98,13 @@ export default {
     success_one: 'Workout deleted',
     success_other: 'Workouts deleted',
   },
+  activeWorkoutDialog: {
+    title: 'Workout in progress',
+    message1: 'You already have a workout in progress.',
+    message2: 'Starting a new one will cancel the previous workout and its data will be lost.',
+    confirm: 'Start new workout',
+    cancel: 'Cancel',
+  },
   deleteFolderDialog: {
     trigger: 'Delete folder',
     title: 'Delete "{{name}}"?',

@@ -9,6 +9,7 @@ import { useReportRequestError } from '@/features/observability/hooks/use-report
 import { workoutObservability } from '@/features/observability/lib';
 import { useProfile } from '@/features/profiles/hooks/use-profile';
 import type { WorkoutFolderResponse } from '@/features/workouts/api/workouts';
+import { ActiveWorkoutSheet } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { AthleteContextSelect } from '@/features/workouts/components/AthleteContextSelect';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
 import {
@@ -21,6 +22,7 @@ import {
   WorkoutFolderItemSkeleton,
 } from '@/features/workouts/components/WorkoutFolderItem';
 import { WorkoutSelectionActions } from '@/features/workouts/components/WorkoutSelectionActions';
+import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
@@ -51,6 +53,11 @@ export default function WorkoutListScreen() {
     refetch: refetchWorkouts,
   } = useWorkouts({ folderId: null, userId: queryUserId });
   const folderFormSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
+  const {
+    start: startWorkout,
+    sheetRef: activeWorkoutSheetRef,
+    confirmDiscard,
+  } = useStartWorkout();
   useReportRequestError(
     { isError: foldersError, error: foldersErrorObj },
     workoutObservability.captureError,
@@ -157,6 +164,12 @@ export default function WorkoutListScreen() {
                 onLongPress={() => {
                   if (mode === 'browse') enterSelect(workout.id);
                 }}
+                onStart={() =>
+                  startWorkout({
+                    workoutId: workout.id,
+                    userId: workout.userId ?? queryUserId,
+                  })
+                }
               />
             ))
           )}
@@ -167,6 +180,7 @@ export default function WorkoutListScreen() {
       ) : null}
       <WorkoutFolderFormSheet ref={folderFormSheetRef} userId={queryUserId} />
       <WorkoutSelectionActions selection={selection} userId={queryUserId} excludeFolderId={null} />
+      <ActiveWorkoutSheet ref={activeWorkoutSheetRef} onConfirm={confirmDiscard} />
     </View>
   );
 }

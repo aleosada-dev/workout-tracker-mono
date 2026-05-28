@@ -44,6 +44,33 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
       return rows.map(toWorkout);
     },
 
+    async getWorkout({ userId, workoutId }) {
+      const { data, error } = await supabase
+        .from('workouts')
+        .select('id, user_id, name, description, folder_id, created_at, updated_at')
+        .eq('id', workoutId)
+        .eq('user_id', userId)
+        .is('archived_at', null)
+        .maybeSingle();
+
+      if (error) {
+        throw supabaseError('Failed to get workout', error);
+      }
+      if (!data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        description: data.description,
+        folderId: data.folder_id,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    },
+
     async deleteWorkouts({ userId, workoutIds }) {
       if (workoutIds.length === 0) {
         return { deletedIds: [] };

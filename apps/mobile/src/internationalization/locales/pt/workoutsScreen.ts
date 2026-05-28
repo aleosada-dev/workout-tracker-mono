@@ -98,6 +98,13 @@ export default {
     success_one: 'Treino excluído',
     success_other: 'Treinos excluídos',
   },
+  activeWorkoutDialog: {
+    title: 'Treino em andamento',
+    message1: 'Você já possui um treino em andamento.',
+    message2: 'Ao iniciar um novo treino, o anterior será cancelado e os dados serão perdidos.',
+    confirm: 'Iniciar novo treino',
+    cancel: 'Cancelar',
+  },
   deleteFolderDialog: {
     trigger: 'Excluir pasta',
     title: 'Excluir "{{name}}"?',

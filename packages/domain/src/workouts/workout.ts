@@ -23,6 +23,21 @@ export type Workout = {
   updatedAt: Date;
 };
 
+export type WorkoutDetail = {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  folderId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type GetWorkoutInput = {
+  userId: string;
+  workoutId: string;
+};
+
 export type ListWorkoutsFilter = {
   userId: string;
   folderId?: string | null;

@@ -432,6 +432,87 @@ async function restoreWorkout(id: string) {
 	await supabase.from("workouts").update({ archived_at: null, arquived_by: null }).eq("id", id);
 }
 
+describe("GET /api/v1/workouts/:id", () => {
+	test("returns a workout owned by the authenticated user", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const res = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: SEED_WORKOUT_A_ROOT }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			id: string;
+			userId: string;
+			name: string;
+			folderId: string | null;
+		};
+		expect(body.id).toBe(SEED_WORKOUT_A_ROOT);
+		expect(body.userId).toBe(athleteId);
+		expect(typeof body.name).toBe("string");
+	});
+
+	test("allows a coach to request a workout for an athlete", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const res = await client.api.v1.workouts[":id"].$get(
+			{ param: { id: SEED_WORKOUT_A_ROOT }, query: { userId: athleteId } },
+			{ headers: authHeaders("coach") },
+		);
+
+		expect(res.status).toBe(200);
+	});
+
+	test("returns 404 when the workout does not exist", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts[":id"].$get(
+			{
+				param: { id: "00000000-0000-4000-8000-000000000000" },
+				// biome-ignore lint/suspicious/noExplicitAny: query optional
+				query: {} as any,
+			},
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 404 when the workout belongs to another user", async () => {
+		const client = getTestClient();
+		const coachId = getTestUserAuth("coach").userId;
+		const res = await client.api.v1.workouts[":id"].$get(
+			{ param: { id: SEED_WORKOUT_A_ROOT }, query: { userId: coachId } },
+			{ headers: authHeaders("coach") },
+		);
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 400 when id is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts[":id"].$get(
+			{
+				// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+				param: { id: "not-a-uuid" as any },
+				// biome-ignore lint/suspicious/noExplicitAny: query optional
+				query: {} as any,
+			},
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts[":id"].$get({
+			param: { id: SEED_WORKOUT_A_ROOT },
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			query: {} as any,
+		});
+		expect(res.status as number).toBe(401);
+	});
+});
+
 describe("DELETE /api/v1/workouts/:id", () => {
 	test("soft-deletes a workout owned by the authenticated user", async () => {
 		const client = getTestClient();

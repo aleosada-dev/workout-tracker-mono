@@ -10,6 +10,7 @@ import { useReportRequestError } from '@/features/observability/hooks/use-report
 import { workoutObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useNavTheme } from '@/features/shared/lib/theme';
+import { ActiveWorkoutSheet } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
 import {
   WorkoutFolderDeleteSheet,
@@ -21,6 +22,7 @@ import {
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
 import { WorkoutSelectionActions } from '@/features/workouts/components/WorkoutSelectionActions';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
+import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import { useWorkouts } from '@/features/workouts/hooks/use-workouts';
 import {
@@ -51,6 +53,11 @@ export default function WorkoutFolderDetailScreen() {
   const folderColor = resolveFolderColor(folderColorName);
   const deleteSheetRef = useRef<WorkoutFolderDeleteSheetRef>(null);
   const editSheetRef = useRef<WorkoutFolderFormSheetRef>(null);
+  const {
+    start: startWorkout,
+    sheetRef: activeWorkoutSheetRef,
+    confirmDiscard,
+  } = useStartWorkout();
 
   const {
     data: workouts,
@@ -177,6 +184,12 @@ export default function WorkoutFolderDetailScreen() {
                   onLongPress={() => {
                     if (mode === 'browse') enterSelect(workout.id);
                   }}
+                  onStart={() =>
+                    startWorkout({
+                      workoutId: workout.id,
+                      userId: workout.userId ?? userId,
+                    })
+                  }
                 />
               ))
             )}
@@ -200,6 +213,8 @@ export default function WorkoutFolderDetailScreen() {
         onConfirm={handleConfirmDelete}
         isPending={isDeleting}
       />
+
+      <ActiveWorkoutSheet ref={activeWorkoutSheetRef} onConfirm={confirmDiscard} />
 
       <WorkoutFolderFormSheet
         ref={editSheetRef}

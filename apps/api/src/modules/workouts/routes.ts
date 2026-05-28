@@ -12,13 +12,16 @@ import {
 	DeleteWorkoutResponseSchema,
 	DeleteWorkoutsRequestSchema,
 	DeleteWorkoutsResponseSchema,
+	GetWorkoutQuerySchema,
 	ListWorkoutFoldersQuerySchema,
 	ListWorkoutsQuerySchema,
 	MoveWorkoutsRequestSchema,
 	MoveWorkoutsResponseSchema,
+	toWorkoutDetailResponse,
 	toWorkoutFolderResponse,
 	toWorkoutResponse,
 	UpdateWorkoutFolderRequestSchema,
+	WorkoutDetailResponseSchema,
 	WorkoutFolderIdParamSchema,
 	WorkoutFolderListResponseSchema,
 	WorkoutFolderResponseSchema,
@@ -174,6 +177,39 @@ export const workoutsRouter = new Hono<AppBindings>()
 				throw new NotFoundError("workout folder");
 			}
 			return c.json({ id: folderId });
+		},
+	)
+	.get(
+		"/:id",
+		describeRoute({
+			summary: "Get a workout by id",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(WorkoutDetailResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Workout not found" },
+			},
+		}),
+		validator("param", WorkoutIdParamSchema),
+		validator("query", GetWorkoutQuerySchema),
+		async (c) => {
+			const { id: workoutId } = c.req.valid("param");
+			const { userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
+			const { getWorkout } = c.get("container").workouts;
+			const workout = await getWorkout({ userId, workoutId });
+			if (!workout) {
+				throw new NotFoundError("workout");
+			}
+			return c.json(toWorkoutDetailResponse(workout));
 		},
 	)
 	.delete(

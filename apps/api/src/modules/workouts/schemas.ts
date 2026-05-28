@@ -1,4 +1,9 @@
-import { WORKOUT_FOLDER_COLORS, type Workout, type WorkoutFolder } from "@workout-tracker/domain";
+import {
+	WORKOUT_FOLDER_COLORS,
+	type Workout,
+	type WorkoutDetail,
+	type WorkoutFolder,
+} from "@workout-tracker/domain";
 import { z } from "zod";
 
 export const ListWorkoutFoldersQuerySchema = z.object({
@@ -72,6 +77,36 @@ export const DeleteWorkoutQuerySchema = z.object({
 });
 
 export type DeleteWorkoutQuery = z.infer<typeof DeleteWorkoutQuerySchema>;
+
+export const GetWorkoutQuerySchema = z.object({
+	userId: z.uuid().optional(),
+});
+
+export type GetWorkoutQuery = z.infer<typeof GetWorkoutQuerySchema>;
+
+export const WorkoutDetailResponseSchema = z.object({
+	id: z.uuid(),
+	userId: z.uuid(),
+	name: z.string(),
+	description: z.string().nullable(),
+	folderId: z.uuid().nullable(),
+	createdAt: z.iso.datetime({ offset: true }),
+	updatedAt: z.iso.datetime({ offset: true }),
+});
+
+export type WorkoutDetailResponse = z.infer<typeof WorkoutDetailResponseSchema>;
+
+export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailResponse {
+	return {
+		id: workout.id,
+		userId: workout.userId,
+		name: workout.name,
+		description: workout.description,
+		folderId: workout.folderId,
+		createdAt: workout.createdAt.toISOString(),
+		updatedAt: workout.updatedAt.toISOString(),
+	};
+}
 
 export const DeleteWorkoutResponseSchema = z.object({
 	id: z.uuid(),
