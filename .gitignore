@@ -68,6 +68,13 @@ app-example
 apps/mobile/ios/
 apps/mobile/android/
 
+# Android/iOS build artifacts
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
+
 # Cloudflare Workers (apps/api)
 .wrangler
 

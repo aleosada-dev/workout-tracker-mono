@@ -13,6 +13,7 @@ import settings from './settings';
 import signInScreen from './signInScreen';
 import tabs from './tabs';
 import variationNames from './variationNames';
+import workoutExecutionScreen from './workoutExecutionScreen';
 import workoutLogs from './workoutLogs';
 import workoutsScreen from './workoutsScreen';
 
@@ -35,6 +36,7 @@ const en = {
     multiSelect,
     equipment,
     workoutLogs,
+    workoutExecutionScreen,
   },
 };
 

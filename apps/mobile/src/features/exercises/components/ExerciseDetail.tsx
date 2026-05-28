@@ -20,9 +20,9 @@ import {
 import { formatKg, formatRecordValue } from '@/features/exercises/lib/format';
 import { SET_TYPE_CONFIG } from '@/features/exercises/lib/sets';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
+import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import { ExerciseDemoVideo } from './ExerciseDemoVideo';
 import { ExerciseMetricChart } from './ExerciseMetricChart';
-import { SetTypesHelpDialog } from './SetTypesHelpDialog';
 
 export type ExerciseDetailProps = {
   data: ExerciseDetailData;

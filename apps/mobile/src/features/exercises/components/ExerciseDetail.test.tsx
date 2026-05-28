@@ -11,7 +11,7 @@ jest.mock('@/features/exercises/components/ExerciseMetricChart', () => ({
 jest.mock('@/features/exercises/components/ExerciseDemoVideo', () => ({
   ExerciseDemoVideo: () => null,
 }));
-jest.mock('@/features/exercises/components/SetTypesHelpDialog', () => {
+jest.mock('@/features/workouts/components/SetTypesHelpDialog', () => {
   const { View } = require('react-native');
   return {
     SetTypesHelpDialog: () => <View testID="exercise-detail.sets.types.help-trigger" />,

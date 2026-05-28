@@ -23,7 +23,7 @@ jest.mock('react-native-screens', () => {
 import { PortalHost } from '@rn-primitives/portal';
 import { fireEvent, render } from '@testing-library/react-native';
 import type React from 'react';
-import { SetTypesHelpDialog } from '@/features/exercises/components/SetTypesHelpDialog';
+import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
