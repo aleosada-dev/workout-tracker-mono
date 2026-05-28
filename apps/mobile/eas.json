@@ -63,7 +63,14 @@
     }
   },
   "submit": {
-    "production": {},
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./.credentials/workout-tracker-app-495718-55ff77262814.json",
+        "track": "internal",
+        "releaseStatus": "draft",
+        "changesNotSentForReview": false
+      }
+    },
     "preview-store": {
       "ios": {
         "appleId": "alexandre.osada.dev@gmail.com",
@@ -71,7 +78,7 @@
         "appleTeamId": "HR5ZMMCYX2"
       },
       "android": {
-        "serviceAccountKeyPath": "./credentials/workout-tracker-app-495718-12dfbd6928a7.json",
+        "serviceAccountKeyPath": "./.credentials/workout-tracker-app-495718-55ff77262814.json",
         "track": "internal",
         "releaseStatus": "draft",
         "changesNotSentForReview": false
