@@ -1,4 +1,12 @@
-import type { Workout, WorkoutTopExercise } from '@workout-tracker/domain';
+import type {
+  ExerciseType,
+  Workout,
+  WorkoutDetail,
+  WorkoutDetailExercise,
+  WorkoutDetailSet,
+  WorkoutSetType,
+  WorkoutTopExercise,
+} from '@workout-tracker/domain';
 
 type MuscleRow = {
   slug: string;
@@ -77,6 +85,106 @@ function pickTopExercises(exercises: WorkoutExerciseRow[]): WorkoutTopExercise[]
       equipmentSlug: we.variation?.equipment?.slug ?? '',
       equipmentPreposition: we.variation?.equipment?.preposition ?? '',
     }));
+}
+
+type WorkoutSetRow = {
+  id: string;
+  set_order: number;
+  set_type: WorkoutSetType;
+  reps_min: number;
+  reps_max: number;
+  linked_set_id: string | null;
+  load_percent_of_previous: number | null;
+};
+
+type DetailVariationRow = {
+  id: string;
+  slug: string | null;
+  name: string | null;
+  exercise: { slug: string | null; name: string; exercise_type: ExerciseType } | null;
+  equipment: { slug: string; preposition: string } | null;
+  muscle: { slug: string } | null;
+  secondary_muscle: { slug: string } | null;
+};
+
+type DetailWorkoutExerciseRow = {
+  id: string;
+  position: number;
+  superset_group_id: string;
+  superset_order: number;
+  note: string | null;
+  rest_seconds: number | null;
+  variation: DetailVariationRow | null;
+  workout_sets: WorkoutSetRow[] | null;
+};
+
+export type WorkoutDetailRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  folder_id: string | null;
+  created_at: string;
+  updated_at: string;
+  workout_exercises: DetailWorkoutExerciseRow[] | null;
+};
+
+function toWorkoutSet(row: WorkoutSetRow): WorkoutDetailSet {
+  return {
+    id: row.id,
+    setOrder: row.set_order,
+    setType: row.set_type,
+    repsMin: row.reps_min,
+    repsMax: row.reps_max,
+    linkedSetId: row.linked_set_id,
+    loadPercentOfPrevious: row.load_percent_of_previous,
+  };
+}
+
+function toWorkoutExercise(row: DetailWorkoutExerciseRow): WorkoutDetailExercise {
+  const variation = row.variation;
+  return {
+    id: row.id,
+    position: row.position,
+    supersetGroupId: row.superset_group_id,
+    supersetOrder: row.superset_order,
+    note: row.note,
+    restSeconds: row.rest_seconds,
+    variation: {
+      id: variation?.id ?? '',
+      slug: variation?.slug ?? null,
+      name: variation?.name ?? null,
+      exercise: {
+        slug: variation?.exercise?.slug ?? null,
+        name: variation?.exercise?.name ?? '',
+        type: variation?.exercise?.exercise_type ?? 'musculacao',
+      },
+      equipment: {
+        slug: variation?.equipment?.slug ?? '',
+        preposition: variation?.equipment?.preposition ?? '',
+      },
+      muscle: { slug: variation?.muscle?.slug ?? '' },
+      secondaryMuscle: variation?.secondary_muscle
+        ? { slug: variation.secondary_muscle.slug }
+        : null,
+    },
+    sets: [...(row.workout_sets ?? [])].sort((a, b) => a.set_order - b.set_order).map(toWorkoutSet),
+  };
+}
+
+export function toWorkoutDetail(row: WorkoutDetailRow): WorkoutDetail {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    description: row.description,
+    folderId: row.folder_id,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    exercises: [...(row.workout_exercises ?? [])]
+      .sort((a, b) => a.position - b.position)
+      .map(toWorkoutExercise),
+  };
 }
 
 export function toWorkout(row: WorkoutListRow): Workout {

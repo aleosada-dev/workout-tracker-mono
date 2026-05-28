@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { createClient } from "@supabase/supabase-js";
 import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
-import type { WorkoutFolderResponse, WorkoutResponse } from "./schemas";
+import type { WorkoutDetailResponse, WorkoutFolderResponse, WorkoutResponse } from "./schemas";
 
 const createdFolderIds = new Set<string>();
 
@@ -443,15 +443,29 @@ describe("GET /api/v1/workouts/:id", () => {
 		);
 
 		expect(res.status).toBe(200);
-		const body = (await res.json()) as {
-			id: string;
-			userId: string;
-			name: string;
-			folderId: string | null;
-		};
+		const body = (await res.json()) as WorkoutDetailResponse;
 		expect(body.id).toBe(SEED_WORKOUT_A_ROOT);
 		expect(body.userId).toBe(athleteId);
 		expect(typeof body.name).toBe("string");
+		expect(body.exercises).toBeArray();
+		expect(body.exercises.length).toBeGreaterThan(0);
+		const exercise = body.exercises[0];
+		expect(exercise.id).toEqual(expect.any(String));
+		expect(exercise.position).toEqual(expect.any(Number));
+		expect(exercise.supersetGroupId).toEqual(expect.any(String));
+		expect(exercise.variation.exercise.name).toEqual(expect.any(String));
+		expect(exercise.variation.equipment.slug).toEqual(expect.any(String));
+		expect(exercise.variation.muscle.slug).toEqual(expect.any(String));
+		expect(Array.isArray(exercise.sets)).toBe(true);
+		expect(exercise.sets.length).toBeGreaterThan(0);
+		const positions = body.exercises.map((e) => e.position);
+		const sortedPositions = [...positions].sort((a, b) => a - b);
+		expect(positions.join(",")).toBe(sortedPositions.join(","));
+		for (let i = 0; i < body.exercises.length; i++) {
+			const orders = body.exercises[i].sets.map((s) => s.setOrder);
+			const sortedOrders = [...orders].sort((a, b) => a - b);
+			expect(orders.join(",")).toBe(sortedOrders.join(","));
+		}
 	});
 
 	test("allows a coach to request a workout for an athlete", async () => {

@@ -10,18 +10,19 @@ import {
 } from '@workout-tracker/ui-mobile';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StickyNote } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
+import { toExerciseExecutionItems } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
 type ExecutionTab = 'preparatorio' | 'musculacao';
 
 export default function WorkoutExecutionScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const active = useValue(activeWorkout$);
   const [tab, setTab] = useState<ExecutionTab>('preparatorio');
   const { workoutId, userId, athleteName } = useLocalSearchParams<{
@@ -46,6 +47,22 @@ export default function WorkoutExecutionScreen() {
   }, [active, workoutTemplate, athleteName]);
 
   const workout = active?.workout ?? workoutTemplate;
+
+  const preparatorioItems = useMemo(
+    () => (workout ? toExerciseExecutionItems(workout, 'preparatorio', t, i18n.language) : []),
+    [workout, t, i18n.language],
+  );
+  const musculacaoItems = useMemo(
+    () => (workout ? toExerciseExecutionItems(workout, 'musculacao', t, i18n.language) : []),
+    [workout, t, i18n.language],
+  );
+
+  const initialTabSetRef = useRef(false);
+  useEffect(() => {
+    if (initialTabSetRef.current || !workout) return;
+    initialTabSetRef.current = true;
+    if (preparatorioItems.length === 0) setTab('musculacao');
+  }, [workout, preparatorioItems.length]);
 
   const handleAddExercise = () => {};
 
@@ -73,10 +90,10 @@ export default function WorkoutExecutionScreen() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="preparatorio" className="flex-1">
-          <ExerciseExecutionList onAddExercise={handleAddExercise} />
+          <ExerciseExecutionList exercises={preparatorioItems} onAddExercise={handleAddExercise} />
         </TabsContent>
         <TabsContent value="musculacao" className="flex-1">
-          <ExerciseExecutionList onAddExercise={handleAddExercise} />
+          <ExerciseExecutionList exercises={musculacaoItems} onAddExercise={handleAddExercise} />
         </TabsContent>
       </Tabs>
       <WorkoutExecutionActions

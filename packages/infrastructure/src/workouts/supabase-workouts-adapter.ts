@@ -1,7 +1,12 @@
 import { ForbiddenError, NotFoundError, type WorkoutRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
-import { toWorkout, type WorkoutListRow } from './supabase-workouts-mapper';
+import {
+  toWorkout,
+  toWorkoutDetail,
+  type WorkoutDetailRow,
+  type WorkoutListRow,
+} from './supabase-workouts-mapper';
 
 const LIST_SELECT = `
   id, user_id, name, folder_id, created_at, updated_at,
@@ -47,7 +52,24 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
     async getWorkout({ userId, workoutId }) {
       const { data, error } = await supabase
         .from('workouts')
-        .select('id, user_id, name, description, folder_id, created_at, updated_at')
+        .select(
+          `
+          id, user_id, name, description, folder_id, created_at, updated_at,
+          workout_exercises (
+            id, position, superset_group_id, superset_order, note, rest_seconds,
+            variation:variations (
+              id, slug, name,
+              exercise:exercises ( slug, name, exercise_type ),
+              equipment:equipments ( slug, preposition ),
+              muscle:muscles!muscle_id ( slug ),
+              secondary_muscle:muscles!secondary_muscle_id ( slug )
+            ),
+            workout_sets (
+              id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous
+            )
+          )
+        `,
+        )
         .eq('id', workoutId)
         .eq('user_id', userId)
         .is('archived_at', null)
@@ -60,15 +82,8 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
         return null;
       }
 
-      return {
-        id: data.id,
-        userId: data.user_id,
-        name: data.name,
-        description: data.description,
-        folderId: data.folder_id,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-      };
+      const row = data as unknown as WorkoutDetailRow;
+      return toWorkoutDetail(row);
     },
 
     async deleteWorkouts({ userId, workoutIds }) {

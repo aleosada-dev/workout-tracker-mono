@@ -17,5 +17,11 @@ export default {
   },
   exercise: {
     addSet: 'Adicionar série',
+    noVariation: 'Sem variação',
+    headers: {
+      weight: 'Peso',
+      reps: 'Reps',
+      target: 'Alvo',
+    },
   },
 };

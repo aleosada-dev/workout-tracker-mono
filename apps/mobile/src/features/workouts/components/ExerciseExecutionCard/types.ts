@@ -14,6 +14,7 @@ export interface ExerciseExecutionCardProps {
   variationName?: string;
   sets: ExerciseExecutionSet[];
   dragHandle?: React.ReactNode;
+  onPressHeader?: () => void;
   onAddSet?: () => void;
   onToggleDone?: (id: string) => void;
   onChangeKg?: (id: string, value: string) => void;

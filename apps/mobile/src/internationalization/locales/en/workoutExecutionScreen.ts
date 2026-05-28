@@ -17,5 +17,11 @@ export default {
   },
   exercise: {
     addSet: 'Add set',
+    noVariation: 'No variation',
+    headers: {
+      weight: 'Weight',
+      reps: 'Reps',
+      target: 'Target',
+    },
   },
 };

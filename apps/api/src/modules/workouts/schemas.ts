@@ -1,5 +1,7 @@
 import {
+	EXERCISE_TYPES,
 	WORKOUT_FOLDER_COLORS,
+	WORKOUT_SET_TYPES,
 	type Workout,
 	type WorkoutDetail,
 	type WorkoutFolder,
@@ -84,6 +86,46 @@ export const GetWorkoutQuerySchema = z.object({
 
 export type GetWorkoutQuery = z.infer<typeof GetWorkoutQuerySchema>;
 
+export const WorkoutSetTypeSchema = z.enum(WORKOUT_SET_TYPES);
+
+export const WorkoutDetailSetSchema = z.object({
+	id: z.uuid(),
+	setOrder: z.int().nonnegative(),
+	setType: WorkoutSetTypeSchema,
+	repsMin: z.int().positive(),
+	repsMax: z.int().positive(),
+	linkedSetId: z.uuid().nullable(),
+	loadPercentOfPrevious: z.int().nonnegative().nullable(),
+});
+
+export const WorkoutDetailExerciseVariationSchema = z.object({
+	id: z.uuid(),
+	slug: z.string().nullable(),
+	name: z.string().nullable(),
+	exercise: z.object({
+		slug: z.string().nullable(),
+		name: z.string(),
+		type: z.enum(EXERCISE_TYPES),
+	}),
+	equipment: z.object({
+		slug: z.string(),
+		preposition: z.string(),
+	}),
+	muscle: z.object({ slug: z.string() }),
+	secondaryMuscle: z.object({ slug: z.string() }).nullable(),
+});
+
+export const WorkoutDetailExerciseSchema = z.object({
+	id: z.uuid(),
+	position: z.int().nonnegative(),
+	supersetGroupId: z.uuid(),
+	supersetOrder: z.int().nonnegative(),
+	note: z.string().nullable(),
+	restSeconds: z.int().nonnegative().nullable(),
+	variation: WorkoutDetailExerciseVariationSchema,
+	sets: z.array(WorkoutDetailSetSchema),
+});
+
 export const WorkoutDetailResponseSchema = z.object({
 	id: z.uuid(),
 	userId: z.uuid(),
@@ -92,9 +134,12 @@ export const WorkoutDetailResponseSchema = z.object({
 	folderId: z.uuid().nullable(),
 	createdAt: z.iso.datetime({ offset: true }),
 	updatedAt: z.iso.datetime({ offset: true }),
+	exercises: z.array(WorkoutDetailExerciseSchema),
 });
 
 export type WorkoutDetailResponse = z.infer<typeof WorkoutDetailResponseSchema>;
+export type WorkoutDetailExerciseResponse = z.infer<typeof WorkoutDetailExerciseSchema>;
+export type WorkoutDetailSetResponse = z.infer<typeof WorkoutDetailSetSchema>;
 
 export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailResponse {
 	return {
@@ -105,6 +150,41 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 		folderId: workout.folderId,
 		createdAt: workout.createdAt.toISOString(),
 		updatedAt: workout.updatedAt.toISOString(),
+		exercises: workout.exercises.map((exercise) => ({
+			id: exercise.id,
+			position: exercise.position,
+			supersetGroupId: exercise.supersetGroupId,
+			supersetOrder: exercise.supersetOrder,
+			note: exercise.note,
+			restSeconds: exercise.restSeconds,
+			variation: {
+				id: exercise.variation.id,
+				slug: exercise.variation.slug,
+				name: exercise.variation.name,
+				exercise: {
+					slug: exercise.variation.exercise.slug,
+					name: exercise.variation.exercise.name,
+					type: exercise.variation.exercise.type,
+				},
+				equipment: {
+					slug: exercise.variation.equipment.slug,
+					preposition: exercise.variation.equipment.preposition,
+				},
+				muscle: { slug: exercise.variation.muscle.slug },
+				secondaryMuscle: exercise.variation.secondaryMuscle
+					? { slug: exercise.variation.secondaryMuscle.slug }
+					: null,
+			},
+			sets: exercise.sets.map((set) => ({
+				id: set.id,
+				setOrder: set.setOrder,
+				setType: set.setType,
+				repsMin: set.repsMin,
+				repsMax: set.repsMax,
+				linkedSetId: set.linkedSetId,
+				loadPercentOfPrevious: set.loadPercentOfPrevious,
+			})),
+		})),
 	};
 }
 

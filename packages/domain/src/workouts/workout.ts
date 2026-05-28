@@ -1,3 +1,5 @@
+import type { ExerciseType } from '../exercises/models';
+import type { WorkoutSetType } from '../set/sets';
 import type { WorkoutFolderColor } from './workout-folder';
 
 export type WorkoutTopExercise = {
@@ -23,6 +25,37 @@ export type Workout = {
   updatedAt: Date;
 };
 
+export type WorkoutDetailSet = {
+  id: string;
+  setOrder: number;
+  setType: WorkoutSetType;
+  repsMin: number;
+  repsMax: number;
+  linkedSetId: string | null;
+  loadPercentOfPrevious: number | null;
+};
+
+export type WorkoutDetailExerciseVariation = {
+  id: string;
+  slug: string | null;
+  name: string | null;
+  exercise: { slug: string | null; name: string; type: ExerciseType };
+  equipment: { slug: string; preposition: string };
+  muscle: { slug: string };
+  secondaryMuscle: { slug: string } | null;
+};
+
+export type WorkoutDetailExercise = {
+  id: string;
+  position: number;
+  supersetGroupId: string;
+  supersetOrder: number;
+  note: string | null;
+  restSeconds: number | null;
+  variation: WorkoutDetailExerciseVariation;
+  sets: WorkoutDetailSet[];
+};
+
 export type WorkoutDetail = {
   id: string;
   userId: string;
@@ -31,6 +64,7 @@ export type WorkoutDetail = {
   folderId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  exercises: WorkoutDetailExercise[];
 };
 
 export type GetWorkoutInput = {
