@@ -98,6 +98,18 @@ export default {
     success_one: 'Workout deleted',
     success_other: 'Workouts deleted',
   },
+  activeWorkoutBanner: {
+    elapsedMinutes: '{{minutes}}min',
+    elapsedHours: '{{hours}}h {{minutes}}min',
+    resume: 'Resume workout',
+    discard: 'Discard workout',
+  },
+  discardWorkoutDialog: {
+    title: 'Discard workout?',
+    message: 'The data for this workout in progress will be lost.',
+    confirm: 'Discard',
+    cancel: 'Cancel',
+  },
   activeWorkoutDialog: {
     title: 'Workout in progress',
     message1: 'You already have a workout in progress.',

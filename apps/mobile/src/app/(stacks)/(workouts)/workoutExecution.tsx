@@ -9,9 +9,10 @@ import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
 export default function WorkoutExecutionScreen() {
   const active = useValue(activeWorkout$);
-  const { workoutId, userId } = useLocalSearchParams<{
+  const { workoutId, userId, athleteName } = useLocalSearchParams<{
     workoutId?: string;
     userId?: string;
+    athleteName?: string;
   }>();
 
   const { data: workoutTemplate } = useWorkout({
@@ -23,10 +24,11 @@ export default function WorkoutExecutionScreen() {
     if (!active && workoutTemplate) {
       activeWorkout$.set({
         startedAt: new Date().toISOString(),
+        athleteName: athleteName ?? null,
         workout: workoutTemplate,
       });
     }
-  }, [active, workoutTemplate]);
+  }, [active, workoutTemplate, athleteName]);
 
   const workout = active?.workout ?? workoutTemplate;
 

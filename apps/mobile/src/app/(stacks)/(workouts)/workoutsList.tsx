@@ -9,6 +9,7 @@ import { useReportRequestError } from '@/features/observability/hooks/use-report
 import { workoutObservability } from '@/features/observability/lib';
 import { useProfile } from '@/features/profiles/hooks/use-profile';
 import type { WorkoutFolderResponse } from '@/features/workouts/api/workouts';
+import { ActiveWorkoutBanner } from '@/features/workouts/components/ActiveWorkoutBanner';
 import { ActiveWorkoutSheet } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { AthleteContextSelect } from '@/features/workouts/components/AthleteContextSelect';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
@@ -86,6 +87,7 @@ export default function WorkoutListScreen() {
 
   return (
     <View className="flex-1 bg-background">
+      <ActiveWorkoutBanner />
       <ScrollView
         contentContainerClassName="p-4"
         contentContainerStyle={{ paddingBottom: insets.bottom + (mode === 'select' ? 96 : 32) }}
@@ -112,7 +114,10 @@ export default function WorkoutListScreen() {
               <WorkoutFolderItem
                 key={folder.id}
                 folder={toFolderViewModel(folder)}
-                onPress={() =>
+                onPress={() => {
+                  const athleteName = queryUserId
+                    ? (athletes?.find((a) => a.athleteId === queryUserId)?.fullName ?? null)
+                    : null;
                   router.push({
                     pathname: '/(stacks)/(workouts)/workoutFolderDetail',
                     params: {
@@ -120,9 +125,10 @@ export default function WorkoutListScreen() {
                       name: folder.name,
                       color: folder.color,
                       ...(queryUserId ? { userId: queryUserId } : {}),
+                      ...(athleteName ? { athleteName } : {}),
                     },
-                  })
-                }
+                  });
+                }}
               />
             ))
           )}
@@ -164,12 +170,16 @@ export default function WorkoutListScreen() {
                 onLongPress={() => {
                   if (mode === 'browse') enterSelect(workout.id);
                 }}
-                onStart={() =>
+                onStart={() => {
+                  const athleteName = queryUserId
+                    ? (athletes?.find((a) => a.athleteId === queryUserId)?.fullName ?? null)
+                    : null;
                   startWorkout({
                     workoutId: workout.id,
                     userId: workout.userId ?? queryUserId,
-                  })
-                }
+                    athleteName,
+                  });
+                }}
               />
             ))
           )}

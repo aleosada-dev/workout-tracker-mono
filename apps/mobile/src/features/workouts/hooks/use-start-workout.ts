@@ -3,7 +3,11 @@ import { useCallback, useRef, useState } from 'react';
 import type { ActiveWorkoutSheetRef } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
-type StartParams = { workoutId: string; userId?: string | null };
+type StartParams = {
+  workoutId: string;
+  userId?: string | null;
+  athleteName?: string | null;
+};
 
 export function useStartWorkout() {
   const sheetRef = useRef<ActiveWorkoutSheetRef>(null);
@@ -15,6 +19,7 @@ export function useStartWorkout() {
       params: {
         workoutId: params.workoutId,
         ...(params.userId ? { userId: params.userId } : {}),
+        ...(params.athleteName ? { athleteName: params.athleteName } : {}),
       },
     });
   }, []);

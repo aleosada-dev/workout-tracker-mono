@@ -35,6 +35,7 @@ import { ThemeBridge } from '@/features/settings/state/theme-bridge';
 import { ensureTimerNotificationChannel } from '@/features/shared/lib/notifications';
 import { useNavTheme } from '@/features/shared/lib/theme';
 import { toastConfig } from '@/features/shared/lib/toast-config';
+import { useClearActiveWorkoutOnSignOut } from '@/features/workouts/hooks/use-clear-active-workout-on-signout';
 import { setupI18n } from '@/internationalization/i18n';
 
 setupI18n(resolveLanguage(language$.get()));
@@ -45,6 +46,7 @@ export default function RootLayout() {
   const { session } = useSession();
   const isAuthenticated = !!session;
   const { t } = useTranslation();
+  useClearActiveWorkoutOnSignOut();
 
   const [loaded, error] = useFonts({
     Geist_400Regular,

@@ -7,6 +7,7 @@ const persistPlugin = new ObservablePersistMMKV({ id: 'active-workout' });
 
 export type ActiveWorkout = {
   startedAt: string;
+  athleteName: string | null;
   workout: GetWorkoutResponse;
 };
 

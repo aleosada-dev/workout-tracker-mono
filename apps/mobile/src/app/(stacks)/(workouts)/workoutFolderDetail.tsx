@@ -10,6 +10,7 @@ import { useReportRequestError } from '@/features/observability/hooks/use-report
 import { workoutObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useNavTheme } from '@/features/shared/lib/theme';
+import { ActiveWorkoutBanner } from '@/features/workouts/components/ActiveWorkoutBanner';
 import { ActiveWorkoutSheet } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { WorkoutCard, WorkoutsLoading } from '@/features/workouts/components/WorkoutCard';
 import {
@@ -37,13 +38,14 @@ type Params = {
   name?: string;
   color?: string;
   userId?: string;
+  athleteName?: string;
 };
 
 export default function WorkoutFolderDetailScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const navTheme = useNavTheme();
-  const { id, name, color, userId } = useLocalSearchParams<Params>();
+  const { id, name, color, userId, athleteName } = useLocalSearchParams<Params>();
   const folderId = id ?? '';
   const initialColor = (WORKOUT_FOLDER_COLORS as readonly string[]).includes(color ?? '')
     ? (color as WorkoutFolderColor)
@@ -140,6 +142,7 @@ export default function WorkoutFolderDetailScreen() {
         />
       )}
       <View className="flex-1 bg-background">
+        <ActiveWorkoutBanner />
         <View className="flex-row items-center gap-3 px-4 pt-4">
           <View className={`h-10 w-10 items-center justify-center rounded-xl ${folderColor.color}`}>
             <Icon as={Folder} size={20} className={folderColor.iconColor} />
@@ -188,6 +191,7 @@ export default function WorkoutFolderDetailScreen() {
                     startWorkout({
                       workoutId: workout.id,
                       userId: workout.userId ?? userId,
+                      athleteName: athleteName ?? null,
                     })
                   }
                 />

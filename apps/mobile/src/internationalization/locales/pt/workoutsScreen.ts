@@ -98,6 +98,18 @@ export default {
     success_one: 'Treino excluído',
     success_other: 'Treinos excluídos',
   },
+  activeWorkoutBanner: {
+    elapsedMinutes: '{{minutes}}min',
+    elapsedHours: '{{hours}}h {{minutes}}min',
+    resume: 'Voltar ao treino',
+    discard: 'Descartar treino',
+  },
+  discardWorkoutDialog: {
+    title: 'Descartar treino?',
+    message: 'Os dados deste treino em andamento serão perdidos.',
+    confirm: 'Descartar',
+    cancel: 'Cancelar',
+  },
   activeWorkoutDialog: {
     title: 'Treino em andamento',
     message1: 'Você já possui um treino em andamento.',
