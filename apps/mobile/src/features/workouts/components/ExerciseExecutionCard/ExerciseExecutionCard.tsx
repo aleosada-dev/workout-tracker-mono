@@ -1,12 +1,24 @@
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
+import * as Crypto from 'expo-crypto';
 import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Controller, useFieldArray, useFormContext, useFormState } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
+import { sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import {
+  SetTypePickerSheet,
+  type SetTypePickerSheetRef,
+} from '@/features/workouts/components/SetTypePickerSheet';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
-import type { ExerciseExecutionCardProps, ExerciseExecutionSet } from './types';
+import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
+import type { ExerciseExecutionCardProps } from './types';
+
+const MAX_WEIGHT_INTEGER_DIGITS = 3;
+const MAX_WEIGHT_FRACTION_DIGITS = 2;
+const MAX_REPS = 99;
 
 const SET_TYPE_INITIAL: Record<SetType, string> = {
   warmup: 'W',
@@ -16,22 +28,40 @@ const SET_TYPE_INITIAL: Record<SetType, string> = {
 };
 
 export function ExerciseExecutionCard({
+  exerciseIndex,
   name,
   variationName,
-  sets,
+  setTargets,
   dragHandle,
   onPressHeader,
-  onAddSet,
-  onToggleDone,
-  onChangeKg,
-  onChangeReps,
-  onChangeType,
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
+  const { control } = useFormContext<ExecutionFormInput>();
+  const { fields, append } = useFieldArray({
+    control,
+    name: `exercises.${exerciseIndex}.sets`,
+  });
+  const { errors } = useFormState({
+    control,
+    name: `exercises.${exerciseIndex}`,
+  });
+  const hasError = Boolean(errors.exercises?.[exerciseIndex]);
+  const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
+
+  const handleAddSet = () => {
+    const previous = fields[fields.length - 1];
+    append({
+      id: Crypto.randomUUID(),
+      type: previous?.type ?? 'normal',
+      kg: '',
+      reps: '',
+      done: false,
+    });
+  };
 
   return (
-    <Card className="gap-3 py-2">
+    <Card className={`gap-3 py-2 ${hasError ? 'border-destructive/50' : ''}`}>
       <View className="flex-row items-center justify-between gap-2 px-4">
         {dragHandle ?? <Icon as={GripVertical} size={18} className="text-muted-foreground" />}
         <Pressable
@@ -86,20 +116,21 @@ export function ExerciseExecutionCard({
               </View>
             </View>
 
-            {sets.map((set) => (
+            {fields.map((field, setIndex) => (
               <SetRow
-                key={set.id}
-                set={set}
-                onToggleDone={onToggleDone}
-                onChangeKg={onChangeKg}
-                onChangeReps={onChangeReps}
-                onChangeType={onChangeType}
+                key={field.id}
+                exerciseIndex={exerciseIndex}
+                setIndex={setIndex}
+                target={setTargets[setIndex] ?? ''}
+                onPressType={(currentType, onChange) =>
+                  setTypePickerRef.current?.present(currentType, onChange)
+                }
               />
             ))}
           </View>
 
           <View className="px-4 pt-3">
-            <Button variant="outline" size="sm" onPress={onAddSet} className="w-full">
+            <Button variant="outline" size="sm" onPress={handleAddSet} className="w-full">
               <Icon as={Plus} size={14} className="text-secondary-foreground" />
               <Text className="font-sans-semibold text-secondary-foreground text-sm">
                 {t('workoutExecutionScreen.exercise.addSet')}
@@ -108,65 +139,113 @@ export function ExerciseExecutionCard({
           </View>
         </Animated.View>
       ) : null}
+      <SetTypePickerSheet ref={setTypePickerRef} />
     </Card>
   );
 }
 
 function SetRow({
-  set,
-  onToggleDone,
-  onChangeKg,
-  onChangeReps,
-  onChangeType,
+  exerciseIndex,
+  setIndex,
+  target,
+  onPressType,
 }: {
-  set: ExerciseExecutionSet;
-  onToggleDone?: (id: string) => void;
-  onChangeKg?: (id: string, value: string) => void;
-  onChangeReps?: (id: string, value: string) => void;
-  onChangeType?: (id: string, type: SetType) => void;
+  exerciseIndex: number;
+  setIndex: number;
+  target: string;
+  onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
 }) {
-  const typeConfig = SET_TYPE_CONFIG[set.type];
+  const { control } = useFormContext<ExecutionFormInput>();
+  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+
   return (
     <View className="flex-row items-center py-0.5">
       <View className="w-10">
-        <Pressable
-          onPress={() => onChangeType?.(set.id, set.type)}
-          hitSlop={8}
-          className="flex-row items-center gap-1"
-          accessibilityRole="button"
-        >
-          <Text className={`font-sans-semibold text-sm ${typeConfig.textColor}`}>
-            {SET_TYPE_INITIAL[set.type]}
-          </Text>
-          <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
-        </Pressable>
-      </View>
-      <View className="flex-1 px-2">
-        <Input
-          variant="outline-primary"
-          keyboardType="numeric"
-          value={set.kg}
-          onChangeText={(value) => onChangeKg?.(set.id, value)}
-          className="h-8 py-0 text-sm"
+        <Controller
+          control={control}
+          name={`${basePath}.type`}
+          render={({ field }) => {
+            const typeConfig = SET_TYPE_CONFIG[field.value];
+            return (
+              <Pressable
+                onPress={() => onPressType(field.value, field.onChange)}
+                hitSlop={8}
+                className="flex-row items-center gap-1"
+                accessibilityRole="button"
+              >
+                <Text
+                  className={`w-5 text-center font-sans-semibold text-sm ${typeConfig.textColor}`}
+                >
+                  {SET_TYPE_INITIAL[field.value]}
+                </Text>
+                <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
+              </Pressable>
+            );
+          }}
         />
       </View>
       <View className="flex-1 px-2">
-        <Input
-          variant="outline-primary"
-          keyboardType="numeric"
-          value={set.reps}
-          onChangeText={(value) => onChangeReps?.(set.id, value)}
-          className="h-8 py-0 text-sm"
+        <Controller
+          control={control}
+          name={`${basePath}.kg`}
+          render={({ field, fieldState }) => (
+            <Input
+              variant="outline-primary"
+              keyboardType="decimal-pad"
+              value={field.value}
+              onChangeText={(text) =>
+                field.onChange(
+                  sanitizeDecimal(text, {
+                    maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
+                    maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
+                  }),
+                )
+              }
+              onBlur={field.onBlur}
+              aria-invalid={fieldState.invalid}
+              className="h-8 py-0 text-sm"
+            />
+          )}
+        />
+      </View>
+      <View className="flex-1 px-2">
+        <Controller
+          control={control}
+          name={`${basePath}.reps`}
+          render={({ field, fieldState }) => (
+            <Input
+              variant="outline-primary"
+              keyboardType="number-pad"
+              value={field.value}
+              onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
+              onBlur={field.onBlur}
+              aria-invalid={fieldState.invalid}
+              className="h-8 py-0 text-sm"
+              maxLength={2}
+            />
+          )}
         />
       </View>
       <View className="w-20 px-2">
         <Text variant="muted" className="text-center text-xs">
-          {set.target}
+          {target}
         </Text>
       </View>
-      <View className="w-10 items-center">
-        <Checkbox checked={set.done} onCheckedChange={() => onToggleDone?.(set.id)} />
-      </View>
+      <Controller
+        control={control}
+        name={`${basePath}.done`}
+        render={({ field }) => (
+          <Pressable
+            onPress={() => field.onChange(!field.value)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: field.value }}
+            className="w-10 items-center justify-center self-stretch"
+            hitSlop={0}
+          >
+            <Checkbox checked={field.value} onCheckedChange={field.onChange} hitSlop={0} />
+          </Pressable>
+        )}
+      />
     </View>
   );
 }

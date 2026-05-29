@@ -5,7 +5,6 @@ import {
   resolveVariationName,
 } from '@/features/exercises/lib/format';
 import type { GetWorkoutResponse, WorkoutResponse } from '@/features/workouts/api/workouts';
-import type { ExerciseExecutionSet } from '@/features/workouts/components/ExerciseExecutionCard';
 import type { WorkoutCardData } from '@/features/workouts/components/WorkoutCard';
 
 export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
@@ -20,10 +19,11 @@ export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
 
 export type ExerciseExecutionItem = {
   id: string;
+  exerciseIndex: number;
   variationId: string;
   name: string;
   variationName: string | null;
-  sets: ExerciseExecutionSet[];
+  setTargets: string[];
 };
 
 export function toExerciseExecutionItems(
@@ -33,8 +33,9 @@ export function toExerciseExecutionItems(
   language: string,
 ): ExerciseExecutionItem[] {
   return workout.exercises
-    .filter((exercise) => exercise.variation.exercise.type === type)
-    .map((exercise) => {
+    .map((exercise, exerciseIndex) => ({ exercise, exerciseIndex }))
+    .filter(({ exercise }) => exercise.variation.exercise.type === type)
+    .map(({ exercise, exerciseIndex }) => {
       const { variation } = exercise;
       const name = composeExerciseName(
         {
@@ -45,14 +46,16 @@ export function toExerciseExecutionItems(
         language,
       );
       const variationName = resolveVariationName(variation.slug, variation.name, t);
-      const sets: ExerciseExecutionSet[] = exercise.sets.map((set) => ({
-        id: set.id,
-        type: set.setType,
-        kg: '',
-        reps: '',
-        target: set.repsMin === set.repsMax ? `${set.repsMin}` : `${set.repsMin}-${set.repsMax}`,
-        done: false,
-      }));
-      return { id: exercise.id, variationId: variation.id, name, variationName, sets };
+      const setTargets = exercise.sets.map((set) =>
+        set.repsMin === set.repsMax ? `${set.repsMin}` : `${set.repsMin}-${set.repsMax}`,
+      );
+      return {
+        id: exercise.id,
+        exerciseIndex,
+        variationId: variation.id,
+        name,
+        variationName,
+        setTargets,
+      };
     });
 }

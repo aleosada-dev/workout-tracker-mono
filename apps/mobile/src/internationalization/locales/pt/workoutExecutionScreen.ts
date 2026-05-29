@@ -24,4 +24,9 @@ export default {
       target: 'Alvo',
     },
   },
+  setTypePicker: {
+    title: 'Tipo de série',
+    rules:
+      'Aquecimentos devem vir antes das demais séries. Drop sets e cluster sets devem ser seguidos por uma série normal ou por outra série do mesmo tipo.',
+  },
 };

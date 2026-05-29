@@ -37,7 +37,7 @@ export function ActiveWorkoutBanner() {
       <View className="flex-row items-center gap-3">
         <Icon as={Dumbbell} size={18} className="text-primary-foreground" />
         <Text numberOfLines={1} className="flex-1 font-sans-semibold text-primary-foreground">
-          {active.workout.name}
+          {active.workout_template.name}
         </Text>
         <Pressable
           onPress={() => router.push('/(stacks)/(workouts)/workoutExecution')}

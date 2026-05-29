@@ -43,9 +43,10 @@ export function ExerciseExecutionList({ exercises, onAddExercise }: ExerciseExec
         <SortableItem key={id} id={id} data={item} {...rest}>
           <View className="pb-3">
             <ExerciseExecutionCard
+              exerciseIndex={item.exerciseIndex}
               name={item.name}
               variationName={item.variationName ?? undefined}
-              sets={item.sets}
+              setTargets={item.setTargets}
               onPressHeader={() =>
                 router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
               }
