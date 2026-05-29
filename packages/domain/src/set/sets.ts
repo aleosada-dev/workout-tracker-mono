@@ -109,3 +109,35 @@ export class TimeSet implements TimeSetProps {
 // ---------- Union ----------
 
 export type WorkoutSet = RepsSet | TimeSet;
+
+// ---------- Sequence validation ----------
+
+export function getValidSetTypesAt<T extends { type: WorkoutSetType }>(
+  sets: readonly T[],
+  index: number,
+): WorkoutSetType[] {
+  return WORKOUT_SET_TYPES.filter((type) =>
+    isValidSetSequence(sets.map((s, i) => (i === index ? { type } : { type: s.type }))),
+  );
+}
+
+export function isValidSetSequence<T extends { type: WorkoutSetType }>(
+  sets: readonly T[],
+): boolean {
+  let seenNonWarmup = false;
+
+  for (const [i, { type }] of sets.entries()) {
+    if (type === 'warmup') {
+      if (seenNonWarmup) return false;
+    } else {
+      seenNonWarmup = true;
+    }
+
+    if (type === 'drop' || type === 'cluster') {
+      const previous = sets[i - 1]?.type;
+      if (previous !== 'normal' && previous !== type) return false;
+    }
+  }
+
+  return true;
+}

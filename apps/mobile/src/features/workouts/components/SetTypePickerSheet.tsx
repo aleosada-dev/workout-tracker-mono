@@ -16,7 +16,12 @@ import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 const SET_TYPE_ORDER: SetType[] = ['warmup', 'normal', 'drop', 'cluster'];
 
 export type SetTypePickerSheetRef = {
-  present: (currentType: SetType, onSelect: (type: SetType) => void, onRemove?: () => void) => void;
+  present: (
+    currentType: SetType,
+    validTypes: readonly SetType[],
+    onSelect: (type: SetType) => void,
+    onRemove?: () => void,
+  ) => void;
   dismiss: () => void;
 };
 
@@ -24,13 +29,15 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetRef>(null);
   const [current, setCurrent] = useState<SetType | null>(null);
+  const [validTypes, setValidTypes] = useState<readonly SetType[]>(SET_TYPE_ORDER);
   const [canRemove, setCanRemove] = useState(false);
   const onSelectRef = useRef<((type: SetType) => void) | null>(null);
   const onRemoveRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    present: (currentType, onSelect, onRemove) => {
+    present: (currentType, nextValidTypes, onSelect, onRemove) => {
       setCurrent(currentType);
+      setValidTypes(nextValidTypes);
       onSelectRef.current = onSelect;
       onRemoveRef.current = onRemove ?? null;
       setCanRemove(Boolean(onRemove));
@@ -63,15 +70,18 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
           {SET_TYPE_ORDER.map((type) => {
             const config = SET_TYPE_CONFIG[type];
             const isSelected = current === type;
+            const isDisabled = !validTypes.includes(type);
             return (
               <Pressable
                 key={type}
                 onPress={() => handleSelect(type)}
+                disabled={isDisabled}
                 accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
+                accessibilityState={{ selected: isSelected, disabled: isDisabled }}
                 className={cn(
                   'rounded-lg border border-border p-3',
                   isSelected && 'border-primary bg-primary/5',
+                  isDisabled && 'opacity-40',
                 )}
               >
                 <Text className={cn('font-sans-semibold text-sm', config.textColor)}>

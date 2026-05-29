@@ -1,3 +1,4 @@
+import { getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react-native';
@@ -37,7 +38,7 @@ export function ExerciseExecutionCard({
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
-  const { control } = useFormContext<ExecutionFormInput>();
+  const { control, getValues } = useFormContext<ExecutionFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: `exercises.${exerciseIndex}.sets`,
@@ -96,7 +97,7 @@ export function ExerciseExecutionCard({
                   <SetTypesHelpDialog />
                 </View>
               </View>
-              <View className="flex-1 px-2">
+              <View className="flex-1 pr-2 pl-3">
                 <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {t('workoutExecutionScreen.exercise.headers.weight')}
                 </Text>
@@ -124,13 +125,16 @@ export function ExerciseExecutionCard({
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
                 target={setTargets[setIndex] ?? ''}
-                onPressType={(currentType, onChange) =>
+                onPressType={(currentType, onChange) => {
+                  const sets = getValues(`exercises.${exerciseIndex}.sets`);
+                  const validTypes = getValidSetTypesAt(sets, setIndex);
                   setTypePickerRef.current?.present(
                     currentType,
+                    validTypes,
                     onChange,
                     fields.length > 1 ? () => remove(setIndex) : undefined,
-                  )
-                }
+                  );
+                }}
               />
             ))}
           </View>
@@ -177,7 +181,7 @@ function SetRow({
               <Pressable
                 onPress={() => onPressType(field.value, field.onChange)}
                 hitSlop={8}
-                className="flex-row items-center gap-1"
+                className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
                 accessibilityRole="button"
               >
                 <Text
@@ -191,7 +195,7 @@ function SetRow({
           }}
         />
       </View>
-      <View className="flex-1 px-2">
+      <View className="flex-1 pr-2 pl-3">
         <Controller
           control={control}
           name={`${basePath}.kg`}

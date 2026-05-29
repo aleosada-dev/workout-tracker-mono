@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 import { getIssues } from '../test/validation';
-import { RepsSet, type RepsSetProps, TimeSet, type TimeSetProps } from './sets';
+import {
+  getValidSetTypesAt,
+  isValidSetSequence,
+  RepsSet,
+  type RepsSetProps,
+  TimeSet,
+  type TimeSetProps,
+  type WorkoutSetType,
+} from './sets';
 
 function validRepsProps(overrides: Partial<RepsSetProps> = {}): RepsSetProps {
   return {
@@ -181,6 +189,78 @@ describe('TimeSet.create — validation', () => {
   it('rejects negative order', () => {
     const issues = getIssues(() => TimeSet.create(validTimeProps({ order: -1 })));
     expect(issues).toEqual([{ code: 'validation.non_negative_integer', field: 'order' }]);
+  });
+});
+
+describe('isValidSetSequence', () => {
+  const seq = (...types: WorkoutSetType[]) => types.map((type) => ({ type }));
+
+  it('returns true for an empty sequence', () => {
+    expect(isValidSetSequence([])).toBe(true);
+  });
+
+  it('accepts warmups followed by normals', () => {
+    expect(isValidSetSequence(seq('warmup', 'warmup', 'normal', 'normal'))).toBe(true);
+  });
+
+  it('rejects a warmup that appears after a non-warmup set', () => {
+    expect(isValidSetSequence(seq('normal', 'warmup'))).toBe(false);
+  });
+
+  it('accepts a drop preceded by a normal', () => {
+    expect(isValidSetSequence(seq('normal', 'drop'))).toBe(true);
+  });
+
+  it('accepts consecutive drops preceded by a normal', () => {
+    expect(isValidSetSequence(seq('normal', 'drop', 'drop'))).toBe(true);
+  });
+
+  it('rejects a drop preceded by a cluster', () => {
+    expect(isValidSetSequence(seq('normal', 'cluster', 'drop'))).toBe(false);
+  });
+
+  it('rejects a drop as the first set', () => {
+    expect(isValidSetSequence(seq('drop', 'normal'))).toBe(false);
+  });
+
+  it('accepts a cluster preceded by a normal', () => {
+    expect(isValidSetSequence(seq('normal', 'cluster'))).toBe(true);
+  });
+
+  it('accepts consecutive clusters preceded by a normal', () => {
+    expect(isValidSetSequence(seq('normal', 'cluster', 'cluster'))).toBe(true);
+  });
+
+  it('rejects a cluster preceded by a drop', () => {
+    expect(isValidSetSequence(seq('normal', 'drop', 'cluster'))).toBe(false);
+  });
+
+  it('rejects a cluster as the first set', () => {
+    expect(isValidSetSequence(seq('cluster', 'normal'))).toBe(false);
+  });
+});
+
+describe('getValidSetTypesAt', () => {
+  const seq = (...types: WorkoutSetType[]) => types.map((type) => ({ type }));
+
+  it('returns every type for the only position in a single-set sequence (warmup or normal)', () => {
+    expect(getValidSetTypesAt(seq('normal'), 0)).toEqual(['warmup', 'normal']);
+  });
+
+  it('disallows drop/cluster at the first position', () => {
+    expect(getValidSetTypesAt(seq('normal', 'normal'), 0)).toEqual(['warmup', 'normal']);
+  });
+
+  it('allows normal, drop and cluster after a normal — but not warmup', () => {
+    expect(getValidSetTypesAt(seq('normal', 'normal'), 1)).toEqual(['normal', 'drop', 'cluster']);
+  });
+
+  it('rejects cluster at the middle when followed by a drop', () => {
+    expect(getValidSetTypesAt(seq('normal', 'normal', 'drop'), 1)).toEqual(['normal', 'drop']);
+  });
+
+  it('allows the same type currently at the position', () => {
+    expect(getValidSetTypesAt(seq('normal', 'drop'), 1)).toContain('drop');
   });
 });
 

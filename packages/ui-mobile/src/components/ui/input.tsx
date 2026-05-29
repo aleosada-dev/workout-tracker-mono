@@ -21,7 +21,7 @@ const inputVariants = cva(
           'rounded-md border border-input bg-background shadow-black/5 shadow-sm dark:bg-input/30',
         ),
         'outline-primary': cn(
-          'h-8 rounded-none border-0 border-primary border-b-2 bg-transparent px-1 py-0 text-center text-sm leading-4 sm:h-8',
+          'h-8 rounded-none border-0 border-primary border-b bg-transparent px-1 py-0 text-center text-sm leading-4 sm:h-8',
         ),
       },
     },
