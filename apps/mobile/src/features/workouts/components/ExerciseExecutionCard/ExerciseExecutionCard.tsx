@@ -1,14 +1,14 @@
 import { getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
-import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, GripVertical, Plus, StickyNote, Timer } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Controller, useFieldArray, useFormContext, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
-import { sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
 import {
   SetTypePickerSheet,
   type SetTypePickerSheetRef,
@@ -32,6 +32,8 @@ export function ExerciseExecutionCard({
   exerciseIndex,
   name,
   variationName,
+  note,
+  restSeconds,
   setTargets,
   dragHandle,
   onPressHeader,
@@ -87,6 +89,24 @@ export function ExerciseExecutionCard({
 
       {!collapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+          {restSeconds != null || (note != null && note.length > 0) ? (
+            <View className="flex-row items-start gap-3 px-4 pb-4">
+              <View className="flex-1 flex-row items-start gap-2">
+                {note != null && note.length > 0 ? (
+                  <>
+                    <Icon as={StickyNote} size={16} className="mt-0.5 text-foreground" />
+                    <Text className="flex-1 text-sm">{note}</Text>
+                  </>
+                ) : null}
+              </View>
+              {restSeconds != null ? (
+                <View className="flex-row items-center gap-2">
+                  <Icon as={Timer} size={16} className="text-foreground" />
+                  <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
           <View className="px-4">
             <View className="flex-row items-center pb-2">
               <View className="w-10">

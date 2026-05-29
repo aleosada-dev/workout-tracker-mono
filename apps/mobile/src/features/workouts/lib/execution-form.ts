@@ -56,6 +56,8 @@ export const ExecutionExerciseVariationSchema = z.object({
 export const ExecutionExerciseSchema = z.object({
   id: z.string(),
   position: z.int().nonnegative(),
+  note: z.string().nullable(),
+  restSeconds: z.int().nonnegative().nullable(),
   variation: ExecutionExerciseVariationSchema,
   sets: z.array(ExecutionSetSchema),
 });
@@ -74,6 +76,8 @@ export function buildExecutionFromWorkout(workout: GetWorkoutResponse): Executio
     exercises: workout.exercises.map((exercise) => ({
       id: exercise.id,
       position: exercise.position,
+      note: exercise.note,
+      restSeconds: exercise.restSeconds,
       variation: exercise.variation,
       sets: exercise.sets.map((set) => ({
         id: set.id,

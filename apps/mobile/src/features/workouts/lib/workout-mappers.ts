@@ -25,6 +25,8 @@ export type ExerciseExecutionItem = {
   name: string;
   variationName: string | null;
   setTargets: string[];
+  note: string | null;
+  restSeconds: number | null;
 };
 
 export function toExerciseExecutionItems(
@@ -58,6 +60,8 @@ export function toExerciseExecutionItems(
         name,
         variationName,
         setTargets,
+        note: exercise.note,
+        restSeconds: exercise.restSeconds,
       };
     });
 }

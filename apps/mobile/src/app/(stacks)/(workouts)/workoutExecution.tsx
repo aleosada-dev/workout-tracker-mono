@@ -195,6 +195,8 @@ function buildExecutionExerciseFromPicked(
   return {
     id: Crypto.randomUUID(),
     position,
+    note: null,
+    restSeconds: null,
     variation: {
       id: picked.variation.id,
       slug: picked.variation.slug,
