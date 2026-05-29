@@ -1,6 +1,6 @@
 import {
   differenceInCalendarDays,
-  differenceInMinutes,
+  differenceInSeconds,
   format,
   formatDuration,
   formatRelative,
@@ -53,7 +53,15 @@ export function formatDurationSeconds(seconds: number, locale: Locale): string {
   });
 }
 
-export function elapsedSince(startedAt: Date | string): { hours: number; minutes: number } {
-  const totalMinutes = Math.max(0, differenceInMinutes(new Date(), toDate(startedAt)));
-  return { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 };
+export function elapsedSince(startedAt: Date | string): {
+  hours: number;
+  minutes: number;
+  seconds: number;
+} {
+  const totalSeconds = Math.max(0, differenceInSeconds(new Date(), toDate(startedAt)));
+  return {
+    hours: Math.floor(totalSeconds / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
 }

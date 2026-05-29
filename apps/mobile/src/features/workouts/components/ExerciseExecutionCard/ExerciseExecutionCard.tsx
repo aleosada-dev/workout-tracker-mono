@@ -2,7 +2,7 @@ import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-m
 import * as Crypto from 'expo-crypto';
 import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { Controller, useFieldArray, useFormContext, useFormState } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -157,9 +157,10 @@ function SetRow({
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const done = useWatch({ control, name: `${basePath}.done` });
 
   return (
-    <View className="flex-row items-center py-0.5">
+    <View className={`-mx-4 flex-row items-center px-4 py-0.5 ${done ? 'bg-primary/10' : ''}`}>
       <View className="w-10">
         <Controller
           control={control}

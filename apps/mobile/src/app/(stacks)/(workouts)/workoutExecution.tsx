@@ -3,6 +3,7 @@ import { useValue } from '@legendapp/state/react';
 import {
   Alert,
   AlertDescription,
+  Icon,
   Tabs,
   TabsContent,
   TabsList,
@@ -10,13 +11,15 @@ import {
   Text,
 } from '@workout-tracker/ui-mobile';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { StickyNote } from 'lucide-react-native';
+import { Clock, StickyNote } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
+import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import {
   buildExecutionFromWorkout,
@@ -107,8 +110,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   return (
     <FormProvider {...form}>
       <View className="flex-1 bg-background">
-        <Stack.Screen options={{ title: workout.name }} />
-        {workout.description ? (
+        <Stack.Screen
+          options={{
+            title: workout.name,
+            headerRight:
+              Platform.OS === 'ios'
+                ? undefined
+                : () => <ElapsedTimeDisplay startedAt={active.startedAt} className="pr-2" />,
+          }}
+        />
+        {Platform.OS === 'ios' ? (
+          <WorkoutInfoBar startedAt={active.startedAt} description={workout.description} />
+        ) : workout.description ? (
           <View className="px-4 pt-4 pb-6">
             <Alert icon={StickyNote}>
               <AlertDescription>{workout.description}</AlertDescription>
@@ -147,5 +160,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         />
       </View>
     </FormProvider>
+  );
+}
+
+function ElapsedTimeDisplay({ startedAt, className }: { startedAt: string; className?: string }) {
+  const elapsed = useElapsedSince(startedAt);
+  if (!elapsed) return null;
+  const hh = String(elapsed.hours).padStart(2, '0');
+  const mm = String(elapsed.minutes).padStart(2, '0');
+  return (
+    <View className={`flex-row items-center gap-1.5 ${className ?? ''}`}>
+      <Icon as={Clock} size={16} className="text-foreground" />
+      <Text className="font-mono text-foreground text-sm">{`${hh}:${mm}`}</Text>
+    </View>
   );
 }

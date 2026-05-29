@@ -99,6 +99,7 @@ export default {
     success_other: 'Workouts deleted',
   },
   activeWorkoutBanner: {
+    inProgress: 'In progress',
     elapsedMinutes: '{{minutes}}min',
     elapsedHours: '{{hours}}h {{minutes}}min',
     resume: 'Resume workout',

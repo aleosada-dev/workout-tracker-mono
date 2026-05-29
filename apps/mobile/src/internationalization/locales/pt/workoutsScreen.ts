@@ -99,6 +99,7 @@ export default {
     success_other: 'Treinos excluídos',
   },
   activeWorkoutBanner: {
+    inProgress: 'Em andamento',
     elapsedMinutes: '{{minutes}}min',
     elapsedHours: '{{hours}}h {{minutes}}min',
     resume: 'Voltar ao treino',
