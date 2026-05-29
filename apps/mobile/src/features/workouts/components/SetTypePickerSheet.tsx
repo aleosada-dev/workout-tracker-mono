@@ -2,9 +2,12 @@ import {
   BottomSheet,
   type BottomSheetRef,
   BottomSheetView,
+  Button,
   cn,
+  Icon,
   Text,
 } from '@workout-tracker/ui-mobile';
+import { Trash2 } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -13,7 +16,7 @@ import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 const SET_TYPE_ORDER: SetType[] = ['warmup', 'normal', 'drop', 'cluster'];
 
 export type SetTypePickerSheetRef = {
-  present: (currentType: SetType, onSelect: (type: SetType) => void) => void;
+  present: (currentType: SetType, onSelect: (type: SetType) => void, onRemove?: () => void) => void;
   dismiss: () => void;
 };
 
@@ -21,12 +24,16 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetRef>(null);
   const [current, setCurrent] = useState<SetType | null>(null);
+  const [canRemove, setCanRemove] = useState(false);
   const onSelectRef = useRef<((type: SetType) => void) | null>(null);
+  const onRemoveRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    present: (currentType, onSelect) => {
+    present: (currentType, onSelect, onRemove) => {
       setCurrent(currentType);
       onSelectRef.current = onSelect;
+      onRemoveRef.current = onRemove ?? null;
+      setCanRemove(Boolean(onRemove));
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
@@ -34,6 +41,11 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
 
   const handleSelect = (type: SetType) => {
     onSelectRef.current?.(type);
+    sheetRef.current?.dismiss();
+  };
+
+  const handleRemove = () => {
+    onRemoveRef.current?.();
     sheetRef.current?.dismiss();
   };
 
@@ -72,6 +84,15 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
             );
           })}
         </View>
+
+        {canRemove ? (
+          <Button variant="destructive" onPress={handleRemove}>
+            <Icon as={Trash2} size={16} className="text-white" />
+            <Text className="font-sans-semibold text-sm text-white">
+              {t('workoutExecutionScreen.setTypePicker.removeSet')}
+            </Text>
+          </Button>
+        ) : null}
       </BottomSheetView>
     </BottomSheet>
   );

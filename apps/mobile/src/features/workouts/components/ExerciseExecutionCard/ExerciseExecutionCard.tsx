@@ -38,7 +38,7 @@ export function ExerciseExecutionCard({
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
   const { control } = useFormContext<ExecutionFormInput>();
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: `exercises.${exerciseIndex}.sets`,
   });
@@ -125,7 +125,11 @@ export function ExerciseExecutionCard({
                 setIndex={setIndex}
                 target={setTargets[setIndex] ?? ''}
                 onPressType={(currentType, onChange) =>
-                  setTypePickerRef.current?.present(currentType, onChange)
+                  setTypePickerRef.current?.present(
+                    currentType,
+                    onChange,
+                    fields.length > 1 ? () => remove(setIndex) : undefined,
+                  )
                 }
               />
             ))}

@@ -28,5 +28,6 @@ export default {
     title: 'Set type',
     rules:
       'Warmup sets must come before the others. Drop sets and cluster sets must be followed by a normal set or another set of the same type.',
+    removeSet: 'Delete set',
   },
 };
