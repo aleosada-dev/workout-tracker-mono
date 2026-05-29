@@ -1,7 +1,24 @@
 import type { WorkoutLogRepository } from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
+import { type LastLogRow, toWorkoutLogLast } from './supabase-workout-logs-last-mapper';
 import { type SummaryRow, toWorkoutLogSummary } from './supabase-workout-logs-summary-mapper';
+
+const LAST_SELECT = `
+  id,
+  workout_id,
+  started_at,
+  finished_at,
+  workout_exercise_logs(
+    variation_id,
+    position,
+    superset_group_id,
+    exercise_name,
+    variation_name,
+    variation:variations_view(name, exercise_name),
+    workout_exercise_set_logs(set_order, set_type, weight_kg, reps)
+  )
+` as const;
 
 const SUMMARIES_SELECT = `
   id,
@@ -43,6 +60,41 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
       return {
         items: pageRows.map(toWorkoutLogSummary),
         hasMore,
+      };
+    },
+
+    async getLast({ workoutId }) {
+      const { data: workout, error: workoutError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('id', workoutId)
+        .is('archived_at', null)
+        .maybeSingle();
+
+      if (workoutError) {
+        throw supabaseError('Failed to check workout for last log', workoutError);
+      }
+      if (!workout) {
+        return { workoutFound: false };
+      }
+
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select(LAST_SELECT)
+        .eq('workout_id', workoutId)
+        .is('deleted_at', null)
+        .order('finished_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        throw supabaseError('Failed to get last workout log', error);
+      }
+
+      const row = data as unknown as LastLogRow | null;
+      return {
+        workoutFound: true,
+        log: row ? toWorkoutLogLast(row) : null,
       };
     },
   };

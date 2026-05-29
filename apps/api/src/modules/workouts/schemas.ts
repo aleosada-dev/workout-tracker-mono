@@ -5,6 +5,7 @@ import {
 	type Workout,
 	type WorkoutDetail,
 	type WorkoutFolder,
+	type WorkoutLogLast,
 } from "@workout-tracker/domain";
 import { z } from "zod";
 
@@ -298,6 +299,38 @@ export function toWorkoutResponse(workout: Workout): WorkoutResponse {
 		createdAt: workout.createdAt.toISOString(),
 		updatedAt: workout.updatedAt.toISOString(),
 	};
+}
+
+export const WorkoutLogLastSetResponseSchema = z.object({
+	setOrder: z.int().nonnegative(),
+	setType: WorkoutSetTypeSchema,
+	weightKg: z.number().nonnegative().nullable(),
+	reps: z.int().positive().nullable(),
+});
+
+export const WorkoutLogLastExerciseResponseSchema = z.object({
+	variationId: z.uuid().nullable(),
+	exerciseName: z.string().trim().min(1).nullable(),
+	variationName: z.string().trim().min(1).nullable(),
+	position: z.int().nonnegative(),
+	supersetGroupId: z.uuid().nullable(),
+	sets: z.array(WorkoutLogLastSetResponseSchema),
+});
+
+export const WorkoutLogLastResponseSchema = z
+	.object({
+		workoutLogId: z.uuid(),
+		workoutId: z.uuid(),
+		startedAt: z.iso.datetime({ offset: true }),
+		finishedAt: z.iso.datetime({ offset: true }),
+		exercises: z.array(WorkoutLogLastExerciseResponseSchema),
+	})
+	.nullable();
+
+export type WorkoutLogLastResponse = z.infer<typeof WorkoutLogLastResponseSchema>;
+
+export function toWorkoutLogLastResponse(log: WorkoutLogLast): NonNullable<WorkoutLogLastResponse> {
+	return log;
 }
 
 export function toWorkoutFolderResponse(folder: WorkoutFolder): WorkoutFolderResponse {

@@ -19,6 +19,7 @@ import {
 	MoveWorkoutsResponseSchema,
 	toWorkoutDetailResponse,
 	toWorkoutFolderResponse,
+	toWorkoutLogLastResponse,
 	toWorkoutResponse,
 	UpdateWorkoutFolderRequestSchema,
 	WorkoutDetailResponseSchema,
@@ -27,6 +28,7 @@ import {
 	WorkoutFolderResponseSchema,
 	WorkoutIdParamSchema,
 	WorkoutListResponseSchema,
+	WorkoutLogLastResponseSchema,
 } from "./schemas";
 
 export const workoutsRouter = new Hono<AppBindings>()
@@ -297,6 +299,35 @@ export const workoutsRouter = new Hono<AppBindings>()
 			const { moveWorkouts } = c.get("container").workouts;
 			const { movedIds } = await moveWorkouts({ userId, workoutIds, targetFolderId });
 			return c.json({ movedIds });
+		},
+	)
+	.get(
+		"/:id/workout-logs/last",
+		describeRoute({
+			summary: "Get the last workout log for a workout (placeholder reference)",
+			tags: ["Workouts"],
+			responses: {
+				200: {
+					description: "OK (null when the workout has never been executed)",
+					content: {
+						"application/json": {
+							schema: resolver(WorkoutLogLastResponseSchema),
+						},
+					},
+				},
+				401: { description: "Unauthorized" },
+				404: { description: "Workout not found" },
+			},
+		}),
+		validator("param", WorkoutIdParamSchema),
+		async (c) => {
+			const { id: workoutId } = c.req.valid("param");
+			const { getLast } = c.get("container").workoutLogs;
+			const result = await getLast({ workoutId });
+			if (!result.workoutFound) {
+				throw new NotFoundError("workout");
+			}
+			return c.json(result.log ? toWorkoutLogLastResponse(result.log) : null);
 		},
 	)
 	.post(
