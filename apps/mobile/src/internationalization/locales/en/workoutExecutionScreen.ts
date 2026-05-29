@@ -33,13 +33,13 @@ export default {
     save: 'Save',
   },
   kgLbsCalculatorSheet: {
-    title: 'kg / lbs calculator',
+    title: 'Calculator (kg x lbs)',
     headers: {
       kg: 'Kilograms',
       lb: 'Pounds',
     },
     swap: 'Swap units',
-    copy: 'Copy converted value',
+    copy: 'Copy',
   },
   timerSheet: {
     title: 'Clock',
@@ -51,6 +51,7 @@ export default {
     pause: 'Pause',
     resume: 'Resume',
     stop: 'Stop',
+    reset: 'Reset',
     confirm: 'Done',
     notification: {
       title: 'Rest finished',

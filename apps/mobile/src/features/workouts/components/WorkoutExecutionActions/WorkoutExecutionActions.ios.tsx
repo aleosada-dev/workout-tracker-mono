@@ -31,7 +31,7 @@ export function WorkoutExecutionActions({
         <Stack.Toolbar.MenuAction icon="plus" onPress={onAddExercise}>
           {t('workoutExecutionScreen.actions.addExercise')}
         </Stack.Toolbar.MenuAction>
-        <Stack.Toolbar.MenuAction icon="arrow.left.arrow.right" onPress={onKgLbsCalculator}>
+        <Stack.Toolbar.MenuAction icon="plus.forwardslash.minus" onPress={onKgLbsCalculator}>
           {t('workoutExecutionScreen.actions.kgLbsCalculator')}
         </Stack.Toolbar.MenuAction>
       </Stack.Toolbar.Menu>

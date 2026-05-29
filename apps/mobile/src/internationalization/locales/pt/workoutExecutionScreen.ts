@@ -33,13 +33,13 @@ export default {
     save: 'Salvar',
   },
   kgLbsCalculatorSheet: {
-    title: 'Calculadora kg x libras',
+    title: 'Calculadora (kg x lbs)',
     headers: {
       kg: 'Quilos',
       lb: 'Libras',
     },
     swap: 'Inverter unidades',
-    copy: 'Copiar valor convertido',
+    copy: 'Copiar',
   },
   timerSheet: {
     title: 'Relógio',
@@ -51,6 +51,7 @@ export default {
     pause: 'Pausar',
     resume: 'Retomar',
     stop: 'Encerrar',
+    reset: 'Limpar',
     confirm: 'Confirmar',
     notification: {
       title: 'Descanso concluído',

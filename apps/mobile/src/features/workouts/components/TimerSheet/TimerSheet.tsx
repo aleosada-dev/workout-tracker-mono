@@ -3,17 +3,22 @@ import {
   type BottomSheetRef,
   BottomSheetView,
   Button,
+  Icon,
   Tabs,
   TabsList,
   TabsTrigger,
   Text,
 } from '@workout-tracker/ui-mobile';
+import { Check, Pause, Play, Square } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useCountdownTimer } from '@/features/shared/hooks/use-countdown-timer';
+import { StopwatchView } from './StopwatchView';
 import { TimerRing } from './TimerRing';
 import { TimeWheelPicker } from './TimeWheelPicker';
+
+type Tab = 'timer' | 'stopwatch';
 
 const PRESETS_SECONDS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 60;
@@ -31,6 +36,7 @@ type Props = {
 export function TimerSheet({ ref }: Props) {
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetRef>(null);
+  const [tab, setTab] = useState<Tab>('timer');
   const [duration, setDuration] = useState(DEFAULT_DURATION);
   const [totalMs, setTotalMs] = useState(DEFAULT_DURATION * 1000);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -90,21 +96,24 @@ export function TimerSheet({ ref }: Props) {
           {t('workoutExecutionScreen.timerSheet.title')}
         </Text>
 
-        <Tabs value="timer" onValueChange={() => {}}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
           <TabsList variant="outline">
             <TabsTrigger value="timer" className="flex-1">
               <Text>{t('workoutExecutionScreen.timerSheet.tabs.timer')}</Text>
             </TabsTrigger>
-            <TabsTrigger value="stopwatch" disabled className="flex-1">
+            <TabsTrigger value="stopwatch" className="flex-1">
               <Text>{t('workoutExecutionScreen.timerSheet.tabs.stopwatch')}</Text>
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {isIdle && pickerOpen ? (
+        {tab === 'stopwatch' ? (
+          <StopwatchView />
+        ) : isIdle && pickerOpen ? (
           <View className="gap-3">
             <TimeWheelPicker totalSeconds={duration} onChange={handlePickerChange} />
             <Button variant="outline" onPress={() => setPickerOpen(false)}>
+              <Icon as={Check} size={18} className="text-foreground" />
               <Text>{t('workoutExecutionScreen.timerSheet.confirm')}</Text>
             </Button>
           </View>
@@ -156,8 +165,9 @@ export function TimerSheet({ ref }: Props) {
           </>
         )}
 
-        {isIdle && !pickerOpen ? (
+        {tab === 'stopwatch' ? null : isIdle && !pickerOpen ? (
           <Button onPress={handleStart} disabled={duration <= 0}>
+            <Icon as={Play} size={18} className="text-primary-foreground" />
             <Text>{t('workoutExecutionScreen.timerSheet.start')}</Text>
           </Button>
         ) : !isIdle ? (
@@ -167,6 +177,7 @@ export function TimerSheet({ ref }: Props) {
               className="flex-1"
               onPress={timer.isPaused ? timer.resume : timer.pause}
             >
+              <Icon as={timer.isPaused ? Play : Pause} size={18} className="text-foreground" />
               <Text>
                 {t(
                   timer.isPaused
@@ -176,6 +187,7 @@ export function TimerSheet({ ref }: Props) {
               </Text>
             </Button>
             <Button variant="destructive" className="flex-1" onPress={handleStop}>
+              <Icon as={Square} size={18} className="text-white" />
               <Text>{t('workoutExecutionScreen.timerSheet.stop')}</Text>
             </Button>
           </View>

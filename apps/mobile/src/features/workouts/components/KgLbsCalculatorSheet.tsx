@@ -9,7 +9,7 @@ import {
   Text,
 } from '@workout-tracker/ui-mobile';
 import * as Clipboard from 'expo-clipboard';
-import { ArrowLeftRight } from 'lucide-react-native';
+import { ArrowLeftRight, Copy } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -110,6 +110,7 @@ export function KgLbsCalculatorSheet({ ref }: Props) {
         </View>
 
         <Button onPress={handleCopy} disabled={converted === ''}>
+          <Icon as={Copy} size={18} className="text-primary-foreground" />
           <Text>{t('workoutExecutionScreen.kgLbsCalculatorSheet.copy')}</Text>
         </Button>
       </BottomSheetView>
