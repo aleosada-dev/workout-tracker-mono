@@ -16,7 +16,12 @@ import { Clock, StickyNote } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Platform, useWindowDimensions, View } from 'react-native';
+import {
+  useReanimatedFocusedInput,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import {
   openExercisePicker,
   type PickedExercise,
@@ -25,6 +30,10 @@ import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
 import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
+import {
+  WorkoutNotesSheet,
+  type WorkoutNotesSheetRef,
+} from '@/features/workouts/components/WorkoutNotesSheet';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import {
   buildExecutionFromWorkout,
@@ -62,6 +71,7 @@ export default function WorkoutExecutionScreen() {
       activeWorkout$.set({
         startedAt: new Date().toISOString(),
         athleteName: athleteName ?? null,
+        note: null,
         workout_template: structuredClone(workoutTemplate),
         workout_execution: buildExecutionFromWorkout(workoutTemplate),
       });
@@ -78,6 +88,22 @@ export default function WorkoutExecutionScreen() {
 function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<ExecutionTab>('preparatorio');
+  const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
+  const { height: screenHeight } = useWindowDimensions();
+  const { height: kbHeight } = useReanimatedKeyboardAnimation();
+  const { input: focusedInput } = useReanimatedFocusedInput();
+
+  const tabsAnimatedStyle = useAnimatedStyle(() => {
+    const keyboardHeight = -kbHeight.value;
+    const focused = focusedInput.value;
+    if (keyboardHeight <= 0 || !focused) {
+      return { transform: [{ translateY: withTiming(0, { duration: 150 }) }] };
+    }
+    const inputBottom = focused.layout.absoluteY + focused.layout.height;
+    const keyboardTop = screenHeight - keyboardHeight;
+    const overlap = Math.max(0, inputBottom - keyboardTop + 16);
+    return { transform: [{ translateY: -overlap }] };
+  });
 
   const { workout_template: workout } = active;
   const exercises = useValue(
@@ -164,41 +190,44 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
             </Alert>
           </View>
         ) : null}
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as ExecutionTab)}
-          className="flex-1 px-4"
-        >
-          <TabsList variant="outline" className="w-full">
-            <TabsTrigger value="preparatorio" className="flex-1">
-              <Text>{t('workoutExecutionScreen.tabs.preparatorio')}</Text>
-            </TabsTrigger>
-            <TabsTrigger value="musculacao" className="flex-1">
-              <Text>{t('workoutExecutionScreen.tabs.musculacao')}</Text>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="preparatorio" className="flex-1">
-            <ExerciseExecutionList
-              exercises={warmupItems}
-              onAddExercise={handleAddExercise}
-              onDeleteExercise={handleDeleteExercise}
-            />
-          </TabsContent>
-          <TabsContent value="musculacao" className="flex-1">
-            <ExerciseExecutionList
-              exercises={strengthItems}
-              onAddExercise={handleAddExercise}
-              onDeleteExercise={handleDeleteExercise}
-            />
-          </TabsContent>
-        </Tabs>
+        <Animated.View style={[{ flex: 1 }, tabsAnimatedStyle]}>
+          <Tabs
+            value={tab}
+            onValueChange={(value) => setTab(value as ExecutionTab)}
+            className="flex-1 px-4"
+          >
+            <TabsList variant="outline" className="w-full">
+              <TabsTrigger value="preparatorio" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.preparatorio')}</Text>
+              </TabsTrigger>
+              <TabsTrigger value="musculacao" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.musculacao')}</Text>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="preparatorio" className="flex-1">
+              <ExerciseExecutionList
+                exercises={warmupItems}
+                onAddExercise={handleAddExercise}
+                onDeleteExercise={handleDeleteExercise}
+              />
+            </TabsContent>
+            <TabsContent value="musculacao" className="flex-1">
+              <ExerciseExecutionList
+                exercises={strengthItems}
+                onAddExercise={handleAddExercise}
+                onDeleteExercise={handleDeleteExercise}
+              />
+            </TabsContent>
+          </Tabs>
+        </Animated.View>
         <WorkoutExecutionActions
           onFinish={handleFinish}
           onTimer={() => {}}
-          onNotes={() => {}}
+          onNotes={() => notesSheetRef.current?.present()}
           onAddExercise={handleAddExercise}
           onKgLbsCalculator={() => {}}
         />
+        <WorkoutNotesSheet ref={notesSheetRef} />
       </View>
     </FormProvider>
   );

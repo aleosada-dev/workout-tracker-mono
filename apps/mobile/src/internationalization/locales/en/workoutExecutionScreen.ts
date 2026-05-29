@@ -26,6 +26,12 @@ export default {
       target: 'Target',
     },
   },
+  notesSheet: {
+    title: 'Workout notes',
+    subtitle: 'Jot down anything worth remembering later.',
+    placeholder: 'How the warmup felt, adjustments, cues…',
+    save: 'Save',
+  },
   setTypePicker: {
     title: 'Set type',
     rules:

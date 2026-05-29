@@ -26,6 +26,12 @@ export default {
       target: 'Alvo',
     },
   },
+  notesSheet: {
+    title: 'Notas do treino',
+    subtitle: 'Anote observações que valham a pena lembrar mais tarde.',
+    placeholder: 'Como foi o aquecimento, sensações, ajustes…',
+    save: 'Salvar',
+  },
   setTypePicker: {
     title: 'Tipo de série',
     rules:
