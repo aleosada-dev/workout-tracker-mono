@@ -41,6 +41,22 @@ export default {
     swap: 'Inverter unidades',
     copy: 'Copiar valor convertido',
   },
+  timerSheet: {
+    title: 'Relógio',
+    tabs: {
+      timer: 'Temporizador',
+      stopwatch: 'Cronômetro',
+    },
+    start: 'Iniciar',
+    pause: 'Pausar',
+    resume: 'Retomar',
+    stop: 'Encerrar',
+    confirm: 'Confirmar',
+    notification: {
+      title: 'Descanso concluído',
+      body: 'Hora da próxima série.',
+    },
+  },
   setTypePicker: {
     title: 'Tipo de série',
     rules:

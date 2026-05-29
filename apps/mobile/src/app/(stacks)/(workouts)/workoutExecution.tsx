@@ -32,6 +32,7 @@ import {
   KgLbsCalculatorSheet,
   type KgLbsCalculatorSheetRef,
 } from '@/features/workouts/components/KgLbsCalculatorSheet';
+import { TimerSheet, type TimerSheetRef } from '@/features/workouts/components/TimerSheet';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
 import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
 import {
@@ -94,6 +95,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const [tab, setTab] = useState<ExecutionTab>('preparatorio');
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
   const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
+  const timerSheetRef = useRef<TimerSheetRef>(null);
   const { height: screenHeight } = useWindowDimensions();
   const { height: kbHeight } = useReanimatedKeyboardAnimation();
   const { input: focusedInput } = useReanimatedFocusedInput();
@@ -227,13 +229,14 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         </Animated.View>
         <WorkoutExecutionActions
           onFinish={handleFinish}
-          onTimer={() => {}}
+          onTimer={() => timerSheetRef.current?.present()}
           onNotes={() => notesSheetRef.current?.present()}
           onAddExercise={handleAddExercise}
           onKgLbsCalculator={() => kgLbsCalculatorSheetRef.current?.present()}
         />
         <WorkoutNotesSheet ref={notesSheetRef} />
         <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
+        <TimerSheet ref={timerSheetRef} />
       </View>
     </FormProvider>
   );

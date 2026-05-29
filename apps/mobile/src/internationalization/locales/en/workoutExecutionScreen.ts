@@ -41,6 +41,22 @@ export default {
     swap: 'Swap units',
     copy: 'Copy converted value',
   },
+  timerSheet: {
+    title: 'Clock',
+    tabs: {
+      timer: 'Timer',
+      stopwatch: 'Stopwatch',
+    },
+    start: 'Start',
+    pause: 'Pause',
+    resume: 'Resume',
+    stop: 'Stop',
+    confirm: 'Done',
+    notification: {
+      title: 'Rest finished',
+      body: 'Time for the next set.',
+    },
+  },
   setTypePicker: {
     title: 'Set type',
     rules:
