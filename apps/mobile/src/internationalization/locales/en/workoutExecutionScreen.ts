@@ -32,6 +32,15 @@ export default {
     placeholder: 'How the warmup felt, adjustments, cues…',
     save: 'Save',
   },
+  kgLbsCalculatorSheet: {
+    title: 'kg / lbs calculator',
+    headers: {
+      kg: 'Kilograms',
+      lb: 'Pounds',
+    },
+    swap: 'Swap units',
+    copy: 'Copy converted value',
+  },
   setTypePicker: {
     title: 'Set type',
     rules:

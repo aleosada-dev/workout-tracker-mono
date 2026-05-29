@@ -28,6 +28,10 @@ import {
 } from '@/features/exercises/state/exercise-picker-bridge';
 import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
+import {
+  KgLbsCalculatorSheet,
+  type KgLbsCalculatorSheetRef,
+} from '@/features/workouts/components/KgLbsCalculatorSheet';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
 import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
 import {
@@ -89,6 +93,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<ExecutionTab>('preparatorio');
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
+  const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
   const { height: screenHeight } = useWindowDimensions();
   const { height: kbHeight } = useReanimatedKeyboardAnimation();
   const { input: focusedInput } = useReanimatedFocusedInput();
@@ -225,9 +230,10 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
           onTimer={() => {}}
           onNotes={() => notesSheetRef.current?.present()}
           onAddExercise={handleAddExercise}
-          onKgLbsCalculator={() => {}}
+          onKgLbsCalculator={() => kgLbsCalculatorSheetRef.current?.present()}
         />
         <WorkoutNotesSheet ref={notesSheetRef} />
+        <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
       </View>
     </FormProvider>
   );

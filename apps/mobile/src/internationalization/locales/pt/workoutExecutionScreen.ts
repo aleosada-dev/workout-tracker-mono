@@ -32,6 +32,15 @@ export default {
     placeholder: 'Como foi o aquecimento, sensações, ajustes…',
     save: 'Salvar',
   },
+  kgLbsCalculatorSheet: {
+    title: 'Calculadora kg x libras',
+    headers: {
+      kg: 'Quilos',
+      lb: 'Libras',
+    },
+    swap: 'Inverter unidades',
+    copy: 'Copiar valor convertido',
+  },
   setTypePicker: {
     title: 'Tipo de série',
     rules:

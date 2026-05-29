@@ -24,6 +24,7 @@ export * from './shared/not-found-error';
 export * from './shared/numbers';
 export * from './shared/type-helpers';
 export * from './shared/validation-error';
+export * from './shared/weight-conversion';
 export * from './workout-logs/workout-log-repo';
 export * from './workout-logs/workout-log-summary';
 export * from './workouts/workout';
