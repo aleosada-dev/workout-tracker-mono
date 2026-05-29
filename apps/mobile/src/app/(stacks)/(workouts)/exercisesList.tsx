@@ -1,17 +1,14 @@
+import { useValue } from '@legendapp/state/react';
 import { FlashList } from '@shopify/flash-list';
-import { Button, EmptyState, Input, Text } from '@workout-tracker/ui-mobile';
-import { router, useFocusEffect } from 'expo-router';
+import { Button, EmptyState, Text } from '@workout-tracker/ui-mobile';
+import { router } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { Funnel } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { useSession } from '@/features/auth/hooks/useSession';
-import {
-  EMPTY_EXERCISE_LIST_PARAMS,
-  type ExerciseListParams,
-} from '@/features/exercises/api/exercises';
+import { EMPTY_EXERCISE_LIST_PARAMS } from '@/features/exercises/api/exercises';
 import {
   BulkCopyExercisesSheet,
   type BulkCopyExercisesSheetRef,
@@ -21,6 +18,7 @@ import {
   type BulkDeleteExercisesSheetRef,
 } from '@/features/exercises/components/BulkDeleteExercisesSheet';
 import { ExerciseCard, ExerciseCardSkeleton } from '@/features/exercises/components/ExerciseCard';
+import { ExerciseSearchField } from '@/features/exercises/components/ExerciseSearchField';
 import {
   BrowseToolbar,
   type IconAction,
@@ -28,29 +26,18 @@ import {
 } from '@/features/exercises/components/ExercisesListToolbar';
 import { useBulkCopyExercises } from '@/features/exercises/hooks/use-bulk-copy-exercises';
 import { useBulkDeleteExercises } from '@/features/exercises/hooks/use-bulk-delete-exercises';
+import { useExerciseListItems } from '@/features/exercises/hooks/use-exercise-list-items';
 import { useExerciseSelection } from '@/features/exercises/hooks/use-exercise-selection';
-import { useExercises } from '@/features/exercises/hooks/use-exercises';
-import { toExercise } from '@/features/exercises/lib/format';
 import { countActiveFilters } from '@/features/exercises/lib/list.helpers';
-import type { ExerciseListItem } from '@/features/exercises/lib/list.types';
 import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
-import { normalizeString } from '@/features/shared/lib/utils';
 
 export default function ExercisesListScreen() {
-  const { t, i18n } = useTranslation();
-  const { session } = useSession();
-  const currentUserId = session?.user.id ?? null;
+  const { t } = useTranslation();
 
-  const [filters, setFilters] = useState<ExerciseListParams>(() => exerciseFilters$.get());
-  useFocusEffect(
-    useCallback(() => {
-      setFilters(exerciseFilters$.get());
-    }, []),
-  );
-
+  const filters = useValue(exerciseFilters$);
   // The filter is scoped to this screen — drop it when the list unmounts.
   useEffect(() => {
     return () => {
@@ -58,33 +45,22 @@ export default function ExercisesListScreen() {
     };
   }, []);
 
-  const { data, isLoading, isError, error, refetch, dataUpdatedAt } = useExercises(filters);
+  const [query, setQuery] = useState('');
+  const {
+    items: exercises,
+    filteredItems: filteredExercises,
+    currentUserId,
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    dataUpdatedAt,
+  } = useExerciseListItems({ filters, query });
+
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercises',
   });
-
-  const exercises = useMemo<ExerciseListItem[]>(
-    () =>
-      (data ?? [])
-        .flatMap((exercise) =>
-          exercise.variations.map((variation) =>
-            toExercise(exercise, variation, i18n.language, t, currentUserId),
-          ),
-        )
-        .sort((a, b) => a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base' })),
-    [data, i18n.language, t, currentUserId],
-  );
-
-  const [query, setQuery] = useState('');
-  const filteredExercises = useMemo(() => {
-    const q = normalizeString(query.trim());
-    if (!q) return exercises;
-    return exercises.filter(
-      (e) =>
-        normalizeString(e.name).includes(q) ||
-        (e.variationName ? normalizeString(e.variationName).includes(q) : false),
-    );
-  }, [exercises, query]);
 
   const { mode, selected, allSelected, enterSelect, exitSelect, toggle, toggleSelectAll } =
     useExerciseSelection(filteredExercises.map((e) => e.id));
@@ -185,7 +161,10 @@ export default function ExercisesListScreen() {
     [filters, dataUpdatedAt],
   );
 
-  if (isLoading) return <ExercisesListLoading />;
+  // `useSession` is per-component and yields `session=null` on the first tick,
+  // which leaves the query disabled and `isLoading=false`. Without the `!data`
+  // guard the FlashList would briefly render its empty state on mount.
+  if (isLoading || (!data && !isError)) return <ExercisesListLoading />;
   if (isError && exercises.length === 0) {
     return (
       <ExercisesListError
@@ -199,18 +178,7 @@ export default function ExercisesListScreen() {
   return (
     <>
       <View className="flex-1 bg-background" testID="exercises-list">
-        <View className="px-4 pt-4 pb-3">
-          <Input
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('exerciseListScreen.searchPlaceholder')}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-            testID="exercises-list.search"
-          />
-        </View>
+        <ExerciseSearchField value={query} onChangeText={setQuery} />
         <FlashList
           key={listKey}
           data={filteredExercises}

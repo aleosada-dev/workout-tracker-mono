@@ -22,14 +22,9 @@ export function BrowseToolbar({ primary, headerAction }: BrowseToolbarProps) {
       />
 
       <View
-        className="border-border border-t bg-background px-4 pt-3"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingBottom: Math.max(insets.bottom, 12),
-        }}
+        pointerEvents="box-none"
+        className="absolute right-0 bottom-0 left-0 bg-transparent px-4 pt-3"
+        style={{ paddingBottom: insets.bottom + 12 }}
       >
         <Button
           size="lg"

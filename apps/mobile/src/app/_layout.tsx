@@ -105,6 +105,13 @@ export default function RootLayout() {
                             presentation: 'modal',
                           }}
                         />
+                        <Stack.Screen
+                          name="(stacks)/(workouts)/exercisePicker"
+                          options={{
+                            title: t('exerciseListScreen.picker.title'),
+                            presentation: 'modal',
+                          }}
+                        />
                         <Stack.Screen name="(stacks)/(workouts)/exerciseDetail" />
                         <Stack.Screen
                           name="(stacks)/(workouts)/exerciseForm"

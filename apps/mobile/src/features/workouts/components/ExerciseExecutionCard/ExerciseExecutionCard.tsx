@@ -54,6 +54,8 @@ export function ExerciseExecutionCard({
     append({
       id: Crypto.randomUUID(),
       type: previous?.type ?? 'normal',
+      repsMin: null,
+      repsMax: null,
       kg: '',
       reps: '',
       done: false,

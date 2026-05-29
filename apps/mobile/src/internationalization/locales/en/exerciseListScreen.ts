@@ -14,10 +14,19 @@ export default {
     filter: 'Filter',
     filterWithCount: 'Filter ({{count}})',
     addExercise: 'Add exercise',
+    addToWorkout: 'Add to workout',
+    createExercise: 'Create exercise',
     share: 'Share',
     move: 'Move',
     copy: 'Copy',
     delete: 'Delete',
+  },
+  picker: {
+    title: 'Add exercises',
+    actions: {
+      more: 'More options',
+      createSuperset: 'Create superset',
+    },
   },
   addExercise: {
     title: 'Add exercise',

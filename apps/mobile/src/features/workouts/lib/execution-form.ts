@@ -1,4 +1,4 @@
-import { WORKOUT_SET_TYPES } from '@workout-tracker/domain';
+import { EXERCISE_TYPES, WORKOUT_SET_TYPES } from '@workout-tracker/domain';
 import { z } from 'zod';
 import {
   countFractionDigits,
@@ -29,13 +29,34 @@ const repsField = z
 export const ExecutionSetSchema = z.object({
   id: z.string(),
   type: z.enum(WORKOUT_SET_TYPES),
+  repsMin: z.int().positive().nullable(),
+  repsMax: z.int().positive().nullable(),
   kg: weightField,
   reps: repsField,
   done: z.boolean(),
 });
 
+export const ExecutionExerciseVariationSchema = z.object({
+  id: z.string(),
+  slug: z.string().nullable(),
+  name: z.string().nullable(),
+  exercise: z.object({
+    slug: z.string().nullable(),
+    name: z.string(),
+    type: z.enum(EXERCISE_TYPES),
+  }),
+  equipment: z.object({
+    slug: z.string(),
+    preposition: z.string(),
+  }),
+  muscle: z.object({ slug: z.string() }),
+  secondaryMuscle: z.object({ slug: z.string() }).nullable(),
+});
+
 export const ExecutionExerciseSchema = z.object({
   id: z.string(),
+  position: z.int().nonnegative(),
+  variation: ExecutionExerciseVariationSchema,
   sets: z.array(ExecutionSetSchema),
 });
 
@@ -45,14 +66,20 @@ export const ExecutionFormSchema = z.object({
 
 export type ExecutionFormInput = z.input<typeof ExecutionFormSchema>;
 export type ExecutionFormValues = z.output<typeof ExecutionFormSchema>;
+export type ExecutionExerciseInput = ExecutionFormInput['exercises'][number];
+export type ExecutionExerciseVariation = z.infer<typeof ExecutionExerciseVariationSchema>;
 
 export function buildExecutionFromWorkout(workout: GetWorkoutResponse): ExecutionFormInput {
   return {
     exercises: workout.exercises.map((exercise) => ({
       id: exercise.id,
+      position: exercise.position,
+      variation: exercise.variation,
       sets: exercise.sets.map((set) => ({
         id: set.id,
         type: set.setType,
+        repsMin: set.repsMin,
+        repsMax: set.repsMax,
         kg: '',
         reps: '',
         done: false,

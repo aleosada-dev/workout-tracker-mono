@@ -10,12 +10,17 @@ import {
   TabsTrigger,
   Text,
 } from '@workout-tracker/ui-mobile';
+import * as Crypto from 'expo-crypto';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Clock, StickyNote } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Platform, View } from 'react-native';
+import {
+  openExercisePicker,
+  type PickedExercise,
+} from '@/features/exercises/state/exercise-picker-bridge';
 import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
@@ -23,6 +28,7 @@ import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import {
   buildExecutionFromWorkout,
+  type ExecutionExerciseInput,
   type ExecutionFormInput,
   ExecutionFormSchema,
   type ExecutionFormValues,
@@ -31,6 +37,9 @@ import { toExerciseExecutionItems } from '@/features/workouts/lib/workout-mapper
 import { type ActiveWorkout, activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
 type ExecutionTab = 'preparatorio' | 'musculacao';
+
+const DEFAULT_NEW_SET_REPS_MIN = 8;
+const DEFAULT_NEW_SET_REPS_MAX = 12;
 
 export default function WorkoutExecutionScreen() {
   const active = useValue(activeWorkout$);
@@ -47,10 +56,13 @@ export default function WorkoutExecutionScreen() {
 
   useEffect(() => {
     if (!active && workoutTemplate) {
+      // Deep-clone before seeding: legend-state v3 stores the passed object by
+      // reference, so any later mutation under `activeWorkout$` would leak back
+      // into the React Query cache.
       activeWorkout$.set({
         startedAt: new Date().toISOString(),
         athleteName: athleteName ?? null,
-        workout_template: workoutTemplate,
+        workout_template: structuredClone(workoutTemplate),
         workout_execution: buildExecutionFromWorkout(workoutTemplate),
       });
     }
@@ -68,20 +80,22 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const [tab, setTab] = useState<ExecutionTab>('preparatorio');
 
   const { workout_template: workout } = active;
+  const exercises = useValue(
+    activeWorkout$.workout_execution.exercises,
+  ) as ExecutionExerciseInput[];
 
-  const preparatorioItems = useMemo(
-    () => toExerciseExecutionItems(workout, 'preparatorio', t, i18n.language),
-    [workout, t, i18n.language],
+  const warmupItems = useMemo(
+    () => toExerciseExecutionItems(exercises, 'preparatorio', t, i18n.language),
+    [exercises, t, i18n.language],
   );
-  const musculacaoItems = useMemo(
-    () => toExerciseExecutionItems(workout, 'musculacao', t, i18n.language),
-    [workout, t, i18n.language],
+  const strengthItems = useMemo(
+    () => toExerciseExecutionItems(exercises, 'musculacao', t, i18n.language),
+    [exercises, t, i18n.language],
   );
 
   const form = useForm<ExecutionFormInput, unknown, ExecutionFormValues>({
     resolver: zodResolver(ExecutionFormSchema),
-    // biome-ignore lint/correctness/useExhaustiveDependencies: snapshot defaults once on mount; updates come through the form, not the observable
-    defaultValues: useMemo(() => active.workout_execution, []),
+    defaultValues: active.workout_execution,
     mode: 'onTouched',
   });
 
@@ -102,10 +116,24 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   useEffect(() => {
     if (initialTabSetRef.current) return;
     initialTabSetRef.current = true;
-    if (preparatorioItems.length === 0) setTab('musculacao');
-  }, [preparatorioItems.length]);
+    if (warmupItems.length === 0) setTab('musculacao');
+  }, [warmupItems.length]);
 
-  const handleAddExercise = () => {};
+  const handleAddExercise = () => {
+    openExercisePicker({
+      onPick: (picked) => {
+        if (picked.length === 0) return;
+        const currentFormExercises = form.getValues('exercises') ?? [];
+        const startPosition = currentFormExercises.length;
+        const additions = picked.map((p, i) =>
+          buildExecutionExerciseFromPicked(p, startPosition + i),
+        );
+        form.setValue('exercises', [...currentFormExercises, ...additions], {
+          shouldDirty: true,
+        });
+      },
+    });
+  };
 
   return (
     <FormProvider {...form}>
@@ -142,13 +170,10 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="preparatorio" className="flex-1">
-            <ExerciseExecutionList
-              exercises={preparatorioItems}
-              onAddExercise={handleAddExercise}
-            />
+            <ExerciseExecutionList exercises={warmupItems} onAddExercise={handleAddExercise} />
           </TabsContent>
           <TabsContent value="musculacao" className="flex-1">
-            <ExerciseExecutionList exercises={musculacaoItems} onAddExercise={handleAddExercise} />
+            <ExerciseExecutionList exercises={strengthItems} onAddExercise={handleAddExercise} />
           </TabsContent>
         </Tabs>
         <WorkoutExecutionActions
@@ -161,6 +186,45 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
       </View>
     </FormProvider>
   );
+}
+
+function buildExecutionExerciseFromPicked(
+  picked: PickedExercise,
+  position: number,
+): ExecutionExerciseInput {
+  return {
+    id: Crypto.randomUUID(),
+    position,
+    variation: {
+      id: picked.variation.id,
+      slug: picked.variation.slug,
+      name: picked.variation.name,
+      exercise: {
+        slug: picked.exercise.slug,
+        name: picked.exercise.name,
+        type: picked.exercise.type,
+      },
+      equipment: {
+        slug: picked.variation.equipment.slug,
+        preposition: picked.variation.equipment.preposition,
+      },
+      muscle: { slug: picked.variation.muscle.slug },
+      secondaryMuscle: picked.variation.secondaryMuscle
+        ? { slug: picked.variation.secondaryMuscle.slug }
+        : null,
+    },
+    sets: [
+      {
+        id: Crypto.randomUUID(),
+        type: 'normal',
+        repsMin: DEFAULT_NEW_SET_REPS_MIN,
+        repsMax: DEFAULT_NEW_SET_REPS_MAX,
+        kg: '',
+        reps: '',
+        done: false,
+      },
+    ],
+  };
 }
 
 function ElapsedTimeDisplay({ startedAt, className }: { startedAt: string; className?: string }) {
