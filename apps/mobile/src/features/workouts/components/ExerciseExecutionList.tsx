@@ -1,9 +1,10 @@
-import { EmptyState, Icon } from '@workout-tracker/ui-mobile';
+import { EmptyState, Icon, Text } from '@workout-tracker/ui-mobile';
 import { router } from 'expo-router';
-import { GripVertical } from 'lucide-react-native';
+import { GripVertical, Trash2, X } from 'lucide-react-native';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, View } from 'react-native';
+import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Sortable, SortableItem, type SortableRenderItemProps } from 'react-native-reanimated-dnd';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExerciseExecutionCard } from '@/features/workouts/components/ExerciseExecutionCard';
@@ -18,12 +19,19 @@ type ListItem =
 type ExerciseExecutionListProps = {
   exercises: ExerciseExecutionItem[];
   onAddExercise?: () => void;
+  onDeleteExercise?: (exerciseIndex: number) => void;
 };
 
-export function ExerciseExecutionList({ exercises, onAddExercise }: ExerciseExecutionListProps) {
+export function ExerciseExecutionList({
+  exercises,
+  onAddExercise,
+  onDeleteExercise,
+}: ExerciseExecutionListProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const spacerHeight = insets.bottom + (Platform.OS === 'ios' ? 70 : 90);
+  const actionsWidth = windowWidth - 32;
 
   const renderItem = useCallback(
     (props: SortableRenderItemProps<ListItem>) => {
@@ -39,30 +47,72 @@ export function ExerciseExecutionList({ exercises, onAddExercise }: ExerciseExec
           </SortableItem>
         );
       }
+      const card = (
+        <ExerciseExecutionCard
+          exerciseIndex={item.exerciseIndex}
+          name={item.name}
+          variationName={item.variationName ?? undefined}
+          note={item.note}
+          restSeconds={item.restSeconds}
+          setTargets={item.setTargets}
+          onPressHeader={() =>
+            router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
+          }
+          dragHandle={
+            <SortableItem.Handle>
+              <Icon as={GripVertical} size={18} className="text-muted-foreground" />
+            </SortableItem.Handle>
+          }
+        />
+      );
       return (
         <SortableItem key={id} id={id} data={item} {...rest}>
           <View className="pb-3">
-            <ExerciseExecutionCard
-              exerciseIndex={item.exerciseIndex}
-              name={item.name}
-              variationName={item.variationName ?? undefined}
-              note={item.note}
-              restSeconds={item.restSeconds}
-              setTargets={item.setTargets}
-              onPressHeader={() =>
-                router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
-              }
-              dragHandle={
-                <SortableItem.Handle>
-                  <Icon as={GripVertical} size={18} className="text-muted-foreground" />
-                </SortableItem.Handle>
-              }
-            />
+            {onDeleteExercise ? (
+              <ReanimatedSwipeable
+                friction={2}
+                rightThreshold={48}
+                overshootRight={false}
+                renderRightActions={(_progress, _translation, methods) => (
+                  <View
+                    style={{ width: actionsWidth }}
+                    className="flex-row items-center justify-around"
+                  >
+                    <Pressable
+                      onPress={() => methods.close()}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('workoutExecutionScreen.exercise.cancel')}
+                      className="items-center justify-center"
+                    >
+                      <Icon as={X} size={24} className="text-muted-foreground" />
+                      <Text className="mt-1 font-sans-semibold text-muted-foreground text-sm">
+                        {t('workoutExecutionScreen.exercise.cancel')}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => onDeleteExercise(item.exerciseIndex)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('workoutExecutionScreen.exercise.delete')}
+                      className="items-center justify-center"
+                    >
+                      <Icon as={Trash2} size={24} className="text-destructive" />
+                      <Text className="mt-1 font-sans-semibold text-destructive text-sm">
+                        {t('workoutExecutionScreen.exercise.delete')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              >
+                {card}
+              </ReanimatedSwipeable>
+            ) : (
+              card
+            )}
           </View>
         </SortableItem>
       );
     },
-    [spacerHeight],
+    [spacerHeight, actionsWidth, onDeleteExercise, t],
   );
 
   if (exercises.length === 0) {

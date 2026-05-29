@@ -18,6 +18,8 @@ export default {
   exercise: {
     addSet: 'Adicionar série',
     noVariation: 'Sem variação',
+    delete: 'Excluir',
+    cancel: 'Cancelar',
     headers: {
       weight: 'Peso',
       reps: 'Reps',

@@ -119,6 +119,14 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     if (warmupItems.length === 0) setTab('musculacao');
   }, [warmupItems.length]);
 
+  const handleDeleteExercise = (exerciseIndex: number) => {
+    const current = form.getValues('exercises') ?? [];
+    const next = current
+      .filter((_, i) => i !== exerciseIndex)
+      .map((exercise, i) => ({ ...exercise, position: i }));
+    form.setValue('exercises', next, { shouldDirty: true });
+  };
+
   const handleAddExercise = () => {
     openExercisePicker({
       onPick: (picked) => {
@@ -170,10 +178,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="preparatorio" className="flex-1">
-            <ExerciseExecutionList exercises={warmupItems} onAddExercise={handleAddExercise} />
+            <ExerciseExecutionList
+              exercises={warmupItems}
+              onAddExercise={handleAddExercise}
+              onDeleteExercise={handleDeleteExercise}
+            />
           </TabsContent>
           <TabsContent value="musculacao" className="flex-1">
-            <ExerciseExecutionList exercises={strengthItems} onAddExercise={handleAddExercise} />
+            <ExerciseExecutionList
+              exercises={strengthItems}
+              onAddExercise={handleAddExercise}
+              onDeleteExercise={handleDeleteExercise}
+            />
           </TabsContent>
         </Tabs>
         <WorkoutExecutionActions

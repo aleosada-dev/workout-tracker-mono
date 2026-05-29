@@ -53,10 +53,9 @@ export function ExerciseExecutionCard({
   const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
 
   const handleAddSet = () => {
-    const previous = fields[fields.length - 1];
     append({
       id: Crypto.randomUUID(),
-      type: previous?.type ?? 'normal',
+      type: 'normal',
       repsMin: null,
       repsMax: null,
       kg: '',
