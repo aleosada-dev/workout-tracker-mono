@@ -29,6 +29,7 @@ export * from './workout-logs/workout-log-last';
 export * from './workout-logs/workout-log-repo';
 export * from './workout-logs/workout-log-summary';
 export * from './workouts/matching';
+export * from './workouts/superset';
 export * from './workouts/workout';
 export * from './workouts/workout-folder';
 export * from './workouts/workout-folder-repo';

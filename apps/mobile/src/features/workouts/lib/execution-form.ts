@@ -66,6 +66,8 @@ export const ExecutionExerciseVariationSchema = z.object({
 export const ExecutionExerciseSchema = z.object({
   id: z.string(),
   position: z.int().nonnegative(),
+  supersetGroupId: z.string(),
+  supersetOrder: z.int().nonnegative(),
   note: z.string().nullable(),
   restSeconds: z.int().nonnegative().nullable(),
   variation: ExecutionExerciseVariationSchema,
@@ -164,6 +166,8 @@ export function buildExecutionFromWorkout(
       return {
         id: exercise.id,
         position: exercise.position,
+        supersetGroupId: exercise.supersetGroupId,
+        supersetOrder: exercise.supersetOrder,
         note: exercise.note,
         restSeconds: exercise.restSeconds,
         variation: exercise.variation,

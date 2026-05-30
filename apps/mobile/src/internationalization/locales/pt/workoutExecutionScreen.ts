@@ -64,5 +64,15 @@ export default {
     rules:
       'Aquecimentos devem vir antes das demais séries. Drop sets e cluster sets devem ser seguidos por uma série normal ou por outra série do mesmo tipo.',
     removeSet: 'Excluir série',
+    removeExerciseSet: 'Excluir série do exercício',
+    removeSupersetSet: 'Excluir série inteira',
+  },
+  superset: {
+    title: 'Superset',
+    help: {
+      title: 'O que é um superset?',
+      description:
+        'Um superset combina 2 ou 3 exercícios executados em sequência, sem descanso entre eles. Faça uma série de cada exercício na ordem (A, B, C) e só então descanse. Marque a série como concluída quando terminar todos os exercícios do grupo.',
+    },
   },
 };

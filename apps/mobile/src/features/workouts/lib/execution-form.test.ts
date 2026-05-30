@@ -103,6 +103,13 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].reps).toBe('');
   });
 
+  test('carries the superset grouping fields through', () => {
+    const result = buildExecutionFromWorkout(workout(VARIATION_A, [templateSet({ id: 's1' })]));
+
+    expect(result.exercises[0].supersetGroupId).toBe('sg-1');
+    expect(result.exercises[0].supersetOrder).toBe(0);
+  });
+
   test('seeds last weight/reps from the matching log set (same variation, same logical key)', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [templateSet({ id: 's1' })]),

@@ -64,5 +64,15 @@ export default {
     rules:
       'Warmup sets must come before the others. Drop sets and cluster sets must be followed by a normal set or another set of the same type.',
     removeSet: 'Delete set',
+    removeExerciseSet: 'Delete exercise set',
+    removeSupersetSet: 'Delete entire set',
+  },
+  superset: {
+    title: 'Superset',
+    help: {
+      title: 'What is a superset?',
+      description:
+        'A superset combines 2 or 3 exercises performed back-to-back, with no rest between them. Do one set of each exercise in order (A, B, C), then rest. Check the set as done once you finish every exercise in the group.',
+    },
   },
 };

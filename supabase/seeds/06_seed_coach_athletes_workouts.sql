@@ -41,6 +41,8 @@ DECLARE
   var_elevacao_lat     uuid;
   var_rosca_direta     uuid;
   var_triceps_corda    uuid;
+  var_crucifixo        uuid;
+  var_pressdown        uuid;
   var_leg_press        uuid;
   var_mesa_flexora     uuid;
   var_elevacao_pelv    uuid;
@@ -60,6 +62,8 @@ BEGIN
   SELECT id INTO var_elevacao_lat     FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Elevação Lateral'     LIMIT 1) LIMIT 1;
   SELECT id INTO var_rosca_direta     FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Rosca Direta'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_triceps_corda    FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Tríceps Corda'        LIMIT 1) LIMIT 1;
+  SELECT id INTO var_crucifixo        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Crucifixo'            LIMIT 1) LIMIT 1;
+  SELECT id INTO var_pressdown        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Pressdown de Tríceps' LIMIT 1) LIMIT 1;
   SELECT id INTO var_leg_press        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Leg Press 45'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_mesa_flexora     FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Mesa Flexora'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_elevacao_pelv    FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Elevação Pélvica'     LIMIT 1) LIMIT 1;
@@ -163,6 +167,8 @@ BEGIN
     -- Treino A Lucas (wk1): Peito e Tríceps
     --   pos 0 → Supino Reto (isolado)
     --   pos 1 → Biset: Supino Inclinado + Tríceps Corda
+    --   pos 2 → Crucifixo (isolado)
+    --   pos 3 → Pressdown de Tríceps (isolado)
     -- ══════════════════════════════════════════════
     ('eddbdb00-f86d-473f-8661-cb40d328e425'::uuid,
      '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
@@ -178,6 +184,16 @@ BEGIN
      '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
      var_triceps_corda, 'Cotovelos fixos ao longo do corpo', 60, 1,
      '55010001-aaaa-4aaa-8aaa-000000000001'::uuid, 1),
+
+    ('71f013ef-7863-49f6-927b-f5559a15f772'::uuid,
+     '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
+     var_crucifixo, 'Abrir bem o peito e controlar a descida', 60, 2,
+     '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 0),
+
+    ('756d8fec-c7ca-437e-a506-44076700aa13'::uuid,
+     '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
+     var_pressdown, 'Cotovelos colados ao tronco', 60, 3,
+     '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 0),
 
     -- ══════════════════════════════════════════════
     -- Treino B Lucas (wk2): Costas e Bíceps
@@ -354,6 +370,16 @@ BEGIN
     ('6f993d10-6baa-428d-a43e-635d274dcb49'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 0, 'normal', 12, 15, NULL, NULL),
     ('ce6d0049-c311-4d12-a782-4b66d6de493f'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 1, 'normal', 12, 15, NULL, NULL),
     ('68c01f3b-da63-4e19-ae1d-2ea9540e0df7'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 2, 'normal', 12, 15, NULL, NULL),
+
+    -- ── we3b: Crucifixo (Treino A Lucas, isolado) — 3 normal ──
+    ('42a46d78-f739-4e47-8c3a-0d1e3f98ddce'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 0, 'normal', 10, 15, NULL, NULL),
+    ('2542bd92-7136-4e80-8028-d506f84e69de'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 1, 'normal', 10, 15, NULL, NULL),
+    ('f2acdcf8-8d90-43e0-bfb8-e313dd13e094'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+
+    -- ── we3c: Pressdown de Tríceps (Treino A Lucas, isolado) — 3 normal ──
+    ('5a4b733c-78e3-4e99-a90a-d56951af781d'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 0, 'normal', 12, 15, NULL, NULL),
+    ('dd663eb4-f78d-4d02-b727-2f561aedc5de'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 1, 'normal', 12, 15, NULL, NULL),
+    ('1df8304c-2a05-4258-b7b3-9d11db2e2044'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 2, 'normal', 12, 15, NULL, NULL),
 
     -- ── we4: Puxada na Barra Fixa (Treino B Lucas) — warmup + 3 normal ──
     ('c915f46d-bc87-4e82-95b9-f0c25392a81d'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 0, 'warmup',  5,  8, NULL, NULL),
@@ -562,6 +588,8 @@ BEGIN
     (athlete1_id, var_remada_cabo,        50.00, 1800.00, 12, 3),
     (athlete1_id, var_puxada_cabo,        45.00, 2025.00, 15, 3),
     (athlete1_id, var_rosca_direta,       25.00,  900.00, 12, 3),
+    (athlete1_id, var_crucifixo,          22.00,  990.00, 15, 3),
+    (athlete1_id, var_pressdown,          35.00, 1575.00, 15, 3),
 
     -- Fernanda Costa (athlete2) — Treino A Inferiores
     (athlete2_id, var_agachamento,        60.00, 3600.00, 12, 5),

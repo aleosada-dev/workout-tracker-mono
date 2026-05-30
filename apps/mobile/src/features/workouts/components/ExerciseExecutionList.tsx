@@ -8,30 +8,56 @@ import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeabl
 import { Sortable, SortableItem, type SortableRenderItemProps } from 'react-native-reanimated-dnd';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExerciseExecutionCard } from '@/features/workouts/components/ExerciseExecutionCard';
-import type { ExerciseExecutionItem } from '@/features/workouts/lib/workout-mappers';
+import { SupersetExecutionCard } from '@/features/workouts/components/SupersetExecutionCard';
+import type { ExecutionListItem } from '@/features/workouts/lib/workout-mappers';
 
 const COLLAPSED_CARD_HEIGHT = 70;
+const SUPERSET_MEMBER_ROW_HEIGHT = 42;
 
-type ListItem =
-  | ({ kind: 'exercise' } & ExerciseExecutionItem)
-  | { kind: 'spacer'; id: '__spacer__' };
+type ListItem = ExecutionListItem | { kind: 'spacer'; id: '__spacer__' };
 
 type ExerciseExecutionListProps = {
-  exercises: ExerciseExecutionItem[];
+  exercises: ExecutionListItem[];
   onAddExercise?: () => void;
-  onDeleteExercise?: (exerciseIndex: number) => void;
+  onDeleteExercises?: (exerciseIndexes: number[]) => void;
+  onReorder?: (orderedItemIds: string[]) => void;
 };
 
 export function ExerciseExecutionList({
   exercises,
   onAddExercise,
-  onDeleteExercise,
+  onDeleteExercises,
+  onReorder,
 }: ExerciseExecutionListProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const spacerHeight = insets.bottom + (Platform.OS === 'ios' ? 70 : 90);
   const actionsWidth = windowWidth - 32;
+
+  const estimateItemHeight = useCallback(
+    (item: ListItem) => {
+      if (item.kind === 'spacer') {
+        return spacerHeight;
+      }
+      if (item.kind === 'superset') {
+        return COLLAPSED_CARD_HEIGHT + item.members.length * SUPERSET_MEMBER_ROW_HEIGHT;
+      }
+      return COLLAPSED_CARD_HEIGHT;
+    },
+    [spacerHeight],
+  );
+
+  const handleDrop = useCallback(
+    (_id: string, _position: number, allPositions?: { [id: string]: number }) => {
+      if (!onReorder || !allPositions) return;
+      const orderedItemIds = Object.keys(allPositions)
+        .sort((a, b) => allPositions[a] - allPositions[b])
+        .filter((itemId) => itemId !== '__spacer__');
+      onReorder(orderedItemIds);
+    },
+    [onReorder],
+  );
 
   const renderItem = useCallback(
     (props: SortableRenderItemProps<ListItem>) => {
@@ -47,27 +73,40 @@ export function ExerciseExecutionList({
           </SortableItem>
         );
       }
-      const card = (
-        <ExerciseExecutionCard
-          exerciseIndex={item.exerciseIndex}
-          name={item.name}
-          variationName={item.variationName ?? undefined}
-          note={item.note}
-          restSeconds={item.restSeconds}
-          onPressHeader={() =>
-            router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
-          }
-          dragHandle={
-            <SortableItem.Handle>
-              <Icon as={GripVertical} size={18} className="text-muted-foreground" />
-            </SortableItem.Handle>
-          }
-        />
+      const dragHandle = (
+        <SortableItem.Handle>
+          <Icon as={GripVertical} size={18} className="text-muted-foreground" />
+        </SortableItem.Handle>
       );
+      const card =
+        item.kind === 'superset' ? (
+          <SupersetExecutionCard
+            members={item.members}
+            restSeconds={item.restSeconds}
+            dragHandle={dragHandle}
+            onPressMember={(variationId) =>
+              router.push({ pathname: '/exerciseDetail', params: { id: variationId } })
+            }
+          />
+        ) : (
+          <ExerciseExecutionCard
+            exerciseIndex={item.exerciseIndex}
+            name={item.name}
+            variationName={item.variationName ?? undefined}
+            note={item.note}
+            restSeconds={item.restSeconds}
+            onPressHeader={() =>
+              router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
+            }
+            dragHandle={dragHandle}
+          />
+        );
+      const deleteIndexes =
+        item.kind === 'superset' ? item.members.map((m) => m.exerciseIndex) : [item.exerciseIndex];
       return (
-        <SortableItem key={id} id={id} data={item} {...rest}>
+        <SortableItem key={id} id={id} data={item} {...rest} onDrop={handleDrop}>
           <View className="pb-3">
-            {onDeleteExercise ? (
+            {onDeleteExercises ? (
               <ReanimatedSwipeable
                 friction={2}
                 rightThreshold={48}
@@ -89,7 +128,7 @@ export function ExerciseExecutionList({
                       </Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => onDeleteExercise(item.exerciseIndex)}
+                      onPress={() => onDeleteExercises(deleteIndexes)}
                       accessibilityRole="button"
                       accessibilityLabel={t('workoutExecutionScreen.exercise.delete')}
                       className="items-center justify-center"
@@ -111,7 +150,7 @@ export function ExerciseExecutionList({
         </SortableItem>
       );
     },
-    [spacerHeight, actionsWidth, onDeleteExercise, t],
+    [spacerHeight, actionsWidth, onDeleteExercises, handleDrop, t],
   );
 
   if (exercises.length === 0) {
@@ -130,15 +169,13 @@ export function ExerciseExecutionList({
     );
   }
 
-  const data: ListItem[] = [
-    ...exercises.map((e) => ({ kind: 'exercise' as const, ...e })),
-    { kind: 'spacer', id: '__spacer__' },
-  ];
+  const data: ListItem[] = [...exercises, { kind: 'spacer', id: '__spacer__' }];
 
   return (
     <Sortable
       data={data}
       enableDynamicHeights
+      itemHeight={estimateItemHeight}
       estimatedItemHeight={COLLAPSED_CARD_HEIGHT}
       renderItem={renderItem}
       style={{ backgroundColor: 'transparent' }}

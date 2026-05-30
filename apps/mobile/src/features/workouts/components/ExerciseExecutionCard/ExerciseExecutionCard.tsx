@@ -186,9 +186,11 @@ export function ExerciseExecutionCard({
                       rematchExercise();
                     },
                     fields.length > 1
-                      ? () => {
-                          remove(setIndex);
-                          rematchExercise();
+                      ? {
+                          onRemoveSet: () => {
+                            remove(setIndex);
+                            rematchExercise();
+                          },
                         }
                       : undefined,
                   );

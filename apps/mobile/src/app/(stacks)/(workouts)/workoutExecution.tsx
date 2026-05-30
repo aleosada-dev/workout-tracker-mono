@@ -50,7 +50,10 @@ import {
   ExecutionFormSchema,
   type ExecutionFormValues,
 } from '@/features/workouts/lib/execution-form';
-import { toExerciseExecutionItems } from '@/features/workouts/lib/workout-mappers';
+import {
+  reorderExercisesWithinType,
+  toExecutionListItems,
+} from '@/features/workouts/lib/workout-mappers';
 import { type ActiveWorkout, activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { restTimerBridge } from '@/features/workouts/state/rest-timer-bridge';
 
@@ -131,11 +134,11 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const exercises = useValue(activeWorkout$.workoutExecution.exercises) as ExecutionExerciseInput[];
 
   const warmupItems = useMemo(
-    () => toExerciseExecutionItems(exercises, 'preparatorio', t, i18n.language),
+    () => toExecutionListItems(exercises, 'preparatorio', t, i18n.language),
     [exercises, t, i18n.language],
   );
   const strengthItems = useMemo(
-    () => toExerciseExecutionItems(exercises, 'musculacao', t, i18n.language),
+    () => toExecutionListItems(exercises, 'musculacao', t, i18n.language),
     [exercises, t, i18n.language],
   );
 
@@ -170,11 +173,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     if (warmupItems.length === 0) setTab('musculacao');
   }, [warmupItems.length]);
 
-  const handleDeleteExercise = (exerciseIndex: number) => {
+  const handleDeleteExercises = (exerciseIndexes: number[]) => {
+    const drop = new Set(exerciseIndexes);
     const current = form.getValues('exercises') ?? [];
     const next = current
-      .filter((_, i) => i !== exerciseIndex)
+      .filter((_, i) => !drop.has(i))
       .map((exercise, i) => ({ ...exercise, position: i }));
+    form.setValue('exercises', next, { shouldDirty: true });
+  };
+
+  const handleReorder = (type: ExecutionTab, orderedItemIds: string[]) => {
+    const current = form.getValues('exercises') ?? [];
+    const next = reorderExercisesWithinType(current, type, orderedItemIds);
     form.setValue('exercises', next, { shouldDirty: true });
   };
 
@@ -233,14 +243,16 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
               <ExerciseExecutionList
                 exercises={warmupItems}
                 onAddExercise={handleAddExercise}
-                onDeleteExercise={handleDeleteExercise}
+                onDeleteExercises={handleDeleteExercises}
+                onReorder={(ids) => handleReorder('preparatorio', ids)}
               />
             </TabsContent>
             <TabsContent value="musculacao" className="flex-1">
               <ExerciseExecutionList
                 exercises={strengthItems}
                 onAddExercise={handleAddExercise}
-                onDeleteExercise={handleDeleteExercise}
+                onDeleteExercises={handleDeleteExercises}
+                onReorder={(ids) => handleReorder('musculacao', ids)}
               />
             </TabsContent>
           </Tabs>
@@ -272,9 +284,12 @@ function buildExecutionExerciseFromPicked(
   picked: PickedExercise,
   position: number,
 ): ExecutionExerciseInput {
+  const id = Crypto.randomUUID();
   return {
-    id: Crypto.randomUUID(),
+    id,
     position,
+    supersetGroupId: id,
+    supersetOrder: 0,
     note: null,
     restSeconds: null,
     variation: {

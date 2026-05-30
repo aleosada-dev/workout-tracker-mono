@@ -15,12 +15,17 @@ import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 
 const SET_TYPE_ORDER: SetType[] = ['warmup', 'normal', 'drop', 'cluster'];
 
+export type SetTypePickerRemoval = {
+  onRemoveSet?: () => void;
+  onRemoveSupersetSet?: () => void;
+};
+
 export type SetTypePickerSheetRef = {
   present: (
     currentType: SetType,
     validTypes: readonly SetType[],
     onSelect: (type: SetType) => void,
-    onRemove?: () => void,
+    removal?: SetTypePickerRemoval,
   ) => void;
   dismiss: () => void;
 };
@@ -30,17 +35,22 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
   const sheetRef = useRef<BottomSheetRef>(null);
   const [current, setCurrent] = useState<SetType | null>(null);
   const [validTypes, setValidTypes] = useState<readonly SetType[]>(SET_TYPE_ORDER);
-  const [canRemove, setCanRemove] = useState(false);
+  const [removal, setRemoval] = useState<SetTypePickerRemoval>({});
   const onSelectRef = useRef<((type: SetType) => void) | null>(null);
-  const onRemoveRef = useRef<(() => void) | null>(null);
+  const onRemoveSetRef = useRef<(() => void) | null>(null);
+  const onRemoveSupersetSetRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    present: (currentType, nextValidTypes, onSelect, onRemove) => {
+    present: (currentType, nextValidTypes, onSelect, nextRemoval) => {
       setCurrent(currentType);
       setValidTypes(nextValidTypes);
       onSelectRef.current = onSelect;
-      onRemoveRef.current = onRemove ?? null;
-      setCanRemove(Boolean(onRemove));
+      onRemoveSetRef.current = nextRemoval?.onRemoveSet ?? null;
+      onRemoveSupersetSetRef.current = nextRemoval?.onRemoveSupersetSet ?? null;
+      setRemoval({
+        onRemoveSet: nextRemoval?.onRemoveSet,
+        onRemoveSupersetSet: nextRemoval?.onRemoveSupersetSet,
+      });
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
@@ -51,10 +61,17 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
     sheetRef.current?.dismiss();
   };
 
-  const handleRemove = () => {
-    onRemoveRef.current?.();
+  const handleRemoveSet = () => {
+    onRemoveSetRef.current?.();
     sheetRef.current?.dismiss();
   };
+
+  const handleRemoveSupersetSet = () => {
+    onRemoveSupersetSetRef.current?.();
+    sheetRef.current?.dismiss();
+  };
+
+  const isSuperset = Boolean(removal.onRemoveSupersetSet);
 
   return (
     <BottomSheet ref={sheetRef}>
@@ -95,11 +112,33 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
           })}
         </View>
 
-        {canRemove ? (
-          <Button variant="destructive" onPress={handleRemove}>
+        {removal.onRemoveSet ? (
+          <Button variant={isSuperset ? 'outline' : 'destructive'} onPress={handleRemoveSet}>
+            <Icon
+              as={Trash2}
+              size={16}
+              className={isSuperset ? 'text-destructive' : 'text-white'}
+            />
+            <Text
+              className={cn(
+                'font-sans-semibold text-sm',
+                isSuperset ? 'text-destructive' : 'text-white',
+              )}
+            >
+              {t(
+                isSuperset
+                  ? 'workoutExecutionScreen.setTypePicker.removeExerciseSet'
+                  : 'workoutExecutionScreen.setTypePicker.removeSet',
+              )}
+            </Text>
+          </Button>
+        ) : null}
+
+        {removal.onRemoveSupersetSet ? (
+          <Button variant="destructive" onPress={handleRemoveSupersetSet}>
             <Icon as={Trash2} size={16} className="text-white" />
             <Text className="font-sans-semibold text-sm text-white">
-              {t('workoutExecutionScreen.setTypePicker.removeSet')}
+              {t('workoutExecutionScreen.setTypePicker.removeSupersetSet')}
             </Text>
           </Button>
         ) : null}
