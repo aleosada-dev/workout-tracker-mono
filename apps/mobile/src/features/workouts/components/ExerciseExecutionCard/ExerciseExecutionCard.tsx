@@ -19,9 +19,11 @@ import {
   type ExecutionFormInput,
   matchExecutionSetsToLog,
   matchExecutionSetsToTemplate,
+  restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 import { formatSetTarget } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
+import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
 import type { ExerciseExecutionCardProps } from './types';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
@@ -234,6 +236,10 @@ function SetRow({
       const reps = autofillFromLast(getValues(`${basePath}.reps`), lastReps);
       if (reps != null) {
         setValue(`${basePath}.reps`, reps, { shouldDirty: true, shouldValidate: true });
+      }
+      const rest = restTimerDuration(getValues(`exercises.${exerciseIndex}.restSeconds`));
+      if (rest != null) {
+        startRestTimer(rest);
       }
     }
   };

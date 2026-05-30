@@ -14,6 +14,7 @@ import type { ColorValue } from 'react-native';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavTheme } from '@/features/shared/lib/theme';
+import { RestTimerBar } from './RestTimerBar';
 import type { WorkoutExecutionActionsProps } from './types';
 
 type IconComponent = React.ComponentType<{ size?: number; color?: ColorValue }>;
@@ -24,6 +25,7 @@ export function WorkoutExecutionActions({
   onNotes,
   onAddExercise,
   onKgLbsCalculator,
+  timer,
 }: WorkoutExecutionActionsProps) {
   const { t } = useTranslation();
   const navTheme = useNavTheme();
@@ -36,10 +38,17 @@ export function WorkoutExecutionActions({
       className="absolute right-0 bottom-0 left-0 flex-row items-center gap-3 bg-transparent px-4 pt-3"
       style={{ paddingBottom: insets.bottom + 12 }}
     >
-      <Button onPress={onFinish} className="h-12 flex-1 rounded-full">
-        <Check size={20} color={rgb(theme.primaryForeground)} />
-        <Text className="font-sans-semibold">{t('workoutExecutionScreen.actions.finish')}</Text>
-      </Button>
+      {timer.active ? (
+        <>
+          <RestTimerBar timer={timer} textColor={navTheme.colors.text} />
+          <View className="flex-1" />
+        </>
+      ) : (
+        <Button onPress={onFinish} className="h-12 flex-1 rounded-full">
+          <Check size={20} color={rgb(theme.primaryForeground)} />
+          <Text className="font-sans-semibold">{t('workoutExecutionScreen.actions.finish')}</Text>
+        </Button>
+      )}
       <Popover>
         <PopoverTrigger asChild>
           <Pressable

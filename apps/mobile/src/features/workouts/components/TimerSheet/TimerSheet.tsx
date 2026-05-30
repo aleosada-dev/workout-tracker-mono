@@ -13,7 +13,8 @@ import { Check, Pause, Play, Square } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { useCountdownTimer } from '@/features/shared/hooks/use-countdown-timer';
+import { formatTime } from '@/features/shared/lib/utils';
+import type { RestTimerController } from '@/features/workouts/hooks/use-rest-timer-controller';
 import { StopwatchView } from './StopwatchView';
 import { TimerRing } from './TimerRing';
 import { TimeWheelPicker } from './TimeWheelPicker';
@@ -21,73 +22,37 @@ import { TimeWheelPicker } from './TimeWheelPicker';
 type Tab = 'timer' | 'stopwatch';
 
 const PRESETS_SECONDS = [30, 60, 90, 120];
-const DEFAULT_DURATION = 60;
 const STEP_SECONDS = 15;
 
 export type TimerSheetRef = {
-  present: () => void;
+  present: (durationSeconds?: number) => void;
   dismiss: () => void;
 };
 
 type Props = {
+  controller: RestTimerController;
   ref?: Ref<TimerSheetRef>;
 };
 
-export function TimerSheet({ ref }: Props) {
+export function TimerSheet({ controller, ref }: Props) {
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheetRef>(null);
   const [tab, setTab] = useState<Tab>('timer');
-  const [duration, setDuration] = useState(DEFAULT_DURATION);
-  const [totalMs, setTotalMs] = useState(DEFAULT_DURATION * 1000);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const timer = useCountdownTimer({
-    durationSeconds: duration,
-    notification: {
-      title: t('workoutExecutionScreen.timerSheet.notification.title'),
-      body: t('workoutExecutionScreen.timerSheet.notification.body'),
-    },
-    onComplete: () => setTotalMs(duration * 1000),
-  });
-
   useImperativeHandle(ref, () => ({
-    present: () => {
+    present: (durationSeconds?: number) => {
       setPickerOpen(false);
+      if (durationSeconds != null && durationSeconds > 0) {
+        setTab('timer');
+        controller.requestStart(durationSeconds);
+      }
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
   }));
 
-  const isIdle = !timer.isRunning && !timer.isPaused;
-  const remainingMs = timer.remainingSeconds * 1000;
-  const progress = isIdle ? 1 : totalMs > 0 ? remainingMs / totalMs : 0;
-  const label = formatTime(isIdle ? duration : timer.remainingSeconds);
-
-  const handlePreset = (seconds: number) => {
-    setDuration(seconds);
-    setTotalMs(seconds * 1000);
-  };
-
-  const handleStart = () => {
-    setTotalMs(duration * 1000);
-    timer.start();
-  };
-
-  const handleStop = () => {
-    timer.reset();
-    setTotalMs(duration * 1000);
-  };
-
-  const handleAddSeconds = (delta: number) => {
-    timer.addSeconds(delta);
-    setTotalMs((prev) => Math.max(0, prev + delta * 1000));
-  };
-
-  const handlePickerChange = (seconds: number) => {
-    const safe = Math.max(1, seconds);
-    setDuration(safe);
-    setTotalMs(safe * 1000);
-  };
+  const { isIdle, duration, progress, label, isPaused } = controller;
 
   return (
     <BottomSheet ref={sheetRef} enableContentPanningGesture={!pickerOpen}>
@@ -111,7 +76,7 @@ export function TimerSheet({ ref }: Props) {
           <StopwatchView />
         ) : isIdle && pickerOpen ? (
           <View className="gap-3">
-            <TimeWheelPicker totalSeconds={duration} onChange={handlePickerChange} />
+            <TimeWheelPicker totalSeconds={duration} onChange={controller.setDurationFromPicker} />
             <Button variant="outline" onPress={() => setPickerOpen(false)}>
               <Icon as={Check} size={18} className="text-foreground" />
               <Text>{t('workoutExecutionScreen.timerSheet.confirm')}</Text>
@@ -126,7 +91,7 @@ export function TimerSheet({ ref }: Props) {
                   return (
                     <Pressable
                       key={seconds}
-                      onPress={() => handlePreset(seconds)}
+                      onPress={() => controller.setPreset(seconds)}
                       accessibilityRole="button"
                       className={`h-10 min-w-16 items-center justify-center rounded-full px-4 ${
                         active ? 'bg-primary' : 'border border-border bg-background'
@@ -149,7 +114,7 @@ export function TimerSheet({ ref }: Props) {
               <StepButton
                 label={`-${STEP_SECONDS}s`}
                 disabled={isIdle}
-                onPress={() => handleAddSeconds(-STEP_SECONDS)}
+                onPress={() => controller.addSeconds(-STEP_SECONDS)}
               />
               <TimerRing
                 progress={progress}
@@ -159,14 +124,14 @@ export function TimerSheet({ ref }: Props) {
               <StepButton
                 label={`+${STEP_SECONDS}s`}
                 disabled={isIdle}
-                onPress={() => handleAddSeconds(STEP_SECONDS)}
+                onPress={() => controller.addSeconds(STEP_SECONDS)}
               />
             </View>
           </>
         )}
 
         {tab === 'stopwatch' ? null : isIdle && !pickerOpen ? (
-          <Button onPress={handleStart} disabled={duration <= 0}>
+          <Button onPress={controller.start} disabled={duration <= 0}>
             <Icon as={Play} size={18} className="text-primary-foreground" />
             <Text>{t('workoutExecutionScreen.timerSheet.start')}</Text>
           </Button>
@@ -175,18 +140,18 @@ export function TimerSheet({ ref }: Props) {
             <Button
               variant="outline"
               className="flex-1"
-              onPress={timer.isPaused ? timer.resume : timer.pause}
+              onPress={isPaused ? controller.resume : controller.pause}
             >
-              <Icon as={timer.isPaused ? Play : Pause} size={18} className="text-foreground" />
+              <Icon as={isPaused ? Play : Pause} size={18} className="text-foreground" />
               <Text>
                 {t(
-                  timer.isPaused
+                  isPaused
                     ? 'workoutExecutionScreen.timerSheet.resume'
                     : 'workoutExecutionScreen.timerSheet.pause',
                 )}
               </Text>
             </Button>
-            <Button variant="destructive" className="flex-1" onPress={handleStop}>
+            <Button variant="destructive" className="flex-1" onPress={controller.stop}>
               <Icon as={Square} size={18} className="text-white" />
               <Text>{t('workoutExecutionScreen.timerSheet.stop')}</Text>
             </Button>
@@ -217,15 +182,4 @@ function StepButton({
       <Text className="font-sans-semibold text-base text-primary">{label}</Text>
     </Pressable>
   );
-}
-
-function formatTime(totalSeconds: number) {
-  const safe = Math.max(0, totalSeconds);
-  const minutes = Math.floor(safe / 60);
-  const seconds = safe % 60;
-  return `${pad(minutes)}:${pad(seconds)}`;
-}
-
-function pad(n: number) {
-  return n.toString().padStart(2, '0');
 }

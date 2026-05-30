@@ -40,6 +40,7 @@ import {
   WorkoutNotesSheet,
   type WorkoutNotesSheetRef,
 } from '@/features/workouts/components/WorkoutNotesSheet';
+import { useRestTimerController } from '@/features/workouts/hooks/use-rest-timer-controller';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import { useWorkoutLastLog } from '@/features/workouts/hooks/use-workout-last-log';
 import {
@@ -51,6 +52,7 @@ import {
 } from '@/features/workouts/lib/execution-form';
 import { toExerciseExecutionItems } from '@/features/workouts/lib/workout-mappers';
 import { type ActiveWorkout, activeWorkout$ } from '@/features/workouts/state/active-workout-store';
+import { restTimerBridge } from '@/features/workouts/state/rest-timer-bridge';
 
 type ExecutionTab = 'preparatorio' | 'musculacao';
 
@@ -106,6 +108,9 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
   const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
   const timerSheetRef = useRef<TimerSheetRef>(null);
+  const restTimer = useRestTimerController();
+  const restTimerRef = useRef(restTimer);
+  restTimerRef.current = restTimer;
   const { height: screenHeight } = useWindowDimensions();
   const { height: kbHeight } = useReanimatedKeyboardAnimation();
   const { input: focusedInput } = useReanimatedFocusedInput();
@@ -152,6 +157,11 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     });
     return () => sub.unsubscribe();
   }, [form]);
+
+  useEffect(
+    () => restTimerBridge.register((seconds) => restTimerRef.current.requestStart(seconds)),
+    [],
+  );
 
   const initialTabSetRef = useRef(false);
   useEffect(() => {
@@ -241,10 +251,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
           onNotes={() => notesSheetRef.current?.present()}
           onAddExercise={handleAddExercise}
           onKgLbsCalculator={() => kgLbsCalculatorSheetRef.current?.present()}
+          timer={{
+            active: restTimer.isActive,
+            label: restTimer.label,
+            isPaused: restTimer.isPaused,
+            onPauseResume: () => (restTimer.isPaused ? restTimer.resume() : restTimer.pause()),
+            onStop: restTimer.stop,
+            onOpen: () => timerSheetRef.current?.present(),
+          }}
         />
         <WorkoutNotesSheet ref={notesSheetRef} />
         <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
-        <TimerSheet ref={timerSheetRef} />
+        <TimerSheet ref={timerSheetRef} controller={restTimer} />
       </View>
     </FormProvider>
   );

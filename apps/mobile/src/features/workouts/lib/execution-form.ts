@@ -135,6 +135,13 @@ export function autofillFromLast(current: string, last: number | null | undefine
   return String(last);
 }
 
+export function restTimerDuration(restSeconds: number | null | undefined): number | null {
+  if (restSeconds == null || restSeconds <= 0) {
+    return null;
+  }
+  return restSeconds;
+}
+
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
   lastLog: GetWorkoutLastLogResponse = null,

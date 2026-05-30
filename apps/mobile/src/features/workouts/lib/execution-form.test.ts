@@ -9,6 +9,7 @@ import {
   type ExecutionSetInput,
   matchExecutionSetsToLog,
   matchExecutionSetsToTemplate,
+  restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 
 type TemplateSet = GetWorkoutResponse['exercises'][number]['sets'][number];
@@ -295,5 +296,18 @@ describe('autofillFromLast', () => {
   test('returns null when there is no last value', () => {
     expect(autofillFromLast('', null)).toBeNull();
     expect(autofillFromLast('', undefined)).toBeNull();
+  });
+});
+
+describe('restTimerDuration', () => {
+  test('returns the rest seconds when a positive value is defined', () => {
+    expect(restTimerDuration(90)).toBe(90);
+    expect(restTimerDuration(1)).toBe(1);
+  });
+
+  test('returns null when there is no rest time', () => {
+    expect(restTimerDuration(null)).toBeNull();
+    expect(restTimerDuration(undefined)).toBeNull();
+    expect(restTimerDuration(0)).toBeNull();
   });
 });
