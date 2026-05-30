@@ -4,6 +4,7 @@ import type {
   GetWorkoutResponse,
 } from '@/features/workouts/api/workouts';
 import {
+  autofillFromLast,
   buildExecutionFromWorkout,
   type ExecutionSetInput,
   matchExecutionSetsToLog,
@@ -273,5 +274,26 @@ describe('matchExecutionSetsToTemplate', () => {
     const result = matchExecutionSetsToTemplate([execSet('s1', 'normal')], undefined);
 
     expect(result).toEqual([{ repsMin: null, repsMax: null }]);
+  });
+});
+
+describe('autofillFromLast', () => {
+  test('returns the last value as a string when the field is empty', () => {
+    expect(autofillFromLast('', 60)).toBe('60');
+    expect(autofillFromLast('', 10)).toBe('10');
+  });
+
+  test('returns the last value when it is zero', () => {
+    expect(autofillFromLast('', 0)).toBe('0');
+  });
+
+  test('returns null when the field already has a value', () => {
+    expect(autofillFromLast('80', 60)).toBeNull();
+    expect(autofillFromLast('0', 60)).toBeNull();
+  });
+
+  test('returns null when there is no last value', () => {
+    expect(autofillFromLast('', null)).toBeNull();
+    expect(autofillFromLast('', undefined)).toBeNull();
   });
 });

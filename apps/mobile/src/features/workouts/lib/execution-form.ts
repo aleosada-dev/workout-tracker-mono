@@ -125,6 +125,16 @@ export function matchExecutionSetsToTemplate(
   }));
 }
 
+export function autofillFromLast(current: string, last: number | null | undefined): string | null {
+  if (current.length > 0) {
+    return null;
+  }
+  if (last == null) {
+    return null;
+  }
+  return String(last);
+}
+
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
   lastLog: GetWorkoutLastLogResponse = null,

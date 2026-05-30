@@ -15,6 +15,7 @@ import {
 } from '@/features/workouts/components/SetTypePickerSheet';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import {
+  autofillFromLast,
   type ExecutionFormInput,
   matchExecutionSetsToLog,
   matchExecutionSetsToTemplate,
@@ -218,11 +219,24 @@ function SetRow({
   setIndex: number;
   onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
 }) {
-  const { control } = useFormContext<ExecutionFormInput>();
+  const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const done = useWatch({ control, name: `${basePath}.done` });
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
+
+  const handleToggleDone = (next: boolean) => {
+    if (next) {
+      const kg = autofillFromLast(getValues(`${basePath}.kg`), lastKg);
+      if (kg != null) {
+        setValue(`${basePath}.kg`, kg, { shouldDirty: true, shouldValidate: true });
+      }
+      const reps = autofillFromLast(getValues(`${basePath}.reps`), lastReps);
+      if (reps != null) {
+        setValue(`${basePath}.reps`, reps, { shouldDirty: true, shouldValidate: true });
+      }
+    }
+  };
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
@@ -305,17 +319,23 @@ function SetRow({
       <Controller
         control={control}
         name={`${basePath}.done`}
-        render={({ field }) => (
-          <Pressable
-            onPress={() => field.onChange(!field.value)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: field.value }}
-            className="w-10 items-center justify-center self-stretch"
-            hitSlop={0}
-          >
-            <Checkbox checked={field.value} onCheckedChange={field.onChange} hitSlop={0} />
-          </Pressable>
-        )}
+        render={({ field }) => {
+          const toggle = (next: boolean) => {
+            handleToggleDone(next);
+            field.onChange(next);
+          };
+          return (
+            <Pressable
+              onPress={() => toggle(!field.value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: field.value }}
+              className="w-10 items-center justify-center self-stretch"
+              hitSlop={0}
+            >
+              <Checkbox checked={field.value} onCheckedChange={toggle} hitSlop={0} />
+            </Pressable>
+          );
+        }}
       />
     </View>
   );
