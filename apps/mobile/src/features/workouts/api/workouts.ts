@@ -7,6 +7,7 @@ const $patchFolder = honoClient.api.v1.workouts.folders[':id'].$patch;
 const $deleteFolder = honoClient.api.v1.workouts.folders[':id'].$delete;
 const $getWorkouts = honoClient.api.v1.workouts.$get;
 const $getWorkout = honoClient.api.v1.workouts[':id'].$get;
+const $getWorkoutLastLog = honoClient.api.v1.workouts[':id']['workout-logs'].last.$get;
 const $deleteWorkouts = honoClient.api.v1.workouts.$delete;
 const $patchWorkouts = honoClient.api.v1.workouts.$patch;
 const $copyWorkouts = honoClient.api.v1.workouts.copy.$post;
@@ -83,6 +84,18 @@ export async function fetchWorkout(
     { param: params.param, query: params.query },
     { init: { signal } },
   );
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export type GetWorkoutLastLogParams = InferRequestType<typeof $getWorkoutLastLog>;
+export type GetWorkoutLastLogResponse = InferResponseType<typeof $getWorkoutLastLog, 200>;
+
+export async function fetchWorkoutLastLog(
+  params: GetWorkoutLastLogParams,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<GetWorkoutLastLogResponse> {
+  const response = await $getWorkoutLastLog({ param: params.param }, { init: { signal } });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

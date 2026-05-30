@@ -34,12 +34,14 @@ import {
 } from '@/features/workouts/components/KgLbsCalculatorSheet';
 import { TimerSheet, type TimerSheetRef } from '@/features/workouts/components/TimerSheet';
 import { WorkoutExecutionActions } from '@/features/workouts/components/WorkoutExecutionActions';
+import { WorkoutExecutionSkeleton } from '@/features/workouts/components/WorkoutExecutionSkeleton';
 import { WorkoutInfoBar } from '@/features/workouts/components/WorkoutInfoBar';
 import {
   WorkoutNotesSheet,
   type WorkoutNotesSheetRef,
 } from '@/features/workouts/components/WorkoutNotesSheet';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
+import { useWorkoutLastLog } from '@/features/workouts/hooks/use-workout-last-log';
 import {
   buildExecutionFromWorkout,
   type ExecutionExerciseInput,
@@ -56,6 +58,7 @@ const DEFAULT_NEW_SET_REPS_MIN = 8;
 const DEFAULT_NEW_SET_REPS_MAX = 12;
 
 export default function WorkoutExecutionScreen() {
+  const { t } = useTranslation();
   const active = useValue(activeWorkout$);
   const { workoutId, userId, athleteName } = useLocalSearchParams<{
     workoutId?: string;
@@ -68,23 +71,29 @@ export default function WorkoutExecutionScreen() {
     userId: active ? null : userId,
   });
 
+  const lastLog = useWorkoutLastLog({ workoutId: active ? null : workoutId });
+
   useEffect(() => {
-    if (!active && workoutTemplate) {
-      // Deep-clone before seeding: legend-state v3 stores the passed object by
-      // reference, so any later mutation under `activeWorkout$` would leak back
-      // into the React Query cache.
-      activeWorkout$.set({
-        startedAt: new Date().toISOString(),
-        athleteName: athleteName ?? null,
-        note: null,
-        workout_template: structuredClone(workoutTemplate),
-        workout_execution: buildExecutionFromWorkout(workoutTemplate),
-      });
-    }
-  }, [active, workoutTemplate, athleteName]);
+    if (active || !workoutTemplate) return;
+    if (lastLog.isPending) return;
+    activeWorkout$.set({
+      startedAt: new Date().toISOString(),
+      athleteName: athleteName ?? null,
+      note: null,
+      workout_template: structuredClone(workoutTemplate),
+      workout_execution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
+    });
+  }, [active, workoutTemplate, lastLog.isPending, lastLog.data, athleteName]);
 
   if (!active) {
-    return <View className="flex-1 bg-background" />;
+    return (
+      <>
+        <Stack.Screen
+          options={{ title: workoutTemplate?.name ?? t('workoutExecutionScreen.loadingTitle') }}
+        />
+        <WorkoutExecutionSkeleton />
+      </>
+    );
   }
 
   return <WorkoutExecutionContent active={active} />;

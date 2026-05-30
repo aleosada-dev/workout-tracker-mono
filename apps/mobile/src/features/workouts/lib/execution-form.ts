@@ -1,10 +1,13 @@
-import { EXERCISE_TYPES, WORKOUT_SET_TYPES } from '@workout-tracker/domain';
+import { EXERCISE_TYPES, matchSets, WORKOUT_SET_TYPES } from '@workout-tracker/domain';
 import { z } from 'zod';
 import {
   countFractionDigits,
   parseLocalizedNumber,
 } from '@/features/shared/lib/utils/numeric-input';
-import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
+import type {
+  GetWorkoutLastLogResponse,
+  GetWorkoutResponse,
+} from '@/features/workouts/api/workouts';
 
 const MAX_WEIGHT_KG = 1000;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
@@ -34,6 +37,8 @@ export const ExecutionSetSchema = z.object({
   kg: weightField,
   reps: repsField,
   done: z.boolean(),
+  lastKg: z.number().nonnegative().nullable().optional(),
+  lastReps: z.int().positive().nullable().optional(),
 });
 
 export const ExecutionExerciseVariationSchema = z.object({
@@ -71,23 +76,42 @@ export type ExecutionFormValues = z.output<typeof ExecutionFormSchema>;
 export type ExecutionExerciseInput = ExecutionFormInput['exercises'][number];
 export type ExecutionExerciseVariation = z.infer<typeof ExecutionExerciseVariationSchema>;
 
-export function buildExecutionFromWorkout(workout: GetWorkoutResponse): ExecutionFormInput {
+export function buildExecutionFromWorkout(
+  workout: GetWorkoutResponse,
+  lastLog: GetWorkoutLastLogResponse = null,
+): ExecutionFormInput {
   return {
-    exercises: workout.exercises.map((exercise) => ({
-      id: exercise.id,
-      position: exercise.position,
-      note: exercise.note,
-      restSeconds: exercise.restSeconds,
-      variation: exercise.variation,
-      sets: exercise.sets.map((set) => ({
-        id: set.id,
-        type: set.setType,
-        repsMin: set.repsMin,
-        repsMax: set.repsMax,
-        kg: '',
-        reps: '',
-        done: false,
-      })),
-    })),
+    exercises: workout.exercises.map((exercise) => {
+      const logExercise = lastLog?.exercises.find((e) => e.variationId === exercise.variation.id);
+      const lastBySetId = new Map<string, { kg: number | null; reps: number | null }>();
+      if (logExercise) {
+        for (const match of matchSets(exercise.sets, logExercise.sets)) {
+          if (match.a && match.b) {
+            lastBySetId.set(match.a.id, { kg: match.b.weightKg, reps: match.b.reps });
+          }
+        }
+      }
+      return {
+        id: exercise.id,
+        position: exercise.position,
+        note: exercise.note,
+        restSeconds: exercise.restSeconds,
+        variation: exercise.variation,
+        sets: exercise.sets.map((set) => {
+          const last = lastBySetId.get(set.id);
+          return {
+            id: set.id,
+            type: set.setType,
+            repsMin: set.repsMin,
+            repsMax: set.repsMax,
+            kg: '',
+            reps: '',
+            done: false,
+            lastKg: last?.kg ?? null,
+            lastReps: last?.reps ?? null,
+          };
+        }),
+      };
+    }),
   };
 }

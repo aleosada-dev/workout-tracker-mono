@@ -1,4 +1,5 @@
 export default {
+  loadingTitle: 'Loading workout…',
   tabs: {
     preparatorio: 'Warmup',
     musculacao: 'Strength',

@@ -1,0 +1,154 @@
+import type {
+  GetWorkoutLastLogResponse,
+  GetWorkoutResponse,
+} from '@/features/workouts/api/workouts';
+import { buildExecutionFromWorkout } from '@/features/workouts/lib/execution-form';
+
+type TemplateSet = GetWorkoutResponse['exercises'][number]['sets'][number];
+type LogSet = NonNullable<GetWorkoutLastLogResponse>['exercises'][number]['sets'][number];
+
+const VARIATION_A = '11111111-1111-1111-1111-111111111111';
+const VARIATION_B = '22222222-2222-2222-2222-222222222222';
+
+function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>): TemplateSet {
+  return {
+    setType: 'normal',
+    setOrder: 1,
+    repsMin: 8,
+    repsMax: 12,
+    linkedSetId: null,
+    loadPercentOfPrevious: null,
+    logicalKey: 'normal-1',
+    ...overrides,
+  };
+}
+
+function logSet(overrides: Partial<LogSet> = {}): LogSet {
+  return {
+    setType: 'normal',
+    setOrder: 1,
+    weightKg: 60,
+    reps: 10,
+    logicalKey: 'normal-1',
+    ...overrides,
+  };
+}
+
+function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
+  return {
+    id: 'w1',
+    userId: 'u1',
+    name: 'Treino',
+    description: null,
+    folderId: null,
+    createdAt: '2026-05-30T00:00:00Z',
+    updatedAt: '2026-05-30T00:00:00Z',
+    exercises: [
+      {
+        id: 'ex-1',
+        position: 0,
+        supersetGroupId: 'sg-1',
+        supersetOrder: 0,
+        note: null,
+        restSeconds: null,
+        variation: {
+          id: variationId,
+          slug: 'supino-reto',
+          name: null,
+          exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
+          equipment: { slug: 'barra', preposition: 'com' },
+          muscle: { slug: 'chest' },
+          secondaryMuscle: null,
+        },
+        sets,
+      },
+    ],
+  } as GetWorkoutResponse;
+}
+
+function lastLog(variationId: string, sets: LogSet[]): GetWorkoutLastLogResponse {
+  return {
+    workoutLogId: 'log-1',
+    workoutId: 'w1',
+    startedAt: '2026-05-20T00:00:00Z',
+    finishedAt: '2026-05-20T01:00:00Z',
+    exercises: [
+      {
+        variationId,
+        exerciseName: 'Supino',
+        variationName: null,
+        position: 0,
+        supersetGroupId: null,
+        sets,
+      },
+    ],
+  } as GetWorkoutLastLogResponse;
+}
+
+describe('buildExecutionFromWorkout', () => {
+  test('leaves lastKg/lastReps null when there is no last log', () => {
+    const result = buildExecutionFromWorkout(workout(VARIATION_A, [templateSet({ id: 's1' })]));
+
+    expect(result.exercises[0].sets[0].lastKg).toBeNull();
+    expect(result.exercises[0].sets[0].lastReps).toBeNull();
+    expect(result.exercises[0].sets[0].kg).toBe('');
+    expect(result.exercises[0].sets[0].reps).toBe('');
+  });
+
+  test('seeds last weight/reps from the matching log set (same variation, same logical key)', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [templateSet({ id: 's1' })]),
+      lastLog(VARIATION_A, [logSet({ weightKg: 72.5, reps: 9 })]),
+    );
+
+    expect(result.exercises[0].sets[0].lastKg).toBe(72.5);
+    expect(result.exercises[0].sets[0].lastReps).toBe(9);
+    // placeholders only — the editable fields stay empty
+    expect(result.exercises[0].sets[0].kg).toBe('');
+    expect(result.exercises[0].sets[0].reps).toBe('');
+  });
+
+  test('matches warmup and normal sets independently by logical key', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [
+        templateSet({ id: 'warm', setType: 'warmup', setOrder: 1 }),
+        templateSet({ id: 'work', setType: 'normal', setOrder: 2 }),
+      ]),
+      lastLog(VARIATION_A, [
+        logSet({ setType: 'warmup', setOrder: 1, weightKg: 20, reps: 15 }),
+        logSet({ setType: 'normal', setOrder: 2, weightKg: 80, reps: 8 }),
+      ]),
+    );
+
+    const [warm, work] = result.exercises[0].sets;
+    expect(warm.lastKg).toBe(20);
+    expect(warm.lastReps).toBe(15);
+    expect(work.lastKg).toBe(80);
+    expect(work.lastReps).toBe(8);
+  });
+
+  test('does not seed when the log has a different variation', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [templateSet({ id: 's1' })]),
+      lastLog(VARIATION_B, [logSet({ weightKg: 99, reps: 5 })]),
+    );
+
+    expect(result.exercises[0].sets[0].lastKg).toBeNull();
+    expect(result.exercises[0].sets[0].lastReps).toBeNull();
+  });
+
+  test('leaves unmatched template sets null when the log has fewer sets', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [
+        templateSet({ id: 's1', setType: 'normal', setOrder: 1 }),
+        templateSet({ id: 's2', setType: 'normal', setOrder: 2 }),
+      ]),
+      lastLog(VARIATION_A, [logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 })]),
+    );
+
+    const [first, second] = result.exercises[0].sets;
+    expect(first.lastKg).toBe(60);
+    expect(second.lastKg).toBeNull();
+    expect(second.lastReps).toBeNull();
+  });
+});

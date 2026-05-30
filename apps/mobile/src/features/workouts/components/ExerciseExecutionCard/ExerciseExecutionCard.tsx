@@ -187,6 +187,8 @@ function SetRow({
   const { control } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const done = useWatch({ control, name: `${basePath}.done` });
+  const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
+  const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
 
   return (
     <View className={`-mx-4 flex-row items-center px-4 py-0.5 ${done ? 'bg-primary/10' : ''}`}>
@@ -234,6 +236,7 @@ function SetRow({
               onBlur={field.onBlur}
               aria-invalid={fieldState.invalid}
               className="h-8 py-0 text-sm"
+              placeholder={lastKg != null ? String(lastKg) : undefined}
             />
           )}
         />
@@ -252,6 +255,7 @@ function SetRow({
               aria-invalid={fieldState.invalid}
               className="h-8 py-0 text-sm"
               maxLength={2}
+              placeholder={lastReps != null ? String(lastReps) : undefined}
             />
           )}
         />
