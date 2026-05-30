@@ -1,7 +1,10 @@
 import { observable } from '@legendapp/state';
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv';
 import { syncObservable } from '@legendapp/state/sync';
-import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
+import type {
+  GetWorkoutLastLogResponse,
+  GetWorkoutResponse,
+} from '@/features/workouts/api/workouts';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 
 const persistPlugin = new ObservablePersistMMKV({ id: 'active-workout' });
@@ -10,8 +13,9 @@ export type ActiveWorkout = {
   startedAt: string;
   athleteName: string | null;
   note: string | null;
-  workout_template: GetWorkoutResponse;
-  workout_execution: ExecutionFormInput;
+  workoutTemplate: GetWorkoutResponse;
+  workoutExecution: ExecutionFormInput;
+  lastLog: GetWorkoutLastLogResponse;
 };
 
 export const activeWorkout$ = observable<ActiveWorkout | null>(null);

@@ -1,8 +1,14 @@
+import type { WorkoutSetType } from '@workout-tracker/domain';
 import type {
   GetWorkoutLastLogResponse,
   GetWorkoutResponse,
 } from '@/features/workouts/api/workouts';
-import { buildExecutionFromWorkout } from '@/features/workouts/lib/execution-form';
+import {
+  buildExecutionFromWorkout,
+  type ExecutionSetInput,
+  matchExecutionSetsToLog,
+  matchExecutionSetsToTemplate,
+} from '@/features/workouts/lib/execution-form';
 
 type TemplateSet = GetWorkoutResponse['exercises'][number]['sets'][number];
 type LogSet = NonNullable<GetWorkoutLastLogResponse>['exercises'][number]['sets'][number];
@@ -150,5 +156,122 @@ describe('buildExecutionFromWorkout', () => {
     expect(first.lastKg).toBe(60);
     expect(second.lastKg).toBeNull();
     expect(second.lastReps).toBeNull();
+  });
+});
+
+function execSet(id: string, type: WorkoutSetType): ExecutionSetInput {
+  return { id, type, repsMin: null, repsMax: null, kg: '', reps: '', done: false };
+}
+
+describe('matchExecutionSetsToLog', () => {
+  test('returns nulls when there are no log sets', () => {
+    const result = matchExecutionSetsToLog([execSet('s1', 'normal')], undefined);
+
+    expect(result).toEqual([{ lastKg: null, lastReps: null }]);
+  });
+
+  test('matches existing sets and leaves an added set null', () => {
+    const logSets = [
+      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
+      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
+    ];
+
+    const afterAdd = matchExecutionSetsToLog(
+      [execSet('s1', 'normal'), execSet('s2', 'normal'), execSet('s3', 'normal')],
+      logSets,
+    );
+
+    expect(afterAdd).toEqual([
+      { lastKg: 60, lastReps: 10 },
+      { lastKg: 65, lastReps: 8 },
+      { lastKg: null, lastReps: null },
+    ]);
+  });
+
+  test('keeps matching after a set is removed', () => {
+    const logSets = [
+      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
+      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
+    ];
+
+    const afterRemove = matchExecutionSetsToLog([execSet('s1', 'normal')], logSets);
+
+    expect(afterRemove).toEqual([{ lastKg: 60, lastReps: 10 }]);
+  });
+
+  test('re-matches when a set type changes', () => {
+    const logSets = [
+      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
+      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
+    ];
+
+    const afterRetype = matchExecutionSetsToLog(
+      [execSet('s1', 'warmup'), execSet('s2', 'normal')],
+      logSets,
+    );
+
+    expect(afterRetype).toEqual([
+      { lastKg: null, lastReps: null },
+      { lastKg: 60, lastReps: 10 },
+    ]);
+  });
+});
+
+describe('matchExecutionSetsToTemplate', () => {
+  const TEMPLATE_SETS = [
+    templateSet({ id: 't1', setType: 'warmup', setOrder: 1, repsMin: 8, repsMax: 12 }),
+    templateSet({ id: 't2', setType: 'normal', setOrder: 2, repsMin: 6, repsMax: 8 }),
+    templateSet({ id: 't3', setType: 'normal', setOrder: 3, repsMin: 6, repsMax: 8 }),
+  ];
+
+  test('retyping the second set to warmup drops its target', () => {
+    const result = matchExecutionSetsToTemplate(
+      [execSet('s1', 'warmup'), execSet('s2', 'warmup'), execSet('s3', 'normal')],
+      TEMPLATE_SETS,
+    );
+
+    expect(result).toEqual([
+      { repsMin: 8, repsMax: 12 },
+      { repsMin: null, repsMax: null },
+      { repsMin: 6, repsMax: 8 },
+    ]);
+  });
+
+  test('adding a normal set pulls the next template target', () => {
+    const result = matchExecutionSetsToTemplate(
+      [
+        execSet('s1', 'warmup'),
+        execSet('s2', 'warmup'),
+        execSet('s3', 'normal'),
+        execSet('s4', 'normal'),
+      ],
+      TEMPLATE_SETS,
+    );
+
+    expect(result).toEqual([
+      { repsMin: 8, repsMax: 12 },
+      { repsMin: null, repsMax: null },
+      { repsMin: 6, repsMax: 8 },
+      { repsMin: 6, repsMax: 8 },
+    ]);
+  });
+
+  test('removing the first set realigns the remaining targets', () => {
+    const result = matchExecutionSetsToTemplate(
+      [execSet('s2', 'warmup'), execSet('s3', 'normal'), execSet('s4', 'normal')],
+      TEMPLATE_SETS,
+    );
+
+    expect(result).toEqual([
+      { repsMin: 8, repsMax: 12 },
+      { repsMin: 6, repsMax: 8 },
+      { repsMin: 6, repsMax: 8 },
+    ]);
+  });
+
+  test('returns nulls when there is no template reference', () => {
+    const result = matchExecutionSetsToTemplate([execSet('s1', 'normal')], undefined);
+
+    expect(result).toEqual([{ repsMin: null, repsMax: null }]);
   });
 });

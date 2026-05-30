@@ -24,10 +24,14 @@ export type ExerciseExecutionItem = {
   variationId: string;
   name: string;
   variationName: string | null;
-  setTargets: string[];
   note: string | null;
   restSeconds: number | null;
 };
+
+export function formatSetTarget(repsMin: number | null, repsMax: number | null): string {
+  if (repsMin == null || repsMax == null) return '';
+  return repsMin === repsMax ? `${repsMin}` : `${repsMin}-${repsMax}`;
+}
 
 export function toExerciseExecutionItems(
   exercises: ExecutionFormInput['exercises'],
@@ -49,17 +53,12 @@ export function toExerciseExecutionItems(
         language,
       );
       const variationName = resolveVariationName(variation.slug, variation.name, t);
-      const setTargets = exercise.sets.map((set) => {
-        if (set.repsMin == null || set.repsMax == null) return '';
-        return set.repsMin === set.repsMax ? `${set.repsMin}` : `${set.repsMin}-${set.repsMax}`;
-      });
       return {
         id: exercise.id,
         exerciseIndex,
         variationId: variation.id,
         name,
         variationName,
-        setTargets,
         note: exercise.note,
         restSeconds: exercise.restSeconds,
       };

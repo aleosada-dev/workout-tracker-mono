@@ -1,4 +1,9 @@
-import { EXERCISE_TYPES, matchSets, WORKOUT_SET_TYPES } from '@workout-tracker/domain';
+import {
+  EXERCISE_TYPES,
+  matchSets,
+  type SetLike,
+  WORKOUT_SET_TYPES,
+} from '@workout-tracker/domain';
 import { z } from 'zod';
 import {
   countFractionDigits,
@@ -74,7 +79,51 @@ export const ExecutionFormSchema = z.object({
 export type ExecutionFormInput = z.input<typeof ExecutionFormSchema>;
 export type ExecutionFormValues = z.output<typeof ExecutionFormSchema>;
 export type ExecutionExerciseInput = ExecutionFormInput['exercises'][number];
+export type ExecutionSetInput = ExecutionExerciseInput['sets'][number];
 export type ExecutionExerciseVariation = z.infer<typeof ExecutionExerciseVariationSchema>;
+
+type LastLogExerciseSets = NonNullable<GetWorkoutLastLogResponse>['exercises'][number]['sets'];
+type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
+
+type LastValues = { lastKg: number | null; lastReps: number | null };
+type TargetValues = { repsMin: number | null; repsMax: number | null };
+
+export function matchExecutionSets<R extends SetLike>(
+  sets: ExecutionSetInput[],
+  reference: R[] | undefined,
+): Array<R | null> {
+  if (!reference || reference.length === 0) {
+    return sets.map(() => null);
+  }
+  const keyed = sets.map((set, index) => ({ setType: set.type, setOrder: index, id: set.id }));
+  const byId = new Map<string, R>();
+  for (const match of matchSets(keyed, reference)) {
+    if (match.a && match.b) {
+      byId.set(match.a.id, match.b);
+    }
+  }
+  return sets.map((set) => byId.get(set.id) ?? null);
+}
+
+export function matchExecutionSetsToLog(
+  sets: ExecutionSetInput[],
+  logSets: LastLogExerciseSets | undefined,
+): LastValues[] {
+  return matchExecutionSets(sets, logSets).map((log) => ({
+    lastKg: log?.weightKg ?? null,
+    lastReps: log?.reps ?? null,
+  }));
+}
+
+export function matchExecutionSetsToTemplate(
+  sets: ExecutionSetInput[],
+  templateSets: TemplateExerciseSets | undefined,
+): TargetValues[] {
+  return matchExecutionSets(sets, templateSets).map((template) => ({
+    repsMin: template?.repsMin ?? null,
+    repsMax: template?.repsMax ?? null,
+  }));
+}
 
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
@@ -83,34 +132,25 @@ export function buildExecutionFromWorkout(
   return {
     exercises: workout.exercises.map((exercise) => {
       const logExercise = lastLog?.exercises.find((e) => e.variationId === exercise.variation.id);
-      const lastBySetId = new Map<string, { kg: number | null; reps: number | null }>();
-      if (logExercise) {
-        for (const match of matchSets(exercise.sets, logExercise.sets)) {
-          if (match.a && match.b) {
-            lastBySetId.set(match.a.id, { kg: match.b.weightKg, reps: match.b.reps });
-          }
-        }
-      }
+      const sets: ExecutionSetInput[] = exercise.sets.map((set) => ({
+        id: set.id,
+        type: set.setType,
+        repsMin: set.repsMin,
+        repsMax: set.repsMax,
+        kg: '',
+        reps: '',
+        done: false,
+        lastKg: null,
+        lastReps: null,
+      }));
+      const matched = matchExecutionSetsToLog(sets, logExercise?.sets);
       return {
         id: exercise.id,
         position: exercise.position,
         note: exercise.note,
         restSeconds: exercise.restSeconds,
         variation: exercise.variation,
-        sets: exercise.sets.map((set) => {
-          const last = lastBySetId.get(set.id);
-          return {
-            id: set.id,
-            type: set.setType,
-            repsMin: set.repsMin,
-            repsMax: set.repsMax,
-            kg: '',
-            reps: '',
-            done: false,
-            lastKg: last?.kg ?? null,
-            lastReps: last?.reps ?? null,
-          };
-        }),
+        sets: sets.map((set, i) => ({ ...set, ...matched[i] })),
       };
     }),
   };

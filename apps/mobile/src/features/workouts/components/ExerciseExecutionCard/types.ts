@@ -4,7 +4,6 @@ export interface ExerciseExecutionCardProps {
   variationName?: string;
   note?: string | null;
   restSeconds?: number | null;
-  setTargets: string[];
   dragHandle?: React.ReactNode;
   onPressHeader?: () => void;
 }

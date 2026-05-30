@@ -80,8 +80,9 @@ export default function WorkoutExecutionScreen() {
       startedAt: new Date().toISOString(),
       athleteName: athleteName ?? null,
       note: null,
-      workout_template: structuredClone(workoutTemplate),
-      workout_execution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
+      workoutTemplate: structuredClone(workoutTemplate),
+      workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
+      lastLog: lastLog.data ?? null,
     });
   }, [active, workoutTemplate, lastLog.isPending, lastLog.data, athleteName]);
 
@@ -121,10 +122,8 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     return { transform: [{ translateY: -overlap }] };
   });
 
-  const { workout_template: workout } = active;
-  const exercises = useValue(
-    activeWorkout$.workout_execution.exercises,
-  ) as ExecutionExerciseInput[];
+  const { workoutTemplate: workout } = active;
+  const exercises = useValue(activeWorkout$.workoutExecution.exercises) as ExecutionExerciseInput[];
 
   const warmupItems = useMemo(
     () => toExerciseExecutionItems(exercises, 'preparatorio', t, i18n.language),
@@ -137,7 +136,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
 
   const form = useForm<ExecutionFormInput, unknown, ExecutionFormValues>({
     resolver: zodResolver(ExecutionFormSchema),
-    defaultValues: active.workout_execution,
+    defaultValues: active.workoutExecution,
     mode: 'onTouched',
   });
 
@@ -149,7 +148,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     const sub = form.watch((value) => {
       if (!value?.exercises) return;
       if (!activeWorkout$.peek()) return;
-      activeWorkout$.workout_execution.set(value as ExecutionFormInput);
+      activeWorkout$.workoutExecution.set(value as ExecutionFormInput);
     });
     return () => sub.unsubscribe();
   }, [form]);

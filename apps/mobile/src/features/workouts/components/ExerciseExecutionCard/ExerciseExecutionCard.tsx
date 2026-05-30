@@ -14,7 +14,13 @@ import {
   type SetTypePickerSheetRef,
 } from '@/features/workouts/components/SetTypePickerSheet';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
-import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
+import {
+  type ExecutionFormInput,
+  matchExecutionSetsToLog,
+  matchExecutionSetsToTemplate,
+} from '@/features/workouts/lib/execution-form';
+import { formatSetTarget } from '@/features/workouts/lib/workout-mappers';
+import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import type { ExerciseExecutionCardProps } from './types';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
@@ -34,13 +40,12 @@ export function ExerciseExecutionCard({
   variationName,
   note,
   restSeconds,
-  setTargets,
   dragHandle,
   onPressHeader,
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
-  const { control, getValues } = useFormContext<ExecutionFormInput>();
+  const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: `exercises.${exerciseIndex}.sets`,
@@ -52,6 +57,29 @@ export function ExerciseExecutionCard({
   const hasError = Boolean(errors.exercises?.[exerciseIndex]);
   const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
 
+  const rematchExercise = () => {
+    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
+
+    const logExercise = activeWorkout$.lastLog
+      .peek()
+      ?.exercises.find((exercise) => exercise.variationId === variationId);
+    matchExecutionSetsToLog(sets, logExercise?.sets).forEach((last, i) => {
+      setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
+      setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+    });
+
+    const templateExercise = activeWorkout$.workoutTemplate
+      .peek()
+      ?.exercises.find((exercise) => exercise.variation.id === variationId);
+    if (templateExercise) {
+      matchExecutionSetsToTemplate(sets, templateExercise.sets).forEach((target, i) => {
+        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
+      });
+    }
+  };
+
   const handleAddSet = () => {
     append({
       id: Crypto.randomUUID(),
@@ -62,6 +90,7 @@ export function ExerciseExecutionCard({
       reps: '',
       done: false,
     });
+    rematchExercise();
   };
 
   return (
@@ -143,15 +172,22 @@ export function ExerciseExecutionCard({
                 key={field.id}
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
-                target={setTargets[setIndex] ?? ''}
                 onPressType={(currentType, onChange) => {
                   const sets = getValues(`exercises.${exerciseIndex}.sets`);
                   const validTypes = getValidSetTypesAt(sets, setIndex);
                   setTypePickerRef.current?.present(
                     currentType,
                     validTypes,
-                    onChange,
-                    fields.length > 1 ? () => remove(setIndex) : undefined,
+                    (next) => {
+                      onChange(next);
+                      rematchExercise();
+                    },
+                    fields.length > 1
+                      ? () => {
+                          remove(setIndex);
+                          rematchExercise();
+                        }
+                      : undefined,
                   );
                 }}
               />
@@ -176,12 +212,10 @@ export function ExerciseExecutionCard({
 function SetRow({
   exerciseIndex,
   setIndex,
-  target,
   onPressType,
 }: {
   exerciseIndex: number;
   setIndex: number;
-  target: string;
   onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
@@ -189,6 +223,9 @@ function SetRow({
   const done = useWatch({ control, name: `${basePath}.done` });
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
+  const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
+  const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
+  const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
 
   return (
     <View className={`-mx-4 flex-row items-center px-4 py-0.5 ${done ? 'bg-primary/10' : ''}`}>

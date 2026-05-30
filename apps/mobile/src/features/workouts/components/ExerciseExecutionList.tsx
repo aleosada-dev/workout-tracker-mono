@@ -54,7 +54,6 @@ export function ExerciseExecutionList({
           variationName={item.variationName ?? undefined}
           note={item.note}
           restSeconds={item.restSeconds}
-          setTargets={item.setTargets}
           onPressHeader={() =>
             router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
           }
