@@ -1,4 +1,5 @@
 import {
+	assignLogicalKeys,
 	EXERCISE_TYPES,
 	WORKOUT_FOLDER_COLORS,
 	WORKOUT_SET_TYPES,
@@ -97,6 +98,7 @@ export const WorkoutDetailSetSchema = z.object({
 	repsMax: z.int().positive(),
 	linkedSetId: z.uuid().nullable(),
 	loadPercentOfPrevious: z.int().nonnegative().nullable(),
+	logicalKey: z.string(),
 });
 
 export const WorkoutDetailExerciseVariationSchema = z.object({
@@ -176,7 +178,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 					? { slug: exercise.variation.secondaryMuscle.slug }
 					: null,
 			},
-			sets: exercise.sets.map((set) => ({
+			sets: assignLogicalKeys(exercise.sets).map((set) => ({
 				id: set.id,
 				setOrder: set.setOrder,
 				setType: set.setType,
@@ -184,6 +186,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 				repsMax: set.repsMax,
 				linkedSetId: set.linkedSetId,
 				loadPercentOfPrevious: set.loadPercentOfPrevious,
+				logicalKey: set.logicalKey,
 			})),
 		})),
 	};
@@ -306,6 +309,7 @@ export const WorkoutLogLastSetResponseSchema = z.object({
 	setType: WorkoutSetTypeSchema,
 	weightKg: z.number().nonnegative().nullable(),
 	reps: z.int().positive().nullable(),
+	logicalKey: z.string(),
 });
 
 export const WorkoutLogLastExerciseResponseSchema = z.object({
@@ -330,7 +334,26 @@ export const WorkoutLogLastResponseSchema = z
 export type WorkoutLogLastResponse = z.infer<typeof WorkoutLogLastResponseSchema>;
 
 export function toWorkoutLogLastResponse(log: WorkoutLogLast): NonNullable<WorkoutLogLastResponse> {
-	return log;
+	return {
+		workoutLogId: log.workoutLogId,
+		workoutId: log.workoutId,
+		startedAt: log.startedAt,
+		finishedAt: log.finishedAt,
+		exercises: log.exercises.map((exercise) => ({
+			variationId: exercise.variationId,
+			exerciseName: exercise.exerciseName,
+			variationName: exercise.variationName,
+			position: exercise.position,
+			supersetGroupId: exercise.supersetGroupId,
+			sets: assignLogicalKeys(exercise.sets).map((set) => ({
+				setOrder: set.setOrder,
+				setType: set.setType,
+				weightKg: set.weightKg,
+				reps: set.reps,
+				logicalKey: set.logicalKey,
+			})),
+		})),
+	};
 }
 
 export function toWorkoutFolderResponse(folder: WorkoutFolder): WorkoutFolderResponse {
