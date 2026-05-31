@@ -1,8 +1,8 @@
 export default {
   loadingTitle: 'Loading workout…',
   tabs: {
-    preparatorio: 'Warmup',
-    musculacao: 'Strength',
+    preparatory: 'Warmup',
+    strength: 'Strength',
   },
   actions: {
     timer: 'Timer',
@@ -24,6 +24,7 @@ export default {
     headers: {
       weight: 'Weight',
       reps: 'Reps',
+      duration: 'Time',
       target: 'Target',
     },
   },
@@ -66,6 +67,30 @@ export default {
     removeSet: 'Delete set',
     removeExerciseSet: 'Delete exercise set',
     removeSupersetSet: 'Delete entire set',
+  },
+  measurementTypePicker: {
+    title: 'Measurement type',
+    notice:
+      'The measurement applies to every set in this exercise — they cannot use different types.',
+    options: {
+      weight_reps: {
+        label: 'Weight & reps',
+        description: 'Track the load and reps of each set.',
+      },
+      reps: {
+        label: 'Reps',
+        description: 'Track reps only, without load.',
+      },
+      duration: {
+        label: 'Time',
+        description: 'Track the duration of the set.',
+      },
+    },
+    removeSet: 'Delete set',
+  },
+  durationPicker: {
+    title: 'Set time',
+    confirm: 'Done',
   },
   superset: {
     title: 'Superset',

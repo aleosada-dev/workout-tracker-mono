@@ -31,6 +31,7 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
         .from('workouts')
         .select(LIST_SELECT)
         .eq('user_id', userId)
+        .eq('workout_exercises.exercise_type', 'strength')
         .is('archived_at', null)
         .order('name', { ascending: true });
 
@@ -56,7 +57,7 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
           `
           id, user_id, name, description, folder_id, created_at, updated_at,
           workout_exercises (
-            id, position, superset_group_id, superset_order, note, rest_seconds,
+            id, position, superset_group_id, superset_order, note, rest_seconds, exercise_type,
             variation:variations (
               id, slug, name,
               exercise:exercises ( slug, name, exercise_type ),
@@ -65,7 +66,7 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
               secondary_muscle:muscles!secondary_muscle_id ( slug )
             ),
             workout_sets (
-              id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous
+              id, set_order, set_type, measurement_type, reps_min, reps_max, duration_seconds, linked_set_id, load_percent_of_previous
             )
           )
         `,

@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import type { ExecutionExerciseInput } from '@/features/workouts/lib/execution-form';
 import {
   type ExecutionListItem,
+  exerciseColumnLayout,
   formatSetTarget,
   reorderExercisesWithinType,
   toExecutionListItems,
@@ -13,6 +14,7 @@ function exercise(
   overrides: Partial<ExecutionExerciseInput> & Pick<ExecutionExerciseInput, 'id'>,
 ): ExecutionExerciseInput {
   return {
+    exerciseType: 'strength',
     position: 0,
     supersetGroupId: overrides.id,
     supersetOrder: 0,
@@ -44,7 +46,7 @@ describe('toExecutionListItems', () => {
       exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 0, restSeconds: 90 }),
     ];
 
-    const items = toExecutionListItems(exercises, 'musculacao', t, 'pt');
+    const items = toExecutionListItems(exercises, 'strength', t, 'pt');
 
     expect(items).toHaveLength(1);
     const group = supersetGroup(items[0]);
@@ -55,7 +57,7 @@ describe('toExecutionListItems', () => {
   });
 
   test('treats an exercise whose group id equals its own id as a single', () => {
-    const items = toExecutionListItems([exercise({ id: 'x' })], 'musculacao', t, 'pt');
+    const items = toExecutionListItems([exercise({ id: 'x' })], 'strength', t, 'pt');
 
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe('single');
@@ -64,7 +66,7 @@ describe('toExecutionListItems', () => {
   test('renders a lone member with a mismatched group id as a single (defensive)', () => {
     const items = toExecutionListItems(
       [exercise({ id: 'a', supersetGroupId: 'sg' })],
-      'musculacao',
+      'strength',
       t,
       'pt',
     );
@@ -80,7 +82,7 @@ describe('toExecutionListItems', () => {
       exercise({ id: 'c', supersetGroupId: 'sg', supersetOrder: 2 }),
     ];
 
-    const group = supersetGroup(toExecutionListItems(exercises, 'musculacao', t, 'pt')[0]);
+    const group = supersetGroup(toExecutionListItems(exercises, 'strength', t, 'pt')[0]);
 
     expect(group.members.map((m) => m.letter)).toEqual(['A', 'B', 'C']);
   });
@@ -92,6 +94,7 @@ describe('toExecutionListItems', () => {
       exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 1 }),
       exercise({
         id: 'warmup',
+        exerciseType: 'preparatory',
         variation: {
           id: 'var-warmup',
           slug: null,
@@ -104,7 +107,7 @@ describe('toExecutionListItems', () => {
       }),
     ];
 
-    const items = toExecutionListItems(exercises, 'musculacao', t, 'pt');
+    const items = toExecutionListItems(exercises, 'strength', t, 'pt');
 
     expect(items.map((i) => i.kind)).toEqual(['single', 'superset']);
   });
@@ -126,10 +129,42 @@ describe('formatSetTarget', () => {
   });
 });
 
+describe('exerciseColumnLayout', () => {
+  test('all weight_reps sets yield weight + reps without duration', () => {
+    expect(
+      exerciseColumnLayout([
+        { measurementType: 'weight_reps' },
+        { measurementType: 'weight_reps' },
+      ]),
+    ).toEqual({ weight: true, reps: true, duration: false });
+  });
+
+  test('a single duration set yields duration only', () => {
+    expect(exerciseColumnLayout([{ measurementType: 'duration' }])).toEqual({
+      weight: false,
+      reps: false,
+      duration: true,
+    });
+  });
+
+  test('mixing reps and duration sets unions reps + duration', () => {
+    expect(
+      exerciseColumnLayout([{ measurementType: 'reps' }, { measurementType: 'duration' }]),
+    ).toEqual({ weight: false, reps: true, duration: true });
+  });
+
+  test('mixing weight_reps and reps unions to weight + reps', () => {
+    expect(
+      exerciseColumnLayout([{ measurementType: 'weight_reps' }, { measurementType: 'reps' }]),
+    ).toEqual({ weight: true, reps: true, duration: false });
+  });
+});
+
 describe('reorderExercisesWithinType', () => {
   const warmup = (id: string): ExecutionExerciseInput =>
     exercise({
       id,
+      exerciseType: 'preparatory',
       variation: {
         id: `var-${id}`,
         slug: null,
@@ -144,7 +179,7 @@ describe('reorderExercisesWithinType', () => {
   test('reorders single exercises and reassigns position', () => {
     const exercises = [exercise({ id: 'a' }), exercise({ id: 'b' }), exercise({ id: 'c' })];
 
-    const next = reorderExercisesWithinType(exercises, 'musculacao', ['c', 'a', 'b']);
+    const next = reorderExercisesWithinType(exercises, 'strength', ['c', 'a', 'b']);
 
     expect(next.map((e) => e.id)).toEqual(['c', 'a', 'b']);
     expect(next.map((e) => e.position)).toEqual([0, 1, 2]);
@@ -157,7 +192,7 @@ describe('reorderExercisesWithinType', () => {
       exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 1 }),
     ];
 
-    const next = reorderExercisesWithinType(exercises, 'musculacao', ['sg', 'single']);
+    const next = reorderExercisesWithinType(exercises, 'strength', ['sg', 'single']);
 
     expect(next.map((e) => e.id)).toEqual(['a', 'b', 'single']);
   });
@@ -165,7 +200,7 @@ describe('reorderExercisesWithinType', () => {
   test('leaves exercises of the other type untouched in place', () => {
     const exercises = [warmup('w'), exercise({ id: 'a' }), exercise({ id: 'b' })];
 
-    const next = reorderExercisesWithinType(exercises, 'musculacao', ['b', 'a']);
+    const next = reorderExercisesWithinType(exercises, 'strength', ['b', 'a']);
 
     expect(next.map((e) => e.id)).toEqual(['w', 'b', 'a']);
   });

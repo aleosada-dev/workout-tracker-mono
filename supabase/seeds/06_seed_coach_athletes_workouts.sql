@@ -46,6 +46,9 @@ DECLARE
   var_leg_press        uuid;
   var_mesa_flexora     uuid;
   var_elevacao_pelv    uuid;
+  -- Variações preparatórias
+  var_rot_ombros       uuid;
+  var_along_peito      uuid;
 
 BEGIN
 
@@ -67,6 +70,8 @@ BEGIN
   SELECT id INTO var_leg_press        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Leg Press 45'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_mesa_flexora     FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Mesa Flexora'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_elevacao_pelv    FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Elevação Pélvica'     LIMIT 1) LIMIT 1;
+  SELECT id INTO var_rot_ombros       FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Rotação de Ombros'    LIMIT 1) LIMIT 1;
+  SELECT id INTO var_along_peito      FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Alongamento de Peitoral' LIMIT 1) LIMIT 1;
 
   -- ------------------------------------------------
   -- coach_athletes
@@ -340,6 +345,39 @@ BEGIN
     ('be250002-5555-4eee-8fff-000000000032'::uuid, 'be4c86b5-9a2f-4d4c-ae86-d5f7b829eb54'::uuid, var_remada_cabo,     NULL,                                          90, 1, 'be250002-5555-4eee-8fff-000000000032'::uuid, 0),
     ('be250003-5555-4eee-8fff-000000000033'::uuid, 'be4c86b5-9a2f-4d4c-ae86-d5f7b829eb54'::uuid, var_rosca_direta,    NULL,                                          60, 2, 'be250003-5555-4eee-8fff-000000000033'::uuid, 0),
     ('be250004-5555-4eee-8fff-000000000034'::uuid, 'be4c86b5-9a2f-4d4c-ae86-d5f7b829eb54'::uuid, var_elevacao_lat,    'Subir até a linha do ombro',                 60, 3, 'be250004-5555-4eee-8fff-000000000034'::uuid, 0)
+  ON CONFLICT DO NOTHING;
+
+  -- ================================================
+  -- workout_exercises PREPARATÓRIOS (modelo unificado: exercise_type='preparatory')
+  -- Adicionados ao Treino A do Lucas (wk1). Inserção direta na tabela base
+  -- (não na view workout_preparatory_exercises), porque o seed roda com
+  -- session_replication_role='replica' e os triggers INSTEAD OF das views não
+  -- disparam nesse modo. O espaço de position é próprio do bloco preparatório
+  -- (índice único inclui exercise_type), então não colide com a musculação.
+  --   prep pos 0 → Rotação de Ombros     (por repetições → measurement_type 'reps')
+  --   prep pos 1 → Alongamento de Peitoral (por tempo      → measurement_type 'duration')
+  -- ================================================
+  INSERT INTO public.workout_exercises
+    (id, workout_id, variation_id, note, rest_seconds, position, superset_group_id, superset_order, exercise_type)
+  VALUES
+    ('aa110001-0000-4aaa-8aaa-000000000001'::uuid, '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
+     var_rot_ombros,  'Mobilizar os ombros antes do supino',     NULL, 0,
+     'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, 'preparatory'),
+    ('aa110002-0000-4aaa-8aaa-000000000002'::uuid, '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
+     var_along_peito, 'Segurar o alongamento sem repuxar',       NULL, 1,
+     'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, 'preparatory')
+  ON CONFLICT DO NOTHING;
+
+  -- Sets dos preparatórios. Rotação de Ombros por reps; Alongamento por tempo.
+  INSERT INTO public.workout_sets
+    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, duration_seconds, measurement_type, linked_set_id, load_percent_of_previous)
+  VALUES
+    -- Rotação de Ombros — 2 séries de 10-15 reps
+    ('bb110001-0000-4aaa-8aaa-000000000001'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, NULL, 10, 15, NULL, 'reps',     NULL, NULL),
+    ('bb110002-0000-4aaa-8aaa-000000000002'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 1, NULL, 10, 15, NULL, 'reps',     NULL, NULL),
+    -- Alongamento de Peitoral — 2 séries de 30s (por tempo)
+    ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, NULL, NULL, NULL, 30, 'duration', NULL, NULL),
+    ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, NULL, NULL, NULL, 30, 'duration', NULL, NULL)
   ON CONFLICT DO NOTHING;
 
   -- ================================================

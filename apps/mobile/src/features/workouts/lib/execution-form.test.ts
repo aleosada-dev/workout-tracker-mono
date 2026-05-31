@@ -1,4 +1,4 @@
-import type { WorkoutSetType } from '@workout-tracker/domain';
+import type { MeasurementType, WorkoutSetType } from '@workout-tracker/domain';
 import type {
   GetWorkoutLastLogResponse,
   GetWorkoutResponse,
@@ -7,6 +7,7 @@ import {
   autofillFromLast,
   buildExecutionFromWorkout,
   type ExecutionSetInput,
+  ExecutionSetSchema,
   matchExecutionSetsToLog,
   matchExecutionSetsToTemplate,
   restTimerDuration,
@@ -21,9 +22,11 @@ const VARIATION_B = '22222222-2222-2222-2222-222222222222';
 function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>): TemplateSet {
   return {
     setType: 'normal',
+    measurementType: 'weight_reps',
     setOrder: 1,
     repsMin: 8,
     repsMax: 12,
+    durationSeconds: null,
     linkedSetId: null,
     loadPercentOfPrevious: null,
     logicalKey: 'normal-1',
@@ -54,6 +57,7 @@ function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
     exercises: [
       {
         id: 'ex-1',
+        exerciseType: 'strength',
         position: 0,
         supersetGroupId: 'sg-1',
         supersetOrder: 0,
@@ -108,6 +112,40 @@ describe('buildExecutionFromWorkout', () => {
 
     expect(result.exercises[0].supersetGroupId).toBe('sg-1');
     expect(result.exercises[0].supersetOrder).toBe(0);
+  });
+
+  test('defensively coalesces a missing set type to normal', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [
+        templateSet({
+          id: 's1',
+          setType: null as unknown as TemplateSet['setType'],
+          measurementType: 'duration',
+          repsMin: null,
+          repsMax: null,
+          durationSeconds: 30,
+        }),
+      ]),
+    );
+
+    expect(result.exercises[0].sets[0].type).toBe('normal');
+  });
+
+  test('carries the measurement type and duration target through', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [
+        templateSet({
+          id: 's1',
+          measurementType: 'duration',
+          repsMin: null,
+          repsMax: null,
+          durationSeconds: 30,
+        }),
+      ]),
+    );
+
+    expect(result.exercises[0].sets[0].measurementType).toBe('duration');
+    expect(result.exercises[0].sets[0].durationTarget).toBe(30);
   });
 
   test('seeds last weight/reps from the matching log set (same variation, same logical key)', () => {
@@ -168,8 +206,23 @@ describe('buildExecutionFromWorkout', () => {
   });
 });
 
-function execSet(id: string, type: WorkoutSetType): ExecutionSetInput {
-  return { id, type, repsMin: null, repsMax: null, kg: '', reps: '', done: false };
+function execSet(
+  id: string,
+  type: WorkoutSetType,
+  measurementType: MeasurementType = 'weight_reps',
+): ExecutionSetInput {
+  return {
+    id,
+    type,
+    measurementType,
+    repsMin: null,
+    repsMax: null,
+    durationTarget: null,
+    kg: '',
+    reps: '',
+    duration: '',
+    done: false,
+  };
 }
 
 describe('matchExecutionSetsToLog', () => {
@@ -240,9 +293,9 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12 },
-      { repsMin: null, repsMax: null },
-      { repsMin: 6, repsMax: 8 },
+      { repsMin: 8, repsMax: 12, durationTarget: null },
+      { repsMin: null, repsMax: null, durationTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null },
     ]);
   });
 
@@ -258,10 +311,10 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12 },
-      { repsMin: null, repsMax: null },
-      { repsMin: 6, repsMax: 8 },
-      { repsMin: 6, repsMax: 8 },
+      { repsMin: 8, repsMax: 12, durationTarget: null },
+      { repsMin: null, repsMax: null, durationTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null },
     ]);
   });
 
@@ -272,16 +325,75 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12 },
-      { repsMin: 6, repsMax: 8 },
-      { repsMin: 6, repsMax: 8 },
+      { repsMin: 8, repsMax: 12, durationTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null },
     ]);
   });
 
   test('returns nulls when there is no template reference', () => {
     const result = matchExecutionSetsToTemplate([execSet('s1', 'normal')], undefined);
 
-    expect(result).toEqual([{ repsMin: null, repsMax: null }]);
+    expect(result).toEqual([{ repsMin: null, repsMax: null, durationTarget: null }]);
+  });
+
+  test('pulls the duration target for a duration template set', () => {
+    const result = matchExecutionSetsToTemplate(
+      [execSet('s1', 'normal', 'duration')],
+      [
+        templateSet({
+          id: 't1',
+          setOrder: 1,
+          measurementType: 'duration',
+          repsMin: null,
+          repsMax: null,
+          durationSeconds: 45,
+        }),
+      ],
+    );
+
+    expect(result).toEqual([{ repsMin: null, repsMax: null, durationTarget: 45 }]);
+  });
+});
+
+describe('ExecutionSetSchema validation', () => {
+  function rawSet(measurementType: MeasurementType, kg: string, reps: string) {
+    return {
+      id: 's1',
+      type: 'normal' as const,
+      measurementType,
+      repsMin: null,
+      repsMax: null,
+      durationTarget: null,
+      kg,
+      reps,
+      duration: '',
+      done: false,
+    };
+  }
+
+  test('weight_reps requires both kg and reps', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '80', '8')).success).toBe(true);
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '', '8')).success).toBe(false);
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '80', '')).success).toBe(false);
+  });
+
+  test('reps requires reps but allows empty kg', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '12')).success).toBe(true);
+    expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '')).success).toBe(false);
+  });
+
+  test('duration requires neither kg nor reps', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '')).success).toBe(true);
+  });
+
+  test('combo types fall back to requiring weight and reps', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '', '')).success).toBe(
+      false,
+    );
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '80', '8')).success).toBe(
+      true,
+    );
   });
 });
 

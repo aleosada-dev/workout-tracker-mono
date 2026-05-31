@@ -1,6 +1,8 @@
 import {
 	assignLogicalKeys,
 	EXERCISE_TYPES,
+	MEASUREMENT_TYPES,
+	WORKOUT_EXERCISE_TYPES,
 	WORKOUT_FOLDER_COLORS,
 	WORKOUT_SET_TYPES,
 	type Workout,
@@ -94,8 +96,10 @@ export const WorkoutDetailSetSchema = z.object({
 	id: z.uuid(),
 	setOrder: z.int().nonnegative(),
 	setType: WorkoutSetTypeSchema,
-	repsMin: z.int().positive(),
-	repsMax: z.int().positive(),
+	measurementType: z.enum(MEASUREMENT_TYPES),
+	repsMin: z.int().positive().nullable(),
+	repsMax: z.int().positive().nullable(),
+	durationSeconds: z.int().positive().nullable(),
 	linkedSetId: z.uuid().nullable(),
 	loadPercentOfPrevious: z.int().nonnegative().nullable(),
 	logicalKey: z.string(),
@@ -120,6 +124,7 @@ export const WorkoutDetailExerciseVariationSchema = z.object({
 
 export const WorkoutDetailExerciseSchema = z.object({
 	id: z.uuid(),
+	exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
 	position: z.int().nonnegative(),
 	supersetGroupId: z.uuid(),
 	supersetOrder: z.int().nonnegative(),
@@ -155,6 +160,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 		updatedAt: workout.updatedAt.toISOString(),
 		exercises: workout.exercises.map((exercise) => ({
 			id: exercise.id,
+			exerciseType: exercise.exerciseType,
 			position: exercise.position,
 			supersetGroupId: exercise.supersetGroupId,
 			supersetOrder: exercise.supersetOrder,
@@ -182,8 +188,10 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 				id: set.id,
 				setOrder: set.setOrder,
 				setType: set.setType,
+				measurementType: set.measurementType,
 				repsMin: set.repsMin,
 				repsMax: set.repsMax,
+				durationSeconds: set.durationSeconds,
 				linkedSetId: set.linkedSetId,
 				loadPercentOfPrevious: set.loadPercentOfPrevious,
 				logicalKey: set.logicalKey,

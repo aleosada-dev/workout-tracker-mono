@@ -82,6 +82,7 @@ export function SupersetExecutionCard({
       matchExecutionSetsToTemplate(memberSets, templateExercise.sets).forEach((target, i) => {
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
       });
     }
   };
@@ -89,6 +90,7 @@ export function SupersetExecutionCard({
   const handleAddSet = () => {
     for (const member of members) {
       const current = getValues(`exercises.${member.exerciseIndex}.sets`);
+      const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
       setValue(
         `exercises.${member.exerciseIndex}.sets`,
         [
@@ -96,10 +98,13 @@ export function SupersetExecutionCard({
           {
             id: Crypto.randomUUID(),
             type: 'normal',
+            measurementType,
             repsMin: null,
             repsMax: null,
+            durationTarget: null,
             kg: '',
             reps: '',
+            duration: '',
             done: false,
           },
         ],
@@ -417,7 +422,7 @@ function SupersetMemberCell({
               }
               onBlur={field.onBlur}
               aria-invalid={fieldState.invalid}
-              className="h-8 py-0 text-sm"
+              className="h-8 max-w-[80px] py-0 text-sm"
               placeholder={lastKg != null ? String(lastKg) : undefined}
             />
           )}
@@ -435,7 +440,7 @@ function SupersetMemberCell({
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
               onBlur={field.onBlur}
               aria-invalid={fieldState.invalid}
-              className="h-8 py-0 text-sm"
+              className="h-8 max-w-[80px] py-0 text-sm"
               maxLength={2}
               placeholder={lastReps != null ? String(lastReps) : undefined}
             />

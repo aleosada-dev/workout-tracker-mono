@@ -1,6 +1,9 @@
 import type { ExerciseType } from '../exercises/models';
-import type { WorkoutSetType } from '../set/sets';
+import type { MeasurementType, WorkoutSetType } from '../set/sets';
 import type { WorkoutFolderColor } from './workout-folder';
+
+export const WORKOUT_EXERCISE_TYPES = ['preparatory', 'strength'] as const;
+export type WorkoutExerciseType = (typeof WORKOUT_EXERCISE_TYPES)[number];
 
 export type WorkoutTopExercise = {
   slug: string | null;
@@ -29,8 +32,10 @@ export type WorkoutDetailSet = {
   id: string;
   setOrder: number;
   setType: WorkoutSetType;
-  repsMin: number;
-  repsMax: number;
+  measurementType: MeasurementType;
+  repsMin: number | null;
+  repsMax: number | null;
+  durationSeconds: number | null;
   linkedSetId: string | null;
   loadPercentOfPrevious: number | null;
 };
@@ -47,6 +52,7 @@ export type WorkoutDetailExerciseVariation = {
 
 export type WorkoutDetailExercise = {
   id: string;
+  exerciseType: WorkoutExerciseType;
   position: number;
   supersetGroupId: string;
   supersetOrder: number;

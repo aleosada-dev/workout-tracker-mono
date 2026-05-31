@@ -1,7 +1,10 @@
 import {
   EXERCISE_TYPES,
+  MEASUREMENT_TYPES,
+  type MeasurementType,
   matchSets,
   type SetLike,
+  WORKOUT_EXERCISE_TYPES,
   WORKOUT_SET_TYPES,
 } from '@workout-tracker/domain';
 import { z } from 'zod';
@@ -18,33 +21,69 @@ const MAX_WEIGHT_KG = 1000;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
 const MIN_REPS = 1;
 const MAX_REPS = 99;
+const MAX_DURATION_SECONDS = 5999;
 
-const weightField = z
+const optionalWeightField = z
   .string()
-  .min(1, { message: 'weight.required' })
-  .refine((v) => countFractionDigits(v) <= MAX_WEIGHT_FRACTION_DIGITS, {
+  .refine((v) => v === '' || countFractionDigits(v) <= MAX_WEIGHT_FRACTION_DIGITS, {
     message: 'weight.tooManyDecimals',
   })
-  .transform((v) => parseLocalizedNumber(v))
-  .pipe(z.number().nonnegative().lt(MAX_WEIGHT_KG));
+  .transform((v) => (v === '' ? undefined : parseLocalizedNumber(v)))
+  .pipe(z.number().nonnegative().lt(MAX_WEIGHT_KG).optional());
 
-const repsField = z
+const optionalRepsField = z
   .string()
-  .min(1, { message: 'reps.required' })
-  .transform((v) => Number(v))
-  .pipe(z.number().int().min(MIN_REPS).max(MAX_REPS));
+  .transform((v) => (v === '' ? undefined : Number(v)))
+  .pipe(z.number().int().min(MIN_REPS).max(MAX_REPS).optional());
 
-export const ExecutionSetSchema = z.object({
-  id: z.string(),
-  type: z.enum(WORKOUT_SET_TYPES),
-  repsMin: z.int().positive().nullable(),
-  repsMax: z.int().positive().nullable(),
-  kg: weightField,
-  reps: repsField,
-  done: z.boolean(),
-  lastKg: z.number().nonnegative().nullable().optional(),
-  lastReps: z.int().positive().nullable().optional(),
-});
+const optionalDurationField = z
+  .string()
+  .transform((v) => (v === '' ? undefined : Number(v)))
+  .pipe(z.number().int().min(1).max(MAX_DURATION_SECONDS).optional());
+
+export type MeasurementDimensions = { weight: boolean; reps: boolean; duration: boolean };
+
+export function setDimensions(measurementType: MeasurementType): MeasurementDimensions {
+  switch (measurementType) {
+    case 'reps':
+      return { weight: false, reps: true, duration: false };
+    case 'duration':
+      return { weight: false, reps: false, duration: true };
+    case 'duration_reps':
+      return { weight: false, reps: true, duration: true };
+    case 'weight_duration':
+      return { weight: true, reps: false, duration: true };
+    case 'weight_reps_duration':
+      return { weight: true, reps: true, duration: true };
+    default:
+      return { weight: true, reps: true, duration: false };
+  }
+}
+
+export const ExecutionSetSchema = z
+  .object({
+    id: z.string(),
+    type: z.enum(WORKOUT_SET_TYPES),
+    measurementType: z.enum(MEASUREMENT_TYPES),
+    repsMin: z.int().positive().nullable(),
+    repsMax: z.int().positive().nullable(),
+    durationTarget: z.int().positive().nullable(),
+    kg: optionalWeightField,
+    reps: optionalRepsField,
+    duration: optionalDurationField,
+    done: z.boolean(),
+    lastKg: z.number().nonnegative().nullable().optional(),
+    lastReps: z.int().positive().nullable().optional(),
+  })
+  .superRefine((set, ctx) => {
+    const dims = setDimensions(set.measurementType);
+    if (dims.weight && set.kg === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['kg'], message: 'weight.required' });
+    }
+    if (dims.reps && set.reps === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['reps'], message: 'reps.required' });
+    }
+  });
 
 export const ExecutionExerciseVariationSchema = z.object({
   id: z.string(),
@@ -65,6 +104,7 @@ export const ExecutionExerciseVariationSchema = z.object({
 
 export const ExecutionExerciseSchema = z.object({
   id: z.string(),
+  exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
   position: z.int().nonnegative(),
   supersetGroupId: z.string(),
   supersetOrder: z.int().nonnegative(),
@@ -88,7 +128,11 @@ type LastLogExerciseSets = NonNullable<GetWorkoutLastLogResponse>['exercises'][n
 type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
 
 type LastValues = { lastKg: number | null; lastReps: number | null };
-type TargetValues = { repsMin: number | null; repsMax: number | null };
+type TargetValues = {
+  repsMin: number | null;
+  repsMax: number | null;
+  durationTarget: number | null;
+};
 
 export function matchExecutionSets<R extends SetLike>(
   sets: ExecutionSetInput[],
@@ -124,6 +168,7 @@ export function matchExecutionSetsToTemplate(
   return matchExecutionSets(sets, templateSets).map((template) => ({
     repsMin: template?.repsMin ?? null,
     repsMax: template?.repsMax ?? null,
+    durationTarget: template?.durationSeconds ?? null,
   }));
 }
 
@@ -153,11 +198,14 @@ export function buildExecutionFromWorkout(
       const logExercise = lastLog?.exercises.find((e) => e.variationId === exercise.variation.id);
       const sets: ExecutionSetInput[] = exercise.sets.map((set) => ({
         id: set.id,
-        type: set.setType,
+        type: set.setType ?? 'normal',
+        measurementType: set.measurementType ?? 'weight_reps',
         repsMin: set.repsMin,
         repsMax: set.repsMax,
+        durationTarget: set.durationSeconds ?? null,
         kg: '',
         reps: '',
+        duration: '',
         done: false,
         lastKg: null,
         lastReps: null,
@@ -165,6 +213,7 @@ export function buildExecutionFromWorkout(
       const matched = matchExecutionSetsToLog(sets, logExercise?.sets);
       return {
         id: exercise.id,
+        exerciseType: exercise.exerciseType,
         position: exercise.position,
         supersetGroupId: exercise.supersetGroupId,
         supersetOrder: exercise.supersetOrder,

@@ -1,4 +1,8 @@
-import { isSupersetGroup } from '@workout-tracker/domain';
+import {
+  isSupersetGroup,
+  type MeasurementType,
+  type WorkoutExerciseType,
+} from '@workout-tracker/domain';
 import type { TFunction } from 'i18next';
 import {
   composeExerciseName,
@@ -7,7 +11,7 @@ import {
 } from '@/features/exercises/lib/format';
 import type { WorkoutResponse } from '@/features/workouts/api/workouts';
 import type { WorkoutCardData } from '@/features/workouts/components/WorkoutCard';
-import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
+import { type ExecutionFormInput, setDimensions } from '@/features/workouts/lib/execution-form';
 
 export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
   return {
@@ -59,6 +63,22 @@ export function formatSetTarget(repsMin: number | null, repsMax: number | null):
   return repsMin === repsMax ? `${repsMin}` : `${repsMin}-${repsMax}`;
 }
 
+export type ColumnLayout = { weight: boolean; reps: boolean; duration: boolean };
+
+export function exerciseColumnLayout(sets: { measurementType: MeasurementType }[]): ColumnLayout {
+  return sets.reduce<ColumnLayout>(
+    (acc, set) => {
+      const dims = setDimensions(set.measurementType);
+      return {
+        weight: acc.weight || dims.weight,
+        reps: acc.reps || dims.reps,
+        duration: acc.duration || dims.duration,
+      };
+    },
+    { weight: false, reps: false, duration: false },
+  );
+}
+
 type ExecutionExercise = ExecutionFormInput['exercises'][number];
 
 function toExerciseExecutionItem(
@@ -90,13 +110,13 @@ function toExerciseExecutionItem(
 
 export function toExerciseExecutionItems(
   exercises: ExecutionFormInput['exercises'],
-  type: 'preparatorio' | 'musculacao',
+  type: WorkoutExerciseType,
   t: TFunction,
   language: string,
 ): ExerciseExecutionItem[] {
   return exercises
     .map((exercise, exerciseIndex) => ({ exercise, exerciseIndex }))
-    .filter(({ exercise }) => exercise.variation.exercise.type === type)
+    .filter(({ exercise }) => exercise.exerciseType === type)
     .map(({ exercise, exerciseIndex }) =>
       toExerciseExecutionItem(exercise, exerciseIndex, t, language),
     );
@@ -104,10 +124,10 @@ export function toExerciseExecutionItems(
 
 export function reorderExercisesWithinType(
   exercises: ExecutionFormInput['exercises'],
-  type: 'preparatorio' | 'musculacao',
+  type: WorkoutExerciseType,
   orderedItemIds: string[],
 ): ExecutionFormInput['exercises'] {
-  const isType = (exercise: ExecutionExercise) => exercise.variation.exercise.type === type;
+  const isType = (exercise: ExecutionExercise) => exercise.exerciseType === type;
   const rank = new Map(orderedItemIds.map((id, index) => [id, index]));
 
   const reordered = exercises
@@ -128,13 +148,13 @@ export function reorderExercisesWithinType(
 
 export function toExecutionListItems(
   exercises: ExecutionFormInput['exercises'],
-  type: 'preparatorio' | 'musculacao',
+  type: WorkoutExerciseType,
   t: TFunction,
   language: string,
 ): ExecutionListItem[] {
   const filtered = exercises
     .map((exercise, exerciseIndex) => ({ exercise, exerciseIndex }))
-    .filter(({ exercise }) => exercise.variation.exercise.type === type);
+    .filter(({ exercise }) => exercise.exerciseType === type);
 
   const groupOrder: string[] = [];
   const groups = new Map<string, { exercise: ExecutionExercise; exerciseIndex: number }[]>();

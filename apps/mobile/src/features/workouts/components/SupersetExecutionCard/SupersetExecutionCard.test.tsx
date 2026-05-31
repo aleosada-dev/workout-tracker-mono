@@ -75,6 +75,7 @@ const MEMBERS: SupersetMember[] = [
 function member(index: number, restSeconds: number): ExecutionFormInput['exercises'][number] {
   return {
     id: `ex-${index}`,
+    exerciseType: 'strength',
     position: index,
     supersetGroupId: 'sg',
     supersetOrder: index,
@@ -93,10 +94,13 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
       {
         id: `s-${index}`,
         type: 'normal',
+        measurementType: 'weight_reps',
         repsMin: null,
         repsMax: null,
+        durationTarget: null,
         kg: '',
         reps: '',
+        duration: '',
         done: false,
         lastKg: null,
         lastReps: null,

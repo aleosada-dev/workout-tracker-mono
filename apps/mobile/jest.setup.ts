@@ -44,6 +44,21 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
+jest.mock('@quidone/react-native-wheel-picker', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock('@expo/ui/swift-ui', () => {
+  const { View } = require('react-native');
+  return { Host: View, HStack: View, Picker: View, Text: View };
+});
+jest.mock('@expo/ui/swift-ui/modifiers', () => ({
+  frame: () => ({}),
+  pickerStyle: () => ({}),
+  tag: () => ({}),
+}));
+
 // Render portalled content inline so tests can query it without a PortalHost,
 // and so the portal's module-global store can't leak between test cases.
 jest.mock('@rn-primitives/portal', () => ({

@@ -1,9 +1,11 @@
 import type {
   ExerciseType,
+  MeasurementType,
   Workout,
   WorkoutDetail,
   WorkoutDetailExercise,
   WorkoutDetailSet,
+  WorkoutExerciseType,
   WorkoutSetType,
   WorkoutTopExercise,
 } from '@workout-tracker/domain';
@@ -90,9 +92,11 @@ function pickTopExercises(exercises: WorkoutExerciseRow[]): WorkoutTopExercise[]
 type WorkoutSetRow = {
   id: string;
   set_order: number;
-  set_type: WorkoutSetType;
-  reps_min: number;
-  reps_max: number;
+  set_type: WorkoutSetType | null;
+  measurement_type: MeasurementType;
+  reps_min: number | null;
+  reps_max: number | null;
+  duration_seconds: number | null;
   linked_set_id: string | null;
   load_percent_of_previous: number | null;
 };
@@ -109,6 +113,7 @@ type DetailVariationRow = {
 
 type DetailWorkoutExerciseRow = {
   id: string;
+  exercise_type: WorkoutExerciseType;
   position: number;
   superset_group_id: string;
   superset_order: number;
@@ -133,9 +138,11 @@ function toWorkoutSet(row: WorkoutSetRow): WorkoutDetailSet {
   return {
     id: row.id,
     setOrder: row.set_order,
-    setType: row.set_type,
+    setType: row.set_type ?? 'normal',
+    measurementType: row.measurement_type ?? 'weight_reps',
     repsMin: row.reps_min,
     repsMax: row.reps_max,
+    durationSeconds: row.duration_seconds,
     linkedSetId: row.linked_set_id,
     loadPercentOfPrevious: row.load_percent_of_previous,
   };
@@ -145,6 +152,7 @@ function toWorkoutExercise(row: DetailWorkoutExerciseRow): WorkoutDetailExercise
   const variation = row.variation;
   return {
     id: row.id,
+    exerciseType: row.exercise_type ?? 'strength',
     position: row.position,
     supersetGroupId: row.superset_group_id,
     supersetOrder: row.superset_order,

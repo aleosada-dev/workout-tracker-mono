@@ -4,6 +4,16 @@ import { ValidationError, type ValidationIssue } from '../shared/validation-erro
 export const WORKOUT_SET_TYPES = ['warmup', 'normal', 'drop', 'cluster'] as const;
 export type WorkoutSetType = (typeof WORKOUT_SET_TYPES)[number];
 
+export const MEASUREMENT_TYPES = [
+  'weight_reps',
+  'reps',
+  'duration',
+  'duration_reps',
+  'weight_duration',
+  'weight_reps_duration',
+] as const;
+export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
+
 export const WEIGHT_METRICS = ['libra', 'kg'] as const;
 export type WeightMetric = (typeof WEIGHT_METRICS)[number];
 

@@ -1,5 +1,5 @@
 import { getValidSetTypesAt } from '@workout-tracker/domain';
-import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
+import { Button, Card, Checkbox, Icon, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import { ChevronDown, ChevronUp, GripVertical, Plus, StickyNote, Timer } from 'lucide-react-native';
 import { useRef, useState } from 'react';
@@ -8,7 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
-import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { formatRestSeconds } from '@/features/shared/lib/utils';
+import {
+  MeasurementTypePickerSheet,
+  type MeasurementTypePickerSheetRef,
+} from '@/features/workouts/components/MeasurementTypePickerSheet';
 import {
   SetTypePickerSheet,
   type SetTypePickerSheetRef,
@@ -21,14 +25,11 @@ import {
   matchExecutionSetsToTemplate,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
-import { formatSetTarget } from '@/features/workouts/lib/workout-mappers';
+import { type ColumnLayout, exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
+import { DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
 import type { ExerciseExecutionCardProps } from './types';
-
-const MAX_WEIGHT_INTEGER_DIGITS = 3;
-const MAX_WEIGHT_FRACTION_DIGITS = 2;
-const MAX_REPS = 99;
 
 const SET_TYPE_INITIAL: Record<SetType, string> = {
   warmup: 'W',
@@ -59,6 +60,15 @@ export function ExerciseExecutionCard({
   });
   const hasError = Boolean(errors.exercises?.[exerciseIndex]);
   const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
+  const measurementPickerRef = useRef<MeasurementTypePickerSheetRef>(null);
+  const measurementTypes = useWatch({
+    control,
+    name: fields.map((_, i) => `exercises.${exerciseIndex}.sets.${i}.measurementType` as const),
+  });
+  const layout = exerciseColumnLayout(
+    measurementTypes.map((measurementType) => ({ measurementType })),
+  );
+  const showSetType = getValues(`exercises.${exerciseIndex}.exerciseType`) !== 'preparatory';
 
   const rematchExercise = () => {
     const sets = getValues(`exercises.${exerciseIndex}.sets`);
@@ -79,18 +89,24 @@ export function ExerciseExecutionCard({
       matchExecutionSetsToTemplate(sets, templateExercise.sets).forEach((target, i) => {
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
       });
     }
   };
 
   const handleAddSet = () => {
+    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    const measurementType = sets[sets.length - 1]?.measurementType ?? 'weight_reps';
     append({
       id: Crypto.randomUUID(),
       type: 'normal',
+      measurementType,
       repsMin: null,
       repsMax: null,
+      durationTarget: null,
       kg: '',
       reps: '',
+      duration: '',
       done: false,
     });
     rematchExercise();
@@ -113,7 +129,12 @@ export function ExerciseExecutionCard({
             {variationName ?? t('workoutExecutionScreen.exercise.noVariation')}
           </Text>
         </Pressable>
-        <Pressable onPress={() => setCollapsed((c) => !c)} hitSlop={12} accessibilityRole="button">
+        <Pressable
+          onPress={() => setCollapsed((c) => !c)}
+          hitSlop={12}
+          accessibilityRole="button"
+          testID="workout-execution.exercise.collapse"
+        >
           <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
         </Pressable>
       </View>
@@ -140,29 +161,41 @@ export function ExerciseExecutionCard({
           ) : null}
           <View className="px-4">
             <View className="flex-row items-center pb-2">
-              <View className="w-10">
+              <View className="w-10 items-center">
                 <View className="flex-row items-center gap-1">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     #
                   </Text>
-                  <SetTypesHelpDialog />
+                  {showSetType ? <SetTypesHelpDialog /> : null}
                 </View>
               </View>
-              <View className="flex-1 pr-2 pl-3">
-                <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {t('workoutExecutionScreen.exercise.headers.weight')}
-                </Text>
-              </View>
-              <View className="flex-1 px-2">
-                <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {t('workoutExecutionScreen.exercise.headers.reps')}
-                </Text>
-              </View>
+              {layout.weight ? (
+                <View className="w-20 pr-2 pl-3">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.weight')}
+                  </Text>
+                </View>
+              ) : null}
+              {layout.reps ? (
+                <View className="w-20 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.reps')}
+                  </Text>
+                </View>
+              ) : null}
+              {layout.duration && !layout.weight && !layout.reps ? (
+                <View className="w-28 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.duration')}
+                  </Text>
+                </View>
+              ) : null}
               <View className="w-20 px-2">
                 <Text className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {t('workoutExecutionScreen.exercise.headers.target')}
                 </Text>
               </View>
+              <View className="flex-1" />
               <View className="w-10 items-center">
                 <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   ✓
@@ -175,6 +208,32 @@ export function ExerciseExecutionCard({
                 key={field.id}
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
+                layout={layout}
+                showSetType={showSetType}
+                onPressMeasurement={() => {
+                  const current = getValues(
+                    `exercises.${exerciseIndex}.sets.${setIndex}.measurementType`,
+                  );
+                  measurementPickerRef.current?.present(
+                    current,
+                    (next) => {
+                      const sets = getValues(`exercises.${exerciseIndex}.sets`);
+                      sets.forEach((_, i) => {
+                        setValue(`exercises.${exerciseIndex}.sets.${i}.measurementType`, next, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      });
+                      rematchExercise();
+                    },
+                    fields.length > 1
+                      ? () => {
+                          remove(setIndex);
+                          rematchExercise();
+                        }
+                      : undefined,
+                  );
+                }}
                 onPressType={(currentType, onChange) => {
                   const sets = getValues(`exercises.${exerciseIndex}.sets`);
                   const validTypes = getValidSetTypesAt(sets, setIndex);
@@ -210,6 +269,7 @@ export function ExerciseExecutionCard({
         </Animated.View>
       ) : null}
       <SetTypePickerSheet ref={setTypePickerRef} />
+      <MeasurementTypePickerSheet ref={measurementPickerRef} />
     </Card>
   );
 }
@@ -217,113 +277,106 @@ export function ExerciseExecutionCard({
 function SetRow({
   exerciseIndex,
   setIndex,
+  layout,
+  showSetType,
   onPressType,
+  onPressMeasurement,
 }: {
   exerciseIndex: number;
   setIndex: number;
+  layout: ColumnLayout;
+  showSetType: boolean;
   onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
+  onPressMeasurement: () => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const done = useWatch({ control, name: `${basePath}.done` });
-  const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
-  const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
+  const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
+
+  const fireRestTimer = () => {
+    const rest = restTimerDuration(getValues(`exercises.${exerciseIndex}.restSeconds`));
+    if (rest != null) {
+      startRestTimer(rest);
+    }
+  };
 
   const handleToggleDone = (next: boolean) => {
     if (next) {
-      const kg = autofillFromLast(getValues(`${basePath}.kg`), lastKg);
+      const kg = autofillFromLast(getValues(`${basePath}.kg`), getValues(`${basePath}.lastKg`));
       if (kg != null) {
         setValue(`${basePath}.kg`, kg, { shouldDirty: true, shouldValidate: true });
       }
-      const reps = autofillFromLast(getValues(`${basePath}.reps`), lastReps);
+      const reps = autofillFromLast(
+        getValues(`${basePath}.reps`),
+        getValues(`${basePath}.lastReps`),
+      );
       if (reps != null) {
         setValue(`${basePath}.reps`, reps, { shouldDirty: true, shouldValidate: true });
       }
-      const rest = restTimerDuration(getValues(`exercises.${exerciseIndex}.restSeconds`));
-      if (rest != null) {
-        startRestTimer(rest);
-      }
+      fireRestTimer();
     }
   };
-  const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
-  const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
-  const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
+
+  const handleTimerComplete = () => {
+    setValue(`${basePath}.done`, true, { shouldDirty: true, shouldValidate: true });
+    fireRestTimer();
+  };
 
   return (
     <View className={`-mx-4 flex-row items-center px-4 py-0.5 ${done ? 'bg-primary/10' : ''}`}>
       <View className="w-10">
-        <Controller
-          control={control}
-          name={`${basePath}.type`}
-          render={({ field }) => {
-            const typeConfig = SET_TYPE_CONFIG[field.value];
-            return (
-              <Pressable
-                onPress={() => onPressType(field.value, field.onChange)}
-                hitSlop={8}
-                className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
-                accessibilityRole="button"
-              >
-                <Text
-                  className={`w-5 text-center font-sans-semibold text-sm ${typeConfig.textColor}`}
+        {showSetType ? (
+          <Controller
+            control={control}
+            name={`${basePath}.type`}
+            render={({ field }) => {
+              const typeConfig = SET_TYPE_CONFIG[field.value];
+              return (
+                <Pressable
+                  onPress={() => onPressType(field.value, field.onChange)}
+                  hitSlop={8}
+                  className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
+                  accessibilityRole="button"
                 >
-                  {SET_TYPE_INITIAL[field.value]}
-                </Text>
-                <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
-              </Pressable>
-            );
-          }}
+                  <Text
+                    className={`w-5 text-center font-sans-semibold text-sm ${typeConfig.textColor}`}
+                  >
+                    {SET_TYPE_INITIAL[field.value]}
+                  </Text>
+                  <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
+                </Pressable>
+              );
+            }}
+          />
+        ) : (
+          <Pressable
+            onPress={onPressMeasurement}
+            hitSlop={8}
+            className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
+            accessibilityRole="button"
+            testID={`workout-execution.set-${setIndex}.measurement`}
+          >
+            <Text className="w-5 text-center font-sans-semibold text-foreground text-sm">
+              {setIndex + 1}
+            </Text>
+            <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
+          </Pressable>
+        )}
+      </View>
+      {measurementType === 'reps' ? (
+        <RepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
+      ) : measurementType === 'duration' ? (
+        <DurationSetRow
+          exerciseIndex={exerciseIndex}
+          setIndex={setIndex}
+          layout={layout}
+          onComplete={handleTimerComplete}
         />
-      </View>
-      <View className="flex-1 pr-2 pl-3">
-        <Controller
-          control={control}
-          name={`${basePath}.kg`}
-          render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="decimal-pad"
-              value={field.value}
-              onChangeText={(text) =>
-                field.onChange(
-                  sanitizeDecimal(text, {
-                    maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
-                    maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
-                  }),
-                )
-              }
-              onBlur={field.onBlur}
-              aria-invalid={fieldState.invalid}
-              className="h-8 py-0 text-sm"
-              placeholder={lastKg != null ? String(lastKg) : undefined}
-            />
-          )}
-        />
-      </View>
-      <View className="flex-1 px-2">
-        <Controller
-          control={control}
-          name={`${basePath}.reps`}
-          render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="number-pad"
-              value={field.value}
-              onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
-              onBlur={field.onBlur}
-              aria-invalid={fieldState.invalid}
-              className="h-8 py-0 text-sm"
-              maxLength={2}
-              placeholder={lastReps != null ? String(lastReps) : undefined}
-            />
-          )}
-        />
-      </View>
-      <View className="w-20 px-2">
-        <Text variant="muted" className="text-center text-xs">
-          {target}
-        </Text>
-      </View>
+      ) : (
+        <WeightRepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
+      )}
+      <View className="flex-1" />
       <Controller
         control={control}
         name={`${basePath}.done`}

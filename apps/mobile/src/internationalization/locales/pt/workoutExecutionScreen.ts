@@ -1,8 +1,8 @@
 export default {
   loadingTitle: 'Carregando treino…',
   tabs: {
-    preparatorio: 'Preparatórios',
-    musculacao: 'Musculação',
+    preparatory: 'Preparatórios',
+    strength: 'Musculação',
   },
   actions: {
     timer: 'Cronômetro',
@@ -24,6 +24,7 @@ export default {
     headers: {
       weight: 'Peso',
       reps: 'Reps',
+      duration: 'Tempo',
       target: 'Alvo',
     },
   },
@@ -66,6 +67,30 @@ export default {
     removeSet: 'Excluir série',
     removeExerciseSet: 'Excluir série do exercício',
     removeSupersetSet: 'Excluir série inteira',
+  },
+  measurementTypePicker: {
+    title: 'Tipo de medição',
+    notice:
+      'A medição vale para todas as séries do exercício — elas não podem ter tipos diferentes.',
+    options: {
+      weight_reps: {
+        label: 'Peso e repetições',
+        description: 'Registre a carga e as repetições de cada série.',
+      },
+      reps: {
+        label: 'Repetições',
+        description: 'Registre apenas as repetições, sem carga.',
+      },
+      duration: {
+        label: 'Tempo',
+        description: 'Registre a duração da série.',
+      },
+    },
+    removeSet: 'Excluir série',
+  },
+  durationPicker: {
+    title: 'Definir tempo',
+    confirm: 'Pronto',
   },
   superset: {
     title: 'Superset',

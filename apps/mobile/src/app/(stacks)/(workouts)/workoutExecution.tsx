@@ -57,7 +57,7 @@ import {
 import { type ActiveWorkout, activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { restTimerBridge } from '@/features/workouts/state/rest-timer-bridge';
 
-type ExecutionTab = 'preparatorio' | 'musculacao';
+type ExecutionTab = 'preparatory' | 'strength';
 
 const DEFAULT_NEW_SET_REPS_MIN = 8;
 const DEFAULT_NEW_SET_REPS_MAX = 12;
@@ -107,7 +107,7 @@ export default function WorkoutExecutionScreen() {
 
 function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const { t, i18n } = useTranslation();
-  const [tab, setTab] = useState<ExecutionTab>('preparatorio');
+  const [tab, setTab] = useState<ExecutionTab>('preparatory');
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
   const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
   const timerSheetRef = useRef<TimerSheetRef>(null);
@@ -134,11 +134,11 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const exercises = useValue(activeWorkout$.workoutExecution.exercises) as ExecutionExerciseInput[];
 
   const warmupItems = useMemo(
-    () => toExecutionListItems(exercises, 'preparatorio', t, i18n.language),
+    () => toExecutionListItems(exercises, 'preparatory', t, i18n.language),
     [exercises, t, i18n.language],
   );
   const strengthItems = useMemo(
-    () => toExecutionListItems(exercises, 'musculacao', t, i18n.language),
+    () => toExecutionListItems(exercises, 'strength', t, i18n.language),
     [exercises, t, i18n.language],
   );
 
@@ -170,7 +170,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   useEffect(() => {
     if (initialTabSetRef.current) return;
     initialTabSetRef.current = true;
-    if (warmupItems.length === 0) setTab('musculacao');
+    if (warmupItems.length === 0) setTab('strength');
   }, [warmupItems.length]);
 
   const handleDeleteExercises = (exerciseIndexes: number[]) => {
@@ -232,27 +232,27 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
             className="flex-1 px-4"
           >
             <TabsList variant="outline" className="w-full">
-              <TabsTrigger value="preparatorio" className="flex-1">
-                <Text>{t('workoutExecutionScreen.tabs.preparatorio')}</Text>
+              <TabsTrigger value="preparatory" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.preparatory')}</Text>
               </TabsTrigger>
-              <TabsTrigger value="musculacao" className="flex-1">
-                <Text>{t('workoutExecutionScreen.tabs.musculacao')}</Text>
+              <TabsTrigger value="strength" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.strength')}</Text>
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="preparatorio" className="flex-1">
+            <TabsContent value="preparatory" className="flex-1">
               <ExerciseExecutionList
                 exercises={warmupItems}
                 onAddExercise={handleAddExercise}
                 onDeleteExercises={handleDeleteExercises}
-                onReorder={(ids) => handleReorder('preparatorio', ids)}
+                onReorder={(ids) => handleReorder('preparatory', ids)}
               />
             </TabsContent>
-            <TabsContent value="musculacao" className="flex-1">
+            <TabsContent value="strength" className="flex-1">
               <ExerciseExecutionList
                 exercises={strengthItems}
                 onAddExercise={handleAddExercise}
                 onDeleteExercises={handleDeleteExercises}
-                onReorder={(ids) => handleReorder('musculacao', ids)}
+                onReorder={(ids) => handleReorder('strength', ids)}
               />
             </TabsContent>
           </Tabs>
@@ -287,6 +287,7 @@ function buildExecutionExerciseFromPicked(
   const id = Crypto.randomUUID();
   return {
     id,
+    exerciseType: picked.exercise.type === 'preparatorio' ? 'preparatory' : 'strength',
     position,
     supersetGroupId: id,
     supersetOrder: 0,
@@ -314,10 +315,13 @@ function buildExecutionExerciseFromPicked(
       {
         id: Crypto.randomUUID(),
         type: 'normal',
+        measurementType: 'weight_reps',
         repsMin: DEFAULT_NEW_SET_REPS_MIN,
         repsMax: DEFAULT_NEW_SET_REPS_MAX,
+        durationTarget: null,
         kg: '',
         reps: '',
+        duration: '',
         done: false,
       },
     ],
