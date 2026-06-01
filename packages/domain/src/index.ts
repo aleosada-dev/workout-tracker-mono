@@ -9,6 +9,7 @@ export * from './exercises/exercise-detail';
 export * from './exercises/exercise-edit';
 export * from './exercises/exercise-list';
 export * from './exercises/exercise-name';
+export * from './exercises/exercise-records';
 export * from './exercises/exercise-repo';
 export * from './exercises/models';
 export * from './exercises/update-exercise';

@@ -1,6 +1,7 @@
 import { observable } from '@legendapp/state';
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv';
 import { syncObservable } from '@legendapp/state/sync';
+import type { ExerciseRecordsResponse } from '@/features/exercises/api/exercises';
 import type {
   GetWorkoutLastLogResponse,
   GetWorkoutResponse,
@@ -18,6 +19,7 @@ export type ActiveWorkout = {
   workoutExecution: ExecutionFormInput;
   completedExecution: CompletedExecution | null;
   lastLog: GetWorkoutLastLogResponse;
+  records: ExerciseRecordsResponse | null;
 };
 
 export const activeWorkout$ = observable<ActiveWorkout | null>(null);

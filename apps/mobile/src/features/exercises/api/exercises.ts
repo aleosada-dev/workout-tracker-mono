@@ -3,6 +3,7 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 
 const $get = honoClient.api.v1.exercises.$get;
 const $getNames = honoClient.api.v1.exercises.names.$get;
+const $getRecords = honoClient.api.v1.exercises.records.$get;
 const $getDetail = honoClient.api.v1.exercises[':id'].detail.$get;
 const $getEdit = honoClient.api.v1.exercises[':id'].$get;
 const $post = honoClient.api.v1.exercises.$post;
@@ -19,6 +20,9 @@ export type ListExercisesResponseVariation = ListExercisesResponseExercise['vari
 
 export type ListExerciseNamesResponse = InferResponseType<typeof $getNames, 200>;
 export type ListExerciseNamesResponseItem = ListExerciseNamesResponse[number];
+
+export type ExerciseRecordsResponse = InferResponseType<typeof $getRecords, 200>;
+export type ExerciseRecord = ExerciseRecordsResponse[number];
 
 export type CreateExerciseRequest = InferRequestType<typeof $post>['json'];
 export type CreateExerciseResponse = InferResponseType<typeof $post, 201>;
@@ -58,6 +62,18 @@ export async function fetchExerciseNames({
   signal?: AbortSignal;
 } = {}): Promise<ListExerciseNamesResponse> {
   const response = await $getNames({}, { init: { signal } });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function fetchExerciseRecords(
+  variationIds: string[],
+  { userId, signal }: { userId?: string; signal?: AbortSignal } = {},
+): Promise<ExerciseRecordsResponse> {
+  const response = await $getRecords(
+    { query: { variationIds, ...(userId ? { userId } : {}) } },
+    { init: { signal } },
+  );
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

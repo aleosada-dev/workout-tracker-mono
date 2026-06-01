@@ -17,6 +17,8 @@ import {
 	ExerciseIdParamSchema,
 	ExerciseListResponseSchema,
 	ExerciseNamesResponseSchema,
+	ExerciseRecordsQuerySchema,
+	ExerciseRecordsResponseSchema,
 	ListExercisesQuerySchema,
 	toExerciseListItemResponse,
 	UpdateExerciseRequestSchema,
@@ -141,6 +143,33 @@ export const exercisesRouter = new Hono<AppBindings>()
 			const { listNames } = c.get("container").exercises;
 			const names = await listNames({ userId });
 			return c.json(names);
+		},
+	)
+	.get(
+		"/records",
+		describeRoute({
+			summary: "Get personal records for one or more variations",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(ExerciseRecordsResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("query", ExerciseRecordsQuerySchema),
+		async (c) => {
+			const { variationIds, userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
+			const { listExerciseRecords } = c.get("container").exercises;
+			const records = await listExerciseRecords({ userId, variationIds });
+			return c.json(records);
 		},
 	)
 	.get(

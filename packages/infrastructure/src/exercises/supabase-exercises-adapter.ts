@@ -98,6 +98,26 @@ export function makeSupabaseExerciseRepository(
       );
     },
 
+    async getExerciseRecords({ userId, variationIds }) {
+      const { data, error } = await supabase
+        .from('workout_variation_records')
+        .select('variation_id, max_weight_kg, max_volume_kg, max_reps, max_sets')
+        .eq('user_id', userId)
+        .in('variation_id', variationIds);
+
+      if (error) {
+        throw supabaseError('Failed to get variation records', error);
+      }
+
+      return (data ?? []).map((row) => ({
+        variationId: row.variation_id,
+        maxWeightKg: row.max_weight_kg,
+        maxVolumeKg: row.max_volume_kg,
+        maxReps: row.max_reps,
+        maxSets: row.max_sets,
+      }));
+    },
+
     async getExerciseForEdit({ userId, variationId }) {
       const { data, error } = await supabase
         .from('variations')

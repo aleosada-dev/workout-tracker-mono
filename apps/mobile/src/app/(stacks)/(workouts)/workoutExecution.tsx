@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useValue } from '@legendapp/state/react';
+import { useSelector, useValue } from '@legendapp/state/react';
 import {
   Alert,
   AlertDescription,
@@ -22,6 +22,7 @@ import {
   useReanimatedKeyboardAnimation,
 } from 'react-native-keyboard-controller';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useExerciseRecords } from '@/features/exercises/hooks/use-exercise-records';
 import {
   openExercisePicker,
   type PickedExercise,
@@ -79,6 +80,18 @@ export default function WorkoutExecutionScreen() {
 
   const lastLog = useWorkoutLastLog({ workoutId: active ? null : workoutId });
 
+  const variationIdsKey = useSelector(() => {
+    const exercises = activeWorkout$.workoutExecution.exercises.get();
+    if (exercises) return exercises.map((e) => e.variation.id).join(',');
+    return (workoutTemplate?.exercises.map((e) => e.variation.id) ?? []).join(',');
+  });
+  const recordsVariationIds = useMemo(
+    () => (variationIdsKey ? variationIdsKey.split(',') : []),
+    [variationIdsKey],
+  );
+  const recordsUserId = (active?.workoutTemplate ?? workoutTemplate)?.userId;
+  const records = useExerciseRecords(recordsVariationIds, recordsUserId);
+
   useEffect(() => {
     if (active || !workoutTemplate) return;
     if (lastLog.isPending) return;
@@ -90,8 +103,14 @@ export default function WorkoutExecutionScreen() {
       workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
       completedExecution: null,
       lastLog: lastLog.data ?? null,
+      records: null,
     });
   }, [active, workoutTemplate, lastLog.isPending, lastLog.data, athleteName]);
+
+  useEffect(() => {
+    if (!active || !records.data) return;
+    activeWorkout$.records.set(records.data);
+  }, [active, records.data]);
 
   if (!active) {
     return (

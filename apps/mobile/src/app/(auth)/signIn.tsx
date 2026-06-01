@@ -68,7 +68,7 @@ export default function SignInScreen() {
         style={[{ paddingTop: insets.top + 8 }, headerStyle]}
         className="absolute right-4 z-10 flex-row items-center gap-2"
       >
-        <ThemeToggle showSystemOption={false} showOptionLabels={false} />
+        <ThemeToggle showSystemOption={false} showOptionLabels={false} fullWidth={false} />
         <LanguageMenuButton />
       </Animated.View>
       <KeyboardAwareScrollView

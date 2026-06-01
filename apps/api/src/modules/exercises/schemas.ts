@@ -258,3 +258,22 @@ export const ExerciseDetailResponseSchema = z.object({
 });
 
 export type ExerciseDetailResponse = z.infer<typeof ExerciseDetailResponseSchema>;
+
+export const ExerciseRecordsQuerySchema = z.object({
+	variationIds: arrayQuery(z.uuid()),
+	userId: z.uuid().optional(),
+});
+
+export type ExerciseRecordsQuery = z.infer<typeof ExerciseRecordsQuerySchema>;
+
+const ExerciseRecordsItemSchema = z.object({
+	variationId: z.uuid(),
+	maxWeightKg: z.number().nullable(),
+	maxVolumeKg: z.number().nullable(),
+	maxReps: z.number().int().nullable(),
+	maxSets: z.number().int().nullable(),
+});
+
+export const ExerciseRecordsResponseSchema = z.array(ExerciseRecordsItemSchema);
+
+export type ExerciseRecordsResponse = z.infer<typeof ExerciseRecordsResponseSchema>;

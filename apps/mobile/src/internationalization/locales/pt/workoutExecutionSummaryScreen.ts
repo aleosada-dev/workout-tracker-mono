@@ -10,4 +10,13 @@ export default {
     subtitle: 'Finalize um treino em andamento para ver o resumo aqui.',
     cta: 'Voltar',
   },
+  records: {
+    title: 'Recordes da sessão',
+    metrics: {
+      maxWeight: 'Maior peso',
+      volume: 'Maior volume',
+      maxReps: 'Mais repetições',
+      sets: 'Mais séries',
+    },
+  },
 };

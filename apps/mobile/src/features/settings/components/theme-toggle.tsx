@@ -1,5 +1,5 @@
 import { useValue } from '@legendapp/state/react';
-import { Icon, Text } from '@workout-tracker/ui-mobile';
+import { cn, Icon, Text } from '@workout-tracker/ui-mobile';
 import { type LucideIcon, Monitor, Moon, Sun } from 'lucide-react-native';
 import { useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, useColorScheme, View } from 'react-native';
@@ -19,11 +19,13 @@ type Layout = { x: number; y: number; width: number; height: number };
 type ThemeToggleProps = {
   showSystemOption?: boolean;
   showOptionLabels?: boolean;
+  fullWidth?: boolean;
 };
 
 export function ThemeToggle({
   showSystemOption = true,
   showOptionLabels = true,
+  fullWidth = true,
 }: ThemeToggleProps = {}) {
   const current = useValue(themeMode$);
   const systemScheme = useColorScheme();
@@ -62,7 +64,7 @@ export function ThemeToggle({
   };
 
   return (
-    <View className="w-full rounded-full border border-border bg-card p-1">
+    <View className={cn('rounded-full border border-border bg-card p-1', fullWidth && 'w-full')}>
       <View className="relative flex-row gap-1">
         <Animated.View
           pointerEvents="none"
@@ -77,6 +79,7 @@ export function ThemeToggle({
             label={label}
             isActive={effectiveMode === mode}
             showLabel={showOptionLabels}
+            fullWidth={fullWidth}
             onLayout={handleLayout(mode)}
           />
         ))}
@@ -91,10 +94,19 @@ type ThemeOptionProps = {
   label: string;
   isActive: boolean;
   showLabel: boolean;
+  fullWidth: boolean;
   onLayout: (e: LayoutChangeEvent) => void;
 };
 
-function ThemeOption({ mode, icon, label, isActive, showLabel, onLayout }: ThemeOptionProps) {
+function ThemeOption({
+  mode,
+  icon,
+  label,
+  isActive,
+  showLabel,
+  fullWidth,
+  onLayout,
+}: ThemeOptionProps) {
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: withTiming(isActive ? 1 : 0, { duration: ANIMATION_DURATION }),
   }));
@@ -106,7 +118,11 @@ function ThemeOption({ mode, icon, label, isActive, showLabel, onLayout }: Theme
       accessibilityState={{ selected: isActive }}
       onLayout={onLayout}
       onPress={() => setThemeMode(mode)}
-      className={`flex-1 flex-row items-center justify-center rounded-full px-3 py-2 ${showLabel ? 'gap-2' : ''}`}
+      className={cn(
+        'flex-row items-center justify-center rounded-full px-3 py-2',
+        fullWidth && 'flex-1',
+        showLabel && 'gap-2',
+      )}
     >
       <View>
         <Icon as={icon} size={16} className="text-foreground" />
