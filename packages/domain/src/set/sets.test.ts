@@ -3,8 +3,10 @@ import { getIssues } from '../test/validation';
 import {
   getValidSetTypesAt,
   isValidSetSequence,
+  measurementDimensions,
   RepsSet,
   type RepsSetProps,
+  setVolume,
   TimeSet,
   type TimeSetProps,
   type WorkoutSetType,
@@ -189,6 +191,78 @@ describe('TimeSet.create — validation', () => {
   it('rejects negative order', () => {
     const issues = getIssues(() => TimeSet.create(validTimeProps({ order: -1 })));
     expect(issues).toEqual([{ code: 'validation.non_negative_integer', field: 'order' }]);
+  });
+});
+
+describe('measurementDimensions', () => {
+  it('weight_reps tracks weight and reps', () => {
+    expect(measurementDimensions('weight_reps')).toEqual({
+      weight: true,
+      reps: true,
+      duration: false,
+    });
+  });
+
+  it('reps tracks reps only', () => {
+    expect(measurementDimensions('reps')).toEqual({ weight: false, reps: true, duration: false });
+  });
+
+  it('duration tracks duration only', () => {
+    expect(measurementDimensions('duration')).toEqual({
+      weight: false,
+      reps: false,
+      duration: true,
+    });
+  });
+
+  it('duration_reps tracks reps and duration', () => {
+    expect(measurementDimensions('duration_reps')).toEqual({
+      weight: false,
+      reps: true,
+      duration: true,
+    });
+  });
+
+  it('weight_duration tracks weight and duration', () => {
+    expect(measurementDimensions('weight_duration')).toEqual({
+      weight: true,
+      reps: false,
+      duration: true,
+    });
+  });
+
+  it('weight_reps_duration tracks all three', () => {
+    expect(measurementDimensions('weight_reps_duration')).toEqual({
+      weight: true,
+      reps: true,
+      duration: true,
+    });
+  });
+});
+
+describe('setVolume', () => {
+  it('returns weight * reps', () => {
+    expect(setVolume({ weight: 80, reps: 10 })).toBe(800);
+  });
+
+  it('returns 0 when weight is null', () => {
+    expect(setVolume({ weight: null, reps: 10 })).toBe(0);
+  });
+
+  it('returns 0 when reps is null', () => {
+    expect(setVolume({ weight: 100, reps: null })).toBe(0);
+  });
+
+  it('returns 0 when weight is undefined', () => {
+    expect(setVolume({ weight: undefined, reps: 10 })).toBe(0);
+  });
+
+  it('returns 0 when reps is undefined', () => {
+    expect(setVolume({ weight: 100, reps: undefined })).toBe(0);
+  });
+
+  it('returns 0 for bodyweight (weight = 0)', () => {
+    expect(setVolume({ weight: 0, reps: 10 })).toBe(0);
   });
 });
 

@@ -17,6 +17,28 @@ export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
 export const WEIGHT_METRICS = ['libra', 'kg'] as const;
 export type WeightMetric = (typeof WEIGHT_METRICS)[number];
 
+// ---------- Measurement dimensions ----------
+
+/** Which value dimensions a set tracks — i.e. the fields that are required for it. */
+export type MeasurementDimensions = { weight: boolean; reps: boolean; duration: boolean };
+
+export function measurementDimensions(measurementType: MeasurementType): MeasurementDimensions {
+  switch (measurementType) {
+    case 'reps':
+      return { weight: false, reps: true, duration: false };
+    case 'duration':
+      return { weight: false, reps: false, duration: true };
+    case 'duration_reps':
+      return { weight: false, reps: true, duration: true };
+    case 'weight_duration':
+      return { weight: true, reps: false, duration: true };
+    case 'weight_reps_duration':
+      return { weight: true, reps: true, duration: true };
+    default:
+      return { weight: true, reps: true, duration: false };
+  }
+}
+
 // ---------- RepsSet ----------
 
 export type RepsSetProps = {
@@ -114,6 +136,18 @@ export class TimeSet implements TimeSetProps {
   get volume(): number {
     return (this.weight ?? 0) * this.duration;
   }
+}
+
+// ---------- Volume ----------
+
+export type VolumeSetLike = {
+  weight: number | null | undefined;
+  reps: number | null | undefined;
+};
+
+export function setVolume({ weight, reps }: VolumeSetLike): number {
+  if (weight == null || reps == null) return 0;
+  return weight * reps;
 }
 
 // ---------- Union ----------

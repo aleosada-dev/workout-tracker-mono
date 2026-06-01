@@ -191,8 +191,10 @@ export function DurationSetRow({
             return (
               <Pressable
                 onPress={() =>
-                  durationSheetRef.current?.present(hasValue ? Number(field.value) : 0, (secs) =>
-                    field.onChange(String(secs)),
+                  durationSheetRef.current?.present(
+                    hasValue ? Number(field.value) : 0,
+                    (secs) => field.onChange(String(secs)),
+                    () => field.onChange(''),
                   )
                 }
                 disabled={running}

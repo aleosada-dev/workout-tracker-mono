@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, TextInput } from 'react-native';
+import { rgb, useTheme } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 
 const inputVariants = cva(
@@ -36,8 +37,15 @@ type InputProps = React.ComponentProps<typeof TextInput> &
   VariantProps<typeof inputVariants> & { 'aria-invalid'?: boolean };
 
 function Input({ className, variant, ...props }: InputProps) {
+  const theme = useTheme();
+  // Keep the caret/selection brand-colored on both platforms (iOS reads
+  // selectionColor for the caret, Android reads cursorColor).
+  const primary = rgb(theme.primary);
+
   return (
     <TextInput
+      selectionColor={primary}
+      cursorColor={primary}
       className={cn(
         inputVariants({ variant }),
         props.editable === false &&

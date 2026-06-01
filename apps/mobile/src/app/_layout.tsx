@@ -125,6 +125,7 @@ export default function RootLayout() {
                         />
                         <Stack.Screen name="(stacks)/(workouts)/workoutFolderDetail" />
                         <Stack.Screen name="(stacks)/(workouts)/workoutExecution" />
+                        <Stack.Screen name="(stacks)/(workouts)/workoutExecutionSummary" />
                         <Stack.Screen name="(stacks)/(workouts)/cardioList" />
                         <Stack.Screen name="(stacks)/(workouts)/myPeriodization" />
 

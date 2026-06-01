@@ -11,7 +11,7 @@ import {
   Text,
 } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Clock, StickyNote } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -43,6 +43,7 @@ import {
 import { useRestTimerController } from '@/features/workouts/hooks/use-rest-timer-controller';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import { useWorkoutLastLog } from '@/features/workouts/hooks/use-workout-last-log';
+import { buildCompletedExecution } from '@/features/workouts/lib/completed-execution';
 import {
   buildExecutionFromWorkout,
   type ExecutionExerciseInput,
@@ -87,6 +88,7 @@ export default function WorkoutExecutionScreen() {
       note: null,
       workoutTemplate: structuredClone(workoutTemplate),
       workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
+      completedExecution: null,
       lastLog: lastLog.data ?? null,
     });
   }, [active, workoutTemplate, lastLog.isPending, lastLog.data, athleteName]);
@@ -148,8 +150,9 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     mode: 'onTouched',
   });
 
-  const handleFinish = form.handleSubmit((_values) => {
-    // TODO: persist the finished workout
+  const handleFinish = form.handleSubmit((values) => {
+    activeWorkout$.completedExecution.set(buildCompletedExecution(values));
+    router.push('/(stacks)/(workouts)/workoutExecutionSummary');
   });
 
   useEffect(() => {

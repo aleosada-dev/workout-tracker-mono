@@ -91,6 +91,7 @@ export default {
   durationPicker: {
     title: 'Set time',
     confirm: 'Done',
+    clear: 'Clear',
   },
   superset: {
     title: 'Superset',

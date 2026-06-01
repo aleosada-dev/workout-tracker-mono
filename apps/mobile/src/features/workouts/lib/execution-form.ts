@@ -1,8 +1,8 @@
 import {
   EXERCISE_TYPES,
   MEASUREMENT_TYPES,
-  type MeasurementType,
   matchSets,
+  measurementDimensions,
   type SetLike,
   WORKOUT_EXERCISE_TYPES,
   WORKOUT_SET_TYPES,
@@ -41,25 +41,6 @@ const optionalDurationField = z
   .transform((v) => (v === '' ? undefined : Number(v)))
   .pipe(z.number().int().min(1).max(MAX_DURATION_SECONDS).optional());
 
-export type MeasurementDimensions = { weight: boolean; reps: boolean; duration: boolean };
-
-export function setDimensions(measurementType: MeasurementType): MeasurementDimensions {
-  switch (measurementType) {
-    case 'reps':
-      return { weight: false, reps: true, duration: false };
-    case 'duration':
-      return { weight: false, reps: false, duration: true };
-    case 'duration_reps':
-      return { weight: false, reps: true, duration: true };
-    case 'weight_duration':
-      return { weight: true, reps: false, duration: true };
-    case 'weight_reps_duration':
-      return { weight: true, reps: true, duration: true };
-    default:
-      return { weight: true, reps: true, duration: false };
-  }
-}
-
 export const ExecutionSetSchema = z
   .object({
     id: z.string(),
@@ -76,12 +57,16 @@ export const ExecutionSetSchema = z
     lastReps: z.int().positive().nullable().optional(),
   })
   .superRefine((set, ctx) => {
-    const dims = setDimensions(set.measurementType);
+    if (!set.done) return;
+    const dims = measurementDimensions(set.measurementType);
     if (dims.weight && set.kg === undefined) {
       ctx.addIssue({ code: 'custom', path: ['kg'], message: 'weight.required' });
     }
     if (dims.reps && set.reps === undefined) {
       ctx.addIssue({ code: 'custom', path: ['reps'], message: 'reps.required' });
+    }
+    if (dims.duration && set.duration === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['duration'], message: 'duration.required' });
     }
   });
 

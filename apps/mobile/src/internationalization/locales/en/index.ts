@@ -14,6 +14,7 @@ import signInScreen from './signInScreen';
 import tabs from './tabs';
 import variationNames from './variationNames';
 import workoutExecutionScreen from './workoutExecutionScreen';
+import workoutExecutionSummaryScreen from './workoutExecutionSummaryScreen';
 import workoutLogs from './workoutLogs';
 import workoutsScreen from './workoutsScreen';
 
@@ -37,6 +38,7 @@ const en = {
     equipment,
     workoutLogs,
     workoutExecutionScreen,
+    workoutExecutionSummaryScreen,
   },
 };
 

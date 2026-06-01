@@ -10,7 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { TimeWheelPicker } from '@/features/workouts/components/TimerSheet/TimeWheelPicker';
 
 export type DurationPickerSheetRef = {
-  present: (currentSeconds: number, onConfirm: (totalSeconds: number) => void) => void;
+  present: (
+    currentSeconds: number,
+    onConfirm: (totalSeconds: number) => void,
+    onClear?: () => void,
+  ) => void;
   dismiss: () => void;
 };
 
@@ -19,11 +23,13 @@ export function DurationPickerSheet({ ref }: { ref?: Ref<DurationPickerSheetRef>
   const sheetRef = useRef<BottomSheetRef>(null);
   const [seconds, setSeconds] = useState(0);
   const onConfirmRef = useRef<((totalSeconds: number) => void) | null>(null);
+  const onClearRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    present: (currentSeconds, onConfirm) => {
+    present: (currentSeconds, onConfirm, onClear) => {
       setSeconds(currentSeconds);
       onConfirmRef.current = onConfirm;
+      onClearRef.current = onClear ?? null;
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
@@ -31,6 +37,11 @@ export function DurationPickerSheet({ ref }: { ref?: Ref<DurationPickerSheetRef>
 
   const handleConfirm = () => {
     onConfirmRef.current?.(seconds);
+    sheetRef.current?.dismiss();
+  };
+
+  const handleClear = () => {
+    onClearRef.current?.();
     sheetRef.current?.dismiss();
   };
 
@@ -43,6 +54,9 @@ export function DurationPickerSheet({ ref }: { ref?: Ref<DurationPickerSheetRef>
         <TimeWheelPicker totalSeconds={seconds} onChange={setSeconds} />
         <Button onPress={handleConfirm}>
           <Text>{t('workoutExecutionScreen.durationPicker.confirm')}</Text>
+        </Button>
+        <Button variant="outline" onPress={handleClear}>
+          <Text>{t('workoutExecutionScreen.durationPicker.clear')}</Text>
         </Button>
       </BottomSheetView>
     </BottomSheet>

@@ -5,6 +5,7 @@ import type {
   GetWorkoutLastLogResponse,
   GetWorkoutResponse,
 } from '@/features/workouts/api/workouts';
+import type { CompletedExecution } from '@/features/workouts/lib/completed-execution';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 
 const persistPlugin = new ObservablePersistMMKV({ id: 'active-workout' });
@@ -15,6 +16,7 @@ export type ActiveWorkout = {
   note: string | null;
   workoutTemplate: GetWorkoutResponse;
   workoutExecution: ExecutionFormInput;
+  completedExecution: CompletedExecution | null;
   lastLog: GetWorkoutLastLogResponse;
 };
 

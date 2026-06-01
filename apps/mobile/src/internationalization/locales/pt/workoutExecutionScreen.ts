@@ -91,6 +91,7 @@ export default {
   durationPicker: {
     title: 'Definir tempo',
     confirm: 'Pronto',
+    clear: 'Limpar',
   },
   superset: {
     title: 'Superset',

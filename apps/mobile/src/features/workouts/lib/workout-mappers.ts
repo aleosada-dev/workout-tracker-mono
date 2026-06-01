@@ -1,6 +1,7 @@
 import {
   isSupersetGroup,
   type MeasurementType,
+  measurementDimensions,
   type WorkoutExerciseType,
 } from '@workout-tracker/domain';
 import type { TFunction } from 'i18next';
@@ -11,7 +12,7 @@ import {
 } from '@/features/exercises/lib/format';
 import type { WorkoutResponse } from '@/features/workouts/api/workouts';
 import type { WorkoutCardData } from '@/features/workouts/components/WorkoutCard';
-import { type ExecutionFormInput, setDimensions } from '@/features/workouts/lib/execution-form';
+import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 
 export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
   return {
@@ -68,7 +69,7 @@ export type ColumnLayout = { weight: boolean; reps: boolean; duration: boolean }
 export function exerciseColumnLayout(sets: { measurementType: MeasurementType }[]): ColumnLayout {
   return sets.reduce<ColumnLayout>(
     (acc, set) => {
-      const dims = setDimensions(set.measurementType);
+      const dims = measurementDimensions(set.measurementType);
       return {
         weight: acc.weight || dims.weight,
         reps: acc.reps || dims.reps,

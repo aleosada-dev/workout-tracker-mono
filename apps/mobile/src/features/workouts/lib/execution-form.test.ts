@@ -357,7 +357,13 @@ describe('matchExecutionSetsToTemplate', () => {
 });
 
 describe('ExecutionSetSchema validation', () => {
-  function rawSet(measurementType: MeasurementType, kg: string, reps: string) {
+  function rawSet(
+    measurementType: MeasurementType,
+    kg: string,
+    reps: string,
+    done = true,
+    duration = '',
+  ) {
     return {
       id: 's1',
       type: 'normal' as const,
@@ -367,33 +373,43 @@ describe('ExecutionSetSchema validation', () => {
       durationTarget: null,
       kg,
       reps,
-      duration: '',
-      done: false,
+      duration,
+      done,
     };
   }
 
-  test('weight_reps requires both kg and reps', () => {
+  test('weight_reps requires both kg and reps when done', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '80', '8')).success).toBe(true);
     expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '', '8')).success).toBe(false);
     expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '80', '')).success).toBe(false);
   });
 
-  test('reps requires reps but allows empty kg', () => {
+  test('reps requires reps but allows empty kg when done', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '12')).success).toBe(true);
     expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '')).success).toBe(false);
   });
 
-  test('duration requires neither kg nor reps', () => {
-    expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '')).success).toBe(true);
+  test('duration requires a duration value but not kg or reps when done', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '60')).success).toBe(true);
+    expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '')).success).toBe(false);
+    expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '0')).success).toBe(false);
   });
 
-  test('combo types fall back to requiring weight and reps', () => {
+  test('combo types fall back to requiring weight and reps when done', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '', '')).success).toBe(
       false,
     );
-    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '80', '8')).success).toBe(
-      true,
-    );
+    expect(
+      ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '80', '8', true, '60')).success,
+    ).toBe(true);
+  });
+
+  test('skips required-field validation for sets that are not done', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '', '', false)).success).toBe(true);
+    expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '', false)).success).toBe(true);
+    expect(
+      ExecutionSetSchema.safeParse(rawSet('weight_reps_duration', '', '', false)).success,
+    ).toBe(true);
   });
 });
 
