@@ -1,10 +1,9 @@
-import { useValue } from '@legendapp/state/react';
 import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
 import { CheckCircle2, Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { countWarmupSets$ } from '@/features/settings/state/settings-store';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { elapsedSince, formatTotalTime, formatWeight } from '@/features/shared/lib/utils';
 import {
   type CompletedExecution,
@@ -22,7 +21,8 @@ export function WorkoutExecutionSummaryStats({
 }: WorkoutExecutionSummaryStatsProps) {
   const { t, i18n } = useTranslation();
   const [elapsed] = useState(() => elapsedSince(startedAt));
-  const includeWarmup = useValue(countWarmupSets$);
+  const { data: preferences } = useUserPreferences();
+  const includeWarmup = preferences?.countWarmupSets ?? false;
   const { completedSets, totalVolumeKg } = summarizeExecution(execution, includeWarmup);
 
   const elapsedSeconds = elapsed.hours * 3600 + elapsed.minutes * 60 + elapsed.seconds;

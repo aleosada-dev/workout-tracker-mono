@@ -13,6 +13,7 @@ import { equipmentsRouter } from "./modules/equipments/routes";
 import { exercisesRouter } from "./modules/exercises/routes";
 import { mediasRouter } from "./modules/medias/routes";
 import { musclesRouter } from "./modules/muscles/routes";
+import { preferencesRouter } from "./modules/preferences/routes";
 import { profilesRouter } from "./modules/profiles/routes";
 import { workoutLogsRouter } from "./modules/workout-logs/routes";
 import { workoutsRouter } from "./modules/workouts/routes";
@@ -39,7 +40,8 @@ const apiApp = new Hono<AppBindings>()
 	.route("/workouts", workoutsRouter)
 	.route("/workout-logs", workoutLogsRouter)
 	.route("/profiles", profilesRouter)
-	.route("/coachs", coachesRouter);
+	.route("/coachs", coachesRouter)
+	.route("/preferences", preferencesRouter);
 
 const openApiSpec = await buildOpenApiSpec(apiApp, "/api/v1");
 

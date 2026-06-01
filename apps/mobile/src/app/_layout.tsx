@@ -134,12 +134,8 @@ export default function RootLayout() {
                           options={{ title: t('settings.profile') }}
                         />
                         <Stack.Screen
-                          name="(stacks)/(settings)/appearance"
-                          options={{ title: t('settings.appearance') }}
-                        />
-                        <Stack.Screen
-                          name="(stacks)/(settings)/local"
-                          options={{ title: t('settings.local') }}
+                          name="(stacks)/(settings)/preferences"
+                          options={{ title: t('settings.preferences') }}
                         />
                         <Stack.Screen
                           name="(stacks)/(settings)/notifications"

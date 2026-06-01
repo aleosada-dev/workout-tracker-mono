@@ -4,6 +4,7 @@ import {
 	makeExerciseApp,
 	makeMuscleApp,
 	makeProfileApp,
+	makeUserPreferencesApp,
 	makeWorkoutApp,
 	makeWorkoutLogApp,
 } from "@workout-tracker/application";
@@ -17,6 +18,7 @@ import {
 	makeSupabaseExerciseRepository,
 	makeSupabaseMuscleRepository,
 	makeSupabaseProfileRepository,
+	makeSupabaseUserPreferencesRepository,
 	makeSupabaseWorkoutFolderRepository,
 	makeSupabaseWorkoutLogRepository,
 	makeSupabaseWorkoutRepository,
@@ -35,6 +37,7 @@ export function buildContainer(env: Env, accessToken?: string) {
 	const workoutRepository = makeSupabaseWorkoutRepository(supabase);
 	const profileRepository = makeSupabaseProfileRepository(supabase);
 	const coachRepository = makeSupabaseCoachRepository(supabase);
+	const userPreferencesRepository = makeSupabaseUserPreferencesRepository(supabase);
 
 	return {
 		muscles: makeMuscleApp(muscleRepository),
@@ -44,6 +47,7 @@ export function buildContainer(env: Env, accessToken?: string) {
 		workoutLogs: makeWorkoutLogApp(workoutLogRepository),
 		profile: makeProfileApp(profileRepository),
 		coaches: makeCoachApp(coachRepository),
+		userPreferences: makeUserPreferencesApp(userPreferencesRepository),
 		videoUploads: {
 			buildUploadUrls: makeBuildVideoUploadUrls(env),
 			headObject: makeHeadObject(env),

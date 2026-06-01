@@ -373,11 +373,11 @@ BEGIN
     (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, duration_seconds, measurement_type, linked_set_id, load_percent_of_previous)
   VALUES
     -- Rotação de Ombros — 2 séries de 10-15 reps
-    ('bb110001-0000-4aaa-8aaa-000000000001'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, NULL, 10, 15, NULL, 'reps',     NULL, NULL),
-    ('bb110002-0000-4aaa-8aaa-000000000002'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 1, NULL, 10, 15, NULL, 'reps',     NULL, NULL),
+    ('bb110001-0000-4aaa-8aaa-000000000001'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, 'normal', 10, 15, NULL, 'reps',     NULL, NULL),
+    ('bb110002-0000-4aaa-8aaa-000000000002'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 1, 'normal', 10, 15, NULL, 'reps',     NULL, NULL),
     -- Alongamento de Peitoral — 2 séries de 30s (por tempo)
-    ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, NULL, NULL, NULL, 30, 'duration', NULL, NULL),
-    ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, NULL, NULL, NULL, 30, 'duration', NULL, NULL)
+    ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, 'normal', NULL, NULL, 30, 'duration', NULL, NULL),
+    ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, 'normal', NULL, NULL, 30, 'duration', NULL, NULL)
   ON CONFLICT DO NOTHING;
 
   -- ================================================

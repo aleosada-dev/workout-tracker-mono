@@ -45,8 +45,6 @@ export function ThemeToggle({
     }
     return {
       opacity: 1,
-      top: target.y,
-      height: target.height,
       width: withTiming(target.width, { duration: ANIMATION_DURATION }),
       transform: [{ translateX: withTiming(target.x, { duration: ANIMATION_DURATION }) }],
     };
@@ -64,23 +62,25 @@ export function ThemeToggle({
   };
 
   return (
-    <View className="relative flex-row gap-1 rounded-full border border-border bg-card p-1">
-      <Animated.View
-        pointerEvents="none"
-        style={[{ position: 'absolute', left: 0 }, indicatorStyle]}
-        className="rounded-full bg-primary"
-      />
-      {options.map(({ mode, icon, label }) => (
-        <ThemeOption
-          key={mode}
-          mode={mode}
-          icon={icon}
-          label={label}
-          isActive={effectiveMode === mode}
-          showLabel={showOptionLabels}
-          onLayout={handleLayout(mode)}
+    <View className="w-full rounded-full border border-border bg-card p-1">
+      <View className="relative flex-row gap-1">
+        <Animated.View
+          pointerEvents="none"
+          style={[{ position: 'absolute', top: 0, bottom: 0, left: 0 }, indicatorStyle]}
+          className="rounded-full bg-primary"
         />
-      ))}
+        {options.map(({ mode, icon, label }) => (
+          <ThemeOption
+            key={mode}
+            mode={mode}
+            icon={icon}
+            label={label}
+            isActive={effectiveMode === mode}
+            showLabel={showOptionLabels}
+            onLayout={handleLayout(mode)}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -106,7 +106,7 @@ function ThemeOption({ mode, icon, label, isActive, showLabel, onLayout }: Theme
       accessibilityState={{ selected: isActive }}
       onLayout={onLayout}
       onPress={() => setThemeMode(mode)}
-      className={`flex-row items-center rounded-full px-3 py-2 ${showLabel ? 'gap-2' : ''}`}
+      className={`flex-1 flex-row items-center justify-center rounded-full px-3 py-2 ${showLabel ? 'gap-2' : ''}`}
     >
       <View>
         <Icon as={icon} size={16} className="text-foreground" />

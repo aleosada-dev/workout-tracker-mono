@@ -1,6 +1,6 @@
 import { Text } from '@workout-tracker/ui-mobile';
 import { useRouter } from 'expo-router';
-import { Bell, CreditCard, Languages, Palette, ShieldCheck, User } from 'lucide-react-native';
+import { Bell, CreditCard, ShieldCheck, SlidersHorizontal, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { MenuCard } from '@/features/shared/components/MenuCard';
@@ -18,40 +18,35 @@ export default function SettingsScreen() {
             {t('settings.profile')}
           </Text>
         </MenuCard>
-        <MenuCard onPress={() => router.push('/appearance')}>
-          <Palette color="white" size={36} />
+        <MenuCard onPress={() => router.push('/preferences')}>
+          <SlidersHorizontal color="white" size={36} />
           <Text variant="h4" className="text-center text-white">
-            {t('settings.appearance')}
+            {t('settings.preferences')}
           </Text>
         </MenuCard>
       </View>
       <View className="flex-row gap-4">
-        <MenuCard onPress={() => router.push('/local')}>
-          <Languages color="white" size={36} />
-          <Text variant="h4" className="text-center text-white">
-            {t('settings.local')}
-          </Text>
-        </MenuCard>
         <MenuCard onPress={() => router.push('/notifications')}>
           <Bell color="white" size={36} />
           <Text variant="h4" className="text-center text-white">
             {t('settings.notifications')}
           </Text>
         </MenuCard>
-      </View>
-      <View className="flex-row gap-4">
         <MenuCard onPress={() => router.push('/privacy')}>
           <ShieldCheck color="white" size={36} />
           <Text variant="h4" className="text-center text-white">
             {t('settings.privacy')}
           </Text>
         </MenuCard>
+      </View>
+      <View className="flex-row gap-4">
         <MenuCard onPress={() => router.push('/subscription')}>
           <CreditCard color="white" size={36} />
           <Text variant="h4" className="text-center text-white">
             {t('settings.subscription')}
           </Text>
         </MenuCard>
+        <View className="flex-1" />
       </View>
     </ScrollView>
   );

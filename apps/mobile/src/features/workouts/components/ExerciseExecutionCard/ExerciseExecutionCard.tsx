@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatRestSeconds } from '@/features/shared/lib/utils';
 import {
   MeasurementTypePickerSheet,
@@ -290,12 +291,17 @@ function SetRow({
   onPressMeasurement: () => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const done = useWatch({ control, name: `${basePath}.done` });
   const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
 
   const fireRestTimer = () => {
-    const rest = restTimerDuration(getValues(`exercises.${exerciseIndex}.restSeconds`));
+    if (!(preferences?.autoStartRestTimer ?? true)) {
+      return;
+    }
+    const exerciseRest = getValues(`exercises.${exerciseIndex}.restSeconds`);
+    const rest = restTimerDuration(exerciseRest ?? preferences?.defaultRestSeconds ?? null);
     if (rest != null) {
       startRestTimer(rest);
     }

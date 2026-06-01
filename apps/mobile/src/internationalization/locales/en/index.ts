@@ -8,6 +8,7 @@ import exercises from './exercises';
 import homeScreen from './homeScreen';
 import multiSelect from './multiSelect';
 import muscles from './muscles';
+import preferencesScreen from './preferencesScreen';
 import sets from './sets';
 import settings from './settings';
 import signInScreen from './signInScreen';
@@ -39,6 +40,7 @@ const en = {
     workoutLogs,
     workoutExecutionScreen,
     workoutExecutionSummaryScreen,
+    preferencesScreen,
   },
 };
 

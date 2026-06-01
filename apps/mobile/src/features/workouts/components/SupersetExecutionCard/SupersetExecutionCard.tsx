@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
 import {
   SetTypePickerSheet,
@@ -292,6 +293,7 @@ function SupersetSetRow({
   onPressType: PressTypeHandler;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const { data: preferences } = useUserPreferences();
   const presentMembers = members.filter((_, i) => (setsByMember[i]?.length ?? 0) > setIndex);
   const doneNames = presentMembers.map(
     (m) => `exercises.${m.exerciseIndex}.sets.${setIndex}.done` as const,
@@ -314,11 +316,10 @@ function SupersetSetRow({
       }
       setValue(`${base}.done`, next, { shouldDirty: true, shouldValidate: true });
     }
-    if (next) {
+    if (next && (preferences?.autoStartRestTimer ?? true)) {
       const last = presentMembers[presentMembers.length - 1];
-      const rest = last
-        ? restTimerDuration(getValues(`exercises.${last.exerciseIndex}.restSeconds`))
-        : null;
+      const exerciseRest = last ? getValues(`exercises.${last.exerciseIndex}.restSeconds`) : null;
+      const rest = restTimerDuration(exerciseRest ?? preferences?.defaultRestSeconds ?? null);
       if (rest != null) {
         startRestTimer(rest);
       }

@@ -15,6 +15,8 @@ export * from './exercises/update-exercise';
 export * from './media/video';
 export * from './muscles/muscle';
 export * from './muscles/muscle-repo';
+export * from './preferences/user-preferences';
+export * from './preferences/user-preferences-repo';
 export * from './profiles/profile';
 export * from './profiles/profile-repo';
 export * from './set/sets';

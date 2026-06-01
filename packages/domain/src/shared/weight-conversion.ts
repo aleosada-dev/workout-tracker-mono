@@ -8,7 +8,9 @@ export function lbToKg(lb: number): number {
   return lb / KG_TO_LB;
 }
 
-export type WeightUnit = 'kg' | 'lb';
+export const WEIGHT_UNITS = ['kg', 'lb'] as const;
+
+export type WeightUnit = (typeof WEIGHT_UNITS)[number];
 
 export function convertWeight(value: number, from: WeightUnit, to: WeightUnit): number {
   if (from === to) return value;

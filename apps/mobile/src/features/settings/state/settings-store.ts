@@ -40,16 +40,3 @@ syncObservable(language$, {
 export function setLanguage(language: LanguagePreference) {
   language$.set(language);
 }
-
-export const countWarmupSets$ = observable<boolean>(false);
-
-syncObservable(countWarmupSets$, {
-  persist: {
-    name: 'countWarmupSets',
-    plugin: persistPlugin,
-  },
-});
-
-export function setCountWarmupSets(value: boolean) {
-  countWarmupSets$.set(value);
-}

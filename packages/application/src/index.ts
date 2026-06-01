@@ -2,6 +2,7 @@ export * from './coaches';
 export * from './equipments';
 export * from './exercises';
 export * from './muscles';
+export * from './preferences';
 export * from './profiles';
 export * from './workout-logs';
 export * from './workouts';

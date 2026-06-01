@@ -26,6 +26,16 @@ jest.mock('expo-crypto', () => {
 jest.mock('@/features/workouts/state/rest-timer-bridge', () => ({
   startRestTimer: jest.fn(),
 }));
+jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
+  useUserPreferences: () => ({
+    data: {
+      defaultRestSeconds: null,
+      weightUnit: 'kg',
+      countWarmupSets: false,
+      autoStartRestTimer: true,
+    },
+  }),
+}));
 jest.mock('@/features/workouts/state/active-workout-store', () => ({
   activeWorkout$: {
     lastLog: { peek: () => null },

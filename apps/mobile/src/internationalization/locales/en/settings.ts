@@ -1,11 +1,10 @@
 export default {
   title: 'Settings',
   profile: 'Profile',
-  appearance: 'Appearance',
   themeLabel: 'Theme',
-  local: 'Language & region',
   languageLabel: 'Language',
   notifications: 'Notifications',
+  preferences: 'Preferences',
   privacy: 'Privacy',
   subscription: 'Subscription',
   signOut: 'Sign out',
