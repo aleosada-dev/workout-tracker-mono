@@ -1,3 +1,4 @@
+import type { LoadRoundingMode } from '../preferences/user-preferences';
 import { greaterThan, greaterThanOrNull, nonNegativeInteger } from '../shared/numbers';
 import { ValidationError, type ValidationIssue } from '../shared/validation-error';
 
@@ -148,6 +149,29 @@ export type VolumeSetLike = {
 export function setVolume({ weight, reps }: VolumeSetLike): number {
   if (weight == null || reps == null) return 0;
   return weight * reps;
+}
+
+// ---------- Suggested load (drop / cluster sets) ----------
+
+/** Rounds a kg value according to the user's load-rounding preference. */
+export function roundLoad(value: number, mode: LoadRoundingMode): number {
+  if (mode === 'none') {
+    return Math.round(value * 100) / 100;
+  }
+  const step = Number(mode);
+  return Math.round(value / step) * step;
+}
+
+/**
+ * Computes the load for a drop/cluster set as a percentage of its associated
+ * normal set's load, rounded per the user's preference.
+ */
+export function computeLinkedLoad(
+  baseKg: number,
+  loadPercentOfPrevious: number,
+  mode: LoadRoundingMode,
+): number {
+  return roundLoad((baseKg * loadPercentOfPrevious) / 100, mode);
 }
 
 // ---------- Union ----------

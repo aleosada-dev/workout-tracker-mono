@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'bun:test';
 import { getIssues } from '../test/validation';
 import {
+  computeLinkedLoad,
   getValidSetTypesAt,
   isValidSetSequence,
   measurementDimensions,
   RepsSet,
   type RepsSetProps,
+  roundLoad,
   setVolume,
   TimeSet,
   type TimeSetProps,
@@ -347,5 +349,40 @@ describe('TimeSet.volume', () => {
   it('returns 0 for a bodyweight set (weight is null)', () => {
     const set = TimeSet.create(validTimeProps({ weight: null, duration: 45 }));
     expect(set.volume).toBe(0);
+  });
+});
+
+describe('roundLoad', () => {
+  it('keeps two decimals without rounding in "none" mode', () => {
+    expect(roundLoad(78.75, 'none')).toBe(78.75);
+    expect(roundLoad(78.756, 'none')).toBe(78.76);
+  });
+
+  it('rounds to the nearest 0.5', () => {
+    expect(roundLoad(78.75, '0.5')).toBe(79);
+    expect(roundLoad(78.24, '0.5')).toBe(78);
+  });
+
+  it('rounds to the nearest integer', () => {
+    expect(roundLoad(78.75, '1')).toBe(79);
+    expect(roundLoad(78.4, '1')).toBe(78);
+  });
+
+  it('rounds to the nearest 2.5', () => {
+    expect(roundLoad(78.75, '2.5')).toBe(80);
+    expect(roundLoad(76.2, '2.5')).toBe(75);
+  });
+});
+
+describe('computeLinkedLoad', () => {
+  it('computes a percentage of the base load', () => {
+    expect(computeLinkedLoad(100, 65, 'none')).toBe(65);
+    expect(computeLinkedLoad(102.5, 80, 'none')).toBe(82);
+  });
+
+  it('applies the rounding mode to the result', () => {
+    expect(computeLinkedLoad(87.5, 90, 'none')).toBe(78.75);
+    expect(computeLinkedLoad(87.5, 90, '0.5')).toBe(79);
+    expect(computeLinkedLoad(87.5, 90, '2.5')).toBe(80);
   });
 });

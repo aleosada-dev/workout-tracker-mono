@@ -55,6 +55,8 @@ export const ExecutionSetSchema = z
     done: z.boolean(),
     lastKg: z.number().nonnegative().nullable().optional(),
     lastReps: z.int().positive().nullable().optional(),
+    linkedSetId: z.string().nullable().optional(),
+    loadPercentOfPrevious: z.int().nonnegative().nullable().optional(),
   })
   .superRefine((set, ctx) => {
     if (!set.done) return;
@@ -230,6 +232,8 @@ export function buildExecutionExerciseFromPicked(
         reps: '',
         duration: '',
         done: false,
+        linkedSetId: null,
+        loadPercentOfPrevious: null,
       },
     ],
   };
@@ -255,6 +259,8 @@ export function buildExecutionFromWorkout(
         done: false,
         lastKg: null,
         lastReps: null,
+        linkedSetId: set.linkedSetId,
+        loadPercentOfPrevious: set.loadPercentOfPrevious,
       }));
       const matched = matchExecutionSetsByLogicalKey(sets, lastExercise?.sets);
       return {

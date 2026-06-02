@@ -109,6 +109,8 @@ export function ExerciseExecutionCard({
       reps: '',
       duration: '',
       done: false,
+      linkedSetId: null,
+      loadPercentOfPrevious: null,
     });
     rematchExercise();
   };

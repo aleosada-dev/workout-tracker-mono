@@ -25,6 +25,7 @@ describe('parseStoredPreferences', () => {
       { key: 'weight_unit', value: 'lb' },
       { key: 'count_warmup_sets', value: true },
       { key: 'auto_start_rest_timer', value: false },
+      { key: 'load_rounding', value: '2.5' },
     ]);
 
     expect(prefs).toEqual({
@@ -32,7 +33,14 @@ describe('parseStoredPreferences', () => {
       weightUnit: 'lb',
       countWarmupSets: true,
       autoStartRestTimer: false,
+      loadRounding: '2.5',
     });
+  });
+
+  test('ignores an invalid load_rounding mode', () => {
+    const prefs = parseStoredPreferences([{ key: 'load_rounding', value: '3' }]);
+
+    expect(prefs).toEqual(DEFAULT_USER_PREFERENCES);
   });
 
   test('ignores values with the wrong shape', () => {

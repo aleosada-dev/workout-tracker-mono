@@ -13,6 +13,7 @@ async function resetPreferences() {
 				weightUnit: "kg",
 				countWarmupSets: false,
 				autoStartRestTimer: true,
+				loadRounding: "none",
 			},
 		},
 		{ headers: authHeaders("athlete") },
@@ -38,6 +39,7 @@ describe("GET /api/v1/preferences", () => {
 			weightUnit: "kg",
 			countWarmupSets: false,
 			autoStartRestTimer: true,
+			loadRounding: "none",
 		});
 	});
 
@@ -103,6 +105,28 @@ describe("PATCH /api/v1/preferences", () => {
 		);
 
 		expect((await res.json()).defaultRestSeconds).toBeNull();
+	});
+
+	test("persists the load rounding mode", async () => {
+		const client = getTestClient();
+
+		const res = await client.api.v1.preferences.$patch(
+			{ json: { loadRounding: "2.5" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect((await res.json()).loadRounding).toBe("2.5");
+	});
+
+	test("rejects an invalid load rounding mode with 400", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.preferences.$patch(
+			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			{ json: { loadRounding: "3" as any } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(400);
 	});
 
 	test("rejects an invalid weight unit with 400", async () => {

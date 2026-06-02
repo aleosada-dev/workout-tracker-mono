@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DefaultRestSecondsField } from '@/features/preferences/components/default-rest-seconds-field';
+import { LoadRoundingSelect } from '@/features/preferences/components/load-rounding-select';
 import { PreferenceSwitchRow } from '@/features/preferences/components/preference-switch-row';
 import { WeightUnitSelect } from '@/features/preferences/components/weight-unit-select';
 import { useUpdateUserPreferences } from '@/features/preferences/hooks/use-update-user-preferences';
@@ -23,7 +24,7 @@ import { ThemeToggle } from '@/features/settings/components/theme-toggle';
 
 type WorkoutDraft = Pick<
   UserPreferences,
-  'weightUnit' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer'
+  'weightUnit' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer' | 'loadRounding'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
@@ -32,6 +33,7 @@ function toDraft(preferences: UserPreferences): WorkoutDraft {
     defaultRestSeconds: preferences.defaultRestSeconds,
     countWarmupSets: preferences.countWarmupSets,
     autoStartRestTimer: preferences.autoStartRestTimer,
+    loadRounding: preferences.loadRounding,
   };
 }
 
@@ -40,7 +42,8 @@ function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
     a.weightUnit === b.weightUnit &&
     a.defaultRestSeconds === b.defaultRestSeconds &&
     a.countWarmupSets === b.countWarmupSets &&
-    a.autoStartRestTimer === b.autoStartRestTimer
+    a.autoStartRestTimer === b.autoStartRestTimer &&
+    a.loadRounding === b.loadRounding
   );
 }
 
@@ -108,6 +111,19 @@ export default function PreferencesScreen() {
               <WeightUnitSelect
                 value={draft.weightUnit}
                 onValueChange={(weightUnit) => setDraft((prev) => prev && { ...prev, weightUnit })}
+              />
+            </View>
+
+            <View className="gap-2">
+              <Label>{t('preferencesScreen.loadRounding.label')}</Label>
+              <Text variant="muted" className="text-sm">
+                {t('preferencesScreen.loadRounding.description')}
+              </Text>
+              <LoadRoundingSelect
+                value={draft.loadRounding}
+                onValueChange={(loadRounding) =>
+                  setDraft((prev) => prev && { ...prev, loadRounding })
+                }
               />
             </View>
 

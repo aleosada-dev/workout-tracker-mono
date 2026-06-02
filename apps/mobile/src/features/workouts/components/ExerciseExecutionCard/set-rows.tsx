@@ -1,11 +1,18 @@
+import {
+  computeLinkedLoad,
+  type LoadRoundingMode,
+  measurementDimensions,
+} from '@workout-tracker/domain';
 import { Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import { Play, Square } from 'lucide-react-native';
 import { useRef } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { useCountdownTimer } from '@/features/shared/hooks/use-countdown-timer';
 import { useStopwatch } from '@/features/shared/hooks/use-stopwatch';
 import { formatTime, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { parseLocalizedNumber } from '@/features/shared/lib/utils/numeric-input';
 import {
   DurationPickerSheet,
   type DurationPickerSheetRef,
@@ -38,13 +45,42 @@ function TargetCell({ target }: { target: string }) {
 }
 
 export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
-  const { control } = useFormContext<ExecutionFormInput>();
+  const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
+
+  // Cascades the suggested load down the exercise's set chain. `linkedSetId`
+  // points to the set directly above, so a drop/cluster set takes a percentage
+  // of its predecessor's load — and a chain (normal → drop → drop) resolves in
+  // order. Each set's effective load (manual value if present, otherwise the
+  // computed one) becomes the base for the next. Only empty fields are filled,
+  // so a manually adjusted load is preserved.
+  const fillLinkedLoads = () => {
+    const mode: LoadRoundingMode = preferences?.loadRounding ?? 'none';
+    const effectiveKg = new Map<string, number>();
+    getValues(`exercises.${exerciseIndex}.sets`).forEach((set, i) => {
+      if (set.kg !== '') {
+        const value = parseLocalizedNumber(set.kg);
+        if (Number.isFinite(value)) effectiveKg.set(set.id, value);
+        return;
+      }
+      if (set.loadPercentOfPrevious == null || set.linkedSetId == null) return;
+      if (!measurementDimensions(set.measurementType).weight) return;
+      const base = effectiveKg.get(set.linkedSetId);
+      if (base == null) return;
+      const kg = computeLinkedLoad(base, set.loadPercentOfPrevious, mode);
+      effectiveKg.set(set.id, kg);
+      setValue(`exercises.${exerciseIndex}.sets.${i}.kg`, String(kg), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    });
+  };
 
   return (
     <>
@@ -65,7 +101,10 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
                   }),
                 )
               }
-              onBlur={field.onBlur}
+              onBlur={() => {
+                field.onBlur();
+                fillLinkedLoads();
+              }}
               aria-invalid={fieldState.invalid}
               className="h-8 max-w-[80px] py-0 text-sm"
               placeholder={lastKg != null ? String(lastKg) : undefined}

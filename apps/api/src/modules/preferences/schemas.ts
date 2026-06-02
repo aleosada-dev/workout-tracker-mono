@@ -1,4 +1,8 @@
-import type { PreferencesPatch, UserPreferences } from "@workout-tracker/domain";
+import {
+	LOAD_ROUNDING_MODES,
+	type PreferencesPatch,
+	type UserPreferences,
+} from "@workout-tracker/domain";
 import { z } from "zod";
 
 export const UserPreferencesResponseSchema = z.object({
@@ -6,6 +10,7 @@ export const UserPreferencesResponseSchema = z.object({
 	weightUnit: z.enum(["kg", "lb"]),
 	countWarmupSets: z.boolean(),
 	autoStartRestTimer: z.boolean(),
+	loadRounding: z.enum(LOAD_ROUNDING_MODES),
 });
 
 export type UserPreferencesResponse = z.infer<typeof UserPreferencesResponseSchema>;
@@ -19,6 +24,7 @@ export const UpdateUserPreferencesRequestSchema = z
 		weightUnit: z.enum(["kg", "lb"]),
 		countWarmupSets: z.boolean(),
 		autoStartRestTimer: z.boolean(),
+		loadRounding: z.enum(LOAD_ROUNDING_MODES),
 	})
 	.partial();
 
@@ -30,6 +36,7 @@ export function toUserPreferencesResponse(preferences: UserPreferences): UserPre
 		weightUnit: preferences.weightUnit,
 		countWarmupSets: preferences.countWarmupSets,
 		autoStartRestTimer: preferences.autoStartRestTimer,
+		loadRounding: preferences.loadRounding,
 	};
 }
 

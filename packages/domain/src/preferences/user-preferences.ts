@@ -1,10 +1,18 @@
 import type { WeightUnit } from '../shared/weight-conversion';
 
+export const LOAD_ROUNDING_MODES = ['none', '0.5', '1', '2.5'] as const;
+export type LoadRoundingMode = (typeof LOAD_ROUNDING_MODES)[number];
+
+export function isLoadRoundingMode(value: unknown): value is LoadRoundingMode {
+  return LOAD_ROUNDING_MODES.includes(value as LoadRoundingMode);
+}
+
 export const PREFERENCE_KEYS = [
   'default_rest_seconds',
   'weight_unit',
   'count_warmup_sets',
   'auto_start_rest_timer',
+  'load_rounding',
 ] as const;
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
@@ -14,6 +22,7 @@ export type UserPreferences = {
   weightUnit: WeightUnit;
   countWarmupSets: boolean;
   autoStartRestTimer: boolean;
+  loadRounding: LoadRoundingMode;
 };
 
 export type PreferencesPatch = Partial<UserPreferences>;
@@ -23,6 +32,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   weightUnit: 'kg',
   countWarmupSets: false,
   autoStartRestTimer: true,
+  loadRounding: 'none',
 };
 
 export type StoredPreference = {
@@ -47,6 +57,9 @@ export function parseStoredPreferences(rows: StoredPreference[]): UserPreference
       case 'auto_start_rest_timer':
         if (typeof value === 'boolean') prefs.autoStartRestTimer = value;
         break;
+      case 'load_rounding':
+        if (isLoadRoundingMode(value)) prefs.loadRounding = value;
+        break;
     }
   }
 
@@ -60,6 +73,7 @@ export function preferencesPatchToStored(patch: PreferencesPatch): Record<string
   if ('weightUnit' in patch) stored.weight_unit = patch.weightUnit;
   if ('countWarmupSets' in patch) stored.count_warmup_sets = patch.countWarmupSets;
   if ('autoStartRestTimer' in patch) stored.auto_start_rest_timer = patch.autoStartRestTimer;
+  if ('loadRounding' in patch) stored.load_rounding = patch.loadRounding;
 
   return stored;
 }
