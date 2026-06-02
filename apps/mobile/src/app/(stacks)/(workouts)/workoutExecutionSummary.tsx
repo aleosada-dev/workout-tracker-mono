@@ -1,15 +1,18 @@
 import { useValue } from '@legendapp/state/react';
 import { Button, EmptyState, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import { useScheduledSessions } from '@/features/coach-sessions/hooks/use-scheduled-sessions';
 import { workoutLogObservability } from '@/features/observability/lib';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useCreateWorkoutLog } from '@/features/workout-logs/hooks/use-create-workout-log';
 import { buildCreateWorkoutLogRequest } from '@/features/workout-logs/lib/create-workout-log-request';
+import { CoachedSessionField } from '@/features/workouts/components/CoachedSessionField';
 import { WorkoutExecutionSummaryStats } from '@/features/workouts/components/WorkoutExecutionSummaryStats';
 import { WorkoutSessionComparison } from '@/features/workouts/components/WorkoutSessionComparison';
 import { WorkoutSessionRecords } from '@/features/workouts/components/WorkoutSessionRecords';
@@ -25,6 +28,26 @@ export default function WorkoutExecutionSummaryScreen() {
   const includeWarmup = preferences?.countWarmupSets ?? false;
   const { mutate: saveWorkoutLog, isPending } = useCreateWorkoutLog();
 
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
+  const { data: scheduledSessions } = useScheduledSessions(today);
+  const sessions = scheduledSessions ?? [];
+
+  const hasCoachContext = active?.athleteName != null;
+  const [isCoached, setIsCoached] = useState(hasCoachContext);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const defaultAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (defaultAppliedRef.current || scheduledSessions === undefined) return;
+    defaultAppliedRef.current = true;
+    if (scheduledSessions.length > 0) {
+      setIsCoached(true);
+      if (scheduledSessions.length === 1) {
+        setSelectedSessionId(scheduledSessions[0].id);
+      }
+    }
+  }, [scheduledSessions]);
+
   const sessionRecords = active?.completedExecution
     ? buildSessionRecords(active.completedExecution, active.records ?? [], includeWarmup)
     : [];
@@ -39,9 +62,12 @@ export default function WorkoutExecutionSummaryScreen() {
     if (!active?.completedExecution) return;
     const request = buildCreateWorkoutLogRequest({
       workoutId: active.workoutTemplate.id,
+      userId: active.athleteId,
       startedAt: active.startedAt,
       finishedAt: new Date().toISOString(),
       note: active.note,
+      isCoached,
+      coachSessionId: selectedSessionId,
       execution: active.completedExecution,
     });
     saveWorkoutLog(request, {
@@ -73,6 +99,13 @@ export default function WorkoutExecutionSummaryScreen() {
       {active?.completedExecution ? (
         <>
           <ScrollView className="flex-1" contentContainerClassName="pb-8">
+            <CoachedSessionField
+              sessions={sessions}
+              isCoached={isCoached}
+              onCoachedChange={setIsCoached}
+              selectedSessionId={selectedSessionId}
+              onSelectedSessionChange={setSelectedSessionId}
+            />
             <WorkoutExecutionSummaryStats
               startedAt={active.startedAt}
               execution={active.completedExecution}

@@ -8,6 +8,7 @@ import {
 } from "@workout-tracker/domain";
 import { Hono } from "hono";
 import { buildContainer } from "./container";
+import { coachSessionsRouter } from "./modules/coach-sessions/routes";
 import { coachesRouter } from "./modules/coaches/routes";
 import { equipmentsRouter } from "./modules/equipments/routes";
 import { exercisesRouter } from "./modules/exercises/routes";
@@ -41,6 +42,7 @@ const apiApp = new Hono<AppBindings>()
 	.route("/workout-logs", workoutLogsRouter)
 	.route("/profiles", profilesRouter)
 	.route("/coachs", coachesRouter)
+	.route("/coach-sessions", coachSessionsRouter)
 	.route("/preferences", preferencesRouter);
 
 const openApiSpec = await buildOpenApiSpec(apiApp, "/api/v1");

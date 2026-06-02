@@ -64,14 +64,10 @@ export const workoutLogsRouter = new Hono<AppBindings>()
 		}),
 		validator("json", CreateWorkoutLogRequestSchema, validationHook),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
-				return c.json({ error: "Missing user identity" }, 401);
-			}
-
-			const body = c.req.valid("json");
+			const actorId = c.get("userId");
+			const { userId, ...body } = c.req.valid("json");
 			const { create } = c.get("container").workoutLogs;
-			const result = await create({ userId, ...body });
+			const result = await create({ ...body, userId: userId ?? actorId, actorId });
 			return c.json(toCreateWorkoutLogResponse(result), 201);
 		},
 	);

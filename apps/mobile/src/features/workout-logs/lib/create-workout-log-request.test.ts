@@ -51,9 +51,12 @@ function execution(exercises: CompletedExercise[]): CompletedExecution {
 
 const base = {
   workoutId: '33333333-3333-3333-3333-333333333333',
+  userId: null,
   startedAt: '2026-06-02T10:00:00.000Z',
   finishedAt: '2026-06-02T11:00:00.000Z',
   note: null,
+  isCoached: false,
+  coachSessionId: null,
 };
 
 describe('buildCreateWorkoutLogRequest', () => {
@@ -67,9 +70,12 @@ describe('buildCreateWorkoutLogRequest', () => {
 
     expect(request).toEqual({
       workoutId: '33333333-3333-3333-3333-333333333333',
+      userId: null,
       startedAt: '2026-06-02T10:00:00.000Z',
       finishedAt: '2026-06-02T11:00:00.000Z',
       note: null,
+      isCoached: false,
+      coachSessionId: null,
       exercises: [
         {
           variationId: '22222222-2222-2222-2222-222222222222',

@@ -15,6 +15,11 @@ export default {
     subtitle: 'Finalize um treino em andamento para ver o resumo aqui.',
     cta: 'Voltar',
   },
+  coached: {
+    label: 'Aula com personal',
+    selectPlaceholder: 'Nova aula (sem vínculo)',
+    none: 'Nenhuma aula agendada hoje.',
+  },
   records: {
     title: 'Recordes da sessão',
     metrics: {

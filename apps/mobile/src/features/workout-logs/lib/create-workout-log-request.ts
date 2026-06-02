@@ -8,16 +8,22 @@ function normalizeNote(note: string | null): string | null {
 
 export function buildCreateWorkoutLogRequest(input: {
   workoutId: string | null;
+  userId: string | null;
   startedAt: string;
   finishedAt: string;
   note: string | null;
+  isCoached: boolean;
+  coachSessionId: string | null;
   execution: CompletedExecution;
 }): CreateWorkoutLogRequest {
   return {
     workoutId: input.workoutId,
+    userId: input.userId,
     startedAt: input.startedAt,
     finishedAt: input.finishedAt,
     note: normalizeNote(input.note),
+    isCoached: input.isCoached,
+    coachSessionId: input.coachSessionId,
     exercises: input.execution.exercises.map((exercise) => ({
       variationId: exercise.variation.id,
       exerciseType: exercise.exerciseType,

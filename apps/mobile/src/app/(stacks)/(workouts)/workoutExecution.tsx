@@ -101,6 +101,7 @@ export default function WorkoutExecutionScreen() {
     hasInitializedRef.current = true;
     activeWorkout$.set({
       startedAt: new Date().toISOString(),
+      athleteId: userId ?? null,
       athleteName: athleteName ?? null,
       note: null,
       workoutTemplate: structuredClone(workoutTemplate),
@@ -118,6 +119,7 @@ export default function WorkoutExecutionScreen() {
     lastSets.isLoading,
     lastSets.data,
     athleteName,
+    userId,
   ]);
 
   useEffect(() => {

@@ -124,7 +124,17 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
         throw supabaseError('Failed to create workout log', error);
       }
 
-      return { workoutLogId: data };
+      const result = data as {
+        workoutLogId: string;
+        coachSessionId: string | null;
+        coachId: string | null;
+      };
+
+      return {
+        workoutLogId: result.workoutLogId,
+        coachSessionId: result.coachSessionId ?? null,
+        coachId: result.coachId ?? null,
+      };
     },
   };
 }

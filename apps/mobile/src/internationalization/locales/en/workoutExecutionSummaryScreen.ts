@@ -15,6 +15,11 @@ export default {
     subtitle: 'Finish an ongoing workout to see its summary here.',
     cta: 'Go back',
   },
+  coached: {
+    label: 'Personal training class',
+    selectPlaceholder: 'New class (unlinked)',
+    none: 'No class scheduled today.',
+  },
   records: {
     title: 'Session records',
     metrics: {

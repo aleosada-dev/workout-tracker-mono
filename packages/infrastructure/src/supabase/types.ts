@@ -2905,7 +2905,7 @@ export type Database = {
         Args: { p_user_id: string; p_variation_id: string }
         Returns: Json
       }
-      wt_insert_workout_log: { Args: { payload: Json }; Returns: string }
+      wt_insert_workout_log: { Args: { payload: Json }; Returns: Json }
       wt_last_sets_by_variations: {
         Args: { p_user_id: string; p_variation_ids: string[] }
         Returns: {

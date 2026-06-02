@@ -24,13 +24,18 @@ export type CreateWorkoutLogExercise = {
 
 export type CreateWorkoutLogInput = {
   userId: string;
+  actorId: string;
   workoutId: string | null;
   startedAt: string;
   finishedAt: string;
   note: string | null;
+  isCoached: boolean;
+  coachSessionId: string | null;
   exercises: CreateWorkoutLogExercise[];
 };
 
 export type CreateWorkoutLogResult = {
   workoutLogId: string;
+  coachSessionId: string | null;
+  coachId: string | null;
 };

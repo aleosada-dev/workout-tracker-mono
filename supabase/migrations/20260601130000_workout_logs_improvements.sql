@@ -24,6 +24,12 @@
 -- está — wt_insert_workout_log continua gravando a partir do payload.
 -- ============================================================================
 
+-- Toda a migration roda numa única transação: se qualquer statement falhar, o
+-- ROLLBACK desfaz tudo (schema, migração de dados, views, funções e policies),
+-- sem deixar o banco num estado parcial. Nenhum statement aqui é incompatível
+-- com transação (sem CREATE INDEX CONCURRENTLY / VACUUM / ALTER TYPE ADD VALUE).
+BEGIN;
+
 -- ============================================================================
 -- PARTE 1 — Schema das tabelas de log unificadas
 -- ============================================================================
@@ -936,7 +942,16 @@ GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "u
 -- set logs (com measurement_type/duration), tanto strength quanto preparatory,
 -- numa única chamada. Ao final, recalcula os workout_variation_records das
 -- variations strength do log (na mesma transação), para que recordes quebrados
--- fiquem persistidos. Retorna só o id do workout_logs.
+-- fiquem persistidos.
+--
+-- Sessão de coach (marcar/criar) também roda aqui, na mesma transação, para
+-- garantir atomicidade: se o insert do log falhar, nenhuma sessão concluída fica
+-- órfã. Quando o payload traz coachSessionId, a sessão agendada vira 'completed';
+-- quando é acompanhada (isCoached) sem id, resolve o coach e cria uma sessão já
+-- concluída. A notificação correspondente continua na camada de aplicação (best
+-- effort, fora da transação), por isso retornamos coachSessionId/coachId.
+--
+-- Retorna jsonb { workoutLogId, coachSessionId, coachId }.
 -- SQLSTATEs:
 --   28000 - sem usuário autenticado
 --   42501 - actor não é o próprio usuário nem coach ativo dele
@@ -945,7 +960,7 @@ GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "u
 --           reps/duration_seconds fora de faixa ou faltando)
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") RETURNS "uuid"
+CREATE OR REPLACE FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY INVOKER
     SET "search_path" TO 'public'
     AS $$
@@ -953,6 +968,10 @@ DECLARE
   v_log_id UUID;
   v_user_id UUID;
   v_actor_id UUID := (SELECT auth.uid());
+  v_is_coached BOOLEAN := COALESCE((payload->>'isCoached')::BOOLEAN, FALSE);
+  v_coach_session_id UUID := NULLIF(payload->>'coachSessionId', '')::UUID;
+  v_coach_id UUID;
+  v_athlete_finished BOOLEAN;
 BEGIN
   IF v_actor_id IS NULL THEN
     RAISE EXCEPTION 'wt_insert_workout_log called without an authenticated user'
@@ -967,6 +986,8 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
+  v_athlete_finished := (v_actor_id = v_user_id);
+
   INSERT INTO public.workout_logs (
     workout_id, user_id, started_by, started_at, finished_at, note,
     coach_session_id, is_coached
@@ -978,15 +999,60 @@ BEGIN
     (payload->>'startedAt')::TIMESTAMPTZ,
     (payload->>'finishedAt')::TIMESTAMPTZ,
     NULLIF(TRIM(payload->>'note'), ''),
-    NULLIF(payload->>'coachSessionId', '')::UUID,
-    COALESCE((payload->>'isCoached')::BOOLEAN, FALSE)
+    v_coach_session_id,
+    v_is_coached
   )
   RETURNING id INTO v_log_id;
 
-  IF NULLIF(payload->>'coachSessionId', '') IS NOT NULL THEN
+  -- Sessão de coach, atômica com o log (movido da camada de aplicação):
+  --   * sessão agendada já informada -> marca como concluída e liga ao log;
+  --   * sessão acompanhada sem id -> resolve o coach (coach ativo quando quem
+  --     finaliza é o próprio aluno; o próprio actor quando é o coach) e cria uma
+  --     sessão já concluída ligada ao log.
+  -- Em ambos os casos v_coach_id sai preenchido só quando há de fato um coach,
+  -- sinalizando ao app que vale notificar.
+  IF v_coach_session_id IS NOT NULL THEN
     UPDATE public.coach_sessions
     SET workout_log_id = v_log_id, status = 'completed'
-    WHERE id = (payload->>'coachSessionId')::UUID;
+    WHERE id = v_coach_session_id
+      AND athlete_id = v_user_id
+    RETURNING coach_id INTO v_coach_id;
+  ELSIF v_is_coached THEN
+    IF v_athlete_finished THEN
+      SELECT ca.coach_id INTO v_coach_id
+      FROM public.coach_athletes ca
+      WHERE ca.athlete_id = v_user_id
+        AND ca.status = 'active'
+      ORDER BY ca.responded_at DESC
+      LIMIT 1;
+    ELSE
+      v_coach_id := v_actor_id;
+    END IF;
+
+    IF v_coach_id IS NOT NULL THEN
+      INSERT INTO public.coach_sessions (
+        coach_id, athlete_id, requested_by, scheduled_at,
+        duration_minutes, status, source, workout_log_id
+      )
+      VALUES (
+        v_coach_id,
+        v_user_id,
+        v_actor_id,
+        -- arredonda started_at para a meia-hora mais próxima (era roundToNearestHalfHour)
+        to_timestamp(
+          round(extract(epoch FROM (payload->>'startedAt')::TIMESTAMPTZ) / 1800.0) * 1800
+        ),
+        60,
+        'completed',
+        'manual',
+        v_log_id
+      )
+      RETURNING id INTO v_coach_session_id;
+
+      UPDATE public.workout_logs
+      SET coach_session_id = v_coach_session_id
+      WHERE id = v_log_id;
+    END IF;
   END IF;
 
   DROP TABLE IF EXISTS temp_exercises;
@@ -1105,7 +1171,11 @@ BEGIN
     )
   );
 
-  RETURN v_log_id;
+  RETURN jsonb_build_object(
+    'workoutLogId', v_log_id,
+    'coachSessionId', v_coach_session_id,
+    'coachId', v_coach_id
+  );
 END;
 $$;
 
@@ -1203,3 +1273,5 @@ ALTER FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) OWNER TO postgres
 GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO anon;
 GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO authenticated;
 GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO service_role;
+
+COMMIT;

@@ -1,3 +1,5 @@
+export * from './coach-sessions/coach-session';
+export * from './coach-sessions/coach-sessions-repo';
 export * from './coaches/coach-athlete';
 export * from './coaches/coach-repo';
 export * from './equipments/equipment';
@@ -17,6 +19,7 @@ export * from './exercises/update-exercise';
 export * from './media/video';
 export * from './muscles/muscle';
 export * from './muscles/muscle-repo';
+export * from './notifications/notification-repo';
 export * from './preferences/user-preferences';
 export * from './preferences/user-preferences-repo';
 export * from './profiles/profile';
