@@ -835,11 +835,108 @@ BEGIN
 END;
 $$;
 
+-- ---- wt_recalculate_variation_records ----
+-- Versão mobile (SECURITY INVOKER, padrão wt_*) do recálculo de records, chamada por
+-- wt_insert_workout_log respeitando a RLS do usuário/coach. As reads (workout_logs /
+-- _exercise_logs / _set_logs / user_preferences) já são liberadas por policy.
+-- Difere da recalculate_variation_records (DEFINER, legado PWA): max_volume_kg é o
+-- volume TOTAL da melhor sessão (SUM weight*reps), não o melhor set isolado, e o
+-- conjunto de sets considerado por TODAS as métricas inclui normal/drop/cluster +
+-- warmup conforme a preferência count_warmup_sets do usuário (em vez de só 'normal').
+-- Como a função faz DELETE + ON CONFLICT DO UPDATE em workout_variation_records, que
+-- só tinha policies de INSERT/SELECT, adicionamos abaixo as policies de DELETE e
+-- UPDATE (dono e coach) — sem elas a RLS bloquearia o recálculo sob INVOKER.
+CREATE POLICY "Athletes delete own workout variation records" ON "public"."workout_variation_records"
+  FOR DELETE TO "authenticated"
+  USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
+
+CREATE POLICY "Athletes update own workout variation records" ON "public"."workout_variation_records"
+  FOR UPDATE TO "authenticated"
+  USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")))
+  WITH CHECK (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
+
+CREATE POLICY "Coaches delete athlete workout variation records" ON "public"."workout_variation_records"
+  FOR DELETE TO "authenticated"
+  USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"));
+
+CREATE POLICY "Coaches update athlete workout variation records" ON "public"."workout_variation_records"
+  FOR UPDATE TO "authenticated"
+  USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"))
+  WITH CHECK ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"));
+
+CREATE OR REPLACE FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY INVOKER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  -- Todas as métricas usam o mesmo conjunto de sets: todos os tipos (normal/drop/
+  -- cluster), incluindo warmup somente se o usuário tiver count_warmup_sets=true.
+  -- Lido no momento do save; trocar a preferência depois deixa os records antigos
+  -- defasados até a variation ser treinada de novo (recálculo global virá depois).
+  -- Sob INVOKER, num save feito por coach a RLS de user_preferences não libera a
+  -- pref do aluno e cai no default (false) — aceitável por ora.
+  v_include_warmup boolean := COALESCE(
+    (SELECT up.value = 'true'::jsonb
+       FROM public.user_preferences up
+      WHERE up.user_id = p_user_id
+        AND up.key = 'count_warmup_sets'),
+    false
+  );
+BEGIN
+  DELETE FROM public.workout_variation_records
+  WHERE user_id = p_user_id
+    AND variation_id = ANY(p_variation_ids);
+
+  INSERT INTO public.workout_variation_records (
+    user_id, variation_id, max_weight_kg, max_volume_kg, max_reps, max_sets
+  )
+  SELECT
+    p_user_id,
+    variation_id,
+    MAX(session_max_weight_kg),
+    MAX(session_max_volume_kg),
+    MAX(session_max_reps),
+    MAX(session_sets_count)
+  FROM (
+    SELECT
+      wel.variation_id,
+      MAX(wesl.weight_kg) AS session_max_weight_kg,
+      COALESCE(SUM(wesl.weight_kg * wesl.reps), 0) AS session_max_volume_kg,
+      MAX(wesl.reps) AS session_max_reps,
+      COUNT(*)::INTEGER AS session_sets_count
+    FROM workout_logs wl
+    JOIN workout_exercise_logs wel ON wel.workout_log_id = wl.id
+    JOIN workout_exercise_set_logs wesl ON wesl.workout_exercise_log_id = wel.id
+    WHERE wl.user_id = p_user_id
+      AND wl.deleted_at IS NULL
+      AND wel.exercise_type = 'strength'
+      AND wel.variation_id = ANY(p_variation_ids)
+      AND (v_include_warmup OR wesl.set_type <> 'warmup')
+    GROUP BY wl.id, wel.variation_id
+  ) per_session
+  GROUP BY variation_id
+  ON CONFLICT (user_id, variation_id) DO UPDATE SET
+    max_weight_kg = EXCLUDED.max_weight_kg,
+    max_volume_kg = EXCLUDED.max_volume_kg,
+    max_reps = EXCLUDED.max_reps,
+    max_sets = EXCLUDED.max_sets,
+    updated_at = NOW();
+END;
+$$;
+
+ALTER FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) OWNER TO "postgres";
+
+GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) TO "service_role";
+
 -- ============================================================================
 -- PARTE 5 — wt_insert_workout_log (mobile): payload unificado.
 -- Persiste o log + exercise logs (com exercise_type e nomes denormalizados) +
 -- set logs (com measurement_type/duration), tanto strength quanto preparatory,
--- numa única chamada. Apenas persistência; retorna só o id do workout_logs.
+-- numa única chamada. Ao final, recalcula os workout_variation_records das
+-- variations strength do log (na mesma transação), para que recordes quebrados
+-- fiquem persistidos. Retorna só o id do workout_logs.
 -- SQLSTATEs:
 --   28000 - sem usuário autenticado
 --   42501 - actor não é o próprio usuário nem coach ativo dele
@@ -998,6 +1095,15 @@ BEGIN
    AND wel.exercise_type = ts.exercise_type
    AND wel.position = ts.position
   ORDER BY ts.exercise_idx, ts.set_order;
+
+  PERFORM public.wt_recalculate_variation_records(
+    v_user_id,
+    ARRAY(
+      SELECT DISTINCT variation_id
+      FROM temp_exercises
+      WHERE exercise_type = 'strength'
+    )
+  );
 
   RETURN v_log_id;
 END;

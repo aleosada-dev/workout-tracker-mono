@@ -12,6 +12,8 @@ export type CompletedSet = {
   measurementType: MeasurementType;
   weightKg: number | null;
   reps: number | null;
+  repsMin: number | null;
+  repsMax: number | null;
   durationSeconds: number | null;
 };
 
@@ -22,6 +24,7 @@ export type CompletedExercise = {
   supersetGroupId: string;
   supersetOrder: number;
   note: string | null;
+  restSeconds: number | null;
   variation: ExecutionExerciseVariation;
   sets: CompletedSet[];
 };
@@ -40,6 +43,7 @@ export function buildCompletedExecution(values: ExecutionFormValues): CompletedE
         supersetGroupId: exercise.supersetGroupId,
         supersetOrder: exercise.supersetOrder,
         note: exercise.note,
+        restSeconds: exercise.restSeconds,
         variation: exercise.variation,
         sets: exercise.sets
           .filter((set) => set.done)
@@ -49,6 +53,8 @@ export function buildCompletedExecution(values: ExecutionFormValues): CompletedE
             measurementType: set.measurementType,
             weightKg: set.kg ?? null,
             reps: set.reps ?? null,
+            repsMin: set.repsMin,
+            repsMax: set.repsMax,
             durationSeconds: set.duration ?? null,
           })),
       }))

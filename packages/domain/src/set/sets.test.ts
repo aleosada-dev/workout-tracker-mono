@@ -49,6 +49,21 @@ describe('RepsSet.create — validation', () => {
     expect(set.reps).toBeNull();
   });
 
+  it('accepts null weight and fractional positive weight', () => {
+    expect(RepsSet.create(validRepsProps({ weight: null })).weight).toBeNull();
+    expect(RepsSet.create(validRepsProps({ weight: 2.5 })).weight).toBe(2.5);
+  });
+
+  it('rejects weight = 0', () => {
+    const issues = getIssues(() => RepsSet.create(validRepsProps({ weight: 0 })));
+    expect(issues).toEqual([{ code: 'validation.positive_number', field: 'weight' }]);
+  });
+
+  it('rejects negative weight', () => {
+    const issues = getIssues(() => RepsSet.create(validRepsProps({ weight: -5 })));
+    expect(issues).toEqual([{ code: 'validation.positive_number', field: 'weight' }]);
+  });
+
   it('rejects non-integer order', () => {
     const issues = getIssues(() => RepsSet.create(validRepsProps({ order: 1.5 })));
     expect(issues).toEqual([{ code: 'validation.non_negative_integer', field: 'order' }]);
@@ -148,9 +163,16 @@ describe('RepsSet.volume', () => {
     expect(set.volume).toBe(0);
   });
 
-  it('returns 0 for bodyweight (weight = 0)', () => {
-    const set = RepsSet.create(validRepsProps({ weight: 0, reps: 10 }));
+  it('returns 0 for legacy bodyweight rows (weight = 0)', () => {
+    const set = RepsSet.restore(validRepsProps({ weight: 0, reps: 10 }));
     expect(set.volume).toBe(0);
+  });
+});
+
+describe('RepsSet.restore — legacy data', () => {
+  it('accepts weight = 0 from the old system without validating', () => {
+    const set = RepsSet.restore(validRepsProps({ weight: 0 }));
+    expect(set.weight).toBe(0);
   });
 });
 
@@ -167,6 +189,12 @@ describe('TimeSet.create — validation', () => {
     const set = TimeSet.create(validTimeProps({ weight: 20, duration: 45 }));
     expect(set.weight).toBe(20);
     expect(set.duration).toBe(45);
+  });
+
+  it('rejects weight = 0 but restores legacy zero-weight rows', () => {
+    const issues = getIssues(() => TimeSet.create(validTimeProps({ weight: 0 })));
+    expect(issues).toEqual([{ code: 'validation.positive_number', field: 'weight' }]);
+    expect(TimeSet.restore(validTimeProps({ weight: 0 })).weight).toBe(0);
   });
 
   it('rejects non-integer duration', () => {

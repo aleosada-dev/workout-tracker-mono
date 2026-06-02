@@ -371,6 +371,10 @@ describe('ExecutionSetSchema validation', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '80', '')).success).toBe(false);
   });
 
+  test('weight must be greater than zero when present', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('weight_reps', '0', '8')).success).toBe(false);
+  });
+
   test('reps requires reps but allows empty kg when done', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '12')).success).toBe(true);
     expect(ExecutionSetSchema.safeParse(rawSet('reps', '', '')).success).toBe(false);

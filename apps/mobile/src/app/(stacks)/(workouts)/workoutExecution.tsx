@@ -90,9 +90,15 @@ export default function WorkoutExecutionScreen() {
   const records = useExerciseRecords(recordsVariationIds, recordsUserId);
   const lastSets = useExerciseLastSets(recordsVariationIds, recordsUserId);
 
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (active || !workoutTemplate) return;
+    if (active) {
+      hasInitializedRef.current = true;
+      return;
+    }
+    if (hasInitializedRef.current || !workoutTemplate) return;
     if (lastLog.isPending || lastSets.isLoading) return;
+    hasInitializedRef.current = true;
     activeWorkout$.set({
       startedAt: new Date().toISOString(),
       athleteName: athleteName ?? null,

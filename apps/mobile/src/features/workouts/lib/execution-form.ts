@@ -29,7 +29,7 @@ const optionalWeightField = z
     message: 'weight.tooManyDecimals',
   })
   .transform((v) => (v === '' ? undefined : parseLocalizedNumber(v)))
-  .pipe(z.number().nonnegative().lt(MAX_WEIGHT_KG).optional());
+  .pipe(z.number().positive().lt(MAX_WEIGHT_KG).optional());
 
 const optionalRepsField = z
   .string()

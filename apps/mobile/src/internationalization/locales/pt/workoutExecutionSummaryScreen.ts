@@ -1,5 +1,10 @@
 export default {
   title: 'Resumo do treino',
+  save: {
+    button: 'Salvar treino',
+    saving: 'Salvando...',
+    success: 'Treino salvo',
+  },
   stats: {
     totalTime: 'Tempo total',
     completedSets: 'Séries concluídas',

@@ -13,6 +13,8 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     measurementType: 'weight_reps',
     weightKg: null,
     reps: null,
+    repsMin: null,
+    repsMax: null,
     durationSeconds: null,
     ...overrides,
   };
@@ -29,6 +31,7 @@ function completedExercise(
     supersetGroupId: 'ex-1',
     supersetOrder: 0,
     note: null,
+    restSeconds: null,
     variation: {
       id: 'var-1',
       slug: 'supino-reto',

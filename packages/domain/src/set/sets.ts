@@ -1,5 +1,10 @@
 import type { LoadRoundingMode } from '../preferences/user-preferences';
-import { greaterThan, greaterThanOrNull, nonNegativeInteger } from '../shared/numbers';
+import {
+  greaterThan,
+  greaterThanOrNull,
+  nonNegativeInteger,
+  positiveNumberOrNull,
+} from '../shared/numbers';
 import { ValidationError, type ValidationIssue } from '../shared/validation-error';
 
 export const WORKOUT_SET_TYPES = ['warmup', 'normal', 'drop', 'cluster'] as const;
@@ -69,6 +74,7 @@ export class RepsSet implements RepsSetProps {
   static create(props: RepsSetProps): RepsSet {
     const issues: ValidationIssue[] = [
       ...nonNegativeInteger('order', props.order),
+      ...positiveNumberOrNull('weight', props.weight),
       ...greaterThanOrNull('reps', props.reps, 0),
       ...greaterThanOrNull('repsMin', props.repsMin, 0),
       ...greaterThanOrNull('repsMax', props.repsMax, 0),
@@ -122,6 +128,7 @@ export class TimeSet implements TimeSetProps {
   static create(props: TimeSetProps): TimeSet {
     const issues: ValidationIssue[] = [
       ...nonNegativeInteger('order', props.order),
+      ...positiveNumberOrNull('weight', props.weight),
       ...greaterThan('duration', props.duration, 0),
     ];
 

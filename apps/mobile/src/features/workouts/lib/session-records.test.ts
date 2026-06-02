@@ -13,6 +13,8 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     measurementType: 'weight_reps',
     weightKg: null,
     reps: null,
+    repsMin: null,
+    repsMax: null,
     durationSeconds: null,
     ...overrides,
   };
@@ -29,6 +31,7 @@ function completedExercise(
     supersetGroupId: 'ex-1',
     supersetOrder: 0,
     note: null,
+    restSeconds: null,
     variation: {
       id: 'var-1',
       slug: 'supino-reto',
@@ -65,6 +68,7 @@ describe('buildSessionRecords', () => {
     const result = buildSessionRecords(
       execution([completedExercise([completedSet({ weightKg: 10, reps: 12 })])]),
       [],
+      false,
     );
 
     expect(result).toEqual([
@@ -85,6 +89,7 @@ describe('buildSessionRecords', () => {
     const result = buildSessionRecords(
       execution([completedExercise([completedSet({ weightKg: 90, reps: 10 })])]),
       [record({ maxWeightKg: 80, maxVolumeKg: 2880, maxReps: 12, maxSets: 4 })],
+      false,
     );
 
     expect(result).toEqual([
@@ -100,27 +105,51 @@ describe('buildSessionRecords', () => {
     const result = buildSessionRecords(
       execution([completedExercise([completedSet({ weightKg: 50, reps: 8 })])]),
       [record({ maxWeightKg: 80, maxVolumeKg: 2880, maxReps: 12, maxSets: 4 })],
+      false,
     );
 
     expect(result).toEqual([]);
   });
 
-  test('counts warmup sets in the record math like the backend does', () => {
+  test('includes drop/cluster but excludes warmup when the preference is off', () => {
     const result = buildSessionRecords(
       execution([
         completedExercise([
           completedSet({ id: 'w', type: 'warmup', weightKg: 40, reps: 15 }),
           completedSet({ id: 'n', type: 'normal', weightKg: 60, reps: 10 }),
+          completedSet({ id: 'd', type: 'drop', weightKg: 30, reps: 20 }),
         ]),
       ]),
       [],
+      false,
     );
 
     expect(result[0].records).toEqual([
       { metric: 'maxWeight', previous: 0, current: 60 },
       { metric: 'volume', previous: 0, current: 1200 },
-      { metric: 'maxReps', previous: 0, current: 15 },
+      { metric: 'maxReps', previous: 0, current: 20 },
       { metric: 'sets', previous: 0, current: 2 },
+    ]);
+  });
+
+  test('counts warmup sets too when the preference is on', () => {
+    const result = buildSessionRecords(
+      execution([
+        completedExercise([
+          completedSet({ id: 'w', type: 'warmup', weightKg: 40, reps: 15 }),
+          completedSet({ id: 'n', type: 'normal', weightKg: 60, reps: 10 }),
+          completedSet({ id: 'd', type: 'drop', weightKg: 30, reps: 20 }),
+        ]),
+      ]),
+      [],
+      true,
+    );
+
+    expect(result[0].records).toEqual([
+      { metric: 'maxWeight', previous: 0, current: 60 },
+      { metric: 'volume', previous: 0, current: 1800 },
+      { metric: 'maxReps', previous: 0, current: 20 },
+      { metric: 'sets', previous: 0, current: 3 },
     ]);
   });
 
@@ -132,6 +161,7 @@ describe('buildSessionRecords', () => {
         }),
       ]),
       [],
+      false,
     );
 
     expect(result).toEqual([]);
@@ -144,6 +174,7 @@ describe('buildSessionRecords', () => {
         completedExercise([completedSet({ id: 'b', weightKg: 70, reps: 8 })], { id: 'slot-2' }),
       ]),
       [],
+      false,
     );
 
     expect(result).toHaveLength(1);
@@ -159,6 +190,7 @@ describe('buildSessionRecords', () => {
     const result = buildSessionRecords(
       execution([completedExercise([completedSet({ weightKg: null, reps: 12 })])]),
       [],
+      false,
     );
 
     expect(result[0].records).toEqual([
@@ -173,6 +205,7 @@ describe('buildSessionRecords', () => {
     const result = buildSessionRecords(
       execution([completedExercise([completedSet({ weightKg: 20, reps: 10 })])]),
       [record({ variationId: 'other-variation', maxWeightKg: 100 })],
+      false,
     );
 
     expect(result).toEqual([

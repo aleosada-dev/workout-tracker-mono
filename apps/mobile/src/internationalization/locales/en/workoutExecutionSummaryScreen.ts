@@ -1,5 +1,10 @@
 export default {
   title: 'Workout summary',
+  save: {
+    button: 'Save workout',
+    saving: 'Saving...',
+    success: 'Workout saved',
+  },
   stats: {
     totalTime: 'Total time',
     completedSets: 'Completed sets',

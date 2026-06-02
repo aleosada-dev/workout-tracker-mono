@@ -31,7 +31,10 @@ type AggregatedExercise = {
   metrics: SessionMetrics;
 };
 
-function aggregateByVariation(execution: CompletedExecution): Map<string, AggregatedExercise> {
+function aggregateByVariation(
+  execution: CompletedExecution,
+  includeWarmup: boolean,
+): Map<string, AggregatedExercise> {
   const byVariation = new Map<string, AggregatedExercise>();
 
   for (const exercise of execution.exercises) {
@@ -48,6 +51,7 @@ function aggregateByVariation(execution: CompletedExecution): Map<string, Aggreg
     }
 
     for (const set of exercise.sets) {
+      if (!includeWarmup && set.type === 'warmup') continue;
       const { metrics } = entry;
       if (set.weightKg !== null) {
         metrics.maxWeight = Math.max(metrics.maxWeight ?? set.weightKg, set.weightKg);
@@ -83,10 +87,11 @@ const PREVIOUS_VALUE: Record<
 export function buildSessionRecords(
   execution: CompletedExecution,
   baseline: ExerciseRecordsResponse,
+  includeWarmup: boolean,
 ): SessionExerciseRecord[] {
   const baselineByVariation = new Map(baseline.map((record) => [record.variationId, record]));
   const result: SessionExerciseRecord[] = [];
-  const aggregateByVariationVar = aggregateByVariation(execution);
+  const aggregateByVariationVar = aggregateByVariation(execution, includeWarmup);
 
   for (const [variationId, { variation, metrics }] of aggregateByVariationVar) {
     const previousRecord = baselineByVariation.get(variationId);

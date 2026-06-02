@@ -27,3 +27,11 @@ export function greaterThanOrNull(
   if (value === null) return [];
   return greaterThan(field, value, min);
 }
+
+export function positiveNumberOrNull(field: string, value: number | null): ValidationIssue[] {
+  if (value === null) return [];
+  if (!Number.isFinite(value) || value <= 0) {
+    return [{ code: 'validation.positive_number', field }];
+  }
+  return [];
+}
