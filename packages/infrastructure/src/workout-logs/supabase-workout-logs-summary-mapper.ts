@@ -9,6 +9,7 @@ export type SummaryRow = {
   workout: Relation<{ name: string | null }>;
   workout_exercise_logs: Array<{
     id: string;
+    exercise_type: string;
     variation: Relation<{
       muscle_slug: string | null;
       muscle_level2_slug: string | null;
@@ -30,9 +31,12 @@ const pickOne = <T>(value: Relation<T>): T | null =>
 const durationSeconds = (startedAt: string, finishedAt: string) =>
   Math.max(0, Math.round((new Date(finishedAt).getTime() - new Date(startedAt).getTime()) / 1000));
 
+const strengthLogs = (row: SummaryRow) =>
+  (row.workout_exercise_logs ?? []).filter((log) => log.exercise_type === 'strength');
+
 const collectMuscleGroupSlugs = (row: SummaryRow): string[] => {
   const slugs = new Set<string>();
-  for (const log of row.workout_exercise_logs ?? []) {
+  for (const log of strengthLogs(row)) {
     const variation = pickOne(log.variation);
     const slug = (variation?.muscle_level2_slug ?? variation?.muscle_slug)?.trim();
     if (slug) slugs.add(slug);
@@ -50,7 +54,7 @@ export const toWorkoutLogSummary = (row: SummaryRow): WorkoutLogSummary => {
     title: workout?.name?.trim() || snapshot?.workoutName?.trim() || null,
     startedAt: row.started_at,
     durationSeconds: durationSeconds(row.started_at, row.finished_at),
-    exerciseCount: row.workout_exercise_logs?.length ?? 0,
+    exerciseCount: strengthLogs(row).length,
     muscleGroupSlugs: collectMuscleGroupSlugs(row),
     prCount: snapshot?.sessionRecords?.length ?? 0,
   };

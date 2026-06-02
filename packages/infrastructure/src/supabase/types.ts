@@ -1864,6 +1864,7 @@ export type Database = {
         Row: {
           created_at: string
           exercise_name: string | null
+          exercise_type: string
           id: string
           note: string | null
           position: number
@@ -1877,6 +1878,7 @@ export type Database = {
         Insert: {
           created_at?: string
           exercise_name?: string | null
+          exercise_type?: string
           id?: string
           note?: string | null
           position: number
@@ -1890,6 +1892,7 @@ export type Database = {
         Update: {
           created_at?: string
           exercise_name?: string | null
+          exercise_type?: string
           id?: string
           note?: string | null
           position?: number
@@ -1927,7 +1930,9 @@ export type Database = {
       workout_exercise_set_logs: {
         Row: {
           created_at: string
+          duration_seconds: number | null
           id: string
+          measurement_type: string
           reps: number | null
           reps_max: number | null
           reps_min: number | null
@@ -1939,7 +1944,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          duration_seconds?: number | null
           id?: string
+          measurement_type?: string
           reps?: number | null
           reps_max?: number | null
           reps_min?: number | null
@@ -1951,7 +1958,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          duration_seconds?: number | null
           id?: string
+          measurement_type?: string
           reps?: number | null
           reps_max?: number | null
           reps_min?: number | null
@@ -1967,6 +1976,13 @@ export type Database = {
             columns: ["workout_exercise_log_id"]
             isOneToOne: false
             referencedRelation: "workout_exercise_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_set_logs_workout_exercise_log_id_fkey"
+            columns: ["workout_exercise_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_preparatory_exercise_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -2156,105 +2172,6 @@ export type Database = {
             columns: ["workout_id"]
             isOneToOne: false
             referencedRelation: "workouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workout_preparatory_exercise_logs: {
-        Row: {
-          created_at: string
-          duration_type: string
-          exercise_name: string | null
-          id: string
-          note: string | null
-          position: number
-          updated_at: string
-          variation_id: string | null
-          variation_name: string | null
-          workout_log_id: string
-        }
-        Insert: {
-          created_at?: string
-          duration_type: string
-          exercise_name?: string | null
-          id?: string
-          note?: string | null
-          position: number
-          updated_at?: string
-          variation_id?: string | null
-          variation_name?: string | null
-          workout_log_id: string
-        }
-        Update: {
-          created_at?: string
-          duration_type?: string
-          exercise_name?: string | null
-          id?: string
-          note?: string | null
-          position?: number
-          updated_at?: string
-          variation_id?: string | null
-          variation_name?: string | null
-          workout_log_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_preparatory_exercise_logs_variation_id_fkey"
-            columns: ["variation_id"]
-            isOneToOne: false
-            referencedRelation: "variations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workout_preparatory_exercise_logs_variation_id_fkey"
-            columns: ["variation_id"]
-            isOneToOne: false
-            referencedRelation: "variations_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workout_preparatory_exercise_logs_workout_log_id_fkey"
-            columns: ["workout_log_id"]
-            isOneToOne: false
-            referencedRelation: "workout_logs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workout_preparatory_set_logs: {
-        Row: {
-          created_at: string
-          duration_seconds: number | null
-          id: string
-          reps: number | null
-          set_order: number
-          updated_at: string
-          workout_preparatory_exercise_log_id: string
-        }
-        Insert: {
-          created_at?: string
-          duration_seconds?: number | null
-          id?: string
-          reps?: number | null
-          set_order: number
-          updated_at?: string
-          workout_preparatory_exercise_log_id: string
-        }
-        Update: {
-          created_at?: string
-          duration_seconds?: number | null
-          id?: string
-          reps?: number | null
-          set_order?: number
-          updated_at?: string
-          workout_preparatory_exercise_log_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_preparatory_set_logs_workout_preparatory_exercise__fkey"
-            columns: ["workout_preparatory_exercise_log_id"]
-            isOneToOne: false
-            referencedRelation: "workout_preparatory_exercise_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -2514,6 +2431,67 @@ export type Database = {
           },
         ]
       }
+      workout_preparatory_exercise_logs: {
+        Row: {
+          created_at: string | null
+          duration_type: string | null
+          exercise_name: string | null
+          id: string | null
+          note: string | null
+          position: number | null
+          updated_at: string | null
+          variation_id: string | null
+          variation_name: string | null
+          workout_log_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_type?: never
+          exercise_name?: string | null
+          id?: string | null
+          note?: string | null
+          position?: number | null
+          updated_at?: string | null
+          variation_id?: string | null
+          variation_name?: string | null
+          workout_log_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_type?: never
+          exercise_name?: string | null
+          id?: string | null
+          note?: string | null
+          position?: number | null
+          updated_at?: string | null
+          variation_id?: string | null
+          variation_name?: string | null
+          workout_log_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercise_logs_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_logs_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_logs_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_preparatory_exercises: {
         Row: {
           created_at: string | null
@@ -2565,6 +2543,33 @@ export type Database = {
             columns: ["workout_id"]
             isOneToOne: false
             referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_preparatory_set_logs: {
+        Row: {
+          created_at: string | null
+          duration_seconds: number | null
+          id: string | null
+          reps: number | null
+          set_order: number | null
+          updated_at: string | null
+          workout_preparatory_exercise_log_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercise_set_logs_workout_exercise_log_id_fkey"
+            columns: ["workout_preparatory_exercise_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_exercise_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_set_logs_workout_exercise_log_id_fkey"
+            columns: ["workout_preparatory_exercise_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_preparatory_exercise_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -2900,6 +2905,7 @@ export type Database = {
         Args: { p_user_id: string; p_variation_id: string }
         Returns: Json
       }
+      wt_insert_workout_log: { Args: { payload: Json }; Returns: string }
       wt_list_exercises_summaries: {
         Args: {
           p_equipment_ids: string[]

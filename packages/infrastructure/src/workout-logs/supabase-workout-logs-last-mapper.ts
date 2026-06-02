@@ -14,6 +14,7 @@ export type LastLogRow = {
   finished_at: string;
   workout_exercise_logs: Array<{
     variation_id: string | null;
+    exercise_type: string;
     position: number;
     superset_group_id: string | null;
     exercise_name: string | null;
@@ -74,7 +75,7 @@ const toExercise = (
 
 export function toWorkoutLogLast(row: LastLogRow): WorkoutLogLast {
   const exercises = (row.workout_exercise_logs ?? [])
-    .slice()
+    .filter((exercise) => exercise.exercise_type === 'strength')
     .sort((a, b) => a.position - b.position)
     .map(toExercise);
 

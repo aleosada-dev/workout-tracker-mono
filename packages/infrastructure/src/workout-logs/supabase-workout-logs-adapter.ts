@@ -1,6 +1,12 @@
-import type { WorkoutLogRepository } from '@workout-tracker/domain';
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+  type WorkoutLogRepository,
+} from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
+import { toWorkoutLogCreatePayload } from './supabase-workout-logs-create-mapper';
 import { type LastLogRow, toWorkoutLogLast } from './supabase-workout-logs-last-mapper';
 import { type SummaryRow, toWorkoutLogSummary } from './supabase-workout-logs-summary-mapper';
 
@@ -11,6 +17,7 @@ const LAST_SELECT = `
   finished_at,
   workout_exercise_logs(
     variation_id,
+    exercise_type,
     position,
     superset_group_id,
     exercise_name,
@@ -27,6 +34,7 @@ const SUMMARIES_SELECT = `
   workout:workouts(name),
   workout_exercise_logs(
     id,
+    exercise_type,
     variation:variations_view(muscle_slug, muscle_level2_slug)
   ),
   workout_log_summaries(summary_snapshot)
@@ -96,6 +104,27 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
         workoutFound: true,
         log: row ? toWorkoutLogLast(row) : null,
       };
+    },
+
+    async create(input) {
+      const { data, error } = await supabase.rpc('wt_insert_workout_log', {
+        payload: toWorkoutLogCreatePayload(input),
+      });
+
+      if (error) {
+        if (error.code === '42501') {
+          throw new ForbiddenError('not authorized to create a workout log for this athlete');
+        }
+        if (error.code === 'P0002') {
+          throw new NotFoundError('variation');
+        }
+        if (error.code === '22023') {
+          throw new ValidationError([{ code: 'validation.invalid' }]);
+        }
+        throw supabaseError('Failed to create workout log', error);
+      }
+
+      return { workoutLogId: data };
     },
   };
 }
