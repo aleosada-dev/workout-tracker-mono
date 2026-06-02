@@ -250,4 +250,23 @@ describe('useCountdownTimer — notificação', () => {
       date: expect.any(Date),
     });
   });
+
+  test('não cancela a notificação ao finalizar naturalmente — é ela quem toca o som', async () => {
+    const { result } = renderHook(() => useCountdownTimer({ durationSeconds: 3, notification }));
+    act(() => result.current.start());
+    await flushPromises();
+    mockCancel.mockClear();
+    act(() => jest.advanceTimersByTime(3000));
+    expect(result.current.isFinished).toBe(true);
+    expect(mockCancel).not.toHaveBeenCalled();
+  });
+
+  test('cancela a notificação ao pular antes do fim', async () => {
+    const { result } = renderHook(() => useCountdownTimer({ durationSeconds: 30, notification }));
+    act(() => result.current.start());
+    await flushPromises();
+    mockCancel.mockClear();
+    act(() => result.current.skip());
+    expect(mockCancel).toHaveBeenCalledWith('notif-id');
+  });
 });

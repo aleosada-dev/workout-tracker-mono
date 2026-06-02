@@ -32,7 +32,10 @@ import { QueryProvider } from '@/features/query/lib/provider';
 import { LanguageBridge, resolveLanguage } from '@/features/settings/state/language-bridge';
 import { language$ } from '@/features/settings/state/settings-store';
 import { ThemeBridge } from '@/features/settings/state/theme-bridge';
-import { ensureTimerNotificationChannel } from '@/features/shared/lib/notifications';
+import {
+  ensureNotificationPermission,
+  ensureTimerNotificationChannel,
+} from '@/features/shared/lib/notifications';
 import { useNavTheme } from '@/features/shared/lib/theme';
 import { toastConfig } from '@/features/shared/lib/toast-config';
 import { useClearActiveWorkoutOnSignOut } from '@/features/workouts/hooks/use-clear-active-workout-on-signout';
@@ -66,7 +69,10 @@ export default function RootLayout() {
   }, [loaded, error]);
 
   useEffect(() => {
-    ensureTimerNotificationChannel();
+    void (async () => {
+      await ensureTimerNotificationChannel();
+      await ensureNotificationPermission();
+    })();
   }, []);
 
   const navTheme = useNavTheme();

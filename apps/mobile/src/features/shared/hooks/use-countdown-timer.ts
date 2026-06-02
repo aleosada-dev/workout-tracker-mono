@@ -106,16 +106,24 @@ export function useCountdownTimer({
     [cancelNotification],
   );
 
-  const handleFinish = useCallback(() => {
-    if (completionFiredRef.current) return;
-    completionFiredRef.current = true;
-    targetTimeRef.current = null;
-    pausedRemainingMsRef.current = null;
-    cancelNotification();
-    setRemainingMs(0);
-    setStatus('finished');
-    onCompleteRef.current?.();
-  }, [cancelNotification]);
+  // `cancelPending` controla o destino da notificação agendada. No fim natural
+  // (`syncFromClock`) deixamos a notificação do SO disparar — é ela quem toca o
+  // som; cancelá-la aqui correria com a entrega no foreground. Em encerramentos
+  // antecipados (skip, remover além do restante) cancelamos para não disparar
+  // uma notificação futura indevida.
+  const handleFinish = useCallback(
+    (cancelPending = true) => {
+      if (completionFiredRef.current) return;
+      completionFiredRef.current = true;
+      targetTimeRef.current = null;
+      pausedRemainingMsRef.current = null;
+      if (cancelPending) cancelNotification();
+      setRemainingMs(0);
+      setStatus('finished');
+      onCompleteRef.current?.();
+    },
+    [cancelNotification],
+  );
 
   // Recalcula o restante a partir do relógio. Usado pelo intervalo de 1s e ao
   // voltar do background.
@@ -124,7 +132,7 @@ export function useCountdownTimer({
     const target = targetTimeRef.current;
     if (target == null) return;
     const left = target - Date.now();
-    if (left <= 0) handleFinish();
+    if (left <= 0) handleFinish(false);
     else setRemainingMs(left);
   }, [handleFinish]);
 
