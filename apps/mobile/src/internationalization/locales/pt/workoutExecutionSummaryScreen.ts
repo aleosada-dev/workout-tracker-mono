@@ -19,4 +19,14 @@ export default {
       sets: 'Mais séries',
     },
   },
+  comparison: {
+    title: 'Comparativo com a sessão anterior',
+    basedOn: 'Baseado no treino anterior de {{date}}.',
+    noPrevious: 'Ainda não existe uma sessão anterior deste mesmo treino para comparação.',
+    series: 'Séries:',
+    volume: 'Volume:',
+    previousSuffix: 'ant.',
+    setsUnit_one: 'sér.',
+    setsUnit_other: 'sér.',
+  },
 };

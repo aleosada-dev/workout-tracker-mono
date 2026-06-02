@@ -19,4 +19,14 @@ export default {
       sets: 'Most sets',
     },
   },
+  comparison: {
+    title: 'Comparison with previous session',
+    basedOn: 'Based on the previous workout from {{date}}.',
+    noPrevious: 'There is no previous session of this same workout to compare against yet.',
+    series: 'Sets:',
+    volume: 'Volume:',
+    previousSuffix: 'prev.',
+    setsUnit_one: 'set',
+    setsUnit_other: 'sets',
+  },
 };

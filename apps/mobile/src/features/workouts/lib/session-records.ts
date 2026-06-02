@@ -107,7 +107,6 @@ export function buildSessionRecords(
       }
     }
 
-    console.log(records);
     if (records.length > 0) {
       result.push({
         exerciseName: variation.exercise.name,
