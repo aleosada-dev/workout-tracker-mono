@@ -1,6 +1,7 @@
 import {
   ConflictError,
   type CreateExerciseInput,
+  type ExerciseLastSet,
   type ExerciseListItem,
   type ExerciseRepository,
   type ListExerciseName,
@@ -116,6 +117,34 @@ export function makeSupabaseExerciseRepository(
         maxReps: row.max_reps,
         maxSets: row.max_sets,
       }));
+    },
+
+    async getLastSets({ userId, variationIds }) {
+      // A função já devolve o último set por (variation, logical_key) em todo o
+      // histórico; aqui só agrupamos as flat rows por variation.
+      const { data, error } = await supabase.rpc('wt_last_sets_by_variations', {
+        p_user_id: userId,
+        p_variation_ids: variationIds,
+      });
+
+      if (error) {
+        throw supabaseError('Failed to get last sets', error);
+      }
+
+      const byVariation = new Map<string, { variationId: string; sets: ExerciseLastSet[] }>();
+      for (const row of data ?? []) {
+        let entry = byVariation.get(row.variation_id);
+        if (!entry) {
+          entry = { variationId: row.variation_id, sets: [] };
+          byVariation.set(row.variation_id, entry);
+        }
+        entry.sets.push({
+          logicalKey: row.logical_key,
+          weightKg: row.weight_kg ?? null,
+          reps: row.reps ?? null,
+        });
+      }
+      return Array.from(byVariation.values());
     },
 
     async getExerciseForEdit({ userId, variationId }) {

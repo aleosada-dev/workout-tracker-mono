@@ -3,6 +3,7 @@ import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
 import type {
 	CreateExerciseRequest,
+	ExerciseLastSetsResponse,
 	ExerciseListItemResponse,
 	ExerciseNameResponse,
 	ExerciseRecordsResponse,
@@ -1066,6 +1067,125 @@ describe("GET /api/v1/exercises/records", () => {
 	test("returns 401 when Authorization header is missing", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.exercises.records.$get({
+			query: { variationIds: ["00000000-0000-4000-8000-000000000000"] },
+		});
+
+		expect(res.status as number).toBe(401);
+	});
+});
+
+describe("GET /api/v1/exercises/last", () => {
+	async function athleteVariationIds(limit: number): Promise<string[]> {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$get(
+			{ query: { visibility: "all" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const exercises = (await res.json()) as ExerciseListItemResponse[];
+		return exercises.flatMap((e) => e.variations.map((v) => v.id)).slice(0, limit);
+	}
+
+	const LOGICAL_KEY = /^(warmup-\d+|normal-\d+|n\d+-(drop|cluster)-\d+)$/;
+
+	test("returns last sets per logical slot only for the requested variations", async () => {
+		const client = getTestClient();
+		const variationIds = await athleteVariationIds(200);
+
+		const res = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as ExerciseLastSetsResponse;
+		expect(data).toBeArray();
+		const requested = new Set(variationIds);
+		for (const item of data) {
+			expect(requested.has(item.variationId)).toBeTrue();
+			// one row per logical slot — keys are unique and well-formed
+			const keys = item.sets.map((s) => s.logicalKey);
+			expect(new Set(keys).size).toBe(keys.length);
+			for (const set of item.sets) {
+				expect(set.logicalKey).toMatch(LOGICAL_KEY);
+				expect(set.weightKg === null || typeof set.weightKg === "number").toBeTrue();
+				expect(set.reps === null || typeof set.reps === "number").toBeTrue();
+			}
+		}
+	});
+
+	test("returns an empty array when the variation has no history", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds: ["00000000-0000-4000-8000-000000000000"] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as ExerciseLastSetsResponse;
+		expect(data).toEqual([]);
+	});
+
+	test("a coach reads an athlete's last sets via the userId param", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const variationIds = await athleteVariationIds(200);
+
+		const asAthlete = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds } },
+			{ headers: authHeaders("athlete") },
+		);
+		const athleteLast = (await asAthlete.json()) as ExerciseLastSetsResponse;
+
+		const asCoach = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds, userId: athleteId } },
+			{ headers: authHeaders("coach") },
+		);
+		expect(asCoach.status).toBe(200);
+		const coachLast = (await asCoach.json()) as ExerciseLastSetsResponse;
+
+		const byVariation = (rs: ExerciseLastSetsResponse) =>
+			[...rs].sort((a, b) => a.variationId.localeCompare(b.variationId));
+		expect(byVariation(coachLast)).toEqual(byVariation(athleteLast));
+	});
+
+	test("does not leak another user's last sets to a caller without a coach relationship", async () => {
+		const client = getTestClient();
+		const coachId = getTestUserAuth("coach").userId;
+		const variationIds = await athleteVariationIds(200);
+
+		const res = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds, userId: coachId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(200);
+		const data = (await res.json()) as ExerciseLastSetsResponse;
+		expect(data).toEqual([]);
+	});
+
+	test("returns 400 when variationIds is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.last.$get(
+			{ query: {} as { variationIds: string[] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 400 when a variationId is not a UUID", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.last.$get(
+			{ query: { variationIds: ["not-a-uuid"] } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.last.$get({
 			query: { variationIds: ["00000000-0000-4000-8000-000000000000"] },
 		});
 

@@ -7,6 +7,7 @@ export * from './exercises/create-exercise';
 export * from './exercises/delete-exercises';
 export * from './exercises/exercise-detail';
 export * from './exercises/exercise-edit';
+export * from './exercises/exercise-last-sets';
 export * from './exercises/exercise-list';
 export * from './exercises/exercise-name';
 export * from './exercises/exercise-records';

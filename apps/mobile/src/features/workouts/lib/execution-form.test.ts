@@ -1,20 +1,20 @@
 import type { MeasurementType, WorkoutSetType } from '@workout-tracker/domain';
-import type {
-  GetWorkoutLastLogResponse,
-  GetWorkoutResponse,
-} from '@/features/workouts/api/workouts';
+import type { ExerciseLastSetsResponse } from '@/features/exercises/api/exercises';
+import type { PickedExercise } from '@/features/exercises/state/exercise-picker-bridge';
+import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
 import {
   autofillFromLast,
+  buildExecutionExerciseFromPicked,
   buildExecutionFromWorkout,
   type ExecutionSetInput,
   ExecutionSetSchema,
-  matchExecutionSetsToLog,
+  matchExecutionSetsByLogicalKey,
   matchExecutionSetsToTemplate,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 
 type TemplateSet = GetWorkoutResponse['exercises'][number]['sets'][number];
-type LogSet = NonNullable<GetWorkoutLastLogResponse>['exercises'][number]['sets'][number];
+type LastSetRef = ExerciseLastSetsResponse[number]['sets'][number];
 
 const VARIATION_A = '11111111-1111-1111-1111-111111111111';
 const VARIATION_B = '22222222-2222-2222-2222-222222222222';
@@ -34,15 +34,8 @@ function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>):
   };
 }
 
-function logSet(overrides: Partial<LogSet> = {}): LogSet {
-  return {
-    setType: 'normal',
-    setOrder: 1,
-    weightKg: 60,
-    reps: 10,
-    logicalKey: 'normal-1',
-    ...overrides,
-  };
+function refSet(logicalKey: string, weightKg: number | null, reps: number | null): LastSetRef {
+  return { logicalKey, weightKg, reps };
 }
 
 function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
@@ -78,23 +71,8 @@ function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
   } as GetWorkoutResponse;
 }
 
-function lastLog(variationId: string, sets: LogSet[]): GetWorkoutLastLogResponse {
-  return {
-    workoutLogId: 'log-1',
-    workoutId: 'w1',
-    startedAt: '2026-05-20T00:00:00Z',
-    finishedAt: '2026-05-20T01:00:00Z',
-    exercises: [
-      {
-        variationId,
-        exerciseName: 'Supino',
-        variationName: null,
-        position: 0,
-        supersetGroupId: null,
-        sets,
-      },
-    ],
-  } as GetWorkoutLastLogResponse;
+function lastSets(variationId: string, sets: LastSetRef[]): ExerciseLastSetsResponse {
+  return [{ variationId, sets }];
 }
 
 describe('buildExecutionFromWorkout', () => {
@@ -148,10 +126,10 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].durationTarget).toBe(30);
   });
 
-  test('seeds last weight/reps from the matching log set (same variation, same logical key)', () => {
+  test('seeds last weight/reps from the matching last set (same variation, same logical key)', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [templateSet({ id: 's1' })]),
-      lastLog(VARIATION_A, [logSet({ weightKg: 72.5, reps: 9 })]),
+      lastSets(VARIATION_A, [refSet('normal-1', 72.5, 9)]),
     );
 
     expect(result.exercises[0].sets[0].lastKg).toBe(72.5);
@@ -167,10 +145,7 @@ describe('buildExecutionFromWorkout', () => {
         templateSet({ id: 'warm', setType: 'warmup', setOrder: 1 }),
         templateSet({ id: 'work', setType: 'normal', setOrder: 2 }),
       ]),
-      lastLog(VARIATION_A, [
-        logSet({ setType: 'warmup', setOrder: 1, weightKg: 20, reps: 15 }),
-        logSet({ setType: 'normal', setOrder: 2, weightKg: 80, reps: 8 }),
-      ]),
+      lastSets(VARIATION_A, [refSet('warmup-1', 20, 15), refSet('normal-1', 80, 8)]),
     );
 
     const [warm, work] = result.exercises[0].sets;
@@ -180,23 +155,23 @@ describe('buildExecutionFromWorkout', () => {
     expect(work.lastReps).toBe(8);
   });
 
-  test('does not seed when the log has a different variation', () => {
+  test('does not seed when the last sets are for a different variation', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [templateSet({ id: 's1' })]),
-      lastLog(VARIATION_B, [logSet({ weightKg: 99, reps: 5 })]),
+      lastSets(VARIATION_B, [refSet('normal-1', 99, 5)]),
     );
 
     expect(result.exercises[0].sets[0].lastKg).toBeNull();
     expect(result.exercises[0].sets[0].lastReps).toBeNull();
   });
 
-  test('leaves unmatched template sets null when the log has fewer sets', () => {
+  test('leaves unmatched template sets null when fewer logical slots exist', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [
         templateSet({ id: 's1', setType: 'normal', setOrder: 1 }),
         templateSet({ id: 's2', setType: 'normal', setOrder: 2 }),
       ]),
-      lastLog(VARIATION_A, [logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 })]),
+      lastSets(VARIATION_A, [refSet('normal-1', 60, 10)]),
     );
 
     const [first, second] = result.exercises[0].sets;
@@ -225,22 +200,19 @@ function execSet(
   };
 }
 
-describe('matchExecutionSetsToLog', () => {
-  test('returns nulls when there are no log sets', () => {
-    const result = matchExecutionSetsToLog([execSet('s1', 'normal')], undefined);
+describe('matchExecutionSetsByLogicalKey', () => {
+  test('returns nulls when there are no reference sets', () => {
+    const result = matchExecutionSetsByLogicalKey([execSet('s1', 'normal')], undefined);
 
     expect(result).toEqual([{ lastKg: null, lastReps: null }]);
   });
 
-  test('matches existing sets and leaves an added set null', () => {
-    const logSets = [
-      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
-      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
-    ];
+  test('matches existing slots and leaves an added set null', () => {
+    const reference = [refSet('normal-1', 60, 10), refSet('normal-2', 65, 8)];
 
-    const afterAdd = matchExecutionSetsToLog(
+    const afterAdd = matchExecutionSetsByLogicalKey(
       [execSet('s1', 'normal'), execSet('s2', 'normal'), execSet('s3', 'normal')],
-      logSets,
+      reference,
     );
 
     expect(afterAdd).toEqual([
@@ -251,30 +223,45 @@ describe('matchExecutionSetsToLog', () => {
   });
 
   test('keeps matching after a set is removed', () => {
-    const logSets = [
-      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
-      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
-    ];
+    const reference = [refSet('normal-1', 60, 10), refSet('normal-2', 65, 8)];
 
-    const afterRemove = matchExecutionSetsToLog([execSet('s1', 'normal')], logSets);
+    const afterRemove = matchExecutionSetsByLogicalKey([execSet('s1', 'normal')], reference);
 
     expect(afterRemove).toEqual([{ lastKg: 60, lastReps: 10 }]);
   });
 
   test('re-matches when a set type changes', () => {
-    const logSets = [
-      logSet({ setType: 'normal', setOrder: 1, weightKg: 60, reps: 10 }),
-      logSet({ setType: 'normal', setOrder: 2, weightKg: 65, reps: 8 }),
-    ];
+    const reference = [refSet('normal-1', 60, 10), refSet('normal-2', 65, 8)];
 
-    const afterRetype = matchExecutionSetsToLog(
+    const afterRetype = matchExecutionSetsByLogicalKey(
       [execSet('s1', 'warmup'), execSet('s2', 'normal')],
-      logSets,
+      reference,
     );
 
     expect(afterRetype).toEqual([
       { lastKg: null, lastReps: null },
       { lastKg: 60, lastReps: 10 },
+    ]);
+  });
+
+  test('matches each slot independently (last value per slot can come from any session)', () => {
+    // normal-2 only exists in the reference (e.g. from an older session); it still
+    // seeds the 2nd working set even though normal-1 came from a different session.
+    const reference = [
+      refSet('warmup-1', 20, 15),
+      refSet('normal-1', 80, 8),
+      refSet('normal-2', 75, 6),
+    ];
+
+    const result = matchExecutionSetsByLogicalKey(
+      [execSet('w1', 'warmup'), execSet('s1', 'normal'), execSet('s2', 'normal')],
+      reference,
+    );
+
+    expect(result).toEqual([
+      { lastKg: 20, lastReps: 15 },
+      { lastKg: 80, lastReps: 8 },
+      { lastKg: 75, lastReps: 6 },
     ]);
   });
 });
@@ -431,6 +418,81 @@ describe('autofillFromLast', () => {
   test('returns null when there is no last value', () => {
     expect(autofillFromLast('', null)).toBeNull();
     expect(autofillFromLast('', undefined)).toBeNull();
+  });
+});
+
+describe('buildExecutionExerciseFromPicked', () => {
+  function pickedExercise(
+    type: 'forca' | 'preparatorio',
+    overrides: Partial<PickedExercise['variation']> = {},
+  ): PickedExercise {
+    return {
+      exercise: { slug: 'bench-press', name: 'Supino', type },
+      variation: {
+        id: VARIATION_A,
+        slug: 'bench-press-barbell',
+        name: 'Supino com barra',
+        equipment: { slug: 'barbell', preposition: 'com' },
+        muscle: { slug: 'chest' },
+        secondaryMuscle: { slug: 'triceps' },
+        ...overrides,
+      },
+    } as PickedExercise;
+  }
+
+  function sequentialIds() {
+    let n = 0;
+    return () => {
+      n += 1;
+      return `id-${n}`;
+    };
+  }
+
+  test('starts a new exercise with a single set that has no rep target', () => {
+    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 0, sequentialIds());
+
+    expect(result.sets).toHaveLength(1);
+    expect(result.sets[0]).toMatchObject({
+      repsMin: null,
+      repsMax: null,
+      durationTarget: null,
+    });
+  });
+
+  test('maps forca to a strength exercise and keeps the given position', () => {
+    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 3, sequentialIds());
+
+    expect(result.exerciseType).toBe('strength');
+    expect(result.position).toBe(3);
+  });
+
+  test('maps preparatorio to a preparatory exercise', () => {
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('preparatorio'),
+      0,
+      sequentialIds(),
+    );
+
+    expect(result.exerciseType).toBe('preparatory');
+  });
+
+  test('uses the generated id as its own superset group anchor', () => {
+    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 0, sequentialIds());
+
+    expect(result.id).toBe('id-1');
+    expect(result.supersetGroupId).toBe('id-1');
+    expect(result.supersetOrder).toBe(0);
+    expect(result.sets[0].id).toBe('id-2');
+  });
+
+  test('keeps secondaryMuscle null when the variation has none', () => {
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('forca', { secondaryMuscle: null }),
+      0,
+      sequentialIds(),
+    );
+
+    expect(result.variation.secondaryMuscle).toBeNull();
   });
 });
 

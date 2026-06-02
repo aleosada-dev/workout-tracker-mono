@@ -22,7 +22,7 @@ import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpD
 import {
   autofillFromLast,
   type ExecutionFormInput,
-  matchExecutionSetsToLog,
+  matchExecutionSetsByLogicalKey,
   matchExecutionSetsToTemplate,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
@@ -75,10 +75,10 @@ export function ExerciseExecutionCard({
     const sets = getValues(`exercises.${exerciseIndex}.sets`);
     const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
 
-    const logExercise = activeWorkout$.lastLog
+    const lastExercise = activeWorkout$.lastSets
       .peek()
-      ?.exercises.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsToLog(sets, logExercise?.sets).forEach((last, i) => {
+      ?.find((exercise) => exercise.variationId === variationId);
+    matchExecutionSetsByLogicalKey(sets, lastExercise?.sets).forEach((last, i) => {
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
     });

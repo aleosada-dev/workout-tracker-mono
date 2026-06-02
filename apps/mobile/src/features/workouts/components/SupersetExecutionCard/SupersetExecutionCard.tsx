@@ -19,7 +19,7 @@ import { SupersetHelpDialog } from '@/features/workouts/components/SupersetHelpD
 import {
   autofillFromLast,
   type ExecutionFormInput,
-  matchExecutionSetsToLog,
+  matchExecutionSetsByLogicalKey,
   matchExecutionSetsToTemplate,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
@@ -68,10 +68,10 @@ export function SupersetExecutionCard({
     const memberSets = getValues(`exercises.${exerciseIndex}.sets`);
     const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
 
-    const logExercise = activeWorkout$.lastLog
+    const lastExercise = activeWorkout$.lastSets
       .peek()
-      ?.exercises.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsToLog(memberSets, logExercise?.sets).forEach((last, i) => {
+      ?.find((exercise) => exercise.variationId === variationId);
+    matchExecutionSetsByLogicalKey(memberSets, lastExercise?.sets).forEach((last, i) => {
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
     });

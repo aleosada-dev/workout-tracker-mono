@@ -15,6 +15,8 @@ import {
 	ExerciseDetailResponseSchema,
 	ExerciseForEditResponseSchema,
 	ExerciseIdParamSchema,
+	ExerciseLastSetsQuerySchema,
+	ExerciseLastSetsResponseSchema,
 	ExerciseListResponseSchema,
 	ExerciseNamesResponseSchema,
 	ExerciseRecordsQuerySchema,
@@ -170,6 +172,33 @@ export const exercisesRouter = new Hono<AppBindings>()
 			const { listExerciseRecords } = c.get("container").exercises;
 			const records = await listExerciseRecords({ userId, variationIds });
 			return c.json(records);
+		},
+	)
+	.get(
+		"/last",
+		describeRoute({
+			summary: "Get the last executed set per logical slot for one or more variations",
+			tags: ["Exercises"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(ExerciseLastSetsResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+			},
+		}),
+		validator("query", ExerciseLastSetsQuerySchema),
+		async (c) => {
+			const { variationIds, userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
+			const { listExerciseLastSets } = c.get("container").exercises;
+			const lastSets = await listExerciseLastSets({ userId, variationIds });
+			return c.json(lastSets);
 		},
 	)
 	.get(

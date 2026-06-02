@@ -277,3 +277,26 @@ const ExerciseRecordsItemSchema = z.object({
 export const ExerciseRecordsResponseSchema = z.array(ExerciseRecordsItemSchema);
 
 export type ExerciseRecordsResponse = z.infer<typeof ExerciseRecordsResponseSchema>;
+
+export const ExerciseLastSetsQuerySchema = z.object({
+	variationIds: arrayQuery(z.uuid()),
+	userId: z.uuid().optional(),
+});
+
+export type ExerciseLastSetsQuery = z.infer<typeof ExerciseLastSetsQuerySchema>;
+
+const ExerciseLastSetItemSchema = z.object({
+	variationId: z.uuid(),
+	// Último set por slot lógico (warmup-1, normal-1, ...) em todo o histórico.
+	sets: z.array(
+		z.object({
+			logicalKey: z.string(),
+			weightKg: z.number().nullable(),
+			reps: z.number().int().nullable(),
+		}),
+	),
+});
+
+export const ExerciseLastSetsResponseSchema = z.array(ExerciseLastSetItemSchema);
+
+export type ExerciseLastSetsResponse = z.infer<typeof ExerciseLastSetsResponseSchema>;

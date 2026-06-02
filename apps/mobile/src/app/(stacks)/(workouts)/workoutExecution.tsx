@@ -22,11 +22,9 @@ import {
   useReanimatedKeyboardAnimation,
 } from 'react-native-keyboard-controller';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useExerciseLastSets } from '@/features/exercises/hooks/use-exercise-last-sets';
 import { useExerciseRecords } from '@/features/exercises/hooks/use-exercise-records';
-import {
-  openExercisePicker,
-  type PickedExercise,
-} from '@/features/exercises/state/exercise-picker-bridge';
+import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import {
@@ -46,11 +44,13 @@ import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import { useWorkoutLastLog } from '@/features/workouts/hooks/use-workout-last-log';
 import { buildCompletedExecution } from '@/features/workouts/lib/completed-execution';
 import {
+  buildExecutionExerciseFromPicked,
   buildExecutionFromWorkout,
   type ExecutionExerciseInput,
   type ExecutionFormInput,
   ExecutionFormSchema,
   type ExecutionFormValues,
+  matchExecutionSetsByLogicalKey,
 } from '@/features/workouts/lib/execution-form';
 import {
   reorderExercisesWithinType,
@@ -60,9 +60,6 @@ import { type ActiveWorkout, activeWorkout$ } from '@/features/workouts/state/ac
 import { restTimerBridge } from '@/features/workouts/state/rest-timer-bridge';
 
 type ExecutionTab = 'preparatory' | 'strength';
-
-const DEFAULT_NEW_SET_REPS_MIN = 8;
-const DEFAULT_NEW_SET_REPS_MAX = 12;
 
 export default function WorkoutExecutionScreen() {
   const { t } = useTranslation();
@@ -91,26 +88,41 @@ export default function WorkoutExecutionScreen() {
   );
   const recordsUserId = (active?.workoutTemplate ?? workoutTemplate)?.userId;
   const records = useExerciseRecords(recordsVariationIds, recordsUserId);
+  const lastSets = useExerciseLastSets(recordsVariationIds, recordsUserId);
 
   useEffect(() => {
     if (active || !workoutTemplate) return;
-    if (lastLog.isPending) return;
+    if (lastLog.isPending || lastSets.isLoading) return;
     activeWorkout$.set({
       startedAt: new Date().toISOString(),
       athleteName: athleteName ?? null,
       note: null,
       workoutTemplate: structuredClone(workoutTemplate),
-      workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastLog.data ?? null),
+      workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastSets.data ?? null),
       completedExecution: null,
       lastLog: lastLog.data ?? null,
+      lastSets: lastSets.data ?? null,
       records: null,
     });
-  }, [active, workoutTemplate, lastLog.isPending, lastLog.data, athleteName]);
+  }, [
+    active,
+    workoutTemplate,
+    lastLog.isPending,
+    lastLog.data,
+    lastSets.isLoading,
+    lastSets.data,
+    athleteName,
+  ]);
 
   useEffect(() => {
     if (!active || !records.data) return;
     activeWorkout$.records.set(records.data);
   }, [active, records.data]);
+
+  useEffect(() => {
+    if (!active || !lastSets.data) return;
+    activeWorkout$.lastSets.set(lastSets.data);
+  }, [active, lastSets.data]);
 
   if (!active) {
     return (
@@ -183,6 +195,30 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     return () => sub.unsubscribe();
   }, [form]);
 
+  // Preenche os placeholders (lastKg/lastReps) dos exercícios adicionados durante a
+  // execução: ao adicionar um exercício, recordsVariationIds muda, useExerciseLastSets
+  // refaz o fetch e activeWorkout$.lastSets atualiza — aqui aplicamos por slot lógico.
+  // Idempotente (só escreve quando muda), então não toca nos do template já preenchidos.
+  const lastSetsData = useValue(activeWorkout$.lastSets);
+  useEffect(() => {
+    if (!lastSetsData) return;
+    const exercises = form.getValues('exercises') ?? [];
+    exercises.forEach((exercise, exerciseIndex) => {
+      const lastExercise = lastSetsData.find((e) => e.variationId === exercise.variation.id);
+      matchExecutionSetsByLogicalKey(exercise.sets, lastExercise?.sets).forEach(
+        (last, setIndex) => {
+          const base = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+          if (form.getValues(`${base}.lastKg`) !== last.lastKg) {
+            form.setValue(`${base}.lastKg`, last.lastKg);
+          }
+          if (form.getValues(`${base}.lastReps`) !== last.lastReps) {
+            form.setValue(`${base}.lastReps`, last.lastReps);
+          }
+        },
+      );
+    });
+  }, [lastSetsData, form]);
+
   useEffect(
     () => restTimerBridge.register((seconds) => restTimerRef.current.requestStart(seconds)),
     [],
@@ -217,7 +253,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         const currentFormExercises = form.getValues('exercises') ?? [];
         const startPosition = currentFormExercises.length;
         const additions = picked.map((p, i) =>
-          buildExecutionExerciseFromPicked(p, startPosition + i),
+          buildExecutionExerciseFromPicked(p, startPosition + i, Crypto.randomUUID),
         );
         form.setValue('exercises', [...currentFormExercises, ...additions], {
           shouldDirty: true,
@@ -300,54 +336,6 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
       </View>
     </FormProvider>
   );
-}
-
-function buildExecutionExerciseFromPicked(
-  picked: PickedExercise,
-  position: number,
-): ExecutionExerciseInput {
-  const id = Crypto.randomUUID();
-  return {
-    id,
-    exerciseType: picked.exercise.type === 'preparatorio' ? 'preparatory' : 'strength',
-    position,
-    supersetGroupId: id,
-    supersetOrder: 0,
-    note: null,
-    restSeconds: null,
-    variation: {
-      id: picked.variation.id,
-      slug: picked.variation.slug,
-      name: picked.variation.name,
-      exercise: {
-        slug: picked.exercise.slug,
-        name: picked.exercise.name,
-        type: picked.exercise.type,
-      },
-      equipment: {
-        slug: picked.variation.equipment.slug,
-        preposition: picked.variation.equipment.preposition,
-      },
-      muscle: { slug: picked.variation.muscle.slug },
-      secondaryMuscle: picked.variation.secondaryMuscle
-        ? { slug: picked.variation.secondaryMuscle.slug }
-        : null,
-    },
-    sets: [
-      {
-        id: Crypto.randomUUID(),
-        type: 'normal',
-        measurementType: 'weight_reps',
-        repsMin: DEFAULT_NEW_SET_REPS_MIN,
-        repsMax: DEFAULT_NEW_SET_REPS_MAX,
-        durationTarget: null,
-        kg: '',
-        reps: '',
-        duration: '',
-        done: false,
-      },
-    ],
-  };
 }
 
 function ElapsedTimeDisplay({ startedAt, className }: { startedAt: string; className?: string }) {

@@ -38,7 +38,7 @@ jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
 }));
 jest.mock('@/features/workouts/state/active-workout-store', () => ({
   activeWorkout$: {
-    lastLog: { peek: () => null },
+    lastSets: { peek: () => null },
     workoutTemplate: { peek: () => null },
   },
 }));

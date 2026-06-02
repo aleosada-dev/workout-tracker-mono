@@ -1,4 +1,5 @@
 import {
+  assignLogicalKeys,
   EXERCISE_TYPES,
   MEASUREMENT_TYPES,
   matchSets,
@@ -8,14 +9,13 @@ import {
   WORKOUT_SET_TYPES,
 } from '@workout-tracker/domain';
 import { z } from 'zod';
+import type { ExerciseLastSetsResponse } from '@/features/exercises/api/exercises';
+import type { PickedExercise } from '@/features/exercises/state/exercise-picker-bridge';
 import {
   countFractionDigits,
   parseLocalizedNumber,
 } from '@/features/shared/lib/utils/numeric-input';
-import type {
-  GetWorkoutLastLogResponse,
-  GetWorkoutResponse,
-} from '@/features/workouts/api/workouts';
+import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
 
 const MAX_WEIGHT_KG = 1000;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
@@ -109,7 +109,7 @@ export type ExecutionExerciseInput = ExecutionFormInput['exercises'][number];
 export type ExecutionSetInput = ExecutionExerciseInput['sets'][number];
 export type ExecutionExerciseVariation = z.infer<typeof ExecutionExerciseVariationSchema>;
 
-type LastLogExerciseSets = NonNullable<GetWorkoutLastLogResponse>['exercises'][number]['sets'];
+type LastSetsExerciseSets = ExerciseLastSetsResponse[number]['sets'];
 type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
 
 type LastValues = { lastKg: number | null; lastReps: number | null };
@@ -136,14 +136,26 @@ export function matchExecutionSets<R extends SetLike>(
   return sets.map((set) => byId.get(set.id) ?? null);
 }
 
-export function matchExecutionSetsToLog(
+/**
+ * Casa os sets da execução com o último set por slot lógico (vindo de /exercises/last).
+ * A referência já traz a `logicalKey`; aqui só computamos a logical key dos sets atuais
+ * (mesma `assignLogicalKeys` do domínio) e fazemos lookup direto.
+ */
+export function matchExecutionSetsByLogicalKey(
   sets: ExecutionSetInput[],
-  logSets: LastLogExerciseSets | undefined,
+  reference: LastSetsExerciseSets | undefined,
 ): LastValues[] {
-  return matchExecutionSets(sets, logSets).map((log) => ({
-    lastKg: log?.weightKg ?? null,
-    lastReps: log?.reps ?? null,
-  }));
+  if (!reference || reference.length === 0) {
+    return sets.map(() => ({ lastKg: null, lastReps: null }));
+  }
+  const keyed = assignLogicalKeys(
+    sets.map((set, index) => ({ setType: set.type, setOrder: index })),
+  );
+  const byKey = new Map(reference.map((ref) => [ref.logicalKey, ref]));
+  return keyed.map((k) => {
+    const ref = byKey.get(k.logicalKey);
+    return { lastKg: ref?.weightKg ?? null, lastReps: ref?.reps ?? null };
+  });
 }
 
 export function matchExecutionSetsToTemplate(
@@ -174,13 +186,62 @@ export function restTimerDuration(restSeconds: number | null | undefined): numbe
   return restSeconds;
 }
 
+export function buildExecutionExerciseFromPicked(
+  picked: PickedExercise,
+  position: number,
+  generateId: () => string,
+): ExecutionExerciseInput {
+  const id = generateId();
+  return {
+    id,
+    exerciseType: picked.exercise.type === 'preparatorio' ? 'preparatory' : 'strength',
+    position,
+    supersetGroupId: id,
+    supersetOrder: 0,
+    note: null,
+    restSeconds: null,
+    variation: {
+      id: picked.variation.id,
+      slug: picked.variation.slug,
+      name: picked.variation.name,
+      exercise: {
+        slug: picked.exercise.slug,
+        name: picked.exercise.name,
+        type: picked.exercise.type,
+      },
+      equipment: {
+        slug: picked.variation.equipment.slug,
+        preposition: picked.variation.equipment.preposition,
+      },
+      muscle: { slug: picked.variation.muscle.slug },
+      secondaryMuscle: picked.variation.secondaryMuscle
+        ? { slug: picked.variation.secondaryMuscle.slug }
+        : null,
+    },
+    sets: [
+      {
+        id: generateId(),
+        type: 'normal',
+        measurementType: 'weight_reps',
+        repsMin: null,
+        repsMax: null,
+        durationTarget: null,
+        kg: '',
+        reps: '',
+        duration: '',
+        done: false,
+      },
+    ],
+  };
+}
+
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
-  lastLog: GetWorkoutLastLogResponse = null,
+  lastSets: ExerciseLastSetsResponse | null = null,
 ): ExecutionFormInput {
   return {
     exercises: workout.exercises.map((exercise) => {
-      const logExercise = lastLog?.exercises.find((e) => e.variationId === exercise.variation.id);
+      const lastExercise = lastSets?.find((e) => e.variationId === exercise.variation.id);
       const sets: ExecutionSetInput[] = exercise.sets.map((set) => ({
         id: set.id,
         type: set.setType ?? 'normal',
@@ -195,7 +256,7 @@ export function buildExecutionFromWorkout(
         lastKg: null,
         lastReps: null,
       }));
-      const matched = matchExecutionSetsToLog(sets, logExercise?.sets);
+      const matched = matchExecutionSetsByLogicalKey(sets, lastExercise?.sets);
       return {
         id: exercise.id,
         exerciseType: exercise.exerciseType,

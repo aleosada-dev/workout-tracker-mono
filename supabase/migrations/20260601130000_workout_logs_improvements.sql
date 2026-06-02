@@ -1008,3 +1008,92 @@ ALTER FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") OWNER TO "pos
 GRANT ALL ON FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") TO "anon";
 GRANT ALL ON FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") TO "service_role";
+
+-- ============================================================================
+-- last_sets_by_variations
+--
+-- Placeholders da execução do treino: para cada variation, o último set executado
+-- POR SLOT LÓGICO ao longo de TODO o histórico (não os sets de uma única sessão).
+--
+-- O slot lógico segue a mesma definição de public assignLogicalKeys
+-- (packages/domain/src/workouts/matching/logical-key.ts) que o app usa para casar
+-- sets: warmups contados primeiro, ordinal DENTRO de cada type (warmup-1, warmup-2,
+-- normal-1, ...), com drop/cluster aninhados sob o normal pai (n1-drop-1). Reproduzir
+-- aqui (e não no app server) evita trafegar todo o histórico de sets: o banco já
+-- devolve ~1 linha por slot por variation.
+--
+-- SECURITY INVOKER: as policies RLS de workout_logs / workout_exercise_logs /
+-- workout_exercise_set_logs já liberam leitura para o dono e para coaches
+-- (is_active_coach_of). Filtrando por wl.user_id = p_user_id e confiando na RLS,
+-- dono e coach funcionam sem checagem manual.
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.wt_last_sets_by_variations(
+  p_user_id uuid,
+  p_variation_ids uuid[]
+)
+RETURNS TABLE (variation_id uuid, logical_key text, weight_kg numeric, reps integer)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path TO 'public'
+AS $$
+  WITH base AS (
+    SELECT
+      wel.variation_id,
+      wel.id           AS exercise_log_id,
+      wesl.id          AS set_log_id,
+      wl.finished_at,
+      wl.id            AS workout_log_id,
+      wesl.set_type,
+      wesl.set_order,
+      wesl.weight_kg,
+      wesl.reps,
+      -- ordem canônica do assignLogicalKeys: warmups primeiro, depois por set_order
+      (CASE WHEN wesl.set_type = 'warmup' THEN 0 ELSE 1 END) AS type_rank
+    FROM public.workout_exercise_set_logs wesl
+    JOIN public.workout_exercise_logs wel ON wel.id = wesl.workout_exercise_log_id
+    JOIN public.workout_logs wl           ON wl.id  = wel.workout_log_id
+    WHERE wel.variation_id = ANY(p_variation_ids)
+      AND wl.user_id = p_user_id
+      AND wl.deleted_at IS NULL
+  ),
+  counted AS (
+    SELECT b.*,
+      -- contagens correntes em ordem canônica.
+      -- normal_running num set normal = seu ordinal; num drop/cluster = o normal pai.
+      SUM((b.set_type = 'normal')::int) OVER w AS normal_running,
+      SUM((b.set_type = 'warmup')::int) OVER w AS warmup_running
+    FROM base b
+    WINDOW w AS (PARTITION BY b.exercise_log_id
+                 ORDER BY b.type_rank, b.set_order, b.set_log_id
+                 ROWS UNBOUNDED PRECEDING)
+  ),
+  keyed AS (
+    SELECT c.*,
+      -- índice do drop/cluster dentro do grupo do normal pai (reseta a cada normal,
+      -- pois normal_running entra na partição)
+      ROW_NUMBER() OVER (PARTITION BY c.exercise_log_id, c.set_type, c.normal_running
+                         ORDER BY c.set_order, c.set_log_id) AS intra_idx
+    FROM counted c
+  ),
+  with_key AS (
+    SELECT k.variation_id, k.weight_kg, k.reps, k.finished_at, k.workout_log_id,
+      CASE k.set_type
+        WHEN 'warmup'  THEN 'warmup-'  || k.warmup_running
+        WHEN 'normal'  THEN 'normal-'  || k.normal_running
+        WHEN 'drop'    THEN 'n' || k.normal_running || '-drop-'    || k.intra_idx
+        WHEN 'cluster' THEN 'n' || k.normal_running || '-cluster-' || k.intra_idx
+      END AS logical_key
+    FROM keyed k
+  )
+  SELECT DISTINCT ON (variation_id, logical_key)
+    variation_id, logical_key, weight_kg, reps
+  FROM with_key
+  ORDER BY variation_id, logical_key, finished_at DESC, workout_log_id DESC;
+$$;
+
+ALTER FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) OWNER TO postgres;
+GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO anon;
+GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO authenticated;
+GRANT ALL ON FUNCTION public.wt_last_sets_by_variations(uuid, uuid[]) TO service_role;
