@@ -15,7 +15,7 @@ export function OccurrencesCarousel() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-4 px-2"
+        contentContainerClassName="gap-4"
       >
         {data.map((occurrence) => (
           <OccurrenceCard

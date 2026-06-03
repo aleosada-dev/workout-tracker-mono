@@ -15,7 +15,7 @@ export default function HomeScreen() {
       <WorkoutLogList
         header={
           <View>
-            <Text variant="h3" className="px-2 pb-3" testID="text.home.title">
+            <Text variant="h3" className="pb-3" testID="text.home.title">
               {t('homeScreen.welcome')}
             </Text>
             <OccurrencesCarousel />
