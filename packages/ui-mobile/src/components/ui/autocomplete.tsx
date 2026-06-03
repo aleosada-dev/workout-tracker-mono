@@ -1,10 +1,12 @@
 import { Portal } from '@rn-primitives/portal';
+import { X } from 'lucide-react-native';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, type TextInput, View } from 'react-native';
 import Animated, { FadeOut, withTiming } from 'react-native-reanimated';
 import { useDebouncedValue } from '../../hooks/use-debounced-value';
 import { cn } from '../../lib/utils';
 import { BottomSheetInput } from './bottom-sheet';
+import { Icon } from './icon';
 import { Input } from './input';
 import { Text } from './text';
 
@@ -67,6 +69,11 @@ type Props = {
    * the gorhom input throws, so this defaults to `false`.
    */
   inBottomSheet?: boolean;
+  /**
+   * Show an inline clear (×) button on the right while the field has text;
+   * pressing it empties the input via `onChangeText('')`.
+   */
+  clearable?: boolean;
 };
 
 /**
@@ -91,6 +98,7 @@ export function Autocomplete({
   animated = true,
   portalHost,
   inBottomSheet = false,
+  clearable = false,
 }: Props) {
   const [focused, setFocused] = useState(false);
   // The input's rect relative to the portal container; anchors the list.
@@ -141,36 +149,55 @@ export function Autocomplete({
     close();
   };
 
+  // Reserve trailing room so the input text never slides under the × button.
+  const inputClassName = clearable ? 'pr-9' : undefined;
+  const showClear = clearable && value.length > 0;
+
   return (
     <View>
-      {inBottomSheet ? (
-        <BottomSheetInput
-          // gorhom's BottomSheetTextInput is typed against gesture-handler's
-          // TextInput, which is nominally different from RN's even though they
-          // share the runtime API we need (measureInWindow, blur). Cast the
-          // shared inputRef rather than maintaining two refs.
-          // biome-ignore lint/suspicious/noExplicitAny: ref shape divergence between RN and gesture-handler TextInput
-          ref={inputRef as any}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          testID={testID}
-          onLayout={measureAnchor}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-        />
-      ) : (
-        <Input
-          ref={inputRef}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          testID={testID}
-          onLayout={measureAnchor}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-        />
-      )}
+      <View className="justify-center">
+        {inBottomSheet ? (
+          <BottomSheetInput
+            // gorhom's BottomSheetTextInput is typed against gesture-handler's
+            // TextInput, which is nominally different from RN's even though they
+            // share the runtime API we need (measureInWindow, blur). Cast the
+            // shared inputRef rather than maintaining two refs.
+            // biome-ignore lint/suspicious/noExplicitAny: ref shape divergence between RN and gesture-handler TextInput
+            ref={inputRef as any}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            testID={testID}
+            className={inputClassName}
+            onLayout={measureAnchor}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+          />
+        ) : (
+          <Input
+            ref={inputRef}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            testID={testID}
+            className={inputClassName}
+            onLayout={measureAnchor}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+          />
+        )}
+        {showClear ? (
+          <Pressable
+            onPress={() => onChangeText('')}
+            accessibilityRole="button"
+            hitSlop={8}
+            className="absolute inset-y-0 right-2 items-center justify-center"
+            testID={testID ? `${testID}.clear` : undefined}
+          >
+            <Icon as={X} size={18} className="text-muted-foreground" />
+          </Pressable>
+        ) : null}
+      </View>
       {open ? (
         <Portal name={portalName} hostName={portalHost}>
           <View ref={portalRef} onLayout={measureAnchor} style={StyleSheet.absoluteFill}>

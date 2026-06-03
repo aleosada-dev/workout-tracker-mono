@@ -11,6 +11,7 @@ type Props = {
   testID?: string;
   portalHost?: string;
   inBottomSheet?: boolean;
+  clearable?: boolean;
 };
 
 const fallbackName = (athleteId: string) => `Atleta ${athleteId.slice(0, 4)}`;
@@ -33,6 +34,7 @@ export function CoachAthleteAutocomplete({
   testID,
   portalHost,
   inBottomSheet,
+  clearable,
 }: Props) {
   const [text, setText] = useState(selected ? labelOf(selected) : '');
 
@@ -67,6 +69,7 @@ export function CoachAthleteAutocomplete({
       testID={testID}
       portalHost={portalHost}
       inBottomSheet={inBottomSheet}
+      clearable={clearable}
       minChars={1}
     />
   );
