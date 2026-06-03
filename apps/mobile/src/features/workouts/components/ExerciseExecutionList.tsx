@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { GripVertical, Trash2, X } from 'lucide-react-native';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Sortable, SortableItem, type SortableRenderItemProps } from 'react-native-reanimated-dnd';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,8 +11,14 @@ import { ExerciseExecutionCard } from '@/features/workouts/components/ExerciseEx
 import { SupersetExecutionCard } from '@/features/workouts/components/SupersetExecutionCard';
 import type { ExecutionListItem } from '@/features/workouts/lib/workout-mappers';
 
-const COLLAPSED_CARD_HEIGHT = 70;
-const SUPERSET_MEMBER_ROW_HEIGHT = 42;
+// Alturas do estado COLAPSADO, derivadas dos estilos dos cards. Servem de altura
+// reservada no Sortable (alturas dinâmicas); manter próximas do real evita vão/sobreposição
+// antes do onLayout medir. O onLayout corrige quando o card expande.
+const COLLAPSED_CARD_HEIGHT = 70; // ExerciseExecutionCard colapsado (py-2 + nome/variação + pb-3)
+const SUPERSET_BASE_HEIGHT = 64; // Card py-2 + header (title) + gap-3 + pb-3
+const SUPERSET_MEMBER_ROW_HEIGHT = 20; // linha do nome do membro (text-sm)
+const SUPERSET_MEMBER_VARIATION_HEIGHT = 16; // linha extra da variação (text-xs)
+const SUPERSET_MEMBER_GAP = 8; // gap-2 entre membros
 
 type ListItem = ExecutionListItem | { kind: 'spacer'; id: '__spacer__' };
 
@@ -21,6 +27,10 @@ type ExerciseExecutionListProps = {
   onAddExercise?: () => void;
   onDeleteExercises?: (exerciseIndexes: number[]) => void;
   onReorder?: (orderedItemIds: string[]) => void;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onLongPressItem?: (id: string) => void;
 };
 
 export function ExerciseExecutionList({
@@ -28,6 +38,10 @@ export function ExerciseExecutionList({
   onAddExercise,
   onDeleteExercises,
   onReorder,
+  selectionMode = false,
+  selectedIds,
+  onToggleSelect,
+  onLongPressItem,
 }: ExerciseExecutionListProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -35,13 +49,56 @@ export function ExerciseExecutionList({
   const spacerHeight = insets.bottom + (Platform.OS === 'ios' ? 70 : 90);
   const actionsWidth = windowWidth - 32;
 
+  const renderCard = useCallback(
+    (item: ExecutionListItem, dragHandle?: React.ReactNode) =>
+      item.kind === 'superset' ? (
+        <SupersetExecutionCard
+          members={item.members}
+          restSeconds={item.restSeconds}
+          dragHandle={dragHandle}
+          selectable={selectionMode}
+          selected={selectedIds?.has(item.id) ?? false}
+          onToggleSelect={() => onToggleSelect?.(item.id)}
+          onLongPress={() => onLongPressItem?.(item.id)}
+          onPressMember={(variationId) =>
+            router.push({ pathname: '/exerciseDetail', params: { id: variationId } })
+          }
+        />
+      ) : (
+        <ExerciseExecutionCard
+          exerciseIndex={item.exerciseIndex}
+          name={item.name}
+          variationName={item.variationName ?? undefined}
+          note={item.note}
+          restSeconds={item.restSeconds}
+          dragHandle={dragHandle}
+          selectable={selectionMode}
+          selected={selectedIds?.has(item.id) ?? false}
+          onToggleSelect={() => onToggleSelect?.(item.id)}
+          onLongPress={() => onLongPressItem?.(item.id)}
+          onPressHeader={() =>
+            router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
+          }
+        />
+      ),
+    [selectionMode, selectedIds, onToggleSelect, onLongPressItem],
+  );
+
   const estimateItemHeight = useCallback(
     (item: ListItem) => {
       if (item.kind === 'spacer') {
         return spacerHeight;
       }
       if (item.kind === 'superset') {
-        return COLLAPSED_CARD_HEIGHT + item.members.length * SUPERSET_MEMBER_ROW_HEIGHT;
+        const membersHeight = item.members.reduce(
+          (sum, m) =>
+            sum +
+            SUPERSET_MEMBER_ROW_HEIGHT +
+            (m.variationName != null ? SUPERSET_MEMBER_VARIATION_HEIGHT : 0),
+          0,
+        );
+        const gaps = Math.max(0, item.members.length - 1) * SUPERSET_MEMBER_GAP;
+        return SUPERSET_BASE_HEIGHT + membersHeight + gaps;
       }
       return COLLAPSED_CARD_HEIGHT;
     },
@@ -74,33 +131,13 @@ export function ExerciseExecutionList({
         );
       }
       const dragHandle = (
-        <SortableItem.Handle>
+        // padding amplia a área de toque do drag; a margem negativa compensa para o
+        // ícone não deslocar visualmente o cabeçalho do card.
+        <SortableItem.Handle style={{ paddingVertical: 14, paddingHorizontal: 10, margin: -10 }}>
           <Icon as={GripVertical} size={18} className="text-muted-foreground" />
         </SortableItem.Handle>
       );
-      const card =
-        item.kind === 'superset' ? (
-          <SupersetExecutionCard
-            members={item.members}
-            restSeconds={item.restSeconds}
-            dragHandle={dragHandle}
-            onPressMember={(variationId) =>
-              router.push({ pathname: '/exerciseDetail', params: { id: variationId } })
-            }
-          />
-        ) : (
-          <ExerciseExecutionCard
-            exerciseIndex={item.exerciseIndex}
-            name={item.name}
-            variationName={item.variationName ?? undefined}
-            note={item.note}
-            restSeconds={item.restSeconds}
-            onPressHeader={() =>
-              router.push({ pathname: '/exerciseDetail', params: { id: item.variationId } })
-            }
-            dragHandle={dragHandle}
-          />
-        );
+      const card = renderCard(item, dragHandle);
       const deleteIndexes =
         item.kind === 'superset' ? item.members.map((m) => m.exerciseIndex) : [item.exerciseIndex];
       return (
@@ -150,7 +187,7 @@ export function ExerciseExecutionList({
         </SortableItem>
       );
     },
-    [spacerHeight, actionsWidth, onDeleteExercises, handleDrop, t],
+    [spacerHeight, actionsWidth, onDeleteExercises, handleDrop, renderCard, t],
   );
 
   if (exercises.length === 0) {
@@ -169,12 +206,32 @@ export function ExerciseExecutionList({
     );
   }
 
+  if (selectionMode) {
+    return (
+      <ScrollView
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: spacerHeight }}
+        showsVerticalScrollIndicator={false}
+      >
+        {exercises.map((item) => (
+          <View key={item.id} className="pb-3">
+            {renderCard(item)}
+          </View>
+        ))}
+      </ScrollView>
+    );
+  }
+
   const data: ListItem[] = [...exercises, { kind: 'spacer', id: '__spacer__' }];
 
   return (
     <Sortable
       data={data}
       enableDynamicHeights
+      // ScrollView (não FlatList): renderiza todos os itens no mount, então o onLayout
+      // de cada card dispara e as alturas dinâmicas são medidas corretamente de imediato.
+      // Com FlatList a virtualização adiava o onLayout e o card recém-criado (ex.: superset)
+      // ficava preso na estimativa, deixando um vão até um colapse/expand forçar a remedição.
+      useFlatList={false}
       itemHeight={estimateItemHeight}
       estimatedItemHeight={COLLAPSED_CARD_HEIGHT}
       renderItem={renderItem}

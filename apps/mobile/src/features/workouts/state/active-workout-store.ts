@@ -18,6 +18,7 @@ export type ActiveWorkout = {
   startedAt: string;
   athleteId: string | null;
   athleteName: string | null;
+  occurrenceId: string | null;
   note: string | null;
   workoutTemplate: GetWorkoutResponse;
   workoutExecution: ExecutionFormInput;

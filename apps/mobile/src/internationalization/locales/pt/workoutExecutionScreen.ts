@@ -101,4 +101,15 @@ export default {
         'Um superset combina 2 ou 3 exercícios executados em sequência, sem descanso entre eles. Faça uma série de cada exercício na ordem (A, B, C) e só então descanse. Marque a série como concluída quando terminar todos os exercícios do grupo.',
     },
   },
+  selection: {
+    combine: 'Combinar',
+    ungroup: 'Desagrupar',
+    reorder: 'Reordenar',
+    delete: 'Excluir',
+    reorderTitle: 'Reordenar superset',
+    reorderHint: 'Defina a ordem (A, B, C) dos exercícios do superset.',
+    reorderConfirm: 'Salvar ordem',
+    moveUp: 'Mover para cima',
+    moveDown: 'Mover para baixo',
+  },
 };

@@ -31,6 +31,7 @@ export type CreateWorkoutLogInput = {
   note: string | null;
   isCoached: boolean;
   coachSessionId: string | null;
+  periodizationOccurrenceId: string | null;
   exercises: CreateWorkoutLogExercise[];
 };
 

@@ -1,11 +1,14 @@
 import type { TFunction } from 'i18next';
 import type { ExecutionExerciseInput } from '@/features/workouts/lib/execution-form';
 import {
+  combineIntoSuperset,
   type ExecutionListItem,
   exerciseColumnLayout,
   formatSetTarget,
   reorderExercisesWithinType,
+  reorderSupersetMembers,
   toExecutionListItems,
+  ungroupSuperset,
   weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
 
@@ -226,5 +229,87 @@ describe('reorderExercisesWithinType', () => {
     const next = reorderExercisesWithinType(exercises, 'strength', ['b', 'a']);
 
     expect(next.map((e) => e.id)).toEqual(['w', 'b', 'a']);
+  });
+});
+
+describe('combineIntoSuperset', () => {
+  test('groups two singles into one superset with shared group id and A/B order', () => {
+    const exercises = [exercise({ id: 'a' }), exercise({ id: 'b' }), exercise({ id: 'c' })];
+
+    const next = combineIntoSuperset(exercises, ['a', 'b'], 'sg');
+
+    const a = next.find((e) => e.id === 'a');
+    const b = next.find((e) => e.id === 'b');
+    expect(a?.supersetGroupId).toBe('sg');
+    expect(b?.supersetGroupId).toBe('sg');
+    expect(a?.supersetOrder).toBe(0);
+    expect(b?.supersetOrder).toBe(1);
+    expect(next.map((e) => e.position)).toEqual([0, 1, 2]);
+  });
+
+  test('uses a group id distinct from every member id so isSupersetGroup holds', () => {
+    const exercises = [exercise({ id: 'a' }), exercise({ id: 'b' })];
+
+    const next = combineIntoSuperset(exercises, ['a', 'b'], 'sg');
+
+    expect(next.every((e) => e.supersetGroupId !== e.id)).toBe(true);
+  });
+
+  test('makes a non-contiguous selection contiguous at the earliest position', () => {
+    const exercises = [exercise({ id: 'a' }), exercise({ id: 'middle' }), exercise({ id: 'b' })];
+
+    const next = combineIntoSuperset(exercises, ['a', 'b'], 'sg');
+
+    expect(next.map((e) => e.id)).toEqual(['a', 'b', 'middle']);
+    expect(next.map((e) => e.position)).toEqual([0, 1, 2]);
+  });
+
+  test('merges an existing 2-member superset plus a single into a 3-member superset', () => {
+    const exercises = [
+      exercise({ id: 'a', supersetGroupId: 'sg', supersetOrder: 0 }),
+      exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 1 }),
+      exercise({ id: 'c' }),
+    ];
+
+    const next = combineIntoSuperset(exercises, ['a', 'b', 'c'], 'sg2');
+
+    const group = supersetGroup(toExecutionListItems(next, 'strength', t, 'pt')[0]);
+    expect(group.members.map((m) => m.letter)).toEqual(['A', 'B', 'C']);
+    expect(next.every((e) => e.supersetGroupId === 'sg2')).toBe(true);
+    expect(next.every((e) => e.supersetOrder === [0, 1, 2][next.indexOf(e)])).toBe(true);
+  });
+});
+
+describe('ungroupSuperset', () => {
+  test('turns every member back into a single and reassigns position', () => {
+    const exercises = [
+      exercise({ id: 'a', supersetGroupId: 'sg', supersetOrder: 0 }),
+      exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 1 }),
+      exercise({ id: 'c' }),
+    ];
+
+    const next = ungroupSuperset(exercises, 'sg');
+
+    expect(next.every((e) => e.supersetGroupId === e.id)).toBe(true);
+    expect(next.every((e) => e.supersetOrder === 0)).toBe(true);
+    expect(next.map((e) => e.position)).toEqual([0, 1, 2]);
+    const items = toExecutionListItems(next, 'strength', t, 'pt');
+    expect(items.map((i) => i.kind)).toEqual(['single', 'single', 'single']);
+  });
+});
+
+describe('reorderSupersetMembers', () => {
+  test('reorders members and reassigns supersetOrder while keeping the group id', () => {
+    const exercises = [
+      exercise({ id: 'a', supersetGroupId: 'sg', supersetOrder: 0 }),
+      exercise({ id: 'b', supersetGroupId: 'sg', supersetOrder: 1 }),
+      exercise({ id: 'c', supersetGroupId: 'sg', supersetOrder: 2 }),
+    ];
+
+    const next = reorderSupersetMembers(exercises, ['c', 'a', 'b']);
+
+    expect(next.map((e) => e.id)).toEqual(['c', 'a', 'b']);
+    expect(next.map((e) => e.supersetOrder)).toEqual([0, 1, 2]);
+    expect(next.every((e) => e.supersetGroupId === 'sg')).toBe(true);
   });
 });

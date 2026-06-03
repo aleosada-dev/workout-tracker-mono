@@ -13,6 +13,7 @@ export function toWorkoutLogCreatePayload(input: CreateWorkoutLogInput) {
     note: input.note,
     isCoached: input.isCoached,
     coachSessionId: input.coachSessionId,
+    periodizationOccurrenceId: input.periodizationOccurrenceId,
     exercises: input.exercises.map((exercise) => ({
       variationId: exercise.variationId,
       exerciseType: exercise.exerciseType,

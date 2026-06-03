@@ -6,4 +6,8 @@ export interface ExerciseExecutionCardProps {
   restSeconds?: number | null;
   dragHandle?: React.ReactNode;
   onPressHeader?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onLongPress?: () => void;
 }

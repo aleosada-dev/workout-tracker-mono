@@ -68,6 +68,7 @@ export default function WorkoutExecutionSummaryScreen() {
       note: active.note,
       isCoached,
       coachSessionId: selectedSessionId,
+      periodizationOccurrenceId: active.occurrenceId,
       execution: active.completedExecution,
     });
     saveWorkoutLog(request, {

@@ -101,4 +101,15 @@ export default {
         'A superset combines 2 or 3 exercises performed back-to-back, with no rest between them. Do one set of each exercise in order (A, B, C), then rest. Check the set as done once you finish every exercise in the group.',
     },
   },
+  selection: {
+    combine: 'Combine',
+    ungroup: 'Ungroup',
+    reorder: 'Reorder',
+    delete: 'Delete',
+    reorderTitle: 'Reorder superset',
+    reorderHint: 'Set the order (A, B, C) of the superset exercises.',
+    reorderConfirm: 'Save order',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+  },
 };

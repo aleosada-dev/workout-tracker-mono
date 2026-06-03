@@ -17,6 +17,10 @@ export function useCreateWorkoutLog() {
       queryClient.invalidateQueries({ queryKey: ['workouts', 'last-log'] });
       queryClient.invalidateQueries({ queryKey: ['exercises', 'last-sets'] });
       queryClient.invalidateQueries({ queryKey: ['exercises', 'records'] });
+      queryClient.invalidateQueries({
+        queryKey: ['periodizations', 'occurrences'],
+        refetchType: 'all',
+      });
     },
   });
 }

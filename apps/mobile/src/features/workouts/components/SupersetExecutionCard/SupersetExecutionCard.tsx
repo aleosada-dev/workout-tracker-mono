@@ -1,7 +1,15 @@
 import { getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
-import { ChevronDown, ChevronUp, GripVertical, Plus, Timer } from 'lucide-react-native';
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Circle,
+  GripVertical,
+  Plus,
+  Timer,
+} from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Controller, useFormContext, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -54,9 +62,14 @@ export function SupersetExecutionCard({
   restSeconds,
   dragHandle,
   onPressMember,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+  onLongPress,
 }: SupersetExecutionCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
+  const isCollapsed = selectable || collapsed;
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const memberSetsNames = members.map((m) => `exercises.${m.exerciseIndex}.sets` as const);
   const watchedMemberSets = useWatch({ control, name: memberSetsNames }) as
@@ -173,52 +186,79 @@ export function SupersetExecutionCard({
   return (
     <Card className={`gap-3 py-2 ${hasError ? 'border-destructive/50' : ''}`}>
       <View className="flex-row items-center justify-between gap-2 px-4">
-        {dragHandle ?? <Icon as={GripVertical} size={18} className="text-muted-foreground" />}
-        <View className="flex-1 flex-row items-center gap-1.5">
+        {selectable ? (
+          <Icon
+            as={selected ? CheckCircle2 : Circle}
+            size={22}
+            className={selected ? 'text-primary' : 'text-muted-foreground'}
+          />
+        ) : (
+          (dragHandle ?? <Icon as={GripVertical} size={18} className="text-muted-foreground" />)
+        )}
+        <Pressable
+          className="flex-1 flex-row items-center gap-1.5"
+          onPress={selectable ? onToggleSelect : undefined}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+          disabled={selectable ? !onToggleSelect : !onLongPress}
+          accessibilityRole={selectable ? 'checkbox' : undefined}
+          accessibilityState={selectable ? { checked: selected } : undefined}
+        >
           <Text className="font-sans-semibold text-base text-foreground">
             {t('workoutExecutionScreen.superset.title')}
           </Text>
-          <SupersetHelpDialog />
-        </View>
-        <Pressable
-          onPress={() => setCollapsed((c) => !c)}
-          hitSlop={12}
-          accessibilityRole="button"
-          testID="workout-execution.superset.collapse"
-        >
-          <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
+          {selectable ? null : <SupersetHelpDialog />}
         </Pressable>
+        {selectable ? null : (
+          <Pressable
+            onPress={() => setCollapsed((c) => !c)}
+            hitSlop={12}
+            accessibilityRole="button"
+            testID="workout-execution.superset.collapse"
+          >
+            <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
+          </Pressable>
+        )}
       </View>
 
       <View className="gap-2 px-4">
-        {members.map((member) => (
-          <Pressable
-            key={member.exerciseIndex}
-            className="flex-row items-center gap-2"
-            onPress={onPressMember ? () => onPressMember(member.variationId) : undefined}
-            disabled={!onPressMember}
-            accessibilityRole={onPressMember ? 'link' : undefined}
-          >
-            <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
-              <Text className="font-sans-semibold text-[10px] text-primary-foreground">
-                {member.letter}
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-sm" numberOfLines={1}>
-                {member.name}
-              </Text>
-              {member.variationName != null ? (
-                <Text variant="muted" className="text-xs" numberOfLines={1}>
-                  {member.variationName}
+        {members.map((member) => {
+          const onPress = selectable
+            ? onToggleSelect
+            : onPressMember
+              ? () => onPressMember(member.variationId)
+              : undefined;
+          return (
+            <Pressable
+              key={member.exerciseIndex}
+              className="flex-row items-center gap-2"
+              onPress={onPress}
+              onLongPress={onLongPress}
+              delayLongPress={350}
+              disabled={!onPress && !onLongPress}
+              accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'link' : undefined}
+            >
+              <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
+                <Text className="font-sans-semibold text-[10px] text-primary-foreground">
+                  {member.letter}
                 </Text>
-              ) : null}
-            </View>
-          </Pressable>
-        ))}
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm" numberOfLines={1}>
+                  {member.name}
+                </Text>
+                {member.variationName != null ? (
+                  <Text variant="muted" className="text-xs" numberOfLines={1}>
+                    {member.variationName}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
 
-      {!collapsed ? (
+      {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
           {restSeconds != null ? (
             <View className="flex-row items-center justify-end gap-2 px-4 pt-3 pb-4">

@@ -165,6 +165,87 @@ export function reorderExercisesWithinType(
     .map((exercise, position) => ({ ...exercise, position }));
 }
 
+function relocateGroupWithinType(
+  exercises: ExecutionFormInput['exercises'],
+  orderedMemberIds: string[],
+  patch: (exercise: ExecutionExercise, order: number) => ExecutionExercise,
+): ExecutionFormInput['exercises'] {
+  if (orderedMemberIds.length === 0) return exercises;
+  const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+  const first = byId.get(orderedMemberIds[0]);
+  if (!first) return exercises;
+  const type = first.exerciseType;
+  const memberSet = new Set(orderedMemberIds);
+  const orderedMembers = orderedMemberIds
+    .map((id) => byId.get(id))
+    .filter((exercise): exercise is ExecutionExercise => exercise != null)
+    .map((exercise, order) => patch(exercise, order));
+
+  let inserted = false;
+  const newTypeList: ExecutionExercise[] = [];
+  for (const exercise of exercises) {
+    if (exercise.exerciseType !== type) continue;
+    if (memberSet.has(exercise.id)) {
+      if (!inserted) {
+        newTypeList.push(...orderedMembers);
+        inserted = true;
+      }
+      continue;
+    }
+    newTypeList.push(exercise);
+  }
+
+  let queueIndex = 0;
+  return exercises
+    .map((exercise) => (exercise.exerciseType === type ? newTypeList[queueIndex++] : exercise))
+    .map((exercise, position) => ({ ...exercise, position }));
+}
+
+/**
+ * Combina exercícios num superset: atribui um `supersetGroupId` comum (deve ser um
+ * UUID novo, nunca igual ao `id` de um membro) e `supersetOrder` 0..n na ordem de
+ * `orderedExerciseIds` (= A/B/C), movendo os membros para ficarem contíguos na menor
+ * posição entre eles. `orderedExerciseIds` são sempre `exercise.id` individuais — para
+ * fundir um superset existente com um single, o chamador expande o grupo nos ids dos
+ * seus membros antes de passar.
+ */
+export function combineIntoSuperset(
+  exercises: ExecutionFormInput['exercises'],
+  orderedExerciseIds: string[],
+  newGroupId: string,
+): ExecutionFormInput['exercises'] {
+  return relocateGroupWithinType(exercises, orderedExerciseIds, (exercise, order) => ({
+    ...exercise,
+    supersetGroupId: newGroupId,
+    supersetOrder: order,
+  }));
+}
+
+/** Dissolve um superset: cada membro volta a single (`supersetGroupId = id`). */
+export function ungroupSuperset(
+  exercises: ExecutionFormInput['exercises'],
+  groupId: string,
+): ExecutionFormInput['exercises'] {
+  return exercises
+    .map((exercise) =>
+      exercise.supersetGroupId === groupId
+        ? { ...exercise, supersetGroupId: exercise.id, supersetOrder: 0 }
+        : exercise,
+    )
+    .map((exercise, position) => ({ ...exercise, position }));
+}
+
+/** Reordena os membros A/B/C de um superset conforme `orderedExerciseIds`. */
+export function reorderSupersetMembers(
+  exercises: ExecutionFormInput['exercises'],
+  orderedExerciseIds: string[],
+): ExecutionFormInput['exercises'] {
+  return relocateGroupWithinType(exercises, orderedExerciseIds, (exercise, order) => ({
+    ...exercise,
+    supersetOrder: order,
+  }));
+}
+
 export function toExecutionListItems(
   exercises: ExecutionFormInput['exercises'],
   type: WorkoutExerciseType,

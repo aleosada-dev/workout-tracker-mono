@@ -36,8 +36,10 @@ BEGIN;
 
 -- ---- workout_exercise_logs ----
 ALTER TABLE public.workout_exercise_logs
-  ADD COLUMN exercise_type text NOT NULL DEFAULT 'strength';
+  ADD COLUMN IF NOT EXISTS exercise_type text NOT NULL DEFAULT 'strength';
 
+ALTER TABLE public.workout_exercise_logs
+  DROP CONSTRAINT IF EXISTS workout_exercise_logs_exercise_type_check;
 ALTER TABLE public.workout_exercise_logs
   ADD CONSTRAINT workout_exercise_logs_exercise_type_check
     CHECK (exercise_type IN ('preparatory', 'strength'));
@@ -48,9 +50,13 @@ ALTER TABLE public.workout_exercise_logs
 -- para preparatórios). A presença de dimensões é garantida (não a exclusividade),
 -- para não falhar com linhas legadas que tenham colunas extras.
 ALTER TABLE public.workout_exercise_set_logs
-  ADD COLUMN duration_seconds integer,
-  ADD COLUMN measurement_type text NOT NULL DEFAULT 'weight_reps';
+  ADD COLUMN IF NOT EXISTS duration_seconds integer,
+  ADD COLUMN IF NOT EXISTS measurement_type text NOT NULL DEFAULT 'weight_reps';
 
+ALTER TABLE public.workout_exercise_set_logs
+  DROP CONSTRAINT IF EXISTS workout_exercise_set_logs_measurement_type_check,
+  DROP CONSTRAINT IF EXISTS workout_exercise_set_logs_duration_positive,
+  DROP CONSTRAINT IF EXISTS workout_exercise_set_logs_dimensions_present;
 ALTER TABLE public.workout_exercise_set_logs
   ADD CONSTRAINT workout_exercise_set_logs_measurement_type_check
     CHECK (measurement_type IN (
@@ -65,54 +71,67 @@ ALTER TABLE public.workout_exercise_set_logs
   );
 
 -- ============================================================================
--- PARTE 2 — Migração de dados: logs preparatórios -> unificado
--- (roda ANTES de dropar as tabelas preparatory)
+-- PARTE 2 + 3 — Migração de dados (logs preparatórios -> unificado) e conversão
+-- das tabelas preparatórias em VIEWS.
+--
+-- Idempotência: a migração de dados + DROP das tabelas só roda ENQUANTO as
+-- tabelas preparatórias ainda forem TABELAS-BASE (relkind 'r'). Depois da primeira
+-- execução elas viram VIEWS (relkind 'v') e este bloco é pulado — caso contrário,
+-- reler a view (que mostra as próprias linhas preparatórias já migradas) e
+-- reinseri-las duplicaria os logs.
 --   duration_type 'time' -> measurement_type 'duration'
 --   duration_type 'reps' -> measurement_type 'reps'
--- IDs preservados (as tabelas antigas serão dropadas, sem conflito de PK).
+-- IDs preservados (as tabelas antigas são dropadas em seguida, sem conflito de PK).
 -- ============================================================================
 
-INSERT INTO public.workout_exercise_logs (
-  id, workout_log_id, variation_id, position, note, rest_seconds,
-  superset_group_id, exercise_name, variation_name, exercise_type,
-  created_at, updated_at
-)
-SELECT
-  wpel.id, wpel.workout_log_id, wpel.variation_id, wpel.position, wpel.note, NULL,
-  NULL, wpel.exercise_name, wpel.variation_name, 'preparatory',
-  wpel.created_at, wpel.updated_at
-FROM public.workout_preparatory_exercise_logs wpel;
+DO $part23$
+BEGIN
+  IF (
+    SELECT c.relkind = 'r'
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname = 'workout_preparatory_exercise_logs'
+  ) THEN
+    INSERT INTO public.workout_exercise_logs (
+      id, workout_log_id, variation_id, position, note, rest_seconds,
+      superset_group_id, exercise_name, variation_name, exercise_type,
+      created_at, updated_at
+    )
+    SELECT
+      wpel.id, wpel.workout_log_id, wpel.variation_id, wpel.position, wpel.note, NULL,
+      NULL, wpel.exercise_name, wpel.variation_name, 'preparatory',
+      wpel.created_at, wpel.updated_at
+    FROM public.workout_preparatory_exercise_logs wpel;
 
-INSERT INTO public.workout_exercise_set_logs (
-  id, workout_exercise_log_id, set_order, set_type, weight_kg, reps,
-  reps_min, reps_max, duration_seconds, measurement_type, created_at, updated_at
-)
-SELECT
-  wpsl.id, wpsl.workout_preparatory_exercise_log_id, wpsl.set_order, 'normal', NULL,
-  CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
-  CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
-  CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
-  CASE WHEN wpel.duration_type = 'time' THEN wpsl.duration_seconds END,
-  -- 'duration' só quando há de fato um tempo gravado; linhas 'time' legadas sem
-  -- duration_seconds caem em 'reps' para respeitar workout_exercise_set_logs_dimensions_present.
-  CASE WHEN wpel.duration_type = 'time' AND wpsl.duration_seconds IS NOT NULL
-       THEN 'duration' ELSE 'reps' END,
-  wpsl.created_at, wpsl.updated_at
-FROM public.workout_preparatory_set_logs wpsl
-JOIN public.workout_preparatory_exercise_logs wpel
-  ON wpel.id = wpsl.workout_preparatory_exercise_log_id;
+    INSERT INTO public.workout_exercise_set_logs (
+      id, workout_exercise_log_id, set_order, set_type, weight_kg, reps,
+      reps_min, reps_max, duration_seconds, measurement_type, created_at, updated_at
+    )
+    SELECT
+      wpsl.id, wpsl.workout_preparatory_exercise_log_id, wpsl.set_order, 'normal', NULL,
+      CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
+      CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
+      CASE WHEN wpel.duration_type = 'reps' THEN wpsl.reps END,
+      CASE WHEN wpel.duration_type = 'time' THEN wpsl.duration_seconds END,
+      -- 'duration' só quando há de fato um tempo gravado; linhas 'time' legadas sem
+      -- duration_seconds caem em 'reps' para respeitar workout_exercise_set_logs_dimensions_present.
+      CASE WHEN wpel.duration_type = 'time' AND wpsl.duration_seconds IS NOT NULL
+           THEN 'duration' ELSE 'reps' END,
+      wpsl.created_at, wpsl.updated_at
+    FROM public.workout_preparatory_set_logs wpsl
+    JOIN public.workout_preparatory_exercise_logs wpel
+      ON wpel.id = wpsl.workout_preparatory_exercise_log_id;
 
--- ============================================================================
--- PARTE 3 — Dropar tabelas de log preparatório e recriá-las como VIEWS
--- atualizáveis sobre as tabelas unificadas. CASCADE remove índices, FKs,
--- triggers e policies das tabelas antigas.
--- ============================================================================
-
-DROP TABLE IF EXISTS public.workout_preparatory_set_logs CASCADE;
-DROP TABLE IF EXISTS public.workout_preparatory_exercise_logs CASCADE;
+    -- CASCADE remove índices, FKs, triggers e policies das tabelas antigas.
+    DROP TABLE public.workout_preparatory_set_logs CASCADE;
+    DROP TABLE public.workout_preparatory_exercise_logs CASCADE;
+  END IF;
+END
+$part23$;
 
 -- ---- View: workout_preparatory_exercise_logs ----
-CREATE VIEW public.workout_preparatory_exercise_logs
+CREATE OR REPLACE VIEW public.workout_preparatory_exercise_logs
 WITH (security_invoker = true) AS
 SELECT
   wel.id,
@@ -179,18 +198,21 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS wt_prep_exercise_logs_view_insert_trg ON public.workout_preparatory_exercise_logs;
 CREATE TRIGGER wt_prep_exercise_logs_view_insert_trg INSTEAD OF INSERT
   ON public.workout_preparatory_exercise_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_exercise_logs_view_insert();
+DROP TRIGGER IF EXISTS wt_prep_exercise_logs_view_update_trg ON public.workout_preparatory_exercise_logs;
 CREATE TRIGGER wt_prep_exercise_logs_view_update_trg INSTEAD OF UPDATE
   ON public.workout_preparatory_exercise_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_exercise_logs_view_update();
+DROP TRIGGER IF EXISTS wt_prep_exercise_logs_view_delete_trg ON public.workout_preparatory_exercise_logs;
 CREATE TRIGGER wt_prep_exercise_logs_view_delete_trg INSTEAD OF DELETE
   ON public.workout_preparatory_exercise_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_exercise_logs_view_delete();
 
 -- ---- View: workout_preparatory_set_logs ----
-CREATE VIEW public.workout_preparatory_set_logs
+CREATE OR REPLACE VIEW public.workout_preparatory_set_logs
 WITH (security_invoker = true) AS
 SELECT
   wesl.id,
@@ -248,12 +270,15 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS wt_prep_set_logs_view_insert_trg ON public.workout_preparatory_set_logs;
 CREATE TRIGGER wt_prep_set_logs_view_insert_trg INSTEAD OF INSERT
   ON public.workout_preparatory_set_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_set_logs_view_insert();
+DROP TRIGGER IF EXISTS wt_prep_set_logs_view_update_trg ON public.workout_preparatory_set_logs;
 CREATE TRIGGER wt_prep_set_logs_view_update_trg INSTEAD OF UPDATE
   ON public.workout_preparatory_set_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_set_logs_view_update();
+DROP TRIGGER IF EXISTS wt_prep_set_logs_view_delete_trg ON public.workout_preparatory_set_logs;
 CREATE TRIGGER wt_prep_set_logs_view_delete_trg INSTEAD OF DELETE
   ON public.workout_preparatory_set_logs
   FOR EACH ROW EXECUTE FUNCTION public.wt_prep_set_logs_view_delete();
@@ -856,23 +881,28 @@ $$;
 -- então num save feito por coach a leitura da pref count_warmup_sets do aluno caía no
 -- default. A policy de SELECT para coach ativo abaixo garante que o recálculo use
 -- sempre a preferência do atleta.
+DROP POLICY IF EXISTS "Coaches read athlete preferences" ON "public"."user_preferences";
 CREATE POLICY "Coaches read athlete preferences" ON "public"."user_preferences"
   FOR SELECT TO "authenticated"
   USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"));
 
+DROP POLICY IF EXISTS "Athletes delete own workout variation records" ON "public"."workout_variation_records";
 CREATE POLICY "Athletes delete own workout variation records" ON "public"."workout_variation_records"
   FOR DELETE TO "authenticated"
   USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
 
+DROP POLICY IF EXISTS "Athletes update own workout variation records" ON "public"."workout_variation_records";
 CREATE POLICY "Athletes update own workout variation records" ON "public"."workout_variation_records"
   FOR UPDATE TO "authenticated"
   USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")))
   WITH CHECK (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
 
+DROP POLICY IF EXISTS "Coaches delete athlete workout variation records" ON "public"."workout_variation_records";
 CREATE POLICY "Coaches delete athlete workout variation records" ON "public"."workout_variation_records"
   FOR DELETE TO "authenticated"
   USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"));
 
+DROP POLICY IF EXISTS "Coaches update athlete workout variation records" ON "public"."workout_variation_records";
 CREATE POLICY "Coaches update athlete workout variation records" ON "public"."workout_variation_records"
   FOR UPDATE TO "authenticated"
   USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"))
@@ -959,6 +989,10 @@ GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "u
 -- concluída. A notificação correspondente continua na camada de aplicação (best
 -- effort, fora da transação), por isso retornamos coachSessionId/coachId.
 --
+-- Quando o payload traz periodizationOccurrenceId, a ocorrência correspondente
+-- (se ainda 'pending') é concluída na mesma transação: status='done', ligada ao
+-- log e carimbada com executed_at = finishedAt.
+--
 -- Retorna jsonb { workoutLogId, coachSessionId, coachId }.
 -- SQLSTATEs:
 --   28000 - sem usuário autenticado
@@ -967,6 +1001,11 @@ GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "u
 --   22023 - payload inválido (variationId/exercise_type/set_type/measurement_type,
 --           reps/duration_seconds fora de faixa ou faltando)
 -- ============================================================================
+
+-- DROP antes do CREATE: a assinatura/retorno desta função mudou em relação à
+-- versão anterior (passou a retornar jsonb), e CREATE OR REPLACE não pode alterar
+-- o tipo de retorno de uma função existente.
+DROP FUNCTION IF EXISTS "public"."wt_insert_workout_log"("payload" "jsonb");
 
 CREATE OR REPLACE FUNCTION "public"."wt_insert_workout_log"("payload" "jsonb") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY INVOKER
@@ -980,6 +1019,7 @@ DECLARE
   v_coach_session_id UUID := NULLIF(payload->>'coachSessionId', '')::UUID;
   v_coach_id UUID;
   v_athlete_finished BOOLEAN;
+  v_occurrence_id UUID := NULLIF(payload->>'periodizationOccurrenceId', '')::UUID;
 BEGIN
   IF v_actor_id IS NULL THEN
     RAISE EXCEPTION 'wt_insert_workout_log called without an authenticated user'
@@ -1178,6 +1218,20 @@ BEGIN
       WHERE exercise_type = 'strength'
     )
   );
+
+  -- Conclui a ocorrência da periodização quando o log nasce a partir dela. Só
+  -- avança ocorrências ainda 'pending' (não reabre 'done'/'skipped'). A RLS de
+  -- periodization_occurrences (INVOKER) já restringe ao dono/atleta da
+  -- periodização; uma ocorrência de terceiros simplesmente não casa o WHERE.
+  IF v_occurrence_id IS NOT NULL THEN
+    UPDATE public.periodization_occurrences
+    SET status = 'done',
+        workout_log_id = v_log_id,
+        executed_at = (payload->>'finishedAt')::TIMESTAMPTZ,
+        updated_at = now()
+    WHERE id = v_occurrence_id
+      AND status = 'pending';
+  END IF;
 
   RETURN jsonb_build_object(
     'workoutLogId', v_log_id,

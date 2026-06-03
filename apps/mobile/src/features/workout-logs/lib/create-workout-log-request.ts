@@ -14,6 +14,7 @@ export function buildCreateWorkoutLogRequest(input: {
   note: string | null;
   isCoached: boolean;
   coachSessionId: string | null;
+  periodizationOccurrenceId: string | null;
   execution: CompletedExecution;
 }): CreateWorkoutLogRequest {
   return {
@@ -24,6 +25,7 @@ export function buildCreateWorkoutLogRequest(input: {
     note: normalizeNote(input.note),
     isCoached: input.isCoached,
     coachSessionId: input.coachSessionId,
+    periodizationOccurrenceId: input.periodizationOccurrenceId,
     exercises: input.execution.exercises.map((exercise) => ({
       variationId: exercise.variation.id,
       exerciseType: exercise.exerciseType,

@@ -104,6 +104,7 @@ export const CreateWorkoutLogRequestSchema = z.object({
 	note: z.string().trim().min(1).nullable(),
 	isCoached: z.boolean(),
 	coachSessionId: z.uuid().nullable(),
+	periodizationOccurrenceId: z.uuid().nullable(),
 	exercises: z.array(CreateWorkoutLogExerciseSchema).min(1),
 });
 

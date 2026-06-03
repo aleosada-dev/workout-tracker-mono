@@ -57,6 +57,7 @@ const base = {
   note: null,
   isCoached: false,
   coachSessionId: null,
+  periodizationOccurrenceId: null,
 };
 
 describe('buildCreateWorkoutLogRequest', () => {
@@ -76,6 +77,7 @@ describe('buildCreateWorkoutLogRequest', () => {
       note: null,
       isCoached: false,
       coachSessionId: null,
+      periodizationOccurrenceId: null,
       exercises: [
         {
           variationId: '22222222-2222-2222-2222-222222222222',

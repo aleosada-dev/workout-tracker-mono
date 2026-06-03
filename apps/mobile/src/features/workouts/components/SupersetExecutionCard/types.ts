@@ -5,4 +5,8 @@ export interface SupersetExecutionCardProps {
   restSeconds?: number | null;
   dragHandle?: React.ReactNode;
   onPressMember?: (variationId: string) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onLongPress?: () => void;
 }

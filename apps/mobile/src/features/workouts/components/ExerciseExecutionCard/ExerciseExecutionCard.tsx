@@ -1,7 +1,16 @@
 import { getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
-import { ChevronDown, ChevronUp, GripVertical, Plus, StickyNote, Timer } from 'lucide-react-native';
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Circle,
+  GripVertical,
+  Plus,
+  StickyNote,
+  Timer,
+} from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Controller, useFieldArray, useFormContext, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -47,9 +56,14 @@ export function ExerciseExecutionCard({
   restSeconds,
   dragHandle,
   onPressHeader,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+  onLongPress,
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
+  const isCollapsed = selectable || collapsed;
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -119,12 +133,23 @@ export function ExerciseExecutionCard({
   return (
     <Card className={`gap-3 py-2 ${hasError ? 'border-destructive/50' : ''}`}>
       <View className="flex-row items-center justify-between gap-2 px-4">
-        {dragHandle ?? <Icon as={GripVertical} size={18} className="text-muted-foreground" />}
+        {selectable ? (
+          <Icon
+            as={selected ? CheckCircle2 : Circle}
+            size={22}
+            className={selected ? 'text-primary' : 'text-muted-foreground'}
+          />
+        ) : (
+          (dragHandle ?? <Icon as={GripVertical} size={18} className="text-muted-foreground" />)
+        )}
         <Pressable
           className="flex-1"
-          onPress={onPressHeader}
-          disabled={!onPressHeader}
-          accessibilityRole={onPressHeader ? 'link' : undefined}
+          onPress={selectable ? onToggleSelect : onPressHeader}
+          onLongPress={onLongPress}
+          delayLongPress={350}
+          disabled={selectable ? !onToggleSelect : !onPressHeader && !onLongPress}
+          accessibilityRole={selectable ? 'checkbox' : onPressHeader ? 'link' : undefined}
+          accessibilityState={selectable ? { checked: selected } : undefined}
         >
           <Text className="font-sans-semibold text-base" numberOfLines={1}>
             {name}
@@ -133,17 +158,19 @@ export function ExerciseExecutionCard({
             {variationName ?? t('workoutExecutionScreen.exercise.noVariation')}
           </Text>
         </Pressable>
-        <Pressable
-          onPress={() => setCollapsed((c) => !c)}
-          hitSlop={12}
-          accessibilityRole="button"
-          testID="workout-execution.exercise.collapse"
-        >
-          <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
-        </Pressable>
+        {selectable ? null : (
+          <Pressable
+            onPress={() => setCollapsed((c) => !c)}
+            hitSlop={12}
+            accessibilityRole="button"
+            testID="workout-execution.exercise.collapse"
+          >
+            <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
+          </Pressable>
+        )}
       </View>
 
-      {!collapsed ? (
+      {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
           {restSeconds != null || (note != null && note.length > 0) ? (
             <View className="flex-row items-start gap-3 px-4 pb-4">
