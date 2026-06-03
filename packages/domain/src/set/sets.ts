@@ -216,3 +216,18 @@ export function isValidSetSequence<T extends { type: WorkoutSetType }>(
 
   return true;
 }
+
+/**
+ * Derives a 0-based round ordinal per set via the block rule: each normal/warmup
+ * opens a new round; drop/cluster inherit the preceding set's round. Used as the
+ * fallback when stored round_order is unavailable (legacy rows).
+ */
+export function deriveRoundOrders<T extends { type: WorkoutSetType }>(
+  sets: readonly T[],
+): number[] {
+  let round = -1;
+  return sets.map(({ type }) => {
+    if (type !== 'drop' && type !== 'cluster') round += 1;
+    return Math.max(round, 0);
+  });
+}

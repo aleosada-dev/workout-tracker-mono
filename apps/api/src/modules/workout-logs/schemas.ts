@@ -53,6 +53,7 @@ export function toWorkoutLogSummaryPageResponse(
 const CreateWorkoutLogSetSchema = z
 	.object({
 		setOrder: z.int().nonnegative(),
+		roundOrder: z.int().nonnegative(),
 		setType: z.enum(WORKOUT_SET_TYPES),
 		measurementType: z.enum(MEASUREMENT_TYPES),
 		weightKg: z.number().positive().nullable(),

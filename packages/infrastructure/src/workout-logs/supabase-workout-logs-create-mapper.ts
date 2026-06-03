@@ -23,6 +23,7 @@ export function toWorkoutLogCreatePayload(input: CreateWorkoutLogInput) {
       supersetGroupId: exercise.supersetGroupId,
       sets: exercise.sets.map((set) => ({
         setOrder: set.setOrder,
+        roundOrder: set.roundOrder,
         setType: set.setType,
         measurementType: set.measurementType,
         weightKg: set.weightKg,

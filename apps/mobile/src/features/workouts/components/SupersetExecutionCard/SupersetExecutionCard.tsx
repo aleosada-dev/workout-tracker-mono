@@ -23,6 +23,11 @@ import {
   type SetTypePickerSheetRef,
 } from '@/features/workouts/components/SetTypePickerSheet';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
+import {
+  type AddSetEntry,
+  SupersetAddSetsSheet,
+  type SupersetAddSetsSheetRef,
+} from '@/features/workouts/components/SupersetAddSetsSheet';
 import { SupersetHelpDialog } from '@/features/workouts/components/SupersetHelpDialog';
 import {
   autofillFromLast,
@@ -44,8 +49,6 @@ const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
 const MAX_REPS = 99;
 
-const SELECTABLE_SET_TYPES: readonly SetType[] = ['warmup', 'normal'];
-
 const SET_TYPE_INITIAL: Record<SetType, string> = {
   warmup: 'W',
   normal: 'N',
@@ -56,6 +59,37 @@ const SET_TYPE_INITIAL: Record<SetType, string> = {
 type MemberSets = ExecutionFormInput['exercises'][number]['sets'];
 
 type PressTypeHandler = (exerciseIndex: number, setIndex: number, currentType: SetType) => void;
+
+type RoundMemberView = {
+  exerciseIndex: number;
+  letter: SupersetMember['letter'];
+  setIndexes: number[];
+  ids: string[];
+};
+
+function buildRounds(members: SupersetMember[], setsByMember: MemberSets[]) {
+  const roundOrders = Array.from(
+    new Set(setsByMember.flatMap((sets) => (sets ?? []).map((set) => set.roundOrder))),
+  ).sort((a, b) => a - b);
+  return roundOrders.map((roundOrder) => ({
+    roundOrder,
+    roundMembers: members
+      .map((member, i) => {
+        const sets = setsByMember[i] ?? [];
+        const matched = sets
+          .map((set, idx) => ({ set, idx }))
+          .filter(({ set }) => set.roundOrder === roundOrder);
+        if (matched.length === 0) return null;
+        return {
+          exerciseIndex: member.exerciseIndex,
+          letter: member.letter,
+          setIndexes: matched.map(({ idx }) => idx),
+          ids: matched.map(({ set }) => set.id),
+        } satisfies RoundMemberView;
+      })
+      .filter((value): value is RoundMemberView => value !== null),
+  }));
+}
 
 export function SupersetExecutionCard({
   members,
@@ -76,10 +110,11 @@ export function SupersetExecutionCard({
     | MemberSets[]
     | undefined;
   const setsByMember = watchedMemberSets ?? [];
-  const maxSets = setsByMember.reduce((max, sets) => Math.max(max, sets?.length ?? 0), 0);
+  const rounds = buildRounds(members, setsByMember);
   const { errors } = useFormState({ control, name: 'exercises' });
   const hasError = members.some((m) => Boolean(errors.exercises?.[m.exerciseIndex]));
   const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
+  const addSetsSheetRef = useRef<SupersetAddSetsSheetRef>(null);
 
   const rematchMember = (exerciseIndex: number) => {
     const memberSets = getValues(`exercises.${exerciseIndex}.sets`);
@@ -105,35 +140,64 @@ export function SupersetExecutionCard({
     }
   };
 
-  const handleAddSet = () => {
-    for (const member of members) {
-      const current = getValues(`exercises.${member.exerciseIndex}.sets`);
-      const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
-      setValue(
-        `exercises.${member.exerciseIndex}.sets`,
-        [
-          ...current,
-          {
-            id: Crypto.randomUUID(),
-            type: 'normal',
-            measurementType,
-            repsMin: null,
-            repsMax: null,
-            durationTarget: null,
-            kg: '',
-            reps: '',
-            duration: '',
-            done: false,
-          },
-        ],
-        { shouldDirty: true },
-      );
-      rematchMember(member.exerciseIndex);
+  const handleConfirmAddSets = (entries: AddSetEntry[]) => {
+    const byMember = new Map<number, SetType[]>();
+    for (const entry of entries) {
+      const list = byMember.get(entry.exerciseIndex) ?? [];
+      list.push(entry.type);
+      byMember.set(entry.exerciseIndex, list);
     }
+    const nextRound =
+      members.reduce(
+        (max, m) =>
+          getValues(`exercises.${m.exerciseIndex}.sets`).reduce(
+            (acc, set) => Math.max(acc, set.roundOrder),
+            max,
+          ),
+        -1,
+      ) + 1;
+    for (const [exerciseIndex, types] of byMember) {
+      const current = getValues(`exercises.${exerciseIndex}.sets`);
+      const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
+      const appended = types.map((type) => ({
+        id: Crypto.randomUUID(),
+        type,
+        measurementType,
+        roundOrder: nextRound,
+        repsMin: null,
+        repsMax: null,
+        durationTarget: null,
+        kg: '',
+        reps: '',
+        duration: '',
+        done: false,
+        linkedSetId: null,
+        loadPercent: null,
+        loadPercentOfPrevious: null,
+      }));
+      setValue(`exercises.${exerciseIndex}.sets`, [...current, ...appended], { shouldDirty: true });
+      rematchMember(exerciseIndex);
+    }
+  };
+
+  const handleAddSet = () => {
+    const sheetMembers = members.map((member) => ({
+      exerciseIndex: member.exerciseIndex,
+      letter: member.letter,
+      name: member.name,
+      existingTypes: getValues(`exercises.${member.exerciseIndex}.sets`).map((set) => set.type),
+    }));
+    addSetsSheetRef.current?.present(sheetMembers, handleConfirmAddSets);
   };
 
   const handleChangeSetType = (exerciseIndex: number, setIndex: number, next: SetType) => {
     setValue(`exercises.${exerciseIndex}.sets.${setIndex}.type`, next, { shouldDirty: true });
+    if ((next === 'drop' || next === 'cluster') && setIndex > 0) {
+      const previousRound = getValues(`exercises.${exerciseIndex}.sets.${setIndex - 1}.roundOrder`);
+      setValue(`exercises.${exerciseIndex}.sets.${setIndex}.roundOrder`, previousRound, {
+        shouldDirty: true,
+      });
+    }
     rematchMember(exerciseIndex);
   };
 
@@ -147,28 +211,75 @@ export function SupersetExecutionCard({
     rematchMember(exerciseIndex);
   };
 
-  const handleRemoveSupersetSet = (setIndex: number) => {
+  const removeRound = (roundOrder: number) => {
     for (const member of members) {
       const current = getValues(`exercises.${member.exerciseIndex}.sets`);
-      if (setIndex >= current.length) continue;
-      setValue(
-        `exercises.${member.exerciseIndex}.sets`,
-        current.filter((_, i) => i !== setIndex),
-        { shouldDirty: true },
-      );
+      const next = current.filter((set) => set.roundOrder !== roundOrder);
+      if (next.length === current.length) continue;
+      setValue(`exercises.${member.exerciseIndex}.sets`, next, { shouldDirty: true });
       rematchMember(member.exerciseIndex);
     }
   };
 
+  const handleConfirmEditRound = (roundOrder: number, entries: AddSetEntry[]) => {
+    for (const member of members) {
+      const current = getValues(`exercises.${member.exerciseIndex}.sets`);
+      const before = current.filter((set) => set.roundOrder < roundOrder);
+      const after = current.filter((set) => set.roundOrder > roundOrder);
+      const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
+      const roundSets = entries
+        .filter((entry) => entry.exerciseIndex === member.exerciseIndex)
+        .map((entry) => {
+          const existing = entry.setId ? current.find((set) => set.id === entry.setId) : undefined;
+          if (existing) return { ...existing, type: entry.type, roundOrder };
+          return {
+            id: Crypto.randomUUID(),
+            type: entry.type,
+            measurementType,
+            roundOrder,
+            repsMin: null,
+            repsMax: null,
+            durationTarget: null,
+            kg: '',
+            reps: '',
+            duration: '',
+            done: false,
+            linkedSetId: null,
+            loadPercent: null,
+            loadPercentOfPrevious: null,
+          };
+        });
+      setValue(`exercises.${member.exerciseIndex}.sets`, [...before, ...roundSets, ...after], {
+        shouldDirty: true,
+      });
+      rematchMember(member.exerciseIndex);
+    }
+  };
+
+  const handleEditRound = (roundOrder: number) => {
+    const sheetMembers = members.map((member) => ({
+      exerciseIndex: member.exerciseIndex,
+      letter: member.letter,
+      name: member.name,
+      existingTypes: getValues(`exercises.${member.exerciseIndex}.sets`)
+        .filter((set) => set.roundOrder < roundOrder)
+        .map((set) => set.type),
+    }));
+    const initialEntries: AddSetEntry[] = members.flatMap((member) =>
+      getValues(`exercises.${member.exerciseIndex}.sets`)
+        .filter((set) => set.roundOrder === roundOrder)
+        .map((set) => ({ exerciseIndex: member.exerciseIndex, type: set.type, setId: set.id })),
+    );
+    addSetsSheetRef.current?.present(
+      sheetMembers,
+      (entries) => handleConfirmEditRound(roundOrder, entries),
+      { initialEntries, onDelete: () => removeRound(roundOrder) },
+    );
+  };
+
   const handlePressType: PressTypeHandler = (exerciseIndex, setIndex, currentType) => {
     const exerciseSets = getValues(`exercises.${exerciseIndex}.sets`);
-    const validTypes = getValidSetTypesAt(exerciseSets, setIndex).filter((type) =>
-      SELECTABLE_SET_TYPES.includes(type),
-    );
-    const positions = members.reduce(
-      (max, m) => Math.max(max, getValues(`exercises.${m.exerciseIndex}.sets`).length),
-      0,
-    );
+    const validTypes = getValidSetTypesAt(exerciseSets, setIndex);
     setTypePickerRef.current?.present(
       currentType,
       validTypes,
@@ -178,7 +289,6 @@ export function SupersetExecutionCard({
           exerciseSets.length > 1
             ? () => handleRemoveExerciseSet(exerciseIndex, setIndex)
             : undefined,
-        onRemoveSupersetSet: positions > 1 ? () => handleRemoveSupersetSet(setIndex) : undefined,
       },
     );
   };
@@ -299,13 +409,13 @@ export function SupersetExecutionCard({
               </View>
             </View>
 
-            {Array.from({ length: maxSets }).map((_, setIndex) => (
+            {rounds.map(({ roundOrder, roundMembers }) => (
               <SupersetSetRow
-                key={setsByMember.map((sets) => sets?.[setIndex]?.id ?? 'x').join('-')}
-                members={members}
-                setsByMember={setsByMember}
-                setIndex={setIndex}
+                key={roundMembers.flatMap((m) => m.ids).join('-')}
+                roundOrder={roundOrder}
+                roundMembers={roundMembers}
                 onPressType={handlePressType}
+                onEditRound={handleEditRound}
               />
             ))}
           </View>
@@ -321,47 +431,49 @@ export function SupersetExecutionCard({
         </Animated.View>
       ) : null}
       <SetTypePickerSheet ref={setTypePickerRef} />
+      <SupersetAddSetsSheet ref={addSetsSheetRef} />
     </Card>
   );
 }
 
 function SupersetSetRow({
-  members,
-  setsByMember,
-  setIndex,
+  roundOrder,
+  roundMembers,
   onPressType,
+  onEditRound,
 }: {
-  members: SupersetMember[];
-  setsByMember: MemberSets[];
-  setIndex: number;
+  roundOrder: number;
+  roundMembers: RoundMemberView[];
   onPressType: PressTypeHandler;
+  onEditRound: (roundOrder: number) => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
-  const presentMembers = members.filter((_, i) => (setsByMember[i]?.length ?? 0) > setIndex);
-  const doneNames = presentMembers.map(
-    (m) => `exercises.${m.exerciseIndex}.sets.${setIndex}.done` as const,
+  const doneNames = roundMembers.flatMap((m) =>
+    m.setIndexes.map((setIndex) => `exercises.${m.exerciseIndex}.sets.${setIndex}.done` as const),
   );
   const dones = useWatch({ control, name: doneNames });
   const allDone = Array.isArray(dones) && dones.length > 0 ? dones.every(Boolean) : false;
 
   const toggle = (next: boolean) => {
-    for (const member of presentMembers) {
-      const base = `exercises.${member.exerciseIndex}.sets.${setIndex}` as const;
-      if (next) {
-        const kg = autofillFromLast(getValues(`${base}.kg`), getValues(`${base}.lastKg`));
-        if (kg != null) {
-          setValue(`${base}.kg`, kg, { shouldDirty: true, shouldValidate: true });
+    for (const member of roundMembers) {
+      for (const setIndex of member.setIndexes) {
+        const base = `exercises.${member.exerciseIndex}.sets.${setIndex}` as const;
+        if (next) {
+          const kg = autofillFromLast(getValues(`${base}.kg`), getValues(`${base}.lastKg`));
+          if (kg != null) {
+            setValue(`${base}.kg`, kg, { shouldDirty: true, shouldValidate: true });
+          }
+          const reps = autofillFromLast(getValues(`${base}.reps`), getValues(`${base}.lastReps`));
+          if (reps != null) {
+            setValue(`${base}.reps`, reps, { shouldDirty: true, shouldValidate: true });
+          }
         }
-        const reps = autofillFromLast(getValues(`${base}.reps`), getValues(`${base}.lastReps`));
-        if (reps != null) {
-          setValue(`${base}.reps`, reps, { shouldDirty: true, shouldValidate: true });
-        }
+        setValue(`${base}.done`, next, { shouldDirty: true, shouldValidate: true });
       }
-      setValue(`${base}.done`, next, { shouldDirty: true, shouldValidate: true });
     }
     if (next && (preferences?.autoStartRestTimer ?? true)) {
-      const last = presentMembers[presentMembers.length - 1];
+      const last = roundMembers[roundMembers.length - 1];
       const exerciseRest = last ? getValues(`exercises.${last.exerciseIndex}.restSeconds`) : null;
       const rest = restTimerDuration(exerciseRest ?? preferences?.defaultRestSeconds ?? null);
       if (rest != null) {
@@ -373,15 +485,18 @@ function SupersetSetRow({
   return (
     <View className={`-mx-4 flex-row items-stretch px-4 py-1 ${allDone ? 'bg-primary/10' : ''}`}>
       <View className="flex-1">
-        {presentMembers.map((member) => (
-          <SupersetMemberCell
-            key={member.exerciseIndex}
-            exerciseIndex={member.exerciseIndex}
-            setIndex={setIndex}
-            letter={member.letter}
-            onPressType={onPressType}
-          />
-        ))}
+        {roundMembers.map((member) =>
+          member.setIndexes.map((setIndex) => (
+            <SupersetMemberCell
+              key={`${member.exerciseIndex}-${setIndex}`}
+              exerciseIndex={member.exerciseIndex}
+              setIndex={setIndex}
+              letter={member.letter}
+              onPressType={onPressType}
+              onPressLetter={() => onEditRound(roundOrder)}
+            />
+          )),
+        )}
       </View>
       <Pressable
         onPress={() => toggle(!allDone)}
@@ -389,7 +504,7 @@ function SupersetSetRow({
         accessibilityState={{ checked: allDone }}
         className="w-10 items-center justify-center"
         hitSlop={0}
-        testID={`workout-execution.superset.set-${setIndex}.done`}
+        testID={`workout-execution.superset.round-${roundOrder}.done`}
       >
         <Checkbox checked={allDone} onCheckedChange={toggle} hitSlop={0} />
       </Pressable>
@@ -402,11 +517,13 @@ function SupersetMemberCell({
   setIndex,
   letter,
   onPressType,
+  onPressLetter,
 }: {
   exerciseIndex: number;
   setIndex: number;
   letter: SupersetMember['letter'];
   onPressType: PressTypeHandler;
+  onPressLetter: () => void;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
@@ -422,11 +539,17 @@ function SupersetMemberCell({
 
   return (
     <View className="flex-row items-center py-0.5">
-      <View className="w-8 items-center">
+      <Pressable
+        onPress={onPressLetter}
+        hitSlop={8}
+        accessibilityRole="button"
+        testID={`workout-execution.superset.set-${setIndex}.exercise-${exerciseIndex}.letter`}
+        className="w-8 items-center"
+      >
         <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
           <Text className="font-sans-semibold text-[10px] text-primary-foreground">{letter}</Text>
         </View>
-      </View>
+      </Pressable>
       <View className="w-10 justify-center">
         <Controller
           control={control}

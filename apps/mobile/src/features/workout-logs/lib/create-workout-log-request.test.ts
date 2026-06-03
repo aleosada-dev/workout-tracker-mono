@@ -10,6 +10,7 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     id: 'set-1',
     type: 'normal',
     measurementType: 'weight_reps',
+    roundOrder: 0,
     weightKg: 80,
     reps: 10,
     repsMin: null,
@@ -89,6 +90,7 @@ describe('buildCreateWorkoutLogRequest', () => {
           sets: [
             {
               setOrder: 0,
+              roundOrder: 0,
               setType: 'normal',
               measurementType: 'weight_reps',
               weightKg: 80,

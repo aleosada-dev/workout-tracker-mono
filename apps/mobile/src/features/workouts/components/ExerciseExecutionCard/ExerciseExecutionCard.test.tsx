@@ -70,6 +70,7 @@ function set(id: string, measurementType: MeasurementType, durationTarget: numbe
     id,
     type: 'normal' as const,
     measurementType,
+    roundOrder: 0,
     repsMin: null,
     repsMax: null,
     durationTarget,

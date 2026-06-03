@@ -10,6 +10,7 @@ export type CompletedSet = {
   id: string;
   type: WorkoutSetType;
   measurementType: MeasurementType;
+  roundOrder: number;
   weightKg: number | null;
   reps: number | null;
   repsMin: number | null;
@@ -51,6 +52,7 @@ export function buildCompletedExecution(values: ExecutionFormValues): CompletedE
             id: set.id,
             type: set.type,
             measurementType: set.measurementType,
+            roundOrder: set.roundOrder,
             weightKg: set.kg ?? null,
             reps: set.reps ?? null,
             repsMin: set.repsMin,

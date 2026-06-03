@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { getIssues } from '../test/validation';
 import {
   computeLinkedLoad,
+  deriveRoundOrders,
   getValidSetTypesAt,
   isValidSetSequence,
   measurementDimensions,
@@ -365,6 +366,23 @@ describe('getValidSetTypesAt', () => {
 
   it('allows the same type currently at the position', () => {
     expect(getValidSetTypesAt(seq('normal', 'drop'), 1)).toContain('drop');
+  });
+});
+
+describe('deriveRoundOrders', () => {
+  const seq = (...types: WorkoutSetType[]) => types.map((type) => ({ type }));
+
+  it('gives each normal/warmup its own round', () => {
+    expect(deriveRoundOrders(seq('normal', 'normal', 'normal'))).toEqual([0, 1, 2]);
+  });
+
+  it('attaches drop/cluster to the preceding round', () => {
+    expect(deriveRoundOrders(seq('normal', 'drop', 'normal'))).toEqual([0, 0, 1]);
+    expect(deriveRoundOrders(seq('warmup', 'normal', 'drop', 'cluster'))).toEqual([0, 1, 1, 1]);
+  });
+
+  it('never returns a negative round when leading with drop/cluster', () => {
+    expect(deriveRoundOrders(seq('drop', 'normal')).every((r) => r >= 0)).toBe(true);
   });
 });
 

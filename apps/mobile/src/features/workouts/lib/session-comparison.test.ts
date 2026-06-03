@@ -11,6 +11,7 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     id: 'set-1',
     type: 'normal',
     measurementType: 'weight_reps',
+    roundOrder: 0,
     weightKg: null,
     reps: null,
     repsMin: null,

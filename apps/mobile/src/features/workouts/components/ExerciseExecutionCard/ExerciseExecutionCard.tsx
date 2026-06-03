@@ -112,10 +112,12 @@ export function ExerciseExecutionCard({
   const handleAddSet = () => {
     const sets = getValues(`exercises.${exerciseIndex}.sets`);
     const measurementType = sets[sets.length - 1]?.measurementType ?? 'weight_reps';
+    const roundOrder = (sets[sets.length - 1]?.roundOrder ?? -1) + 1;
     append({
       id: Crypto.randomUUID(),
       type: 'normal',
       measurementType,
+      roundOrder,
       repsMin: null,
       repsMax: null,
       durationTarget: null,
@@ -273,6 +275,13 @@ export function ExerciseExecutionCard({
                     validTypes,
                     (next) => {
                       onChange(next);
+                      if ((next === 'drop' || next === 'cluster') && setIndex > 0) {
+                        setValue(
+                          `exercises.${exerciseIndex}.sets.${setIndex}.roundOrder`,
+                          getValues(`exercises.${exerciseIndex}.sets.${setIndex - 1}.roundOrder`),
+                          { shouldDirty: true },
+                        );
+                      }
                       rematchExercise();
                     },
                     fields.length > 1

@@ -30,6 +30,7 @@ function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>):
     linkedSetId: null,
     loadPercent: null,
     loadPercentOfPrevious: null,
+    roundOrder: 0,
     logicalKey: 'normal-1',
     ...overrides,
   };
@@ -191,6 +192,7 @@ function execSet(
     id,
     type,
     measurementType,
+    roundOrder: 0,
     repsMin: null,
     repsMax: null,
     durationTarget: null,
@@ -356,6 +358,7 @@ describe('ExecutionSetSchema validation', () => {
       id: 's1',
       type: 'normal' as const,
       measurementType,
+      roundOrder: 0,
       repsMin: null,
       repsMax: null,
       durationTarget: null,

@@ -17,7 +17,6 @@ const SET_TYPE_ORDER: SetType[] = ['warmup', 'normal', 'drop', 'cluster'];
 
 export type SetTypePickerRemoval = {
   onRemoveSet?: () => void;
-  onRemoveSupersetSet?: () => void;
 };
 
 export type SetTypePickerSheetRef = {
@@ -38,7 +37,6 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
   const [removal, setRemoval] = useState<SetTypePickerRemoval>({});
   const onSelectRef = useRef<((type: SetType) => void) | null>(null);
   const onRemoveSetRef = useRef<(() => void) | null>(null);
-  const onRemoveSupersetSetRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
     present: (currentType, nextValidTypes, onSelect, nextRemoval) => {
@@ -46,11 +44,7 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
       setValidTypes(nextValidTypes);
       onSelectRef.current = onSelect;
       onRemoveSetRef.current = nextRemoval?.onRemoveSet ?? null;
-      onRemoveSupersetSetRef.current = nextRemoval?.onRemoveSupersetSet ?? null;
-      setRemoval({
-        onRemoveSet: nextRemoval?.onRemoveSet,
-        onRemoveSupersetSet: nextRemoval?.onRemoveSupersetSet,
-      });
+      setRemoval({ onRemoveSet: nextRemoval?.onRemoveSet });
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
@@ -65,13 +59,6 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
     onRemoveSetRef.current?.();
     sheetRef.current?.dismiss();
   };
-
-  const handleRemoveSupersetSet = () => {
-    onRemoveSupersetSetRef.current?.();
-    sheetRef.current?.dismiss();
-  };
-
-  const isSuperset = Boolean(removal.onRemoveSupersetSet);
 
   return (
     <BottomSheet ref={sheetRef}>
@@ -113,32 +100,10 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
         </View>
 
         {removal.onRemoveSet ? (
-          <Button variant={isSuperset ? 'outline' : 'destructive'} onPress={handleRemoveSet}>
-            <Icon
-              as={Trash2}
-              size={16}
-              className={isSuperset ? 'text-destructive' : 'text-white'}
-            />
-            <Text
-              className={cn(
-                'font-sans-semibold text-sm',
-                isSuperset ? 'text-destructive' : 'text-white',
-              )}
-            >
-              {t(
-                isSuperset
-                  ? 'workoutExecutionScreen.setTypePicker.removeExerciseSet'
-                  : 'workoutExecutionScreen.setTypePicker.removeSet',
-              )}
-            </Text>
-          </Button>
-        ) : null}
-
-        {removal.onRemoveSupersetSet ? (
-          <Button variant="destructive" onPress={handleRemoveSupersetSet}>
+          <Button variant="destructive" onPress={handleRemoveSet}>
             <Icon as={Trash2} size={16} className="text-white" />
             <Text className="font-sans-semibold text-sm text-white">
-              {t('workoutExecutionScreen.setTypePicker.removeSupersetSet')}
+              {t('workoutExecutionScreen.setTypePicker.removeSet')}
             </Text>
           </Button>
         ) : null}

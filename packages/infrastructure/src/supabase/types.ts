@@ -1936,6 +1936,7 @@ export type Database = {
           reps: number | null
           reps_max: number | null
           reps_min: number | null
+          round_order: number
           set_order: number
           set_type: string
           updated_at: string
@@ -1950,6 +1951,7 @@ export type Database = {
           reps?: number | null
           reps_max?: number | null
           reps_min?: number | null
+          round_order?: number
           set_order: number
           set_type: string
           updated_at?: string
@@ -1964,6 +1966,7 @@ export type Database = {
           reps?: number | null
           reps_max?: number | null
           reps_min?: number | null
+          round_order?: number
           set_order?: number
           set_type?: string
           updated_at?: string
@@ -2186,6 +2189,7 @@ export type Database = {
           measurement_type: string
           reps_max: number | null
           reps_min: number | null
+          round_order: number
           set_order: number
           set_type: string
           updated_at: string
@@ -2200,6 +2204,7 @@ export type Database = {
           measurement_type?: string
           reps_max?: number | null
           reps_min?: number | null
+          round_order?: number
           set_order: number
           set_type: string
           updated_at?: string
@@ -2214,6 +2219,7 @@ export type Database = {
           measurement_type?: string
           reps_max?: number | null
           reps_min?: number | null
+          round_order?: number
           set_order?: number
           set_type?: string
           updated_at?: string

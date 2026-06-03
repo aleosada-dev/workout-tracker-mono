@@ -1,3 +1,4 @@
+import { deriveRoundOrders } from '../../set/sets';
 import type {
   WorkoutDetail,
   WorkoutDetailExercise,
@@ -19,6 +20,7 @@ function toSet(value: WorkoutSetValue, id: string, setOrder: number): WorkoutDet
     linkedSetId: null,
     loadPercent: value.loadPercent,
     loadPercentOfPrevious: value.loadPercentOfPrevious,
+    roundOrder: 0,
   };
 }
 
@@ -106,7 +108,14 @@ export function materializeWorkout(
 
   const exercises: WorkoutDetailExercise[] = mut
     .filter((e) => !e.removed)
-    .map(({ removed: _removed, ...ex }, position) => ({ ...ex, position }));
+    .map(({ removed: _removed, ...ex }, position) => {
+      const rounds = deriveRoundOrders(ex.sets.map((s) => ({ type: s.setType })));
+      return {
+        ...ex,
+        position,
+        sets: ex.sets.map((set, i) => ({ ...set, roundOrder: rounds[i] })),
+      };
+    });
 
   return { ...base, exercises };
 }

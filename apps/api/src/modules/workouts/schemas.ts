@@ -103,6 +103,7 @@ export const WorkoutDetailSetSchema = z.object({
 	linkedSetId: z.uuid().nullable(),
 	loadPercent: z.int().nonnegative().nullable(),
 	loadPercentOfPrevious: z.int().nonnegative().nullable(),
+	roundOrder: z.int().nonnegative(),
 	logicalKey: z.string(),
 });
 
@@ -196,6 +197,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 				linkedSetId: set.linkedSetId,
 				loadPercent: set.loadPercent,
 				loadPercentOfPrevious: set.loadPercentOfPrevious,
+				roundOrder: set.roundOrder,
 				logicalKey: set.logicalKey,
 			})),
 		})),

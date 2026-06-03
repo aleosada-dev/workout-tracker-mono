@@ -65,8 +65,17 @@ export default {
     rules:
       'Warmup sets must come before the others. Drop sets and cluster sets must be followed by a normal set or another set of the same type.',
     removeSet: 'Delete set',
-    removeExerciseSet: 'Delete exercise set',
-    removeSupersetSet: 'Delete entire set',
+  },
+  addSetsSheet: {
+    title: 'Add sets',
+    subtitle: 'Compose what to add to each superset exercise.',
+    editTitle: 'Edit set',
+    editSubtitle: 'Adjust the exercises and types in this set.',
+    addEntry: 'Add entry',
+    confirm: 'Add',
+    editConfirm: 'Save',
+    cancel: 'Cancel',
+    deleteRound: 'Delete set',
   },
   measurementTypePicker: {
     title: 'Measurement type',

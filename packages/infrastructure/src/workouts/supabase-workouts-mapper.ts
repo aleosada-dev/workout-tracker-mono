@@ -99,6 +99,7 @@ type WorkoutSetRow = {
   duration_seconds: number | null;
   linked_set_id: string | null;
   load_percent_of_previous: number | null;
+  round_order: number;
 };
 
 type DetailVariationRow = {
@@ -146,6 +147,7 @@ function toWorkoutSet(row: WorkoutSetRow): WorkoutDetailSet {
     linkedSetId: row.linked_set_id,
     loadPercent: null,
     loadPercentOfPrevious: row.load_percent_of_previous,
+    roundOrder: row.round_order,
   };
 }
 

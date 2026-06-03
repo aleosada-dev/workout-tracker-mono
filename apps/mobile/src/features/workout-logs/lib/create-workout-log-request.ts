@@ -35,6 +35,7 @@ export function buildCreateWorkoutLogRequest(input: {
       supersetGroupId: exercise.supersetGroupId,
       sets: exercise.sets.map((set, index) => ({
         setOrder: index,
+        roundOrder: set.roundOrder,
         setType: set.type,
         measurementType: set.measurementType,
         weightKg: set.weightKg,

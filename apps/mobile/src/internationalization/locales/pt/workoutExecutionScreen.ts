@@ -65,8 +65,17 @@ export default {
     rules:
       'Aquecimentos devem vir antes das demais séries. Drop sets e cluster sets devem ser seguidos por uma série normal ou por outra série do mesmo tipo.',
     removeSet: 'Excluir série',
-    removeExerciseSet: 'Excluir série do exercício',
-    removeSupersetSet: 'Excluir série inteira',
+  },
+  addSetsSheet: {
+    title: 'Adicionar séries',
+    subtitle: 'Monte o que adicionar a cada exercício do superset.',
+    editTitle: 'Editar série',
+    editSubtitle: 'Ajuste os exercícios e tipos desta série.',
+    addEntry: 'Adicionar entrada',
+    confirm: 'Adicionar',
+    editConfirm: 'Salvar',
+    cancel: 'Cancelar',
+    deleteRound: 'Excluir série',
   },
   measurementTypePicker: {
     title: 'Tipo de medição',

@@ -19,6 +19,7 @@ function makeSet(overrides: Partial<WorkoutDetailSet> = {}): WorkoutDetailSet {
     linkedSetId: null,
     loadPercent: null,
     loadPercentOfPrevious: null,
+    roundOrder: 0,
     ...overrides,
   };
 }
@@ -51,9 +52,9 @@ function makeBase(): WorkoutDetail {
           secondaryMuscle: null,
         },
         sets: [
-          makeSet({ id: 's1', setOrder: 0 }),
-          makeSet({ id: 's2', setOrder: 1 }),
-          makeSet({ id: 's3', setOrder: 2 }),
+          makeSet({ id: 's1', setOrder: 0, roundOrder: 0 }),
+          makeSet({ id: 's2', setOrder: 1, roundOrder: 1 }),
+          makeSet({ id: 's3', setOrder: 2, roundOrder: 2 }),
         ],
       },
     ],

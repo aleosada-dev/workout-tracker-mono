@@ -39,6 +39,7 @@ export type WorkoutDetailSet = {
   linkedSetId: string | null;
   loadPercent: number | null;
   loadPercentOfPrevious: number | null;
+  roundOrder: number;
 };
 
 export type WorkoutDetailExerciseVariation = {

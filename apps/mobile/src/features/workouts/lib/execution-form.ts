@@ -1,5 +1,6 @@
 import {
   assignLogicalKeys,
+  deriveRoundOrders,
   EXERCISE_TYPES,
   MEASUREMENT_TYPES,
   matchSets,
@@ -46,6 +47,7 @@ export const ExecutionSetSchema = z
     id: z.string(),
     type: z.enum(WORKOUT_SET_TYPES),
     measurementType: z.enum(MEASUREMENT_TYPES),
+    roundOrder: z.int().nonnegative(),
     repsMin: z.int().positive().nullable(),
     repsMax: z.int().positive().nullable(),
     durationTarget: z.int().positive().nullable(),
@@ -226,6 +228,7 @@ export function buildExecutionExerciseFromPicked(
         id: generateId(),
         type: 'normal',
         measurementType: 'weight_reps',
+        roundOrder: 0,
         repsMin: null,
         repsMax: null,
         durationTarget: null,
@@ -248,10 +251,14 @@ export function buildExecutionFromWorkout(
   return {
     exercises: workout.exercises.map((exercise) => {
       const lastExercise = lastSets?.find((e) => e.variationId === exercise.variation.id);
-      const sets: ExecutionSetInput[] = exercise.sets.map((set) => ({
+      const fallbackRounds = deriveRoundOrders(
+        exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
+      );
+      const sets: ExecutionSetInput[] = exercise.sets.map((set, i) => ({
         id: set.id,
         type: set.setType ?? 'normal',
         measurementType: set.measurementType ?? 'weight_reps',
+        roundOrder: set.roundOrder ?? fallbackRounds[i],
         repsMin: set.repsMin,
         repsMax: set.repsMax,
         durationTarget: set.durationSeconds ?? null,

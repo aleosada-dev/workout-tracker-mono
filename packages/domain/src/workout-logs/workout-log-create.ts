@@ -3,6 +3,7 @@ import type { WorkoutExerciseType } from '../workouts/workout';
 
 export type CreateWorkoutLogSet = {
   setOrder: number;
+  roundOrder: number;
   setType: WorkoutSetType;
   measurementType: MeasurementType;
   weightKg: number | null;

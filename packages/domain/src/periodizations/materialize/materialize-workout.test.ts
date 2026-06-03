@@ -78,6 +78,7 @@ function makeBase(): WorkoutDetail {
             linkedSetId: null,
             loadPercent: null,
             loadPercentOfPrevious: null,
+            roundOrder: 0,
           },
           {
             id: 's2',
@@ -90,6 +91,7 @@ function makeBase(): WorkoutDetail {
             linkedSetId: null,
             loadPercent: null,
             loadPercentOfPrevious: null,
+            roundOrder: 1,
           },
         ],
       },

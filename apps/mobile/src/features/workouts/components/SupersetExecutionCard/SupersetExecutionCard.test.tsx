@@ -105,6 +105,7 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
         id: `s-${index}`,
         type: 'normal',
         measurementType: 'weight_reps',
+        roundOrder: 0,
         repsMin: null,
         repsMax: null,
         durationTarget: null,
@@ -152,7 +153,7 @@ describe('<SupersetExecutionCard />', () => {
   test('the shared checkbox marks the set done across all members and starts the rest timer once', async () => {
     const { getByTestId, form } = renderCard();
 
-    fireEvent.press(getByTestId('workout-execution.superset.set-0.done'));
+    fireEvent.press(getByTestId('workout-execution.superset.round-0.done'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets.0.done')).toBe(true));
     expect(form().getValues('exercises.1.sets.0.done')).toBe(true);
@@ -160,45 +161,119 @@ describe('<SupersetExecutionCard />', () => {
     expect(startRestTimer).toHaveBeenCalledWith(60);
   });
 
-  test('add set appends a set to every member', async () => {
-    const { getByText, form } = renderCard();
+  test('add set defaults to one normal set per member', async () => {
+    const { getByText, getByTestId, form } = renderCard();
 
     fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.confirm')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(2));
     expect(form().getValues('exercises.1.sets')).toHaveLength(2);
+    expect(form().getValues('exercises.0.sets.1.type')).toBe('normal');
+    expect(form().getValues('exercises.1.sets.1.type')).toBe('normal');
+  });
+
+  test('add set composes an asymmetric round (A normal, B normal + drop)', async () => {
+    const { getByText, getByTestId, form } = renderCard();
+
+    fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.add-entry')).toBeTruthy());
+
+    fireEvent.press(getByTestId('superset-add-sets.add-entry'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.exercise.1'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.type.drop'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
+
+    await waitFor(() => expect(form().getValues('exercises.1.sets')).toHaveLength(3));
+    expect(form().getValues('exercises.0.sets')).toHaveLength(2);
+    expect(form().getValues('exercises.1.sets.2.type')).toBe('drop');
+  });
+
+  test('a composed série groups all its sets under one checkbox', async () => {
+    const { getByText, getByTestId, form } = renderCard();
+
+    fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.add-entry')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.add-entry'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.exercise.1'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.type.drop'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
+    await waitFor(() => expect(form().getValues('exercises.1.sets')).toHaveLength(3));
+
+    fireEvent.press(getByTestId('workout-execution.superset.round-1.done'));
+
+    await waitFor(() => expect(form().getValues('exercises.0.sets.1.done')).toBe(true));
+    expect(form().getValues('exercises.1.sets.1.done')).toBe(true);
+    expect(form().getValues('exercises.1.sets.2.done')).toBe(true);
+    expect(form().getValues('exercises.1.sets.2.roundOrder')).toBe(
+      form().getValues('exercises.1.sets.1.roundOrder'),
+    );
+  });
+
+  test('composes A + B + A into one série with two A sets in the same round', async () => {
+    const { getByText, getByTestId, form } = renderCard();
+
+    fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.add-entry')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.add-entry'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
+
+    await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(3));
+    expect(form().getValues('exercises.1.sets')).toHaveLength(2);
+    expect(form().getValues('exercises.0.sets.1.roundOrder')).toBe(1);
+    expect(form().getValues('exercises.0.sets.2.roundOrder')).toBe(1);
   });
 
   test('deleting the whole set removes that position from every member', async () => {
     const { getByText, getByTestId, form } = renderCard();
 
     fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.confirm')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(2));
 
-    fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.type'));
-    await waitFor(() =>
-      expect(getByText('workoutExecutionScreen.setTypePicker.removeSupersetSet')).toBeTruthy(),
-    );
-    fireEvent.press(getByText('workoutExecutionScreen.setTypePicker.removeSupersetSet'));
+    fireEvent.press(getByTestId('workout-execution.superset.set-1.exercise-0.letter'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.delete-round')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.delete-round'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(1));
     expect(form().getValues('exercises.1.sets')).toHaveLength(1);
   });
 
-  test('deleting the exercise set removes only that member position', async () => {
+  test('the set-type sheet deletes only the edited line', async () => {
     const { getByText, getByTestId, form } = renderCard();
 
     fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.confirm')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(2));
 
     fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.type'));
     await waitFor(() =>
-      expect(getByText('workoutExecutionScreen.setTypePicker.removeExerciseSet')).toBeTruthy(),
+      expect(getByText('workoutExecutionScreen.setTypePicker.removeSet')).toBeTruthy(),
     );
-    fireEvent.press(getByText('workoutExecutionScreen.setTypePicker.removeExerciseSet'));
+    fireEvent.press(getByText('workoutExecutionScreen.setTypePicker.removeSet'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(1));
     expect(form().getValues('exercises.1.sets')).toHaveLength(2);
+  });
+
+  test('editing a série pre-fills the sheet and saves changes', async () => {
+    const { getByTestId, form } = renderCard();
+
+    fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.letter'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.confirm')).toBeTruthy());
+
+    fireEvent.press(getByTestId('superset-add-sets.add-entry'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.exercise.1'));
+    fireEvent.press(getByTestId('superset-add-sets.entry.2.type.drop'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
+
+    await waitFor(() => expect(form().getValues('exercises.1.sets')).toHaveLength(2));
+    expect(form().getValues('exercises.0.sets')).toHaveLength(1);
+    expect(form().getValues('exercises.1.sets.1.type')).toBe('drop');
+    expect(form().getValues('exercises.1.sets.1.roundOrder')).toBe(0);
   });
 
   test('changing a set type updates only that member', async () => {
