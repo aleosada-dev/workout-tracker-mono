@@ -1,6 +1,5 @@
 import type { WorkoutLogSummary } from '@workout-tracker/domain';
-
-type Relation<T> = T | T[] | null;
+import { pickOne, type Relation } from '../supabase/relation';
 
 export type SummaryRow = {
   id: string;
@@ -24,9 +23,6 @@ export type SummaryRow = {
 };
 
 const MUSCLE_GROUPS_LIMIT = 3;
-
-const pickOne = <T>(value: Relation<T>): T | null =>
-  Array.isArray(value) ? (value[0] ?? null) : value;
 
 const durationSeconds = (startedAt: string, finishedAt: string) =>
   Math.max(0, Math.round((new Date(finishedAt).getTime() - new Date(startedAt).getTime()) / 1000));

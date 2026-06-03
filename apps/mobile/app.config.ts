@@ -83,6 +83,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     './plugins/withGradleJvmArgs',
+    './plugins/withExactAlarmPermissions',
     [
       '@sentry/react-native/expo',
       {

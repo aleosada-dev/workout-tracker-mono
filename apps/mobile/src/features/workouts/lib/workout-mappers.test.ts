@@ -6,6 +6,7 @@ import {
   formatSetTarget,
   reorderExercisesWithinType,
   toExecutionListItems,
+  weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
 
 const t = ((key: string) => key) as unknown as TFunction;
@@ -126,6 +127,28 @@ describe('formatSetTarget', () => {
 
   test('returns a range when min and max differ', () => {
     expect(formatSetTarget(8, 12)).toBe('8-12');
+  });
+});
+
+describe('weightPlaceholder', () => {
+  test('returns undefined when there is no previous load', () => {
+    expect(weightPlaceholder(null, 90, 'none')).toBeUndefined();
+    expect(weightPlaceholder(undefined, 90, 'none')).toBeUndefined();
+  });
+
+  test('falls back to the previous load when there is no adjustment', () => {
+    expect(weightPlaceholder(100, null, 'none')).toBe('100');
+    expect(weightPlaceholder(100, undefined, '2.5')).toBe('100');
+  });
+
+  test('scales the previous load by the adjustment percentage', () => {
+    expect(weightPlaceholder(100, 90, 'none')).toBe('90');
+    expect(weightPlaceholder(80, 105, 'none')).toBe('84');
+  });
+
+  test('rounds the scaled load per the rounding preference', () => {
+    expect(weightPlaceholder(83, 90, '2.5')).toBe('75');
+    expect(weightPlaceholder(83, 90, 'none')).toBe('74.7');
   });
 });
 

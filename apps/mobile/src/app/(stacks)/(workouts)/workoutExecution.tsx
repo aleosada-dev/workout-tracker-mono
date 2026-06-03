@@ -25,6 +25,7 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { useExerciseLastSets } from '@/features/exercises/hooks/use-exercise-last-sets';
 import { useExerciseRecords } from '@/features/exercises/hooks/use-exercise-records';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
+import { useOccurrenceWorkout } from '@/features/periodizations/hooks/use-occurrence-workout';
 import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
 import {
@@ -64,16 +65,22 @@ type ExecutionTab = 'preparatory' | 'strength';
 export default function WorkoutExecutionScreen() {
   const { t } = useTranslation();
   const active = useValue(activeWorkout$);
-  const { workoutId, userId, athleteName } = useLocalSearchParams<{
+  const { workoutId, occurrenceId, userId, athleteName } = useLocalSearchParams<{
     workoutId?: string;
+    occurrenceId?: string;
     userId?: string;
     athleteName?: string;
   }>();
 
-  const { data: workoutTemplate } = useWorkout({
-    workoutId: active ? null : workoutId,
+  const occurrenceWorkout = useOccurrenceWorkout(active || !occurrenceId ? null : occurrenceId);
+
+  const { data: baseWorkout } = useWorkout({
+    workoutId: active || occurrenceId ? null : workoutId,
     userId: active ? null : userId,
   });
+
+  const workoutTemplate = occurrenceId ? occurrenceWorkout.data?.workout : baseWorkout;
+  const occurrenceNote = occurrenceId ? (occurrenceWorkout.data?.note ?? null) : null;
 
   const lastLog = useWorkoutLastLog({ workoutId: active ? null : workoutId });
 
@@ -103,7 +110,7 @@ export default function WorkoutExecutionScreen() {
       startedAt: new Date().toISOString(),
       athleteId: userId ?? null,
       athleteName: athleteName ?? null,
-      note: null,
+      note: occurrenceNote,
       workoutTemplate: structuredClone(workoutTemplate),
       workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastSets.data ?? null),
       completedExecution: null,
@@ -120,6 +127,7 @@ export default function WorkoutExecutionScreen() {
     lastSets.data,
     athleteName,
     userId,
+    occurrenceNote,
   ]);
 
   useEffect(() => {

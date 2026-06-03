@@ -101,6 +101,7 @@ export const WorkoutDetailSetSchema = z.object({
 	repsMax: z.int().positive().nullable(),
 	durationSeconds: z.int().positive().nullable(),
 	linkedSetId: z.uuid().nullable(),
+	loadPercent: z.int().nonnegative().nullable(),
 	loadPercentOfPrevious: z.int().nonnegative().nullable(),
 	logicalKey: z.string(),
 });
@@ -193,6 +194,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 				repsMax: set.repsMax,
 				durationSeconds: set.durationSeconds,
 				linkedSetId: set.linkedSetId,
+				loadPercent: set.loadPercent,
 				loadPercentOfPrevious: set.loadPercentOfPrevious,
 				logicalKey: set.logicalKey,
 			})),

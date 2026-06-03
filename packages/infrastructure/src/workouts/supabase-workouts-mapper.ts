@@ -144,6 +144,7 @@ function toWorkoutSet(row: WorkoutSetRow): WorkoutDetailSet {
     repsMax: row.reps_max,
     durationSeconds: row.duration_seconds,
     linkedSetId: row.linked_set_id,
+    loadPercent: null,
     loadPercentOfPrevious: row.load_percent_of_previous,
   };
 }

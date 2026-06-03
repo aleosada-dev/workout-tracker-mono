@@ -56,6 +56,7 @@ export const ExecutionSetSchema = z
     lastKg: z.number().nonnegative().nullable().optional(),
     lastReps: z.int().positive().nullable().optional(),
     linkedSetId: z.string().nullable().optional(),
+    loadPercent: z.int().nonnegative().nullable().optional(),
     loadPercentOfPrevious: z.int().nonnegative().nullable().optional(),
   })
   .superRefine((set, ctx) => {
@@ -233,6 +234,7 @@ export function buildExecutionExerciseFromPicked(
         duration: '',
         done: false,
         linkedSetId: null,
+        loadPercent: null,
         loadPercentOfPrevious: null,
       },
     ],
@@ -260,6 +262,7 @@ export function buildExecutionFromWorkout(
         lastKg: null,
         lastReps: null,
         linkedSetId: set.linkedSetId,
+        loadPercent: set.loadPercent,
         loadPercentOfPrevious: set.loadPercentOfPrevious,
       }));
       const matched = matchExecutionSetsByLogicalKey(sets, lastExercise?.sets);

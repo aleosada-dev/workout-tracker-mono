@@ -5,19 +5,21 @@ import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
 type StartParams = {
   workoutId: string;
+  occurrenceId?: string | null;
   userId?: string | null;
   athleteName?: string | null;
 };
 
 export function useStartWorkout() {
   const sheetRef = useRef<ActiveWorkoutSheetRef>(null);
-  const [pending, setPending] = useState<StartParams | null>(null);
+  const [pendingStart, setPendingStart] = useState<StartParams | null>(null);
 
   const navigate = useCallback((params: StartParams) => {
     router.push({
       pathname: '/(stacks)/(workouts)/workoutExecution',
       params: {
         workoutId: params.workoutId,
+        ...(params.occurrenceId ? { occurrenceId: params.occurrenceId } : {}),
         ...(params.userId ? { userId: params.userId } : {}),
         ...(params.athleteName ? { athleteName: params.athleteName } : {}),
       },
@@ -27,7 +29,7 @@ export function useStartWorkout() {
   const start = useCallback(
     (params: StartParams) => {
       if (activeWorkout$.peek()) {
-        setPending(params);
+        setPendingStart(params);
         sheetRef.current?.present();
         return;
       }
@@ -37,11 +39,11 @@ export function useStartWorkout() {
   );
 
   const confirmDiscard = useCallback(() => {
-    if (!pending) return;
+    if (!pendingStart) return;
     activeWorkout$.delete();
-    setPending(null);
-    navigate(pending);
-  }, [pending, navigate]);
+    setPendingStart(null);
+    navigate(pendingStart);
+  }, [pendingStart, navigate]);
 
   return { start, sheetRef, confirmDiscard };
 }

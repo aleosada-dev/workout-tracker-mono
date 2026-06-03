@@ -1,5 +1,7 @@
 import {
+  computeLinkedLoad,
   isSupersetGroup,
+  type LoadRoundingMode,
   type MeasurementType,
   measurementDimensions,
   type WorkoutExerciseType,
@@ -62,6 +64,22 @@ const SUPERSET_LETTERS: SupersetLetter[] = ['A', 'B', 'C'];
 export function formatSetTarget(repsMin: number | null, repsMax: number | null): string {
   if (repsMin == null || repsMax == null) return '';
   return repsMin === repsMax ? `${repsMin}` : `${repsMin}-${repsMax}`;
+}
+
+/**
+ * Weight-input placeholder for a normal set. With a periodization `loadPercent`
+ * adjustment it suggests the previous session's load scaled by that percentage
+ * (rounded per preference); otherwise it falls back to the previous load. No
+ * previous load means no placeholder.
+ */
+export function weightPlaceholder(
+  lastKg: number | null | undefined,
+  loadPercent: number | null | undefined,
+  mode: LoadRoundingMode,
+): string | undefined {
+  if (lastKg == null) return undefined;
+  if (loadPercent == null) return String(lastKg);
+  return String(computeLinkedLoad(lastKg, loadPercent, mode));
 }
 
 export type ColumnLayout = { weight: boolean; reps: boolean; duration: boolean };

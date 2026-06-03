@@ -4,6 +4,8 @@ export { makeSupabaseEquipmentRepository } from './equipments/supabase-equipment
 export { makeSupabaseExerciseRepository } from './exercises/supabase-exercises-adapter';
 export { makeSupabaseMuscleRepository } from './muscles/supabase-muscles-adapter';
 export { makeSupabaseNotificationRepository } from './notifications/supabase-notification-adapter';
+export { makeSupabasePeriodizationAdjustmentRepository } from './periodizations/supabase-adjustments-adapter';
+export { makeSupabasePeriodizationOccurrenceRepository } from './periodizations/supabase-occurrences-adapter';
 export { makeSupabaseUserPreferencesRepository } from './preferences/supabase-user-preferences-adapter';
 export { makeSupabaseProfileRepository } from './profiles/supabase-profile-adapter';
 export type {

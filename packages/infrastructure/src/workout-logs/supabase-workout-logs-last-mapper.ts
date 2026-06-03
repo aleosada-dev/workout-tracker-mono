@@ -4,8 +4,7 @@ import type {
   WorkoutLogLastSet,
   WorkoutSetType,
 } from '@workout-tracker/domain';
-
-type Relation<T> = T | T[] | null;
+import { pickOne, type Relation } from '../supabase/relation';
 
 export type LastLogRow = {
   id: string;
@@ -31,9 +30,6 @@ export type LastLogRow = {
     }> | null;
   }> | null;
 };
-
-const pickOne = <T>(value: Relation<T>): T | null =>
-  Array.isArray(value) ? (value[0] ?? null) : value;
 
 const toNumber = (value: number | string | null): number | null => {
   if (value === null) return null;

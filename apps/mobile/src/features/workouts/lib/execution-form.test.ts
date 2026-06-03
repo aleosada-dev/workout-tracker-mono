@@ -28,6 +28,7 @@ function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>):
     repsMax: 12,
     durationSeconds: null,
     linkedSetId: null,
+    loadPercent: null,
     loadPercentOfPrevious: null,
     logicalKey: 'normal-1',
     ...overrides,

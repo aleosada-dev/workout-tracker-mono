@@ -4,6 +4,7 @@ import {
 	makeEquipmentApp,
 	makeExerciseApp,
 	makeMuscleApp,
+	makePeriodizationApp,
 	makeProfileApp,
 	makeUserPreferencesApp,
 	makeWorkoutApp,
@@ -20,6 +21,8 @@ import {
 	makeSupabaseExerciseRepository,
 	makeSupabaseMuscleRepository,
 	makeSupabaseNotificationRepository,
+	makeSupabasePeriodizationAdjustmentRepository,
+	makeSupabasePeriodizationOccurrenceRepository,
 	makeSupabaseProfileRepository,
 	makeSupabaseUserPreferencesRepository,
 	makeSupabaseWorkoutFolderRepository,
@@ -43,6 +46,8 @@ export function buildContainer(env: Env, accessToken?: string) {
 	const coachSessionRepository = makeSupabaseCoachSessionRepository(supabase);
 	const notificationRepository = makeSupabaseNotificationRepository(supabase);
 	const userPreferencesRepository = makeSupabaseUserPreferencesRepository(supabase);
+	const periodizationOccurrenceRepository = makeSupabasePeriodizationOccurrenceRepository(supabase);
+	const periodizationAdjustmentRepository = makeSupabasePeriodizationAdjustmentRepository(supabase);
 
 	return {
 		muscles: makeMuscleApp(muscleRepository),
@@ -54,6 +59,11 @@ export function buildContainer(env: Env, accessToken?: string) {
 		coaches: makeCoachApp(coachRepository),
 		coachSessions: makeCoachSessionApp(coachSessionRepository),
 		userPreferences: makeUserPreferencesApp(userPreferencesRepository),
+		periodizations: makePeriodizationApp(
+			periodizationOccurrenceRepository,
+			periodizationAdjustmentRepository,
+			workoutRepository,
+		),
 		videoUploads: {
 			buildUploadUrls: makeBuildVideoUploadUrls(env),
 			headObject: makeHeadObject(env),

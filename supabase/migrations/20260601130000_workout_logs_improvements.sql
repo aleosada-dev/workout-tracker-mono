@@ -852,6 +852,14 @@ $$;
 -- Como a função faz DELETE + ON CONFLICT DO UPDATE em workout_variation_records, que
 -- só tinha policies de INSERT/SELECT, adicionamos abaixo as policies de DELETE e
 -- UPDATE (dono e coach) — sem elas a RLS bloquearia o recálculo sob INVOKER.
+-- Pela mesma razão, user_preferences só tinha policy do próprio dono (auth.uid()),
+-- então num save feito por coach a leitura da pref count_warmup_sets do aluno caía no
+-- default. A policy de SELECT para coach ativo abaixo garante que o recálculo use
+-- sempre a preferência do atleta.
+CREATE POLICY "Coaches read athlete preferences" ON "public"."user_preferences"
+  FOR SELECT TO "authenticated"
+  USING ("public"."is_active_coach_of"(( SELECT "auth"."uid"() AS "uid"), "user_id"));
+
 CREATE POLICY "Athletes delete own workout variation records" ON "public"."workout_variation_records"
   FOR DELETE TO "authenticated"
   USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
@@ -879,8 +887,8 @@ DECLARE
   -- cluster), incluindo warmup somente se o usuário tiver count_warmup_sets=true.
   -- Lido no momento do save; trocar a preferência depois deixa os records antigos
   -- defasados até a variation ser treinada de novo (recálculo global virá depois).
-  -- Sob INVOKER, num save feito por coach a RLS de user_preferences não libera a
-  -- pref do aluno e cai no default (false) — aceitável por ora.
+  -- A pref é sempre a do atleta (p_user_id): num save feito por coach a policy
+  -- "Coaches read athlete preferences" libera a leitura sob INVOKER.
   v_include_warmup boolean := COALESCE(
     (SELECT up.value = 'true'::jsonb
        FROM public.user_preferences up

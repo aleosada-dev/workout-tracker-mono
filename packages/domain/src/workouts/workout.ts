@@ -37,6 +37,7 @@ export type WorkoutDetailSet = {
   repsMax: number | null;
   durationSeconds: number | null;
   linkedSetId: string | null;
+  loadPercent: number | null;
   loadPercentOfPrevious: number | null;
 };
 

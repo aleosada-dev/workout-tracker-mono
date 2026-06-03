@@ -23,7 +23,11 @@ import {
   matchExecutionSetsToTemplate,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
-import { formatSetTarget, type SupersetMember } from '@/features/workouts/lib/workout-mappers';
+import {
+  formatSetTarget,
+  type SupersetMember,
+  weightPlaceholder,
+} from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
 import type { SupersetExecutionCardProps } from './types';
@@ -365,12 +369,16 @@ function SupersetMemberCell({
   onPressType: PressTypeHandler;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
+  const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
+  const loadPercent = useWatch({ control, name: `${basePath}.loadPercent` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
+  const adjusted = loadPercent != null;
+  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, preferences?.loadRounding ?? 'none');
 
   return (
     <View className="flex-row items-center py-0.5">
@@ -423,8 +431,8 @@ function SupersetMemberCell({
               }
               onBlur={field.onBlur}
               aria-invalid={fieldState.invalid}
-              className="h-8 max-w-[80px] py-0 text-sm"
-              placeholder={lastKg != null ? String(lastKg) : undefined}
+              className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
+              placeholder={kgPlaceholder}
             />
           )}
         />
@@ -449,7 +457,9 @@ function SupersetMemberCell({
         />
       </View>
       <View className="w-20 px-2">
-        <Text variant="muted" className="text-center text-xs">
+        <Text
+          className={`text-center text-xs ${adjusted ? 'font-sans-semibold text-primary' : 'text-muted-foreground'}`}
+        >
           {target}
         </Text>
       </View>

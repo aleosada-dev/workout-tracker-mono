@@ -110,6 +110,7 @@ export function ExerciseExecutionCard({
       duration: '',
       done: false,
       linkedSetId: null,
+      loadPercent: null,
       loadPercentOfPrevious: null,
     });
     rematchExercise();

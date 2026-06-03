@@ -18,7 +18,11 @@ import {
   type DurationPickerSheetRef,
 } from '@/features/workouts/components/DurationPickerSheet';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
-import { type ColumnLayout, formatSetTarget } from '@/features/workouts/lib/workout-mappers';
+import {
+  type ColumnLayout,
+  formatSetTarget,
+  weightPlaceholder,
+} from '@/features/workouts/lib/workout-mappers';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
@@ -34,10 +38,12 @@ type DurationSetRowProps = SetRowBodyProps & {
   onComplete: () => void;
 };
 
-function TargetCell({ target }: { target: string }) {
+function TargetCell({ target, adjusted = false }: { target: string; adjusted?: boolean }) {
   return (
     <View className="w-20 px-2">
-      <Text variant="muted" className="text-center text-xs">
+      <Text
+        className={`text-center text-xs ${adjusted ? 'font-sans-semibold text-primary' : 'text-muted-foreground'}`}
+      >
         {target}
       </Text>
     </View>
@@ -52,7 +58,11 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
+  const loadPercent = useWatch({ control, name: `${basePath}.loadPercent` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
+  const mode: LoadRoundingMode = preferences?.loadRounding ?? 'none';
+  const adjusted = loadPercent != null;
+  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, mode);
 
   // Cascades the suggested load down the exercise's set chain. `linkedSetId`
   // points to the set directly above, so a drop/cluster set takes a percentage
@@ -61,7 +71,6 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
   // computed one) becomes the base for the next. Only empty fields are filled,
   // so a manually adjusted load is preserved.
   const fillLinkedLoads = () => {
-    const mode: LoadRoundingMode = preferences?.loadRounding ?? 'none';
     const effectiveKg = new Map<string, number>();
     getValues(`exercises.${exerciseIndex}.sets`).forEach((set, i) => {
       if (set.kg !== '') {
@@ -106,8 +115,8 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
                 fillLinkedLoads();
               }}
               aria-invalid={fieldState.invalid}
-              className="h-8 max-w-[80px] py-0 text-sm"
-              placeholder={lastKg != null ? String(lastKg) : undefined}
+              className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
+              placeholder={kgPlaceholder}
             />
           )}
         />
@@ -131,7 +140,7 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
           )}
         />
       </View>
-      <TargetCell target={target} />
+      <TargetCell target={target} adjusted={adjusted} />
     </>
   );
 }
