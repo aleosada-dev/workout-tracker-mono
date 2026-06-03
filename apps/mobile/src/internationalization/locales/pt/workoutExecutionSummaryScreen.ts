@@ -1,7 +1,7 @@
 export default {
   title: 'Resumo do treino',
   save: {
-    button: 'Salvar treino',
+    button: 'Finalizar treino',
     saving: 'Salvando...',
     success: 'Treino salvo',
   },

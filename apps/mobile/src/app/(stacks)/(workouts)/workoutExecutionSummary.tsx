@@ -1,10 +1,9 @@
 import { useValue } from '@legendapp/state/react';
-import { Button, EmptyState, Text } from '@workout-tracker/ui-mobile';
+import { EmptyState } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useScheduledSessions } from '@/features/coach-sessions/hooks/use-scheduled-sessions';
 import { workoutLogObservability } from '@/features/observability/lib';
@@ -13,6 +12,7 @@ import { handleLocalError } from '@/features/query/lib/error-handling';
 import { useCreateWorkoutLog } from '@/features/workout-logs/hooks/use-create-workout-log';
 import { buildCreateWorkoutLogRequest } from '@/features/workout-logs/lib/create-workout-log-request';
 import { CoachedSessionField } from '@/features/workouts/components/CoachedSessionField';
+import { WorkoutExecutionSummaryActions } from '@/features/workouts/components/WorkoutExecutionSummaryActions';
 import { WorkoutExecutionSummaryStats } from '@/features/workouts/components/WorkoutExecutionSummaryStats';
 import { WorkoutSessionComparison } from '@/features/workouts/components/WorkoutSessionComparison';
 import { WorkoutSessionRecords } from '@/features/workouts/components/WorkoutSessionRecords';
@@ -23,7 +23,6 @@ import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 export default function WorkoutExecutionSummaryScreen() {
   const { t } = useTranslation();
   const active = useValue(activeWorkout$);
-  const insets = useSafeAreaInsets();
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
   const { mutate: saveWorkoutLog, isPending } = useCreateWorkoutLog();
@@ -114,22 +113,11 @@ export default function WorkoutExecutionSummaryScreen() {
             <WorkoutSessionComparison comparison={comparison} />
             <WorkoutSessionRecords exercises={sessionRecords} />
           </ScrollView>
-          <View
-            className="border-border border-t bg-background px-4 pt-3"
-            style={{ paddingBottom: insets.bottom + 12 }}
-          >
-            <Button
-              onPress={handleSave}
-              disabled={isPending || !canSave}
-              className="h-12 rounded-full"
-            >
-              <Text className="font-sans-semibold">
-                {isPending
-                  ? t('workoutExecutionSummaryScreen.save.saving')
-                  : t('workoutExecutionSummaryScreen.save.button')}
-              </Text>
-            </Button>
-          </View>
+          <WorkoutExecutionSummaryActions
+            onSave={handleSave}
+            isPending={isPending}
+            canSave={canSave}
+          />
         </>
       ) : (
         <View className="flex-1 justify-center p-4">

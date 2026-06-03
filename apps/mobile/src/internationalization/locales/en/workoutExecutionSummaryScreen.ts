@@ -1,7 +1,7 @@
 export default {
   title: 'Workout summary',
   save: {
-    button: 'Save workout',
+    button: 'Finish workout',
     saving: 'Saving...',
     success: 'Workout saved',
   },

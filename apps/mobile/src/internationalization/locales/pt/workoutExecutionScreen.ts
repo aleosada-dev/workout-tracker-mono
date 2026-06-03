@@ -9,7 +9,7 @@ export default {
     notes: 'Notas',
     addExercise: 'Adicionar exercício',
     kgLbsCalculator: 'Calculadora kg x libras',
-    finish: 'Finalizar treino',
+    finish: 'Revisar treino',
     more: 'Mais opções',
   },
   empty: {

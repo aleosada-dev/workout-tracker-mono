@@ -9,7 +9,7 @@ export default {
     notes: 'Notes',
     addExercise: 'Add exercise',
     kgLbsCalculator: 'kg / lbs calculator',
-    finish: 'Finish workout',
+    finish: 'Review workout',
     more: 'More options',
   },
   empty: {
