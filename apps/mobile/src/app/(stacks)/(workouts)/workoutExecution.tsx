@@ -1,18 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSelector, useValue } from '@legendapp/state/react';
-import {
-  Alert,
-  AlertDescription,
-  Icon,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Text,
-} from '@workout-tracker/ui-mobile';
+import { Icon, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Clock, StickyNote } from 'lucide-react-native';
+import { Clock } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -123,7 +114,8 @@ export default function WorkoutExecutionScreen() {
       athleteId: userId ?? null,
       athleteName: athleteName ?? null,
       occurrenceId: occurrenceId ?? null,
-      note: occurrenceNote,
+      occurrenceNote,
+      note: null,
       workoutTemplate: structuredClone(workoutTemplate),
       workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastSets.data ?? null),
       completedExecution: null,
@@ -423,17 +415,19 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
               Platform.OS === 'ios'
                 ? undefined
                 : () => <ElapsedTimeDisplay startedAt={active.startedAt} className="pr-2" />,
+            unstable_headerRightItems:
+              Platform.OS === 'ios'
+                ? () => [
+                    {
+                      type: 'custom',
+                      element: <ElapsedTimeDisplay startedAt={active.startedAt} className="pr-2" />,
+                      hidesSharedBackground: true,
+                    },
+                  ]
+                : undefined,
           }}
         />
-        {Platform.OS === 'ios' ? (
-          <WorkoutInfoBar startedAt={active.startedAt} description={workout.description} />
-        ) : workout.description ? (
-          <View className="px-4 pt-4 pb-6">
-            <Alert icon={StickyNote}>
-              <AlertDescription>{workout.description}</AlertDescription>
-            </Alert>
-          </View>
-        ) : null}
+        <WorkoutInfoBar note={active.occurrenceNote} description={workout.description} />
         <Animated.View style={[{ flex: 1 }, tabsAnimatedStyle]}>
           <Tabs
             value={tab}
