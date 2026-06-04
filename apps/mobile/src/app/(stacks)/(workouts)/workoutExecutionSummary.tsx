@@ -1,5 +1,5 @@
 import { useValue } from '@legendapp/state/react';
-import { EmptyState } from '@workout-tracker/ui-mobile';
+import { ConfirmDialog, EmptyState } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,9 +9,14 @@ import { useScheduledSessions } from '@/features/coach-sessions/hooks/use-schedu
 import { workoutLogObservability } from '@/features/observability/lib';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { handleLocalError } from '@/features/query/lib/error-handling';
+import { elapsedSince } from '@/features/shared/lib/utils';
 import { useCreateWorkoutLog } from '@/features/workout-logs/hooks/use-create-workout-log';
 import { buildCreateWorkoutLogRequest } from '@/features/workout-logs/lib/create-workout-log-request';
 import { CoachedSessionField } from '@/features/workouts/components/CoachedSessionField';
+import {
+  WorkoutDurationSheet,
+  type WorkoutDurationSheetRef,
+} from '@/features/workouts/components/WorkoutDurationSheet';
 import { WorkoutExecutionSummaryActions } from '@/features/workouts/components/WorkoutExecutionSummaryActions';
 import { WorkoutExecutionSummaryStats } from '@/features/workouts/components/WorkoutExecutionSummaryStats';
 import { WorkoutSessionComparison } from '@/features/workouts/components/WorkoutSessionComparison';
@@ -36,6 +41,15 @@ export default function WorkoutExecutionSummaryScreen() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const defaultAppliedRef = useRef(false);
 
+  const durationSheetRef = useRef<WorkoutDurationSheetRef>(null);
+  const [durationSeconds, setDurationSeconds] = useState(() => {
+    const startedAt = activeWorkout$.startedAt.peek();
+    if (!startedAt) return 0;
+    const elapsed = elapsedSince(startedAt);
+    return elapsed.hours * 3600 + elapsed.minutes * 60 + elapsed.seconds;
+  });
+  const [longDurationOpen, setLongDurationOpen] = useState(false);
+
   useEffect(() => {
     if (defaultAppliedRef.current || scheduledSessions === undefined) return;
     defaultAppliedRef.current = true;
@@ -57,13 +71,16 @@ export default function WorkoutExecutionSummaryScreen() {
 
   const canSave = (active?.completedExecution?.exercises.length ?? 0) > 0;
 
-  const handleSave = () => {
+  const performSave = () => {
     if (!active?.completedExecution) return;
+    const finishedAt = new Date(
+      new Date(active.startedAt).getTime() + durationSeconds * 1000,
+    ).toISOString();
     const request = buildCreateWorkoutLogRequest({
       workoutId: active.workoutTemplate.id,
       userId: active.athleteId,
       startedAt: active.startedAt,
-      finishedAt: new Date().toISOString(),
+      finishedAt,
       note: active.note,
       isCoached,
       coachSessionId: selectedSessionId,
@@ -93,6 +110,18 @@ export default function WorkoutExecutionSummaryScreen() {
     });
   };
 
+  const requestSave = () => {
+    if (durationSeconds > 2 * 3600) {
+      setLongDurationOpen(true);
+      return;
+    }
+    performSave();
+  };
+
+  const handleSaveRef = useRef(requestSave);
+  handleSaveRef.current = requestSave;
+  const onSave = useRef(() => handleSaveRef.current()).current;
+
   return (
     <View className="flex-1 bg-background">
       <Stack.Screen options={{ title: t('workoutExecutionSummaryScreen.title') }} />
@@ -107,17 +136,28 @@ export default function WorkoutExecutionSummaryScreen() {
               onSelectedSessionChange={setSelectedSessionId}
             />
             <WorkoutExecutionSummaryStats
-              startedAt={active.startedAt}
+              durationSeconds={durationSeconds}
+              onEditDuration={() =>
+                durationSheetRef.current?.present(durationSeconds, setDurationSeconds)
+              }
               execution={active.completedExecution}
             />
             <WorkoutSessionComparison comparison={comparison} />
             <WorkoutSessionRecords exercises={sessionRecords} />
           </ScrollView>
-          <WorkoutExecutionSummaryActions
-            onSave={handleSave}
-            isPending={isPending}
-            canSave={canSave}
+          <WorkoutDurationSheet ref={durationSheetRef} />
+          <ConfirmDialog
+            open={longDurationOpen}
+            onOpenChange={setLongDurationOpen}
+            title={t('workoutExecutionSummaryScreen.longDuration.title')}
+            description={t('workoutExecutionSummaryScreen.longDuration.description')}
+            confirmLabel={t('workoutExecutionSummaryScreen.longDuration.adjust')}
+            cancelLabel={t('workoutExecutionSummaryScreen.longDuration.finishAnyway')}
+            destructive={false}
+            onConfirm={() => durationSheetRef.current?.present(durationSeconds, setDurationSeconds)}
+            onCancel={performSave}
           />
+          <WorkoutExecutionSummaryActions onSave={onSave} isPending={isPending} canSave={canSave} />
         </>
       ) : (
         <View className="flex-1 justify-center p-4">

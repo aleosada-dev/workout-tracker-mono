@@ -6,9 +6,19 @@ export default {
     success: 'Treino salvo',
   },
   stats: {
-    totalTime: 'Tempo total',
-    completedSets: 'Séries concluídas',
-    totalVolume: 'Volume total',
+    totalTime: 'Duração',
+    completedSets: 'Séries',
+    totalVolume: 'Volume',
+  },
+  durationEdit: {
+    title: 'Ajustar duração',
+    confirm: 'Pronto',
+  },
+  longDuration: {
+    title: 'Treino muito longo',
+    description: 'Este treino passou de 2 horas. Quer ajustar o tempo antes de finalizar?',
+    adjust: 'Ajustar tempo',
+    finishAnyway: 'Finalizar mesmo assim',
   },
   empty: {
     title: 'Nenhum treino para resumir',

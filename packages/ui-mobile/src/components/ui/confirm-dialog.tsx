@@ -18,6 +18,7 @@ export type ConfirmDialogProps = {
   confirmLabel: string;
   cancelLabel: string;
   onConfirm: () => void;
+  onCancel?: () => void;
   confirmTestID?: string;
   destructive?: boolean;
 };
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   onConfirm,
+  onCancel,
   confirmTestID,
   destructive = true,
 }: ConfirmDialogProps) {
@@ -41,7 +43,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>
+          <AlertDialogCancel onPress={onCancel}>
             <Text>{cancelLabel}</Text>
           </AlertDialogCancel>
           <AlertDialogAction

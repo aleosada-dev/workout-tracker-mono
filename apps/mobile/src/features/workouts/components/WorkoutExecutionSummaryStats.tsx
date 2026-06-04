@@ -1,38 +1,37 @@
 import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
 import { CheckCircle2, Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
-import { elapsedSince, formatTotalTime, formatWeight } from '@/features/shared/lib/utils';
+import { formatTotalTime, formatWeight } from '@/features/shared/lib/utils';
 import {
   type CompletedExecution,
   summarizeExecution,
 } from '@/features/workouts/lib/completed-execution';
 
 type WorkoutExecutionSummaryStatsProps = {
-  startedAt: string;
+  durationSeconds: number;
+  onEditDuration: () => void;
   execution: CompletedExecution;
 };
 
 export function WorkoutExecutionSummaryStats({
-  startedAt,
+  durationSeconds,
+  onEditDuration,
   execution,
 }: WorkoutExecutionSummaryStatsProps) {
   const { t, i18n } = useTranslation();
-  const [elapsed] = useState(() => elapsedSince(startedAt));
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
   const { completedSets, totalVolumeKg } = summarizeExecution(execution, includeWarmup);
-
-  const elapsedSeconds = elapsed.hours * 3600 + elapsed.minutes * 60 + elapsed.seconds;
 
   return (
     <View className="flex-row gap-3 px-4 pt-4">
       <StatCard
         icon={Clock}
         label={t('workoutExecutionSummaryScreen.stats.totalTime')}
-        value={formatTotalTime(elapsedSeconds)}
+        value={formatTotalTime(durationSeconds)}
+        onPress={onEditDuration}
       />
       <StatCard
         icon={CheckCircle2}
@@ -52,16 +51,27 @@ type StatCardProps = {
   icon: LucideIcon;
   label: string;
   value: string;
+  onPress?: () => void;
 };
 
-function StatCard({ icon, label, value }: StatCardProps) {
-  return (
+function StatCard({ icon, label, value, onPress }: StatCardProps) {
+  const content = (
     <Card className="flex-1 items-center gap-3 px-1 py-4">
       <Icon as={icon} size={18} className="text-muted-foreground" />
       <Text variant="muted" className="flex-1 text-center">
         {label}
       </Text>
-      <Text variant="large">{value}</Text>
+      <Text variant="large" className={onPress ? 'underline' : undefined}>
+        {value}
+      </Text>
     </Card>
+  );
+
+  if (!onPress) return content;
+
+  return (
+    <Pressable className="flex-1" onPress={onPress} accessibilityRole="button">
+      {content}
+    </Pressable>
   );
 }

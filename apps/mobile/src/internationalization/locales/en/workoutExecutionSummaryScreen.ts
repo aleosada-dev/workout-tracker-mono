@@ -6,9 +6,19 @@ export default {
     success: 'Workout saved',
   },
   stats: {
-    totalTime: 'Total time',
-    completedSets: 'Completed sets',
-    totalVolume: 'Total volume',
+    totalTime: 'Duration',
+    completedSets: 'Sets',
+    totalVolume: 'Volume',
+  },
+  durationEdit: {
+    title: 'Adjust duration',
+    confirm: 'Done',
+  },
+  longDuration: {
+    title: 'Very long workout',
+    description: 'This workout is over 2 hours. Do you want to adjust the time before finishing?',
+    adjust: 'Adjust time',
+    finishAnyway: 'Finish anyway',
   },
   empty: {
     title: 'No workout to summarize',
