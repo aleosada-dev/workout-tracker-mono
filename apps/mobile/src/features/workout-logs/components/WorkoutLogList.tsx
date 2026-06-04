@@ -1,8 +1,9 @@
 import { FlashList } from '@shopify/flash-list';
 import { Button, EmptyState, Text } from '@workout-tracker/ui-mobile';
+import { router } from 'expo-router';
 import { type ReactElement, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, RefreshControl, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ApiUnauthorizedError } from '@/features/api/lib/errors';
 import { useOnNewError } from '@/features/observability/hooks/use-on-new-error';
@@ -79,7 +80,19 @@ export function WorkoutLogList({ header }: { header?: ReactElement }) {
     <FlashList
       data={items}
       keyExtractor={(it) => it.id}
-      renderItem={({ item }) => <WorkoutLogCard {...toCardProps(item, t, locale)} />}
+      renderItem={({ item }) => (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: '/(stacks)/(workouts)/workoutLogDetail',
+              params: { id: item.id },
+            })
+          }
+          testID={`workout-log-card.${item.id}`}
+        >
+          <WorkoutLogCard {...toCardProps(item, t, locale)} />
+        </Pressable>
+      )}
       ItemSeparatorComponent={() => <View className="h-3" />}
       ListHeaderComponent={header}
       contentContainerClassName="p-4"

@@ -16,6 +16,7 @@ import tabs from './tabs';
 import variationNames from './variationNames';
 import workoutExecutionScreen from './workoutExecutionScreen';
 import workoutExecutionSummaryScreen from './workoutExecutionSummaryScreen';
+import workoutLogDetail from './workoutLogDetail';
 import workoutLogs from './workoutLogs';
 import workoutsScreen from './workoutsScreen';
 
@@ -38,6 +39,7 @@ const pt = {
     multiSelect,
     equipment,
     workoutLogs,
+    workoutLogDetail,
     workoutExecutionScreen,
     workoutExecutionSummaryScreen,
     preferencesScreen,

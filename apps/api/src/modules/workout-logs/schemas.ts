@@ -4,6 +4,7 @@ import {
 	measurementDimensions,
 	WORKOUT_EXERCISE_TYPES,
 	WORKOUT_SET_TYPES,
+	type WorkoutLogDetail,
 	type WorkoutLogSummary,
 	type WorkoutLogSummaryPage,
 } from "@workout-tracker/domain";
@@ -48,6 +49,50 @@ export function toWorkoutLogSummaryPageResponse(
 		items: page.items.map(toWorkoutLogSummaryResponse),
 		hasMore: page.hasMore,
 	};
+}
+
+export const WorkoutLogIdParamSchema = z.object({
+	id: z.uuid(),
+});
+
+const WorkoutLogDetailSetSchema = z.object({
+	setOrder: z.int().nonnegative(),
+	roundOrder: z.int().nonnegative(),
+	setType: z.enum(WORKOUT_SET_TYPES),
+	measurementType: z.enum(MEASUREMENT_TYPES),
+	weightKg: z.number().nullable(),
+	reps: z.int().nullable(),
+	repsMin: z.int().nullable(),
+	repsMax: z.int().nullable(),
+	durationSeconds: z.int().nullable(),
+});
+
+const WorkoutLogDetailExerciseSchema = z.object({
+	variationId: z.uuid().nullable(),
+	exerciseName: z.string().nullable(),
+	variationName: z.string().nullable(),
+	exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
+	position: z.int().nonnegative(),
+	supersetGroupId: z.uuid().nullable(),
+	note: z.string().nullable(),
+	restSeconds: z.int().nullable(),
+	sets: z.array(WorkoutLogDetailSetSchema),
+});
+
+export const WorkoutLogDetailResponseSchema = z.object({
+	workoutLogId: z.uuid(),
+	title: z.string().nullable(),
+	startedAt: z.iso.datetime({ offset: true }),
+	finishedAt: z.iso.datetime({ offset: true }),
+	note: z.string().nullable(),
+	exercises: z.array(WorkoutLogDetailExerciseSchema),
+	sessionRecords: z.array(z.unknown()),
+});
+
+export type WorkoutLogDetailResponse = z.infer<typeof WorkoutLogDetailResponseSchema>;
+
+export function toWorkoutLogDetailResponse(detail: WorkoutLogDetail): WorkoutLogDetailResponse {
+	return detail;
 }
 
 const CreateWorkoutLogSetSchema = z

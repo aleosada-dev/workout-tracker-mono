@@ -7,6 +7,7 @@ import {
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
 import { toWorkoutLogCreatePayload } from './supabase-workout-logs-create-mapper';
+import { type DetailRow, toWorkoutLogDetail } from './supabase-workout-logs-detail-mapper';
 import { type LastLogRow, toWorkoutLogLast } from './supabase-workout-logs-last-mapper';
 import { type SummaryRow, toWorkoutLogSummary } from './supabase-workout-logs-summary-mapper';
 
@@ -24,6 +25,37 @@ const LAST_SELECT = `
     variation_name,
     variation:variations_view(name, exercise_name),
     workout_exercise_set_logs(set_order, set_type, weight_kg, reps)
+  )
+` as const;
+
+const DETAIL_SELECT = `
+  id,
+  started_at,
+  finished_at,
+  note,
+  workout:workouts(name),
+  workout_log_summaries(summary_snapshot),
+  workout_exercise_logs(
+    variation_id,
+    exercise_type,
+    position,
+    superset_group_id,
+    note,
+    rest_seconds,
+    exercise_name,
+    variation_name,
+    variation:variations_view(name, exercise_name),
+    workout_exercise_set_logs(
+      set_order,
+      round_order,
+      set_type,
+      measurement_type,
+      weight_kg,
+      reps,
+      reps_min,
+      reps_max,
+      duration_seconds
+    )
   )
 ` as const;
 
@@ -104,6 +136,23 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
         workoutFound: true,
         log: row ? toWorkoutLogLast(row) : null,
       };
+    },
+
+    async getById({ userId, workoutLogId }) {
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select(DETAIL_SELECT)
+        .eq('id', workoutLogId)
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (error) {
+        throw supabaseError('Failed to get workout log', error);
+      }
+
+      const row = data as unknown as DetailRow | null;
+      return row ? toWorkoutLogDetail(row) : null;
     },
 
     async create(input) {

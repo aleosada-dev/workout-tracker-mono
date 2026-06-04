@@ -7,7 +7,10 @@ import {
 	CreateWorkoutLogResponseSchema,
 	ListWorkoutLogSummariesQuerySchema,
 	toCreateWorkoutLogResponse,
+	toWorkoutLogDetailResponse,
 	toWorkoutLogSummaryPageResponse,
+	WorkoutLogDetailResponseSchema,
+	WorkoutLogIdParamSchema,
 	WorkoutLogSummaryPageResponseSchema,
 } from "./schemas";
 
@@ -69,5 +72,39 @@ export const workoutLogsRouter = new Hono<AppBindings>()
 			const { create } = c.get("container").workoutLogs;
 			const result = await create({ ...body, userId: userId ?? actorId, actorId });
 			return c.json(toCreateWorkoutLogResponse(result), 201);
+		},
+	)
+	.get(
+		"/:id",
+		describeRoute({
+			summary: "Get a single workout log with full exercise/set detail",
+			tags: ["Workout Logs"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(WorkoutLogDetailResponseSchema),
+						},
+					},
+				},
+				401: { description: "Unauthorized" },
+				404: { description: "Not found" },
+			},
+		}),
+		validator("param", WorkoutLogIdParamSchema),
+		async (c) => {
+			const userId = c.get("userClaims")?.sub;
+			if (!userId) {
+				return c.json({ error: "Missing user identity" }, 401);
+			}
+
+			const { id } = c.req.valid("param");
+			const { getById } = c.get("container").workoutLogs;
+			const detail = await getById({ userId, workoutLogId: id });
+			if (!detail) {
+				return c.json({ error: "Workout log not found" }, 404);
+			}
+			return c.json(toWorkoutLogDetailResponse(detail));
 		},
 	);
