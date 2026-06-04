@@ -21,6 +21,8 @@ export type ConfirmDialogProps = {
   onCancel?: () => void;
   confirmTestID?: string;
   destructive?: boolean;
+  titleClassName?: string;
+  descriptionClassName?: string;
 };
 
 export function ConfirmDialog({
@@ -34,13 +36,17 @@ export function ConfirmDialog({
   onCancel,
   confirmTestID,
   destructive = true,
+  titleClassName,
+  descriptionClassName,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle className={titleClassName}>{title}</AlertDialogTitle>
+          <AlertDialogDescription className={descriptionClassName}>
+            {description}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onPress={onCancel}>

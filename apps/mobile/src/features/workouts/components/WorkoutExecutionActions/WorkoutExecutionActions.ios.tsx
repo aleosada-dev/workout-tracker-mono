@@ -10,7 +10,7 @@ import type { WorkoutExecutionActionsProps } from './types';
 const TOOLBAR_CLEARANCE = 60;
 
 export function WorkoutExecutionActions({
-  onFinish,
+  onReview,
   onTimer,
   onNotes,
   onAddExercise,
@@ -25,8 +25,8 @@ export function WorkoutExecutionActions({
   return (
     <>
       <Stack.Toolbar placement="bottom">
-        <Stack.Toolbar.Button variant="prominent" tintColor={rgb(theme.primary)} onPress={onFinish}>
-          {t('workoutExecutionScreen.actions.finish')}
+        <Stack.Toolbar.Button variant="prominent" tintColor={rgb(theme.primary)} onPress={onReview}>
+          {t('workoutExecutionScreen.actions.review')}
         </Stack.Toolbar.Button>
         <Stack.Toolbar.Spacer />
         <Stack.Toolbar.Menu>

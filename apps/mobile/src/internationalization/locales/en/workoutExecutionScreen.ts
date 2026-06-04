@@ -9,12 +9,18 @@ export default {
     notes: 'Notes',
     addExercise: 'Add exercise',
     kgLbsCalculator: 'kg / lbs calculator',
-    finish: 'Review workout',
+    review: 'Review workout',
     more: 'More options',
   },
   empty: {
     title: 'No exercises yet',
     subtitle: 'Add exercises to start tracking your sets.',
+  },
+  incompleteSets: {
+    title: 'Incomplete sets',
+    description: 'The exercises below still have sets that are not done:',
+    continueToReview: 'Continue to review',
+    goBack: 'Go back and adjust',
   },
   exercise: {
     addSet: 'Add set',

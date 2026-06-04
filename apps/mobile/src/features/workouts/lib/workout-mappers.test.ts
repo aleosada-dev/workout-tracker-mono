@@ -1,10 +1,14 @@
 import type { TFunction } from 'i18next';
-import type { ExecutionExerciseInput } from '@/features/workouts/lib/execution-form';
+import type {
+  ExecutionExerciseInput,
+  ExecutionSetInput,
+} from '@/features/workouts/lib/execution-form';
 import {
   combineIntoSuperset,
   type ExecutionListItem,
   exerciseColumnLayout,
   formatSetTarget,
+  listIncompleteStrengthExercises,
   reorderExercisesWithinType,
   reorderSupersetMembers,
   toExecutionListItems,
@@ -34,6 +38,23 @@ function exercise(
       secondaryMuscle: null,
     },
     sets: [],
+    ...overrides,
+  };
+}
+
+function set(
+  overrides: Partial<ExecutionSetInput> & Pick<ExecutionSetInput, 'id' | 'done'>,
+): ExecutionSetInput {
+  return {
+    type: 'normal',
+    measurementType: 'weight_reps',
+    roundOrder: 0,
+    repsMin: null,
+    repsMax: null,
+    durationTarget: null,
+    kg: '',
+    reps: '',
+    duration: '',
     ...overrides,
   };
 }
@@ -311,5 +332,35 @@ describe('reorderSupersetMembers', () => {
     expect(next.map((e) => e.id)).toEqual(['c', 'a', 'b']);
     expect(next.map((e) => e.supersetOrder)).toEqual([0, 1, 2]);
     expect(next.every((e) => e.supersetGroupId === 'sg')).toBe(true);
+  });
+});
+
+describe('listIncompleteStrengthExercises', () => {
+  test('returns one entry per strength exercise that has an undone set', () => {
+    const exercises = [
+      exercise({ id: 'a', sets: [set({ id: 'a1', done: true }), set({ id: 'a2', done: false })] }),
+      exercise({ id: 'b', sets: [set({ id: 'b1', done: true })] }),
+    ];
+
+    const result = listIncompleteStrengthExercises(exercises, t, 'pt');
+
+    expect(result).toHaveLength(1);
+  });
+
+  test('ignores preparatory exercises even with undone sets', () => {
+    const exercises = [
+      exercise({ id: 'p', exerciseType: 'preparatory', sets: [set({ id: 'p1', done: false })] }),
+    ];
+
+    expect(listIncompleteStrengthExercises(exercises, t, 'pt')).toEqual([]);
+  });
+
+  test('ignores exercises whose sets are all done or that have no sets', () => {
+    const exercises = [
+      exercise({ id: 'a', sets: [set({ id: 'a1', done: true })] }),
+      exercise({ id: 'b', sets: [] }),
+    ];
+
+    expect(listIncompleteStrengthExercises(exercises, t, 'pt')).toEqual([]);
   });
 });

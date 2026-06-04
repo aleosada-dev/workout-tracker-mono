@@ -8,7 +8,7 @@ export interface WorkoutExecutionActionsTimer {
 }
 
 export interface WorkoutExecutionActionsProps {
-  onFinish: () => void;
+  onReview: () => void;
   onTimer: () => void;
   onNotes: () => void;
   onAddExercise: () => void;

@@ -141,6 +141,23 @@ export function toExerciseExecutionItems(
     );
 }
 
+export function listIncompleteStrengthExercises(
+  exercises: ExecutionFormInput['exercises'],
+  t: TFunction,
+  language: string,
+): string[] {
+  return exercises
+    .map((exercise, exerciseIndex) => ({ exercise, exerciseIndex }))
+    .filter(
+      ({ exercise }) =>
+        exercise.exerciseType === 'strength' && exercise.sets.some((set) => !set.done),
+    )
+    .map(
+      ({ exercise, exerciseIndex }) =>
+        toExerciseExecutionItem(exercise, exerciseIndex, t, language).name,
+    );
+}
+
 export function reorderExercisesWithinType(
   exercises: ExecutionFormInput['exercises'],
   type: WorkoutExerciseType,

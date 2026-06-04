@@ -20,7 +20,7 @@ import type { WorkoutExecutionActionsProps } from './types';
 type IconComponent = React.ComponentType<{ size?: number; color?: ColorValue }>;
 
 export function WorkoutExecutionActions({
-  onFinish,
+  onReview,
   onTimer,
   onNotes,
   onAddExercise,
@@ -44,9 +44,9 @@ export function WorkoutExecutionActions({
           <View className="flex-1" />
         </>
       ) : (
-        <Button onPress={onFinish} className="h-12 flex-1 rounded-full">
+        <Button onPress={onReview} className="h-12 flex-1 rounded-full">
           <Check size={20} color={rgb(theme.primaryForeground)} />
-          <Text className="font-sans-semibold">{t('workoutExecutionScreen.actions.finish')}</Text>
+          <Text className="font-sans-semibold">{t('workoutExecutionScreen.actions.review')}</Text>
         </Button>
       )}
       <Popover>

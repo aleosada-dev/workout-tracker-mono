@@ -9,12 +9,18 @@ export default {
     notes: 'Notas',
     addExercise: 'Adicionar exercício',
     kgLbsCalculator: 'Calculadora kg x libras',
-    finish: 'Revisar treino',
+    review: 'Revisar treino',
     more: 'Mais opções',
   },
   empty: {
     title: 'Nenhum exercício ainda',
     subtitle: 'Adicione exercícios para começar a registrar suas séries.',
+  },
+  incompleteSets: {
+    title: 'Séries não concluídas',
+    description: 'Os exercícios abaixo ainda têm séries não concluídas:',
+    continueToReview: 'Continuar para revisão',
+    goBack: 'Voltar e ajustar',
   },
   exercise: {
     addSet: 'Adicionar série',

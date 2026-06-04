@@ -1,6 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSelector, useValue } from '@legendapp/state/react';
-import { Icon, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@workout-tracker/ui-mobile';
+import {
+  ConfirmDialog,
+  Icon,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Clock } from 'lucide-react-native';
@@ -55,6 +63,7 @@ import {
 import {
   combineIntoSuperset,
   type ExecutionListItem,
+  listIncompleteStrengthExercises,
   reorderExercisesWithinType,
   reorderSupersetMembers,
   toExecutionListItems,
@@ -208,9 +217,28 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     mode: 'onTouched',
   });
 
-  const handleFinish = form.handleSubmit((values) => {
+  const [incompleteOpen, setIncompleteOpen] = useState(false);
+  const [incompleteNames, setIncompleteNames] = useState<string[]>([]);
+  const pendingValuesRef = useRef<ExecutionFormValues | null>(null);
+
+  const goToSummary = (values: ExecutionFormValues) => {
     activeWorkout$.completedExecution.set(buildCompletedExecution(values));
     router.push('/(stacks)/(workouts)/workoutExecutionSummary');
+  };
+
+  const handleReview = form.handleSubmit((values) => {
+    const incomplete = listIncompleteStrengthExercises(
+      form.getValues('exercises'),
+      t,
+      i18n.language,
+    );
+    if (incomplete.length > 0) {
+      pendingValuesRef.current = values;
+      setIncompleteNames(incomplete);
+      setIncompleteOpen(true);
+      return;
+    }
+    goToSummary(values);
   });
 
   useEffect(() => {
@@ -478,7 +506,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
           />
         ) : (
           <WorkoutExecutionActions
-            onFinish={handleFinish}
+            onReview={handleReview}
             onTimer={() => timerSheetRef.current?.present()}
             onNotes={() => notesSheetRef.current?.present()}
             onAddExercise={handleAddExercise}
@@ -497,6 +525,27 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
         <TimerSheet ref={timerSheetRef} controller={restTimer} />
         <SupersetReorderSheet ref={reorderSheetRef} />
+        <ConfirmDialog
+          open={incompleteOpen}
+          onOpenChange={setIncompleteOpen}
+          title={t('workoutExecutionScreen.incompleteSets.title')}
+          titleClassName="text-center"
+          description={`${t('workoutExecutionScreen.incompleteSets.description')}\n\n${incompleteNames
+            .map((name) => `• ${name}`)
+            .join('\n')}`}
+          descriptionClassName="text-left"
+          confirmLabel={t('workoutExecutionScreen.incompleteSets.goBack')}
+          cancelLabel={t('workoutExecutionScreen.incompleteSets.continueToReview')}
+          destructive={false}
+          onConfirm={() => {
+            pendingValuesRef.current = null;
+          }}
+          onCancel={() => {
+            const values = pendingValuesRef.current;
+            pendingValuesRef.current = null;
+            if (values) goToSummary(values);
+          }}
+        />
       </View>
     </FormProvider>
   );
