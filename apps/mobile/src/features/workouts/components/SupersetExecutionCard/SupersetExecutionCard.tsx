@@ -8,6 +8,7 @@ import {
   Circle,
   GripVertical,
   Plus,
+  StickyNote,
   Timer,
 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
@@ -104,6 +105,17 @@ export function SupersetExecutionCard({
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
   const isCollapsed = selectable || collapsed;
+  const [expandedNotes, setExpandedNotes] = useState<ReadonlySet<number>>(() => new Set());
+  const toggleNote = (exerciseIndex: number) =>
+    setExpandedNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(exerciseIndex)) {
+        next.delete(exerciseIndex);
+      } else {
+        next.add(exerciseIndex);
+      }
+      return next;
+    });
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const memberSetsNames = members.map((m) => `exercises.${m.exerciseIndex}.sets` as const);
   const watchedMemberSets = useWatch({ control, name: memberSetsNames }) as
@@ -338,32 +350,51 @@ export function SupersetExecutionCard({
             : onPressMember
               ? () => onPressMember(member.variationId)
               : undefined;
+          const hasNote = member.note != null && member.note.length > 0;
+          const noteExpanded = expandedNotes.has(member.exerciseIndex);
           return (
-            <Pressable
-              key={member.exerciseIndex}
-              className="flex-row items-center gap-2"
-              onPress={onPress}
-              onLongPress={onLongPress}
-              delayLongPress={350}
-              disabled={!onPress && !onLongPress}
-              accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'link' : undefined}
-            >
-              <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
-                <Text className="font-sans-semibold text-[10px] text-primary-foreground">
-                  {member.letter}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm" numberOfLines={1}>
-                  {member.name}
-                </Text>
-                {member.variationName != null ? (
-                  <Text variant="muted" className="text-xs" numberOfLines={1}>
-                    {member.variationName}
+            <View key={member.exerciseIndex} className="gap-1">
+              <Pressable
+                className="flex-row items-center gap-2"
+                onPress={onPress}
+                onLongPress={onLongPress}
+                delayLongPress={350}
+                disabled={!onPress && !onLongPress}
+                accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'link' : undefined}
+              >
+                <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
+                  <Text className="font-sans-semibold text-[10px] text-primary-foreground">
+                    {member.letter}
                   </Text>
-                ) : null}
-              </View>
-            </Pressable>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm" numberOfLines={1}>
+                    {member.name}
+                  </Text>
+                  {member.variationName != null ? (
+                    <Text variant="muted" className="text-xs" numberOfLines={1}>
+                      {member.variationName}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+              {hasNote && !isCollapsed ? (
+                <Pressable
+                  className="flex-row items-start gap-1.5 pl-7"
+                  onPress={() => toggleNote(member.exerciseIndex)}
+                  accessibilityRole="button"
+                >
+                  <Icon as={StickyNote} size={13} className="mt-0.5 text-muted-foreground" />
+                  <Text
+                    variant="muted"
+                    className="flex-1 text-xs"
+                    numberOfLines={noteExpanded ? undefined : 1}
+                  >
+                    {member.note}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
           );
         })}
       </View>
