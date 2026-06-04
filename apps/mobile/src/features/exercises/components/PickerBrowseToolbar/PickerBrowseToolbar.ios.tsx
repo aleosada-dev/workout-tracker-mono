@@ -6,11 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { ImageSourcePropType } from 'react-native';
 import type { PickerBrowseToolbarProps } from './types';
 
-export function PickerBrowseToolbar({
-  headerAction,
-  onCreateExercise,
-  onCreateSuperset,
-}: PickerBrowseToolbarProps) {
+export function PickerBrowseToolbar({ headerAction, onCreateExercise }: PickerBrowseToolbarProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const badge = headerAction?.badge ?? 0;
@@ -51,16 +47,16 @@ export function PickerBrowseToolbar({
 
       <Stack.Toolbar placement="bottom">
         <Stack.Toolbar.Spacer />
-        <Stack.Toolbar.Menu>
-          <Stack.Toolbar.Icon sf="ellipsis.circle" />
-          <Stack.Toolbar.Label>{t('exerciseListScreen.picker.actions.more')}</Stack.Toolbar.Label>
-          <Stack.Toolbar.MenuAction icon="plus" onPress={onCreateExercise}>
+        <Stack.Toolbar.Button
+          onPress={onCreateExercise}
+          variant="prominent"
+          tintColor={rgb(theme.primary)}
+        >
+          <Stack.Toolbar.Icon sf="plus" />
+          <Stack.Toolbar.Label>
             {t('exerciseListScreen.actions.createExercise')}
-          </Stack.Toolbar.MenuAction>
-          <Stack.Toolbar.MenuAction icon="link" onPress={onCreateSuperset}>
-            {t('exerciseListScreen.picker.actions.createSuperset')}
-          </Stack.Toolbar.MenuAction>
-        </Stack.Toolbar.Menu>
+          </Stack.Toolbar.Label>
+        </Stack.Toolbar.Button>
       </Stack.Toolbar>
     </>
   );

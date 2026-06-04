@@ -1,35 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Button,
-  Icon,
-  Popover,
-  PopoverClose,
-  PopoverContent,
-  PopoverTrigger,
-  rgb,
-  Text,
-  useTheme,
-} from '@workout-tracker/ui-mobile';
+import { Button, Icon, rgb, Text, useTheme } from '@workout-tracker/ui-mobile';
 import { Stack } from 'expo-router';
-import { Link2, MoreHorizontal, Plus } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import type { ColorValue } from 'react-native';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IconAction } from '@/features/shared/components/SelectionToolbar';
-import { useNavTheme } from '@/features/shared/lib/theme';
 import type { PickerBrowseToolbarProps } from './types';
 
-type IconComponent = React.ComponentType<{ size?: number; color?: ColorValue }>;
-
-export function PickerBrowseToolbar({
-  headerAction,
-  onCreateExercise,
-  onCreateSuperset,
-}: PickerBrowseToolbarProps) {
+export function PickerBrowseToolbar({ headerAction, onCreateExercise }: PickerBrowseToolbarProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navTheme = useNavTheme();
+  const theme = useTheme();
 
   return (
     <>
@@ -47,32 +29,18 @@ export function PickerBrowseToolbar({
         className="absolute right-0 bottom-0 left-0 flex-row items-center justify-end bg-transparent px-4 pt-3"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        <Popover>
-          <PopoverTrigger asChild>
-            <Pressable
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel={t('exerciseListScreen.picker.actions.more')}
-              className="h-12 w-12 items-center justify-center rounded-full border border-border bg-background"
-            >
-              <MoreHorizontal size={22} color={navTheme.colors.text} />
-            </Pressable>
-          </PopoverTrigger>
-          <PopoverContent align="end" side="top" className="w-60 p-1">
-            <MenuItem
-              icon={Plus}
-              label={t('exerciseListScreen.actions.createExercise')}
-              onPress={onCreateExercise}
-              color={navTheme.colors.text}
-            />
-            <MenuItem
-              icon={Link2}
-              label={t('exerciseListScreen.picker.actions.createSuperset')}
-              onPress={onCreateSuperset}
-              color={navTheme.colors.text}
-            />
-          </PopoverContent>
-        </Popover>
+        <Pressable
+          onPress={onCreateExercise}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('exerciseListScreen.actions.createExercise')}
+          className="h-12 flex-row items-center gap-2 rounded-full bg-primary px-5 active:opacity-90"
+        >
+          <Plus size={20} color={rgb(theme.primaryForeground)} />
+          <Text className="font-sans-semibold text-primary-foreground">
+            {t('exerciseListScreen.actions.createExercise')}
+          </Text>
+        </Pressable>
       </View>
     </>
   );
@@ -122,29 +90,5 @@ function Badge({ count }: { count: number }) {
         {count}
       </Text>
     </View>
-  );
-}
-
-function MenuItem({
-  icon: Icon,
-  label,
-  onPress,
-  color,
-}: {
-  icon: IconComponent;
-  label: string;
-  onPress: () => void;
-  color: ColorValue;
-}) {
-  return (
-    <PopoverClose asChild>
-      <Pressable
-        onPress={onPress}
-        className="flex-row items-center gap-3 rounded-md px-3 py-2.5 active:bg-accent"
-      >
-        <Icon size={18} color={color} />
-        <Text className="text-sm">{label}</Text>
-      </Pressable>
-    </PopoverClose>
   );
 }

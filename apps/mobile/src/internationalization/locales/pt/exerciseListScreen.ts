@@ -23,10 +23,6 @@ export default {
   },
   picker: {
     title: 'Adicionar exercícios',
-    actions: {
-      more: 'Mais opções',
-      createSuperset: 'Criar superset',
-    },
   },
   addExercise: {
     title: 'Adicionar exercício',

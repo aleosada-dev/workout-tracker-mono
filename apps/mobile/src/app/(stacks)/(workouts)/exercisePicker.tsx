@@ -165,9 +165,6 @@ export default function ExercisePickerScreen() {
         <PickerBrowseToolbar
           headerAction={browseFilterAction(t, countActiveFilters(filters))}
           onCreateExercise={() => router.push('/exerciseForm')}
-          onCreateSuperset={() => {
-            exerciseObservability.trackAction('exercise_picker_create_superset');
-          }}
         />
       ) : (
         <PickerSelectionToolbar
