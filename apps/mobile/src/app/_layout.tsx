@@ -32,6 +32,7 @@ import { QueryProvider } from '@/features/query/lib/provider';
 import { LanguageBridge, resolveLanguage } from '@/features/settings/state/language-bridge';
 import { language$ } from '@/features/settings/state/settings-store';
 import { ThemeBridge } from '@/features/settings/state/theme-bridge';
+import { useDismissKeyboardOnBackground } from '@/features/shared/hooks/use-dismiss-keyboard-on-background';
 import {
   ensureNotificationPermission,
   ensureTimerNotificationChannel,
@@ -50,6 +51,7 @@ export default function RootLayout() {
   const isAuthenticated = !!session;
   const { t } = useTranslation();
   useClearActiveWorkoutOnSignOut();
+  useDismissKeyboardOnBackground();
 
   const [loaded, error] = useFonts({
     Geist_400Regular,
