@@ -2,12 +2,15 @@ import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { AppBindings } from "../../shared/http/types";
 import {
+	OccurrenceIdParamSchema,
 	OccurrenceListResponseSchema,
+	OccurrenceResponseSchema,
 	OccurrencesQuerySchema,
 	OccurrenceWorkoutParamSchema,
 	OccurrenceWorkoutResponseSchema,
 	toOccurrenceResponse,
 	toOccurrenceWorkoutResponse,
+	UpdateOccurrenceStatusRequestSchema,
 } from "./schemas";
 
 export const periodizationsRouter = new Hono<AppBindings>()
@@ -63,5 +66,34 @@ export const periodizationsRouter = new Hono<AppBindings>()
 			const { getOccurrenceWorkout } = c.get("container").periodizations;
 			const result = await getOccurrenceWorkout({ occurrenceId, athleteId });
 			return c.json(toOccurrenceWorkoutResponse(result));
+		},
+	)
+	.patch(
+		"/occurrences/:id",
+		describeRoute({
+			summary: "Update the status of a periodization occurrence",
+			tags: ["Periodizations"],
+			responses: {
+				200: {
+					description: "OK",
+					content: {
+						"application/json": {
+							schema: resolver(OccurrenceResponseSchema),
+						},
+					},
+				},
+				400: { description: "Invalid input" },
+				401: { description: "Unauthorized" },
+				404: { description: "Occurrence not found" },
+			},
+		}),
+		validator("param", OccurrenceIdParamSchema),
+		validator("json", UpdateOccurrenceStatusRequestSchema),
+		async (c) => {
+			const { id: occurrenceId } = c.req.valid("param");
+			const { status, skippedReason } = c.req.valid("json");
+			const { updateOccurrenceStatus } = c.get("container").periodizations;
+			const occurrence = await updateOccurrenceStatus({ occurrenceId, status, skippedReason });
+			return c.json(toOccurrenceResponse(occurrence));
 		},
 	);

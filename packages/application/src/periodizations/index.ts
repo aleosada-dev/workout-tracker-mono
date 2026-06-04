@@ -5,6 +5,7 @@ import type {
 } from '@workout-tracker/domain';
 import { makeGetOccurrenceWorkout } from './get-occurrence-workout';
 import { makeListOccurrences } from './list-occurrences';
+import { makeUpdateOccurrenceStatus } from './update-occurrence-status';
 
 export function makePeriodizationApp(
   occurrenceRepository: PeriodizationOccurrenceRepository,
@@ -18,8 +19,10 @@ export function makePeriodizationApp(
       adjustmentRepository,
       workoutRepository,
     }),
+    updateOccurrenceStatus: makeUpdateOccurrenceStatus(occurrenceRepository),
   };
 }
 
 export * from './get-occurrence-workout';
 export * from './list-occurrences';
+export * from './update-occurrence-status';

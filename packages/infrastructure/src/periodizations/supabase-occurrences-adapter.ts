@@ -79,5 +79,29 @@ export function makeSupabasePeriodizationOccurrenceRepository(
         workoutOwnerId: row.workout.user_id,
       };
     },
+
+    async updateOccurrenceStatus({ occurrenceId, status, skippedReason }) {
+      const patch: { status: typeof status; updated_at: string; skipped_reason?: string } = {
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      if (skippedReason !== undefined) {
+        patch.skipped_reason = skippedReason;
+      }
+
+      const { data, error } = await supabase
+        .from('periodization_occurrences')
+        .update(patch)
+        .eq('id', occurrenceId)
+        .select(OCCURRENCES_SELECT)
+        .maybeSingle();
+
+      if (error) {
+        throw supabaseError('Failed to update periodization occurrence', error);
+      }
+      if (!data) return null;
+
+      return toOccurrence(data as unknown as OccurrenceRow);
+    },
   };
 }

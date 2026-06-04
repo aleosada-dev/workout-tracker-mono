@@ -16,7 +16,13 @@ import { WorkoutLogCardSkeleton } from '@/features/workout-logs/components/Worko
 import { useWorkoutLogSummaries } from '@/features/workout-logs/hooks/use-workout-log-summaries';
 import { toCardProps } from '@/features/workout-logs/lib/format';
 
-export function WorkoutLogList({ header }: { header?: ReactElement }) {
+export function WorkoutLogList({
+  header,
+  onRefresh,
+}: {
+  header?: ReactElement;
+  onRefresh?: () => void;
+}) {
   const { t } = useTranslation();
   const locale = useDateFnsLocale();
 
@@ -120,7 +126,10 @@ export function WorkoutLogList({ header }: { header?: ReactElement }) {
       refreshControl={
         <RefreshControl
           refreshing={isRefetching && !isFetchingNextPage}
-          onRefresh={() => refetch()}
+          onRefresh={() => {
+            onRefresh?.();
+            refetch();
+          }}
         />
       }
       testID="workout-log-list"

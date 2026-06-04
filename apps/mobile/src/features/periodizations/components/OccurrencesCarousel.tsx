@@ -10,29 +10,36 @@ export function OccurrencesCarousel() {
 
   if (!data || data.length === 0) return null;
 
+  const renderCard = (occurrence: (typeof data)[number], fullWidth: boolean) => (
+    <OccurrenceCard
+      key={occurrence.occurrenceId}
+      occurrence={occurrence}
+      fullWidth={fullWidth}
+      onStart={
+        occurrence.kind === 'workout' && occurrence.workoutId
+          ? () =>
+              start({
+                workoutId: occurrence.workoutId as string,
+                occurrenceId: occurrence.occurrenceId,
+              })
+          : undefined
+      }
+    />
+  );
+
   return (
     <View className="pb-4">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-4"
-      >
-        {data.map((occurrence) => (
-          <OccurrenceCard
-            key={occurrence.occurrenceId}
-            occurrence={occurrence}
-            onStart={
-              occurrence.kind === 'workout' && occurrence.workoutId
-                ? () =>
-                    start({
-                      workoutId: occurrence.workoutId as string,
-                      occurrenceId: occurrence.occurrenceId,
-                    })
-                : undefined
-            }
-          />
-        ))}
-      </ScrollView>
+      {data.length === 1 ? (
+        renderCard(data[0], true)
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-4"
+        >
+          {data.map((occurrence) => renderCard(occurrence, false))}
+        </ScrollView>
+      )}
       <ActiveWorkoutSheet ref={sheetRef} onConfirm={confirmDiscard} />
     </View>
   );

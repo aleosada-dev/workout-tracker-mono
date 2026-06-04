@@ -31,6 +31,17 @@ export function toOccurrenceResponse(occurrence: PeriodizationOccurrence): Occur
 	return occurrence;
 }
 
+export const OccurrenceIdParamSchema = z.object({
+	id: z.uuid(),
+});
+
+export const UpdateOccurrenceStatusRequestSchema = z.object({
+	status: z.enum(OCCURRENCE_STATUSES),
+	skippedReason: z.string().trim().max(500).optional(),
+});
+
+export type UpdateOccurrenceStatusRequest = z.infer<typeof UpdateOccurrenceStatusRequestSchema>;
+
 export const OccurrenceWorkoutParamSchema = z.object({
 	occurrenceId: z.uuid(),
 });

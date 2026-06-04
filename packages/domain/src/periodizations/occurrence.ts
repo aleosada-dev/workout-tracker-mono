@@ -36,3 +36,9 @@ export type GetOccurrenceTargetInput = {
   occurrenceId: string;
   athleteId: string;
 };
+
+export type UpdateOccurrenceStatusInput = {
+  occurrenceId: string;
+  status: OccurrenceStatus;
+  skippedReason?: string;
+};
