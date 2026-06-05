@@ -81,6 +81,7 @@ const WorkoutLogDetailExerciseSchema = z.object({
 
 export const WorkoutLogDetailResponseSchema = z.object({
 	workoutLogId: z.uuid(),
+	userId: z.uuid(),
 	title: z.string().nullable(),
 	startedAt: z.iso.datetime({ offset: true }),
 	finishedAt: z.iso.datetime({ offset: true }),

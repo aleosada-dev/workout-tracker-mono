@@ -30,6 +30,7 @@ const LAST_SELECT = `
 
 const DETAIL_SELECT = `
   id,
+  user_id,
   started_at,
   finished_at,
   note,
@@ -184,6 +185,22 @@ export function makeSupabaseWorkoutLogRepository(supabase: Supabase): WorkoutLog
         coachSessionId: result.coachSessionId ?? null,
         coachId: result.coachId ?? null,
       };
+    },
+
+    async softDelete({ workoutLogId }) {
+      const { error } = await supabase.rpc('wt_delete_workout_log', {
+        p_workout_log_id: workoutLogId,
+      });
+
+      if (error) {
+        if (error.code === '42501') {
+          throw new ForbiddenError('not authorized to delete this workout log');
+        }
+        if (error.code === 'P0002') {
+          throw new NotFoundError('workout log');
+        }
+        throw supabaseError('Failed to delete workout log', error);
+      }
     },
   };
 }

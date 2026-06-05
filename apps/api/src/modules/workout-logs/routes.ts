@@ -107,4 +107,26 @@ export const workoutLogsRouter = new Hono<AppBindings>()
 			}
 			return c.json(toWorkoutLogDetailResponse(detail));
 		},
+	)
+	.delete(
+		"/:id",
+		describeRoute({
+			summary: "Soft-delete a workout log and recompute affected records",
+			tags: ["Workout Logs"],
+			responses: {
+				204: { description: "Deleted" },
+				401: { description: "Unauthorized" },
+				403: { description: "Not authorized to delete this workout log" },
+				404: { description: "Not found" },
+			},
+		}),
+		validator("param", WorkoutLogIdParamSchema),
+		async (c) => {
+			const userId = c.get("userId");
+
+			const { id } = c.req.valid("param");
+			const { delete: deleteWorkoutLog } = c.get("container").workoutLogs;
+			await deleteWorkoutLog({ userId, workoutLogId: id });
+			return c.body(null, 204);
+		},
 	);

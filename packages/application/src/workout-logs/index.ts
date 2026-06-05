@@ -1,5 +1,6 @@
 import type { NotificationRepository, WorkoutLogRepository } from '@workout-tracker/domain';
 import { makeCreateWorkoutLog } from './create';
+import { makeDeleteWorkoutLog } from './delete';
 import { makeGetWorkoutLog } from './get';
 import { makeGetLastWorkoutLog } from './get-last';
 import { makeListWorkoutLogSummaries } from './list-summaries';
@@ -13,10 +14,12 @@ export function makeWorkoutLogApp(
     getLast: makeGetLastWorkoutLog(repository),
     getById: makeGetWorkoutLog(repository),
     create: makeCreateWorkoutLog(repository, notifications),
+    delete: makeDeleteWorkoutLog(repository),
   };
 }
 
 export * from './create';
+export * from './delete';
 export * from './get';
 export * from './get-last';
 export * from './list-summaries';

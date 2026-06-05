@@ -370,14 +370,14 @@ BEGIN
 
   -- Sets dos preparatórios. Rotação de Ombros por reps; Alongamento por tempo.
   INSERT INTO public.workout_sets
-    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, duration_seconds, measurement_type, linked_set_id, load_percent_of_previous)
+    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, duration_seconds, measurement_type, linked_set_id, load_percent_of_previous, round_order)
   VALUES
     -- Rotação de Ombros — 2 séries de 10-15 reps
-    ('bb110001-0000-4aaa-8aaa-000000000001'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, 'normal', 10, 15, NULL, 'reps',     NULL, NULL),
-    ('bb110002-0000-4aaa-8aaa-000000000002'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 1, 'normal', 10, 15, NULL, 'reps',     NULL, NULL),
+    ('bb110001-0000-4aaa-8aaa-000000000001'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 0, 'normal', 10, 15, NULL, 'reps',     NULL, NULL, 0),
+    ('bb110002-0000-4aaa-8aaa-000000000002'::uuid, 'aa110001-0000-4aaa-8aaa-000000000001'::uuid, 1, 'normal', 10, 15, NULL, 'reps',     NULL, NULL, 1),
     -- Alongamento de Peitoral — 2 séries de 30s (por tempo)
-    ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, 'normal', NULL, NULL, 30, 'duration', NULL, NULL),
-    ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, 'normal', NULL, NULL, 30, 'duration', NULL, NULL)
+    ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, 'normal', NULL, NULL, 30, 'duration', NULL, NULL, 0),
+    ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, 'normal', NULL, NULL, 30, 'duration', NULL, NULL, 1)
   ON CONFLICT DO NOTHING;
 
   -- ================================================
@@ -390,134 +390,134 @@ BEGIN
   --   • linked_set_id e load_percent_of_previous usados somente para drop/cluster
   -- ================================================
   INSERT INTO public.workout_sets
-    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous)
+    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous, round_order)
   VALUES
 
     -- ── we1: Supino Reto (Treino A Lucas) — warmup + 3 normal ──
-    ('5c8a08c0-86fd-4dc1-9460-1122f0f02a09'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('eb897524-4942-4baa-b199-e4f5f85e4994'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('155c2c1b-9d3c-4411-a527-3211098253e3'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('f549633f-5210-4181-ab45-06f3ae595186'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 3, 'normal',  8, 12, NULL, NULL),
+    ('5c8a08c0-86fd-4dc1-9460-1122f0f02a09'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('eb897524-4942-4baa-b199-e4f5f85e4994'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('155c2c1b-9d3c-4411-a527-3211098253e3'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('f549633f-5210-4181-ab45-06f3ae595186'::uuid, 'eddbdb00-f86d-473f-8661-cb40d328e425'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
 
     -- ── we2: Supino Inclinado (biset) — 3 normal ──
-    ('db7b7f7c-8ce2-4ed4-85bd-280b7960a4fb'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('42f1e17c-663e-42ec-9524-28b170b5eac6'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('ca8540db-c225-4ab0-928a-a6f5127da97f'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+    ('db7b7f7c-8ce2-4ed4-85bd-280b7960a4fb'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('42f1e17c-663e-42ec-9524-28b170b5eac6'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('ca8540db-c225-4ab0-928a-a6f5127da97f'::uuid, '8e31acae-fbb2-4221-8405-dba9ec818586'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
 
     -- ── we3: Tríceps Corda (biset, mesmo nº de séries que we2) — 3 normal ──
-    ('6f993d10-6baa-428d-a43e-635d274dcb49'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 0, 'normal', 12, 15, NULL, NULL),
-    ('ce6d0049-c311-4d12-a782-4b66d6de493f'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 1, 'normal', 12, 15, NULL, NULL),
-    ('68c01f3b-da63-4e19-ae1d-2ea9540e0df7'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 2, 'normal', 12, 15, NULL, NULL),
+    ('6f993d10-6baa-428d-a43e-635d274dcb49'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 0, 'normal', 12, 15, NULL, NULL, 0),
+    ('ce6d0049-c311-4d12-a782-4b66d6de493f'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 1, 'normal', 12, 15, NULL, NULL, 1),
+    ('68c01f3b-da63-4e19-ae1d-2ea9540e0df7'::uuid, '2d2e7fc0-a786-4951-b32e-80405f4843e0'::uuid, 2, 'normal', 12, 15, NULL, NULL, 2),
 
     -- ── we3b: Crucifixo (Treino A Lucas, isolado) — 3 normal ──
-    ('42a46d78-f739-4e47-8c3a-0d1e3f98ddce'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('2542bd92-7136-4e80-8028-d506f84e69de'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('f2acdcf8-8d90-43e0-bfb8-e313dd13e094'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+    ('42a46d78-f739-4e47-8c3a-0d1e3f98ddce'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('2542bd92-7136-4e80-8028-d506f84e69de'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('f2acdcf8-8d90-43e0-bfb8-e313dd13e094'::uuid, '71f013ef-7863-49f6-927b-f5559a15f772'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
 
     -- ── we3c: Pressdown de Tríceps (Treino A Lucas, isolado) — 3 normal ──
-    ('5a4b733c-78e3-4e99-a90a-d56951af781d'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 0, 'normal', 12, 15, NULL, NULL),
-    ('dd663eb4-f78d-4d02-b727-2f561aedc5de'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 1, 'normal', 12, 15, NULL, NULL),
-    ('1df8304c-2a05-4258-b7b3-9d11db2e2044'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 2, 'normal', 12, 15, NULL, NULL),
+    ('5a4b733c-78e3-4e99-a90a-d56951af781d'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 0, 'normal', 12, 15, NULL, NULL, 0),
+    ('dd663eb4-f78d-4d02-b727-2f561aedc5de'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 1, 'normal', 12, 15, NULL, NULL, 1),
+    ('1df8304c-2a05-4258-b7b3-9d11db2e2044'::uuid, '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 2, 'normal', 12, 15, NULL, NULL, 2),
 
     -- ── we4: Puxada na Barra Fixa (Treino B Lucas) — warmup + 3 normal ──
-    ('c915f46d-bc87-4e82-95b9-f0c25392a81d'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 0, 'warmup',  5,  8, NULL, NULL),
-    ('82a1f57e-0f44-4fb3-b58b-ef0e871c6e1b'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 1, 'normal',  6, 10, NULL, NULL),
-    ('0cec9445-6efb-45b8-83a6-05b1c59fde58'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 2, 'normal',  6, 10, NULL, NULL),
-    ('17d134ee-d3c7-442c-84cd-d19cba51b846'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 3, 'normal',  6, 10, NULL, NULL),
+    ('c915f46d-bc87-4e82-95b9-f0c25392a81d'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 0, 'warmup',  5,  8, NULL, NULL, 0),
+    ('82a1f57e-0f44-4fb3-b58b-ef0e871c6e1b'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 1, 'normal',  6, 10, NULL, NULL, 1),
+    ('0cec9445-6efb-45b8-83a6-05b1c59fde58'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 2, 'normal',  6, 10, NULL, NULL, 2),
+    ('17d134ee-d3c7-442c-84cd-d19cba51b846'::uuid, '11c87e26-6619-4f14-8f6f-840b9793623b'::uuid, 3, 'normal',  6, 10, NULL, NULL, 3),
 
     -- ── we5: Remada Sentada no Cabo — 3 normal ──
-    ('cb1ae711-f927-4f3d-bf71-c7553ee43f18'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 0, 'normal', 10, 12, NULL, NULL),
-    ('b2f2b23e-9f0c-4836-b518-4aee71997790'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 1, 'normal', 10, 12, NULL, NULL),
-    ('04ff3401-627d-4ee5-a190-66cae7850344'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 2, 'normal', 10, 12, NULL, NULL),
+    ('cb1ae711-f927-4f3d-bf71-c7553ee43f18'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 0, 'normal', 10, 12, NULL, NULL, 0),
+    ('b2f2b23e-9f0c-4836-b518-4aee71997790'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 1, 'normal', 10, 12, NULL, NULL, 1),
+    ('04ff3401-627d-4ee5-a190-66cae7850344'::uuid, '1e8cf022-a470-4932-b943-e46cf7a4f94f'::uuid, 2, 'normal', 10, 12, NULL, NULL, 2),
 
     -- ── we6: Puxada Frontal no Cabo (biset) — 3 normal ──
-    ('1c4f35e8-f893-4126-b367-36dfb285a878'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('311bb19b-e9c9-40d4-94dc-a5d0b20fd12c'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('67ef3ac4-79ec-4b5a-96c5-4c66dccdf87f'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+    ('1c4f35e8-f893-4126-b367-36dfb285a878'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('311bb19b-e9c9-40d4-94dc-a5d0b20fd12c'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('67ef3ac4-79ec-4b5a-96c5-4c66dccdf87f'::uuid, 'd983cc82-a4af-4058-b5e9-8fe79c291c72'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
 
     -- ── we7: Rosca Direta (biset, mesmo nº que we6) — 3 normal ──
-    ('ee6d26d3-cc60-40cd-824f-5caf2a3a9e82'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 0, 'normal', 10, 12, NULL, NULL),
-    ('0def4c21-d7ff-4e89-857c-588e660e143f'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 1, 'normal', 10, 12, NULL, NULL),
-    ('f02a247b-54a4-4490-9c54-9b1233ce2b09'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 2, 'normal', 10, 12, NULL, NULL),
+    ('ee6d26d3-cc60-40cd-824f-5caf2a3a9e82'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 0, 'normal', 10, 12, NULL, NULL, 0),
+    ('0def4c21-d7ff-4e89-857c-588e660e143f'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 1, 'normal', 10, 12, NULL, NULL, 1),
+    ('f02a247b-54a4-4490-9c54-9b1233ce2b09'::uuid, '8f76cdaa-1a4b-4b82-ba82-15e764bfed54'::uuid, 2, 'normal', 10, 12, NULL, NULL, 2),
 
     -- ── we8: Agachamento Livre (Treino A Fernanda) — warmup + 4 normal ──
-    ('88b8de94-51ab-45e1-823a-278ca6e22394'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('d5778bd1-e188-4769-a5c3-562ff6c319af'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('98a6c799-c9cf-43ce-8612-b3c1af9b9bec'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('1c405be0-3792-48c6-bca3-29fc04edc0c3'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 3, 'normal',  8, 12, NULL, NULL),
-    ('0a65c258-9909-4673-ad57-4945110f7fdd'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 4, 'normal',  8, 12, NULL, NULL),
+    ('88b8de94-51ab-45e1-823a-278ca6e22394'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('d5778bd1-e188-4769-a5c3-562ff6c319af'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('98a6c799-c9cf-43ce-8612-b3c1af9b9bec'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('1c405be0-3792-48c6-bca3-29fc04edc0c3'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
+    ('0a65c258-9909-4673-ad57-4945110f7fdd'::uuid, '585467c2-ffcb-4c66-b16c-9198acf2fa23'::uuid, 4, 'normal',  8, 12, NULL, NULL, 4),
 
     -- ── we9: Leg Press — 3 normal ──
-    ('8cd1ddca-34c0-42c1-99bb-847479a81424'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('98e797aa-131d-41c2-a288-58713a794fb5'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('b9cd128d-3aa2-45eb-b061-7c331e280c86'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+    ('8cd1ddca-34c0-42c1-99bb-847479a81424'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('98e797aa-131d-41c2-a288-58713a794fb5'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('b9cd128d-3aa2-45eb-b061-7c331e280c86'::uuid, '9f9606f7-4d33-469b-91ea-942486ec96d7'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
 
     -- ── we10: Mesa Flexora (biset) — 3 normal ──
-    ('63da9f51-57d8-4cba-9f3f-a33fa8b7ebd9'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('fa339cb9-0887-42f4-9fc9-17fc1970cb4a'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('baf4a2ac-c45d-4403-a7ff-c541d2b17977'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 2, 'normal', 10, 15, NULL, NULL),
+    ('63da9f51-57d8-4cba-9f3f-a33fa8b7ebd9'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('fa339cb9-0887-42f4-9fc9-17fc1970cb4a'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('baf4a2ac-c45d-4403-a7ff-c541d2b17977'::uuid, 'f031fc90-2a9a-4c84-924a-1f8af362a0df'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
 
     -- ── we11: Elevação Pélvica (biset, mesmo nº que we10) — 3 normal ──
-    ('68e3b367-8520-4bb3-9eed-d7fbeb795083'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 0, 'normal', 12, 15, NULL, NULL),
-    ('95c48f57-5a28-4261-8480-c8ce5655bfdf'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 1, 'normal', 12, 15, NULL, NULL),
-    ('91d18ae3-3dbe-464e-9350-12ff17261ff8'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 2, 'normal', 12, 15, NULL, NULL),
+    ('68e3b367-8520-4bb3-9eed-d7fbeb795083'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 0, 'normal', 12, 15, NULL, NULL, 0),
+    ('95c48f57-5a28-4261-8480-c8ce5655bfdf'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 1, 'normal', 12, 15, NULL, NULL, 1),
+    ('91d18ae3-3dbe-464e-9350-12ff17261ff8'::uuid, '0946a2cd-d24c-4832-95ee-0a0fdbd611b0'::uuid, 2, 'normal', 12, 15, NULL, NULL, 2),
 
     -- ── we12: Supino Reto (Full Body Rafael) — warmup + 3 normal ──
-    ('ab88c0a0-8493-4ae0-9926-c6e1d96c510a'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('780bcedd-30e5-4151-ab59-cc29613c7744'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('04bbb841-33d3-4190-9a35-c594ade10b3d'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('1afcd78e-4033-4ffe-9540-eeb280ad1f0e'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 3, 'normal',  8, 12, NULL, NULL),
+    ('ab88c0a0-8493-4ae0-9926-c6e1d96c510a'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('780bcedd-30e5-4151-ab59-cc29613c7744'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('04bbb841-33d3-4190-9a35-c594ade10b3d'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('1afcd78e-4033-4ffe-9540-eeb280ad1f0e'::uuid, 'd1a0ad4b-8b5e-4d37-b330-dfb0112c9b78'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
 
     -- ── we13: Agachamento Livre (Full Body Rafael) — warmup + 3 normal ──
-    ('32bb8660-f685-4372-b3bb-deae58fb60ad'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('4351f751-e18b-45c5-94cd-a7b99ed11164'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('8afe03e5-6cab-4978-9628-b3df4056d1f8'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('8c6247f8-cf93-4be3-ae47-c0e307e227ff'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 3, 'normal',  8, 12, NULL, NULL),
+    ('32bb8660-f685-4372-b3bb-deae58fb60ad'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('4351f751-e18b-45c5-94cd-a7b99ed11164'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('8afe03e5-6cab-4978-9628-b3df4056d1f8'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('8c6247f8-cf93-4be3-ae47-c0e307e227ff'::uuid, '51fa054a-539d-4f58-8511-469473421df6'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
 
     -- ── we14: Remada Sentada no Cabo (Full Body Rafael) — 3 normal ──
-    ('3194d1d9-f8e7-4686-bdd6-f5fc65c62047'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 0, 'normal', 10, 12, NULL, NULL),
-    ('eb599dca-43d3-44a2-8600-c4503504ced7'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 1, 'normal', 10, 12, NULL, NULL),
-    ('8912fc79-ced9-4898-a529-0e37ff12b1b5'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 2, 'normal', 10, 12, NULL, NULL),
+    ('3194d1d9-f8e7-4686-bdd6-f5fc65c62047'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 0, 'normal', 10, 12, NULL, NULL, 0),
+    ('eb599dca-43d3-44a2-8600-c4503504ced7'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 1, 'normal', 10, 12, NULL, NULL, 1),
+    ('8912fc79-ced9-4898-a529-0e37ff12b1b5'::uuid, '96cb499a-f6a1-4773-bc45-52cbf5b06161'::uuid, 2, 'normal', 10, 12, NULL, NULL, 2),
 
     -- ── we15: Desenvolvimento Militar (Full Body Rafael) — warmup + 3 normal ──
-    ('0e6101cd-8299-4f5a-ae4a-b31d528503cb'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('13d4183a-8e1f-4019-bc65-e8e4d0e2341b'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('789463d1-db12-469a-b09d-5f69aa078d29'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('18e698fa-b3e2-4566-a371-3bf9bd2f865c'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 3, 'normal',  8, 12, NULL, NULL),
+    ('0e6101cd-8299-4f5a-ae4a-b31d528503cb'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('13d4183a-8e1f-4019-bc65-e8e4d0e2341b'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('789463d1-db12-469a-b09d-5f69aa078d29'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('18e698fa-b3e2-4566-a371-3bf9bd2f865c'::uuid, '98cce1eb-002a-4274-853e-2921e4cecf2a'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
 
     -- ── we16: Supino Reto (Treino A Marcos) — warmup + 4 normal ──
-    ('ca05050c-fc8f-4929-ba16-f89ac1412c6e'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 0, 'warmup', 12, 15, NULL, NULL),
-    ('8155131a-20c0-4dd5-b993-ec7089b79672'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('288a32ec-da56-413b-8a8c-3d5b4cf9433c'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('9a9dfaee-3084-4921-a443-28189dd180f3'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 3, 'normal',  8, 12, NULL, NULL),
-    ('2b70aff1-a1f8-4c66-bbf5-7023def244df'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 4, 'normal',  8, 12, NULL, NULL),
+    ('ca05050c-fc8f-4929-ba16-f89ac1412c6e'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 0, 'warmup', 12, 15, NULL, NULL, 0),
+    ('8155131a-20c0-4dd5-b993-ec7089b79672'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('288a32ec-da56-413b-8a8c-3d5b4cf9433c'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('9a9dfaee-3084-4921-a443-28189dd180f3'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
+    ('2b70aff1-a1f8-4c66-bbf5-7023def244df'::uuid, '3c2afa30-3934-425d-89c3-b7615ff07e90'::uuid, 4, 'normal',  8, 12, NULL, NULL, 4),
 
     -- ── we17: Supino Inclinado (Treino A Marcos) — 4 normal ──
-    ('f75dc00e-7d15-4c2b-9ebe-c5f4003fc528'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 0, 'normal', 10, 15, NULL, NULL),
-    ('82cc712f-464b-441e-8b03-fde032febb67'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 1, 'normal', 10, 15, NULL, NULL),
-    ('c14ea290-02f8-4a49-9d33-8d1d6c72248b'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 2, 'normal', 10, 15, NULL, NULL),
-    ('d009f18e-47ba-4ece-bfb2-1a59373a2843'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 3, 'normal', 10, 15, NULL, NULL),
+    ('f75dc00e-7d15-4c2b-9ebe-c5f4003fc528'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 0, 'normal', 10, 15, NULL, NULL, 0),
+    ('82cc712f-464b-441e-8b03-fde032febb67'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 1, 'normal', 10, 15, NULL, NULL, 1),
+    ('c14ea290-02f8-4a49-9d33-8d1d6c72248b'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 2, 'normal', 10, 15, NULL, NULL, 2),
+    ('d009f18e-47ba-4ece-bfb2-1a59373a2843'::uuid, '50acbdfe-42c4-4037-bf4f-e8b4165b8e06'::uuid, 3, 'normal', 10, 15, NULL, NULL, 3),
 
     -- ── we18: Desenvolvimento Militar (Treino A Marcos) — warmup + 3 normal ──
-    ('bd88df0d-1741-42b4-98e5-9dfba8e30160'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 0, 'warmup', 10, 15, NULL, NULL),
-    ('531c42ab-ba3e-4e0c-85c0-f6e4950bc29c'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 1, 'normal',  8, 12, NULL, NULL),
-    ('34e62acc-7607-4166-a811-8edf23c35167'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 2, 'normal',  8, 12, NULL, NULL),
-    ('c385116c-c034-408f-b2d2-d11553c4b04c'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 3, 'normal',  8, 12, NULL, NULL),
+    ('bd88df0d-1741-42b4-98e5-9dfba8e30160'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 0, 'warmup', 10, 15, NULL, NULL, 0),
+    ('531c42ab-ba3e-4e0c-85c0-f6e4950bc29c'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 1, 'normal',  8, 12, NULL, NULL, 1),
+    ('34e62acc-7607-4166-a811-8edf23c35167'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 2, 'normal',  8, 12, NULL, NULL, 2),
+    ('c385116c-c034-408f-b2d2-d11553c4b04c'::uuid, '081a736e-51fe-4b12-b0c5-10ee687d00c7'::uuid, 3, 'normal',  8, 12, NULL, NULL, 3),
 
     -- ── we19: Elevação Lateral (biset) — 3 normal ──
-    ('d45aa959-e751-47a1-9b67-ec24db080f64'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 0, 'normal', 12, 15, NULL, NULL),
-    ('4866dc65-ef1e-4eef-9df5-4a4d2dbd6a83'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 1, 'normal', 12, 15, NULL, NULL),
-    ('362438ea-709f-4036-b826-2c74830a67a4'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 2, 'normal', 12, 15, NULL, NULL),
+    ('d45aa959-e751-47a1-9b67-ec24db080f64'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 0, 'normal', 12, 15, NULL, NULL, 0),
+    ('4866dc65-ef1e-4eef-9df5-4a4d2dbd6a83'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 1, 'normal', 12, 15, NULL, NULL, 1),
+    ('362438ea-709f-4036-b826-2c74830a67a4'::uuid, '8d59cf84-14f5-42d5-be73-4876aee6b69b'::uuid, 2, 'normal', 12, 15, NULL, NULL, 2),
 
     -- ── we20: Tríceps Corda (biset, mesmo nº que we19) — 3 normal ──
-    ('83001e63-0341-4ae6-841c-acc512307e22'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 0, 'normal', 12, 15, NULL, NULL),
-    ('280b0f9c-93fe-4331-9c10-258eb94a8a10'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 1, 'normal', 12, 15, NULL, NULL),
-    ('46efe9d9-a47d-4dc5-9815-ca0bddfb0902'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 2, 'normal', 12, 15, NULL, NULL)
+    ('83001e63-0341-4ae6-841c-acc512307e22'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 0, 'normal', 12, 15, NULL, NULL, 0),
+    ('280b0f9c-93fe-4331-9c10-258eb94a8a10'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 1, 'normal', 12, 15, NULL, NULL, 1),
+    ('46efe9d9-a47d-4dc5-9815-ca0bddfb0902'::uuid, 'a3c5d46c-a9bf-4bca-94a8-fd275cec9fea'::uuid, 2, 'normal', 12, 15, NULL, NULL, 2)
 
   ON CONFLICT DO NOTHING;
 
   INSERT INTO public.workout_sets
-    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous)
+    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous, round_order)
   SELECT
     gen_random_uuid(),
     exercise_id,
@@ -526,7 +526,7 @@ BEGIN
     reps_min,
     reps_max,
     NULL,
-    NULL
+    NULL, set_order
   FROM (
     -- wk7 athlete2 — Posteriores e Costas
     VALUES
@@ -611,9 +611,13 @@ BEGIN
   ON CONFLICT DO NOTHING;
 
   -- ================================================
-  -- workout_variation_records
-  -- PRs históricos por atleta para as variações dos seus treinos
-  -- max_weight_kg NULL para exercícios com peso corporal (ex: barra fixa)
+  -- workout_variation_records (BASE de geração)
+  -- PRs históricos por atleta para as variações dos seus treinos.
+  -- max_weight_kg NULL para exercícios com peso corporal (ex: barra fixa).
+  -- ATENÇÃO: estes valores servem apenas como base para derivar as cargas
+  -- dos set logs em 07_seed_workout_logs.sql. Os records finais são
+  -- recalculados lá via wt_recalculate_variation_records a partir dos set
+  -- logs reais (uma linha por user/variation), substituindo estes.
   -- ================================================
   INSERT INTO public.workout_variation_records
     (user_id, variation_id, max_weight_kg, max_volume_kg, max_reps, max_sets)
@@ -787,8 +791,8 @@ BEGIN
 
   -- workout_sets
   INSERT INTO public.workout_sets
-    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous)
-  SELECT gen_random_uuid(), exercise_id, set_order, set_type, reps_min, reps_max, NULL, NULL
+    (id, workout_exercise_id, set_order, set_type, reps_min, reps_max, linked_set_id, load_percent_of_previous, round_order)
+  SELECT gen_random_uuid(), exercise_id, set_order, set_type, reps_min, reps_max, NULL, NULL, set_order
   FROM (VALUES
     -- Treino C
     (we_c_1, 0, 'warmup', 12, 15),

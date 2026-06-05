@@ -1,21 +1,56 @@
-import { Card, EmptyState, Icon, SectionHeading, Text } from '@workout-tracker/ui-mobile';
+import {
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  Icon,
+  SectionHeading,
+  Text,
+} from '@workout-tracker/ui-mobile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { StickyNote, Trophy } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { Pencil, StickyNote, Trash2, Trophy } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { useSession } from '@/features/auth/hooks/useSession';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { workoutLogObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
+import { useNavTheme } from '@/features/shared/lib/theme';
 import { WorkoutLogExerciseCard } from '@/features/workout-logs/components/WorkoutLogExerciseCard';
 import { WorkoutLogStats } from '@/features/workout-logs/components/WorkoutLogStats';
 import { WorkoutLogSupersetCard } from '@/features/workout-logs/components/WorkoutLogSupersetCard';
+import { useDeleteWorkoutLog } from '@/features/workout-logs/hooks/use-delete-workout-log';
 import { useWorkoutLogDetail } from '@/features/workout-logs/hooks/use-workout-log-detail';
 import { groupDetailExercises } from '@/features/workout-logs/lib/detail-format';
 
 export default function WorkoutLogDetailScreen() {
   const { t } = useTranslation();
+  const navTheme = useNavTheme();
+  const { session } = useSession();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: detail, isLoading, isError, error } = useWorkoutLogDetail(id);
+  const { mutate: deleteWorkoutLog, isPending: isDeleting } = useDeleteWorkoutLog();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleConfirmDelete = () => {
+    deleteWorkoutLog(id, {
+      onSuccess: () => {
+        workoutLogObservability.trackAction('workout_log_deleted', { id });
+        setDeleteOpen(false);
+        Toast.show({ type: 'success', text1: t('workoutLogDetail.delete.success') });
+        router.back();
+      },
+      onError: handleLocalError((err) => {
+        workoutLogObservability.captureError(err, { action: 'delete_workout_log', extra: { id } });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      }),
+    });
+  };
 
   useReportRequestError({ isError, error }, workoutLogObservability.captureError, {
     action: 'load_detail',
@@ -58,10 +93,42 @@ export default function WorkoutLogDetailScreen() {
   }
 
   const items = groupDetailExercises(detail.exercises);
+  const isOwner = detail.userId === session?.user?.id;
 
   return (
     <View className="flex-1 bg-background">
-      <Stack.Screen options={{ title: detail.title ?? t('workoutLogs.untitled') }} />
+      <Stack.Screen
+        options={{
+          title: detail.title ?? t('workoutLogs.untitled'),
+          headerRight: () => (
+            <View className="flex-row items-center gap-1">
+              <Pressable
+                onPress={() => {}}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t('workoutLogDetail.actions.edit')}
+                className="px-2"
+                testID="workout-log-detail.edit"
+              >
+                <Pencil size={20} color={navTheme.colors.text} />
+              </Pressable>
+              {isOwner ? (
+                <Pressable
+                  onPress={() => setDeleteOpen(true)}
+                  disabled={isDeleting}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workoutLogDetail.actions.delete')}
+                  className="px-2"
+                  testID="workout-log-detail.delete"
+                >
+                  <Trash2 size={20} color={navTheme.colors.notification} />
+                </Pressable>
+              ) : null}
+            </View>
+          ),
+        }}
+      />
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-3 pb-8"
@@ -102,6 +169,17 @@ export default function WorkoutLogDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t('workoutLogDetail.delete.title')}
+        description={t('workoutLogDetail.delete.description')}
+        confirmLabel={t('workoutLogDetail.delete.confirm')}
+        cancelLabel={t('workoutLogDetail.delete.cancel')}
+        onConfirm={handleConfirmDelete}
+        confirmTestID="workout-log-detail.delete-confirm"
+      />
     </View>
   );
 }

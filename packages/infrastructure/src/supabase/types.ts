@@ -2907,6 +2907,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      wt_delete_workout_log: {
+        Args: { p_workout_log_id: string }
+        Returns: undefined
+      }
       wt_get_exercise_history: {
         Args: { p_user_id: string; p_variation_id: string }
         Returns: Json
@@ -2957,6 +2961,10 @@ export type Database = {
           video_thumbnail_key: string
           video_url: string
         }[]
+      }
+      wt_recalculate_variation_records: {
+        Args: { p_user_id: string; p_variation_ids: string[] }
+        Returns: undefined
       }
       wt_set_user_preferences: {
         Args: { p_prefs: Json }

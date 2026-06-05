@@ -10,6 +10,18 @@ export default {
   },
   superset: 'Superset',
   preparatory: 'Preparatory',
+  actions: {
+    edit: 'Edit workout',
+    delete: 'Delete workout',
+  },
+  delete: {
+    title: 'Delete this workout?',
+    description:
+      'The log will no longer appear in your history and the exercise records will be recalculated. This action cannot be undone.',
+    confirm: 'Delete',
+    cancel: 'Cancel',
+    success: 'Workout deleted',
+  },
   error: {
     title: 'Could not load this workout.',
     retry: 'Try again',

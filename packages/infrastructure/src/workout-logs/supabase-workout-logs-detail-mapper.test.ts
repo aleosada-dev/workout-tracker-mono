@@ -3,6 +3,7 @@ import { type DetailRow, toWorkoutLogDetail } from './supabase-workout-logs-deta
 
 const baseRow: DetailRow = {
   id: 'log-1',
+  user_id: 'user-1',
   started_at: '2026-05-08T14:00:00Z',
   finished_at: '2026-05-08T14:56:00Z',
   note: 'great session',
@@ -64,6 +65,7 @@ describe('toWorkoutLogDetail', () => {
     const detail = toWorkoutLogDetail(baseRow);
 
     expect(detail.workoutLogId).toBe('log-1');
+    expect(detail.userId).toBe('user-1');
     expect(detail.title).toBe('Fullbody');
     expect(detail.note).toBe('great session');
     expect(detail.sessionRecords).toEqual([{ variationId: 'v-1' }]);

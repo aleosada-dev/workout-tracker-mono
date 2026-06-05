@@ -4,6 +4,7 @@ import { buildApiError, honoClient } from '@/features/api/lib/hono-client';
 const $getSummaries = honoClient.api.v1['workout-logs'].summaries.$get;
 const $getWorkoutLog = honoClient.api.v1['workout-logs'][':id'].$get;
 const $createWorkoutLog = honoClient.api.v1['workout-logs'].$post;
+const $deleteWorkoutLog = honoClient.api.v1['workout-logs'][':id'].$delete;
 
 export type WorkoutLogSummariesPage = InferResponseType<typeof $getSummaries, 200>;
 export type WorkoutLogSummariesParams = InferRequestType<typeof $getSummaries>;
@@ -37,4 +38,9 @@ export async function createWorkoutLog(
   const response = await $createWorkoutLog({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
+}
+
+export async function deleteWorkoutLog(id: string): Promise<void> {
+  const response = await $deleteWorkoutLog({ param: { id } });
+  if (!response.ok) throw await buildApiError(response);
 }

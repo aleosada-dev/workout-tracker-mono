@@ -59,6 +59,7 @@ describe('formatSetValue', () => {
 describe('summarizeDetail', () => {
   const detail: WorkoutLogDetail = {
     workoutLogId: 'log-1',
+    userId: 'user-1',
     title: 'Fullbody',
     startedAt: '2026-05-08T14:00:00Z',
     finishedAt: '2026-05-08T14:30:00Z',
