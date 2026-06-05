@@ -7,6 +7,7 @@ import {
 	OccurrenceResponseSchema,
 	OccurrencesQuerySchema,
 	OccurrenceWorkoutParamSchema,
+	OccurrenceWorkoutQuerySchema,
 	OccurrenceWorkoutResponseSchema,
 	toOccurrenceResponse,
 	toOccurrenceWorkoutResponse,
@@ -33,11 +34,12 @@ export const periodizationsRouter = new Hono<AppBindings>()
 		}),
 		validator("query", OccurrencesQuerySchema),
 		async (c) => {
-			const userId = c.get("userId");
+			const authUserId = c.get("userId");
 
-			const { date, status } = c.req.valid("query");
+			const { userId: queryUserId, date, status } = c.req.valid("query");
+			const athleteId = queryUserId ?? authUserId;
 			const { listOccurrences } = c.get("container").periodizations;
-			const occurrences = await listOccurrences({ athleteId: userId, date, status });
+			const occurrences = await listOccurrences({ athleteId, date, status });
 			return c.json(occurrences.map(toOccurrenceResponse));
 		},
 	)
@@ -60,9 +62,12 @@ export const periodizationsRouter = new Hono<AppBindings>()
 			},
 		}),
 		validator("param", OccurrenceWorkoutParamSchema),
+		validator("query", OccurrenceWorkoutQuerySchema),
 		async (c) => {
-			const athleteId = c.get("userId");
+			const authUserId = c.get("userId");
 			const { occurrenceId } = c.req.valid("param");
+			const { userId: queryUserId } = c.req.valid("query");
+			const athleteId = queryUserId ?? authUserId;
 			const { getOccurrenceWorkout } = c.get("container").periodizations;
 			const result = await getOccurrenceWorkout({ occurrenceId, athleteId });
 			return c.json(toOccurrenceWorkoutResponse(result));

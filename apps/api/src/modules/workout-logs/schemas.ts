@@ -14,6 +14,7 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 
 export const ListWorkoutLogSummariesQuerySchema = z.object({
+	userId: z.uuid().optional(),
 	limit: z.coerce.number().int().positive().max(MAX_LIMIT).default(DEFAULT_LIMIT),
 	cursor: z.iso.datetime({ offset: true }).optional(),
 });

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toWorkoutDetailResponse, WorkoutDetailResponseSchema } from "../workouts/schemas";
 
 export const OccurrencesQuerySchema = z.object({
+	userId: z.uuid().optional(),
 	date: z.iso.date(),
 	status: z.enum(OCCURRENCE_STATUSES).default("pending"),
 });
@@ -44,6 +45,10 @@ export type UpdateOccurrenceStatusRequest = z.infer<typeof UpdateOccurrenceStatu
 
 export const OccurrenceWorkoutParamSchema = z.object({
 	occurrenceId: z.uuid(),
+});
+
+export const OccurrenceWorkoutQuerySchema = z.object({
+	userId: z.uuid().optional(),
 });
 
 export const OccurrenceWorkoutResponseSchema = z.object({

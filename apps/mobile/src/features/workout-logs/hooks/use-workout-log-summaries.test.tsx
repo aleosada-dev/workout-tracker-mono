@@ -79,6 +79,38 @@ describe('useWorkoutLogSummaries', () => {
     );
   });
 
+  test('forwards userId to the query when provided', async () => {
+    mockFetch.mockResolvedValueOnce({
+      items: [itemAt('2026-05-01T00:00:00Z')],
+      hasMore: false,
+    });
+
+    const { result } = renderHook(() => useWorkoutLogSummaries('athlete-1'), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockFetch).toHaveBeenCalledWith(
+      { query: { limit: String(PAGE_SIZE), cursor: undefined, userId: 'athlete-1' } },
+      expect.anything(),
+    );
+  });
+
+  test('omits userId from the query when not provided', async () => {
+    mockFetch.mockResolvedValueOnce({
+      items: [itemAt('2026-05-01T00:00:00Z')],
+      hasMore: false,
+    });
+
+    const { result } = renderHook(() => useWorkoutLogSummaries(), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockFetch).toHaveBeenCalledWith(
+      { query: { limit: String(PAGE_SIZE), cursor: undefined } },
+      expect.anything(),
+    );
+  });
+
   test('hasNextPage is false when hasMore is false', async () => {
     mockFetch.mockResolvedValueOnce({
       items: [itemAt('2026-05-01T00:00:00Z')],

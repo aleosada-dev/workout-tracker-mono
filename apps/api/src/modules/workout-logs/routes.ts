@@ -34,12 +34,13 @@ export const workoutLogsRouter = new Hono<AppBindings>()
 		}),
 		validator("query", ListWorkoutLogSummariesQuerySchema),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
+			const authUserId = c.get("userClaims")?.sub;
+			if (!authUserId) {
 				return c.json({ error: "Missing user identity" }, 401);
 			}
 
-			const { limit, cursor } = c.req.valid("query");
+			const { userId: queryUserId, limit, cursor } = c.req.valid("query");
+			const userId = queryUserId ?? authUserId;
 			const { listSummaries } = c.get("container").workoutLogs;
 			const page = await listSummaries({ userId, limit, cursor });
 			return c.json(toWorkoutLogSummaryPageResponse(page));

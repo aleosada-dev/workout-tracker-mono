@@ -3,6 +3,7 @@ export default {
   workouts: 'Workouts',
   cardio: 'Cardio',
   periodization: 'Periodization',
+  workoutHistory: 'Workout history',
   newFolder: 'New folder',
   folders: 'Folders',
   athleteContext: {

@@ -4,8 +4,14 @@ import { useTodayOccurrences } from '@/features/periodizations/hooks/use-today-o
 import { ActiveWorkoutSheet } from '@/features/workouts/components/ActiveWorkoutSheet';
 import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout';
 
-export function OccurrencesCarousel() {
-  const { data } = useTodayOccurrences();
+export function OccurrencesCarousel({
+  userId,
+  athleteName,
+}: {
+  userId?: string | null;
+  athleteName?: string | null;
+} = {}) {
+  const { data } = useTodayOccurrences(userId);
   const { start, sheetRef, confirmDiscard } = useStartWorkout();
 
   if (!data || data.length === 0) return null;
@@ -21,6 +27,8 @@ export function OccurrencesCarousel() {
               start({
                 workoutId: occurrence.workoutId as string,
                 occurrenceId: occurrence.occurrenceId,
+                userId,
+                athleteName,
               })
           : undefined
       }

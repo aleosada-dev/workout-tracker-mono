@@ -1,6 +1,6 @@
 import { Text } from '@workout-tracker/ui-mobile';
 import { useRouter } from 'expo-router';
-import { Calendar, Dumbbell, HeartPulse, List } from 'lucide-react-native';
+import { Calendar, Dumbbell, HeartPulse, History, List } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +40,18 @@ export default function WorkoutsScreen() {
               {t('workoutsScreen.periodization')}
             </Text>
           </MenuCard>
+        </View>
+        <View className="flex-row gap-4">
+          <MenuCard
+            onPress={() => router.push('/workoutHistory')}
+            testID="workouts-menu.workout-history"
+          >
+            <History color="white" size={36} />
+            <Text variant="h4" className="text-center text-white">
+              {t('workoutsScreen.workoutHistory')}
+            </Text>
+          </MenuCard>
+          <View className="flex-1" />
         </View>
       </View>
     </SafeAreaView>

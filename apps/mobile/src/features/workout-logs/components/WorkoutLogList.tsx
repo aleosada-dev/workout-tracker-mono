@@ -19,9 +19,11 @@ import { toCardProps } from '@/features/workout-logs/lib/format';
 export function WorkoutLogList({
   header,
   onRefresh,
+  userId,
 }: {
   header?: ReactElement;
   onRefresh?: () => void;
+  userId?: string | null;
 }) {
   const { t } = useTranslation();
   const locale = useDateFnsLocale();
@@ -36,7 +38,7 @@ export function WorkoutLogList({
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useWorkoutLogSummaries();
+  } = useWorkoutLogSummaries(userId);
 
   const items: WorkoutLogSummary[] = useMemo(
     () => (data?.pages ?? []).flatMap((p) => p.items),

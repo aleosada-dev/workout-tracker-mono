@@ -137,6 +137,10 @@ export default function RootLayout() {
                         <Stack.Screen name="(stacks)/(workouts)/workoutLogDetail" />
                         <Stack.Screen name="(stacks)/(workouts)/cardioList" />
                         <Stack.Screen name="(stacks)/(workouts)/myPeriodization" />
+                        <Stack.Screen
+                          name="(stacks)/(workouts)/workoutHistory"
+                          options={{ title: t('workoutsScreen.workoutHistory') }}
+                        />
 
                         <Stack.Screen
                           name="(stacks)/(settings)/profile"

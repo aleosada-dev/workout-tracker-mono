@@ -84,7 +84,10 @@ export default function WorkoutExecutionScreen() {
     athleteName?: string;
   }>();
 
-  const occurrenceWorkout = useOccurrenceWorkout(active || !occurrenceId ? null : occurrenceId);
+  const occurrenceWorkout = useOccurrenceWorkout(
+    active || !occurrenceId ? null : occurrenceId,
+    userId,
+  );
 
   const { data: baseWorkout } = useWorkout({
     workoutId: active || occurrenceId ? null : workoutId,
