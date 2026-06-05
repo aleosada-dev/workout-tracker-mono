@@ -22,36 +22,30 @@ describe('parseStoredPreferences', () => {
   test('parses every preference key', () => {
     const prefs = parseStoredPreferences([
       { key: 'default_rest_seconds', value: 90 },
-      { key: 'weight', value: { unit: 'lb', rounding: 5 } },
+      { key: 'weight_unit', value: 'lb' },
       { key: 'count_warmup_sets', value: true },
       { key: 'auto_start_rest_timer', value: false },
+      { key: 'load_rounding', value: '2.5' },
     ]);
 
     expect(prefs).toEqual({
       defaultRestSeconds: 90,
-      weight: { unit: 'lb', rounding: 5 },
+      weightUnit: 'lb',
       countWarmupSets: true,
       autoStartRestTimer: false,
+      loadRounding: '2.5',
     });
   });
 
-  test('keeps the unit but drops a rounding increment invalid for that unit', () => {
-    const prefs = parseStoredPreferences([{ key: 'weight', value: { unit: 'kg', rounding: 5 } }]);
+  test('ignores an invalid load_rounding mode', () => {
+    const prefs = parseStoredPreferences([{ key: 'load_rounding', value: '3' }]);
 
-    expect(prefs.weight).toEqual({ unit: 'kg', rounding: null });
+    expect(prefs).toEqual(DEFAULT_USER_PREFERENCES);
   });
 
-  test('accepts a null rounding (no rounding)', () => {
+  test('ignores values with the wrong shape', () => {
     const prefs = parseStoredPreferences([
-      { key: 'weight', value: { unit: 'lb', rounding: null } },
-    ]);
-
-    expect(prefs.weight).toEqual({ unit: 'lb', rounding: null });
-  });
-
-  test('ignores a weight value with an invalid unit', () => {
-    const prefs = parseStoredPreferences([
-      { key: 'weight', value: { unit: 'oz', rounding: 1 } },
+      { key: 'weight_unit', value: 'oz' },
       { key: 'default_rest_seconds', value: 'fast' },
     ]);
 
@@ -61,14 +55,9 @@ describe('parseStoredPreferences', () => {
 
 describe('preferencesPatchToStored', () => {
   test('maps present camelCase keys to snake_case, preserving null as reset', () => {
-    expect(
-      preferencesPatchToStored({
-        defaultRestSeconds: null,
-        weight: { unit: 'lb', rounding: 2.5 },
-      }),
-    ).toEqual({
+    expect(preferencesPatchToStored({ defaultRestSeconds: null, weightUnit: 'lb' })).toEqual({
       default_rest_seconds: null,
-      weight: { unit: 'lb', rounding: 2.5 },
+      weight_unit: 'lb',
     });
   });
 

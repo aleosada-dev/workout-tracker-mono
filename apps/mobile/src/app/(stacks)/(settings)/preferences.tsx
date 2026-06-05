@@ -5,6 +5,7 @@ import {
   SectionHeading,
   Separator,
   Skeleton,
+  Text,
 } from '@workout-tracker/ui-mobile';
 import { Dumbbell, SlidersHorizontal } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -13,9 +14,10 @@ import { ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { preferencesObservability } from '@/features/observability/lib';
 import { DefaultRestSecondsField } from '@/features/preferences/components/default-rest-seconds-field';
+import { LoadRoundingSelect } from '@/features/preferences/components/load-rounding-select';
 import { PreferencesActions } from '@/features/preferences/components/PreferencesActions';
 import { PreferenceSwitchRow } from '@/features/preferences/components/preference-switch-row';
-import { WeightPreferenceField } from '@/features/preferences/components/weight-preference-field';
+import { WeightUnitSelect } from '@/features/preferences/components/weight-unit-select';
 import { useUpdateUserPreferences } from '@/features/preferences/hooks/use-update-user-preferences';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { LanguageSelect } from '@/features/settings/components/language-select';
@@ -23,25 +25,26 @@ import { ThemeToggle } from '@/features/settings/components/theme-toggle';
 
 type WorkoutDraft = Pick<
   UserPreferences,
-  'weight' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer'
+  'weightUnit' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer' | 'loadRounding'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
   return {
-    weight: preferences.weight,
+    weightUnit: preferences.weightUnit,
     defaultRestSeconds: preferences.defaultRestSeconds,
     countWarmupSets: preferences.countWarmupSets,
     autoStartRestTimer: preferences.autoStartRestTimer,
+    loadRounding: preferences.loadRounding,
   };
 }
 
 function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
   return (
-    a.weight.unit === b.weight.unit &&
-    a.weight.rounding === b.weight.rounding &&
+    a.weightUnit === b.weightUnit &&
     a.defaultRestSeconds === b.defaultRestSeconds &&
     a.countWarmupSets === b.countWarmupSets &&
-    a.autoStartRestTimer === b.autoStartRestTimer
+    a.autoStartRestTimer === b.autoStartRestTimer &&
+    a.loadRounding === b.loadRounding
   );
 }
 
@@ -130,10 +133,26 @@ export default function PreferencesScreen() {
           </View>
         ) : (
           <>
-            <WeightPreferenceField
-              value={draft.weight}
-              onChange={(weight) => setDraft((prev) => prev && { ...prev, weight })}
-            />
+            <View className="gap-2">
+              <Label>{t('preferencesScreen.weightUnit.label')}</Label>
+              <WeightUnitSelect
+                value={draft.weightUnit}
+                onValueChange={(weightUnit) => setDraft((prev) => prev && { ...prev, weightUnit })}
+              />
+            </View>
+
+            <View className="gap-2">
+              <Label>{t('preferencesScreen.loadRounding.label')}</Label>
+              <Text variant="muted" className="text-sm">
+                {t('preferencesScreen.loadRounding.description')}
+              </Text>
+              <LoadRoundingSelect
+                value={draft.loadRounding}
+                onValueChange={(loadRounding) =>
+                  setDraft((prev) => prev && { ...prev, loadRounding })
+                }
+              />
+            </View>
 
             <DefaultRestSecondsField
               value={draft.defaultRestSeconds}

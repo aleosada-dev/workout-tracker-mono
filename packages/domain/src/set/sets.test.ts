@@ -399,43 +399,36 @@ describe('TimeSet.volume', () => {
 });
 
 describe('roundLoad', () => {
-  it('keeps two decimals without rounding', () => {
-    expect(roundLoad(78.75, { unit: 'kg', rounding: null })).toBe(78.75);
-    expect(roundLoad(78.756, { unit: 'kg', rounding: null })).toBe(78.76);
+  it('keeps two decimals without rounding in "none" mode', () => {
+    expect(roundLoad(78.75, 'none')).toBe(78.75);
+    expect(roundLoad(78.756, 'none')).toBe(78.76);
   });
 
-  it('rounds to the nearest 0.5 kg', () => {
-    expect(roundLoad(78.75, { unit: 'kg', rounding: 0.5 })).toBe(79);
-    expect(roundLoad(78.24, { unit: 'kg', rounding: 0.5 })).toBe(78);
+  it('rounds to the nearest 0.5', () => {
+    expect(roundLoad(78.75, '0.5')).toBe(79);
+    expect(roundLoad(78.24, '0.5')).toBe(78);
   });
 
-  it('rounds to the nearest kg', () => {
-    expect(roundLoad(78.75, { unit: 'kg', rounding: 1 })).toBe(79);
-    expect(roundLoad(78.4, { unit: 'kg', rounding: 1 })).toBe(78);
+  it('rounds to the nearest integer', () => {
+    expect(roundLoad(78.75, '1')).toBe(79);
+    expect(roundLoad(78.4, '1')).toBe(78);
   });
 
-  it('rounds to the nearest 2.5 kg', () => {
-    expect(roundLoad(78.75, { unit: 'kg', rounding: 2.5 })).toBe(80);
-    expect(roundLoad(76.2, { unit: 'kg', rounding: 2.5 })).toBe(75);
-  });
-
-  it('snaps to lb increments and stores the kg equivalent', () => {
-    // 10 kg ≈ 22.05 lb → nearest 5 lb = 20 lb ≈ 9.07 kg
-    expect(roundLoad(10, { unit: 'lb', rounding: 5 })).toBe(9.07);
-    // 10 kg ≈ 22.05 lb → nearest 2.5 lb = 22.5 lb ≈ 10.21 kg
-    expect(roundLoad(10, { unit: 'lb', rounding: 2.5 })).toBe(10.21);
+  it('rounds to the nearest 2.5', () => {
+    expect(roundLoad(78.75, '2.5')).toBe(80);
+    expect(roundLoad(76.2, '2.5')).toBe(75);
   });
 });
 
 describe('computeLinkedLoad', () => {
   it('computes a percentage of the base load', () => {
-    expect(computeLinkedLoad(100, 65, { unit: 'kg', rounding: null })).toBe(65);
-    expect(computeLinkedLoad(102.5, 80, { unit: 'kg', rounding: null })).toBe(82);
+    expect(computeLinkedLoad(100, 65, 'none')).toBe(65);
+    expect(computeLinkedLoad(102.5, 80, 'none')).toBe(82);
   });
 
-  it('applies the rounding increment to the result', () => {
-    expect(computeLinkedLoad(87.5, 90, { unit: 'kg', rounding: null })).toBe(78.75);
-    expect(computeLinkedLoad(87.5, 90, { unit: 'kg', rounding: 0.5 })).toBe(79);
-    expect(computeLinkedLoad(87.5, 90, { unit: 'kg', rounding: 2.5 })).toBe(80);
+  it('applies the rounding mode to the result', () => {
+    expect(computeLinkedLoad(87.5, 90, 'none')).toBe(78.75);
+    expect(computeLinkedLoad(87.5, 90, '0.5')).toBe(79);
+    expect(computeLinkedLoad(87.5, 90, '2.5')).toBe(80);
   });
 });

@@ -8,7 +8,6 @@ import {
   useFont,
   vec,
 } from '@shopify/react-native-skia';
-import { DEFAULT_WEIGHT_PREFERENCE, displayWeight } from '@workout-tracker/domain';
 import { rgb, type Theme, useTheme } from '@workout-tracker/ui-mobile';
 import { format } from 'date-fns';
 import { useMemo } from 'react';
@@ -18,11 +17,7 @@ import { type SharedValue, useDerivedValue } from 'react-native-reanimated';
 import { CartesianChart, Line, useChartPressState } from 'victory-native';
 import { formatMetricTick, niceYAxis } from '@/features/charts/lib/charts';
 import type { MetricChartPoint } from '@/features/charts/lib/types';
-import {
-  EXERCISE_METRIC_UNIT,
-  type ExerciseMetricKey,
-} from '@/features/exercises/lib/detail-types';
-import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
+import type { ExerciseMetricKey } from '@/features/exercises/lib/detail-types';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
 
 const CHART_HEIGHT = 220;
@@ -41,26 +36,16 @@ export type ExerciseMetricChartProps = {
 export function ExerciseMetricChart({ metric, points }: ExerciseMetricChartProps) {
   const { i18n } = useTranslation();
   const language = i18n.language;
-  const { data: preferences } = useUserPreferences();
-  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
   const locale = useDateFnsLocale();
   const theme = useTheme();
   const font = useFont(Geist_400Regular, 12);
   const tooltipFont = useFont(Geist_400Regular, TOOLTIP_FONT_SIZE);
   const { state, isActive } = useChartPressState({ x: 0, y: { y: 0 } });
 
-  // Weight series are stored in kg; convert the values to the user's unit so the
-  // domain, ticks and labels are all consistent (other metrics pass through).
-  const isWeightMetric = EXERCISE_METRIC_UNIT[metric] === 'kg';
-  const displayValues = useMemo(
-    () => points.map((p) => (isWeightMetric ? displayWeight(p.value, unit) : p.value)),
-    [points, isWeightMetric, unit],
-  );
-
-  const data = useMemo(() => displayValues.map((y, i) => ({ x: i, y })), [displayValues]);
+  const data = useMemo(() => points.map((p, i) => ({ x: i, y: p.value })), [points]);
   const { domain: yDomain, ticks: yTicks } = useMemo(
-    () => niceYAxis(displayValues),
-    [displayValues],
+    () => niceYAxis(points.map((p) => p.value)),
+    [points],
   );
   // One tick per data point. Victory-native downsamples to ~5 via the default
   // `tickCount` when the series is too dense to fit every label.
@@ -69,8 +54,8 @@ export function ExerciseMetricChart({ metric, points }: ExerciseMetricChartProps
   // Pre-format the value of each point on the JS side. The tooltip worklet
   // only does an index lookup (formatMetricTick isn't workletizable).
   const formattedValues = useMemo(
-    () => displayValues.map((value) => formatMetricTick(metric, value, unit, language)),
-    [displayValues, metric, unit, language],
+    () => points.map((p) => formatMetricTick(metric, p.value, language)),
+    [points, metric, language],
   );
 
   const tooltipText = useDerivedValue(() => {
@@ -97,7 +82,7 @@ export function ExerciseMetricChart({ metric, points }: ExerciseMetricChartProps
             const point = points[Math.round(value)];
             return point ? format(new Date(point.date), 'dd MMM', { locale }) : '';
           },
-          formatYLabel: (value) => formatMetricTick(metric, value, unit, language),
+          formatYLabel: (value) => formatMetricTick(metric, value, language),
         }}
       >
         {({ points: chartPoints, chartBounds }) => (

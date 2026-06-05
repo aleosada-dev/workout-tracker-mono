@@ -1,72 +1,44 @@
 import type { WeightUnit } from '../shared/weight-conversion';
 
-/**
- * Load-rounding increments offered per weight unit. The increment is expressed
- * in the unit the athlete trains in — kg plates step differently from lb plates,
- * so a single kg-only ruler never made sense for lb users. `null` means "no
- * rounding".
- */
-export const ROUNDING_INCREMENTS: Record<WeightUnit, readonly number[]> = {
-  kg: [0.5, 1, 2.5],
-  lb: [1.25, 2.5, 5],
-};
+export const LOAD_ROUNDING_MODES = ['none', '0.5', '1', '2.5'] as const;
+export type LoadRoundingMode = (typeof LOAD_ROUNDING_MODES)[number];
 
-export type WeightPreference = {
-  unit: WeightUnit;
-  /** Rounding increment expressed in `unit`; `null` means no rounding. */
-  rounding: number | null;
-};
-
-export function isValidRounding(unit: WeightUnit, rounding: number | null): boolean {
-  return rounding === null || ROUNDING_INCREMENTS[unit].includes(rounding);
+export function isLoadRoundingMode(value: unknown): value is LoadRoundingMode {
+  return LOAD_ROUNDING_MODES.includes(value as LoadRoundingMode);
 }
-
-export const DEFAULT_WEIGHT_PREFERENCE: WeightPreference = { unit: 'kg', rounding: null };
 
 export const PREFERENCE_KEYS = [
   'default_rest_seconds',
-  'weight',
+  'weight_unit',
   'count_warmup_sets',
   'auto_start_rest_timer',
+  'load_rounding',
 ] as const;
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
 
 export type UserPreferences = {
   defaultRestSeconds: number | null;
-  weight: WeightPreference;
+  weightUnit: WeightUnit;
   countWarmupSets: boolean;
   autoStartRestTimer: boolean;
+  loadRounding: LoadRoundingMode;
 };
 
 export type PreferencesPatch = Partial<UserPreferences>;
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   defaultRestSeconds: null,
-  weight: DEFAULT_WEIGHT_PREFERENCE,
+  weightUnit: 'kg',
   countWarmupSets: false,
   autoStartRestTimer: true,
+  loadRounding: 'none',
 };
 
 export type StoredPreference = {
   key: string;
   value: unknown;
 };
-
-/**
- * Parses a stored `weight` value. Returns `null` only when the unit is missing
- * or invalid; a valid unit with an invalid/absent rounding keeps the unit and
- * falls back to no rounding.
- */
-export function parseWeightPreference(value: unknown): WeightPreference | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const { unit, rounding } = value as Record<string, unknown>;
-  if (unit !== 'kg' && unit !== 'lb') return null;
-  if (typeof rounding === 'number' && isValidRounding(unit, rounding)) {
-    return { unit, rounding };
-  }
-  return { unit, rounding: null };
-}
 
 export function parseStoredPreferences(rows: StoredPreference[]): UserPreferences {
   const prefs: UserPreferences = { ...DEFAULT_USER_PREFERENCES };
@@ -76,16 +48,17 @@ export function parseStoredPreferences(rows: StoredPreference[]): UserPreference
       case 'default_rest_seconds':
         if (typeof value === 'number') prefs.defaultRestSeconds = value;
         break;
-      case 'weight': {
-        const weight = parseWeightPreference(value);
-        if (weight) prefs.weight = weight;
+      case 'weight_unit':
+        if (value === 'kg' || value === 'lb') prefs.weightUnit = value;
         break;
-      }
       case 'count_warmup_sets':
         if (typeof value === 'boolean') prefs.countWarmupSets = value;
         break;
       case 'auto_start_rest_timer':
         if (typeof value === 'boolean') prefs.autoStartRestTimer = value;
+        break;
+      case 'load_rounding':
+        if (isLoadRoundingMode(value)) prefs.loadRounding = value;
         break;
     }
   }
@@ -97,9 +70,10 @@ export function preferencesPatchToStored(patch: PreferencesPatch): Record<string
   const stored: Record<string, unknown> = {};
 
   if ('defaultRestSeconds' in patch) stored.default_rest_seconds = patch.defaultRestSeconds;
-  if ('weight' in patch) stored.weight = patch.weight;
+  if ('weightUnit' in patch) stored.weight_unit = patch.weightUnit;
   if ('countWarmupSets' in patch) stored.count_warmup_sets = patch.countWarmupSets;
   if ('autoStartRestTimer' in patch) stored.auto_start_rest_timer = patch.autoStartRestTimer;
+  if ('loadRounding' in patch) stored.load_rounding = patch.loadRounding;
 
   return stored;
 }

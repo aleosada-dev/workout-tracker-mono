@@ -28,7 +28,7 @@ export default {
     delete: 'Delete',
     cancel: 'Cancel',
     headers: {
-      weight: 'Weight ({{unit}})',
+      weight: 'Weight',
       reps: 'Reps',
       duration: 'Time',
       target: 'Target',

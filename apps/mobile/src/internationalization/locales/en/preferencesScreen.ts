@@ -15,11 +15,18 @@ export default {
     confirm: 'Confirm',
     clear: 'Clear',
   },
-  weight: {
-    unitLabel: 'Weight unit',
-    roundingLabel: 'Load rounding',
-    roundingDescription: 'Round the suggested load in any weight calculation.',
-    roundingNone: 'Off',
+  weightUnit: {
+    label: 'Weight unit',
+  },
+  loadRounding: {
+    label: 'Load rounding',
+    description: 'Round the suggested load of drop and cluster sets.',
+    modes: {
+      none: 'Off',
+      half: '0.5',
+      one: '1',
+      twoAndHalf: '2.5',
+    },
   },
   countWarmupSets: {
     label: 'Count warmup sets',

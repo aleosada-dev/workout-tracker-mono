@@ -6,9 +6,6 @@ jest.mock('react-i18next', () => {
     'workoutLogDetail.superset': 'Supersérie',
   });
 });
-jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
-  useUserPreferences: () => ({ data: { weight: { unit: 'kg', rounding: null } } }),
-}));
 
 import { render } from '@testing-library/react-native';
 import type { WorkoutLogDetailExercise } from '@/features/workout-logs/api/workout-logs';

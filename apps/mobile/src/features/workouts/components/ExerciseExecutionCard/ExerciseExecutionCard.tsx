@@ -1,4 +1,4 @@
-import { DEFAULT_WEIGHT_PREFERENCE, getValidSetTypesAt } from '@workout-tracker/domain';
+import { getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import {
@@ -62,9 +62,6 @@ export function ExerciseExecutionCard({
   onLongPress,
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
-  const { data: preferences } = useUserPreferences();
-  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
-  const effectiveRestSeconds = restSeconds ?? preferences?.defaultRestSeconds ?? null;
   const [collapsed, setCollapsed] = useState(true);
   const isCollapsed = selectable || collapsed;
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
@@ -177,7 +174,7 @@ export function ExerciseExecutionCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-          {effectiveRestSeconds != null || (note != null && note.length > 0) ? (
+          {restSeconds != null || (note != null && note.length > 0) ? (
             <View className="flex-row items-start gap-3 px-4 pb-4">
               <View className="flex-1 flex-row items-start gap-2">
                 {note != null && note.length > 0 ? (
@@ -187,10 +184,10 @@ export function ExerciseExecutionCard({
                   </>
                 ) : null}
               </View>
-              {effectiveRestSeconds != null ? (
+              {restSeconds != null ? (
                 <View className="flex-row items-center gap-2">
                   <Icon as={Timer} size={16} className="text-foreground" />
-                  <Text className="text-sm">{formatRestSeconds(effectiveRestSeconds)}</Text>
+                  <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
                 </View>
               ) : null}
             </View>
@@ -206,17 +203,14 @@ export function ExerciseExecutionCard({
                 </View>
               </View>
               {layout.weight ? (
-                <View className="w-24 pr-2 pl-3">
-                  <Text
-                    numberOfLines={1}
-                    className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider"
-                  >
-                    {t('workoutExecutionScreen.exercise.headers.weight', { unit })}
+                <View className="w-20 pr-2 pl-3">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.weight')}
                   </Text>
                 </View>
               ) : null}
               {layout.reps ? (
-                <View className="w-16 px-2">
+                <View className="w-20 px-2">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     {t('workoutExecutionScreen.exercise.headers.reps')}
                   </Text>

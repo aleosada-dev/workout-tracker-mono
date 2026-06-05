@@ -30,7 +30,7 @@ jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
   useUserPreferences: () => ({
     data: {
       defaultRestSeconds: null,
-      weight: { unit: 'kg', rounding: null },
+      weightUnit: 'kg',
       countWarmupSets: false,
       autoStartRestTimer: true,
     },

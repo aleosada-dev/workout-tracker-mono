@@ -1,5 +1,5 @@
-import { describe, expect, it, test } from 'bun:test';
-import { convertWeight, displayWeight, kgToLb, lbToKg } from './weight-conversion';
+import { describe, expect, it } from 'bun:test';
+import { convertWeight, kgToLb, lbToKg } from './weight-conversion';
 
 describe('weight-conversion', () => {
   it('converts kg to lb', () => {
@@ -24,20 +24,5 @@ describe('weight-conversion', () => {
   it('dispatches by unit', () => {
     expect(convertWeight(1, 'kg', 'lb')).toBeCloseTo(2.20462, 5);
     expect(convertWeight(1, 'lb', 'kg')).toBeCloseTo(0.45359, 5);
-  });
-});
-
-describe('displayWeight', () => {
-  test('returns kg unchanged', () => {
-    expect(displayWeight(42.5, 'kg')).toBe(42.5);
-  });
-
-  test('converts kg to lb rounded to 2 decimals', () => {
-    expect(displayWeight(100, 'lb')).toBe(220.46);
-    expect(displayWeight(1, 'lb')).toBe(2.2);
-  });
-
-  test('is stable round-trip to 2 decimals', () => {
-    expect(displayWeight(lbToKg(100), 'lb')).toBe(100);
   });
 });
