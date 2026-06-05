@@ -1,5 +1,6 @@
-import { measurementDimensions, setVolume } from '@workout-tracker/domain';
+import { measurementDimensions, setVolume, type WeightUnit } from '@workout-tracker/domain';
 import { formatTime } from '@/features/shared/lib/utils/format-time';
+import { formatWeightInUnit } from '@/features/shared/lib/utils/format-weight';
 import type {
   WorkoutLogDetail,
   WorkoutLogDetailExercise,
@@ -47,13 +48,16 @@ export function groupDetailExercises(
 }
 
 /** Human-readable value for a logged set, e.g. "80,5 kg × 8", "12 reps", "0:45". */
-export function formatSetValue(set: WorkoutLogDetailSet, language: string): string {
+export function formatSetValue(
+  set: WorkoutLogDetailSet,
+  unit: WeightUnit,
+  language: string,
+): string {
   const dims = measurementDimensions(set.measurementType);
   const parts: string[] = [];
 
   if (dims.weight && set.weightKg !== null) {
-    const kg = new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(set.weightKg);
-    parts.push(`${kg} kg`);
+    parts.push(formatWeightInUnit(set.weightKg, unit, language));
   }
   if (dims.reps && set.reps !== null) {
     parts.push(dims.weight ? `× ${set.reps}` : `${set.reps}`);

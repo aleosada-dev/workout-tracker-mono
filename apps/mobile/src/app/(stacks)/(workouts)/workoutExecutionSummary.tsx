@@ -1,6 +1,6 @@
 import { useValue } from '@legendapp/state/react';
 import { ConfirmDialog, EmptyState } from '@workout-tracker/ui-mobile';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useNavigation } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
@@ -31,6 +31,9 @@ export default function WorkoutExecutionSummaryScreen() {
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
   const { mutate: saveWorkoutLog, isPending } = useCreateWorkoutLog();
+  const navigation = useNavigation<{
+    navigate: (target: string, params: { screen: string }) => void;
+  }>();
 
   const [today] = useState(() => new Date().toISOString().slice(0, 10));
   const { data: scheduledSessions } = useScheduledSessions(today);
@@ -96,8 +99,9 @@ export default function WorkoutExecutionSummaryScreen() {
           type: 'success',
           text1: t('workoutExecutionSummaryScreen.save.success'),
         });
-        router.dismissAll();
         activeWorkout$.delete();
+        router.dismissAll();
+        navigation.navigate('(tabs)', { screen: 'index' });
       },
       onError: handleLocalError((err) => {
         workoutLogObservability.captureError(err, { action: 'create_workout_log' });

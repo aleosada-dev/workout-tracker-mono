@@ -38,13 +38,14 @@ describe('niceYAxis', () => {
 });
 
 describe('formatMetricTick', () => {
-  test('appends the unit for weight metrics, no decimals', () => {
-    expect(formatMetricTick('maxWeight', 8, 'pt')).toBe('8 kg');
-    expect(formatMetricTick('volume', 270, 'pt')).toBe('270 kg');
+  test('appends the unit symbol for weight metrics (value already in unit)', () => {
+    expect(formatMetricTick('maxWeight', 8, 'kg', 'pt')).toBe('8 kg');
+    expect(formatMetricTick('volume', 270, 'kg', 'pt')).toBe('270 kg');
+    expect(formatMetricTick('maxWeight', 220, 'lb', 'en')).toBe('220 lb');
   });
 
   test('renders a bare integer for rep/count metrics', () => {
-    expect(formatMetricTick('maxReps', 12, 'pt')).toBe('12');
-    expect(formatMetricTick('sets', 3, 'pt')).toBe('3');
+    expect(formatMetricTick('maxReps', 12, 'kg', 'pt')).toBe('12');
+    expect(formatMetricTick('sets', 3, 'kg', 'pt')).toBe('3');
   });
 });

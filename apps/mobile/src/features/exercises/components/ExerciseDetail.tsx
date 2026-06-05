@@ -1,3 +1,4 @@
+import { DEFAULT_WEIGHT_PREFERENCE } from '@workout-tracker/domain';
 import {
   Badge,
   Card,
@@ -19,6 +20,7 @@ import {
 } from '@/features/exercises/lib/detail-types';
 import { formatKg, formatRecordValue } from '@/features/exercises/lib/format';
 import { SET_TYPE_CONFIG } from '@/features/exercises/lib/sets';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import { ExerciseDemoVideo } from './ExerciseDemoVideo';
@@ -32,6 +34,8 @@ export type ExerciseDetailProps = {
 export function ExerciseDetail({ data }: ExerciseDetailProps) {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
+  const { data: preferences } = useUserPreferences();
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
   const locale = useDateFnsLocale();
   const [selectedMetric, setSelectedMetric] = useState<ExerciseMetricKey>('maxWeight');
   const selectedSeries = data.metrics[selectedMetric];
@@ -170,7 +174,7 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
                     {t(typeConfig.label)}
                   </Text>
                   <Text className="flex-1 text-right text-sm">
-                    {formatKg(set.weightKg, language)}
+                    {formatKg(set.weightKg, unit, language)}
                   </Text>
                   <Text className="w-14 text-right text-sm">{set.reps}</Text>
                 </View>
@@ -213,7 +217,7 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
                     {t(`exerciseDetailScreen.metrics.${record.metric}`)}
                   </Text>
                   <Text className="font-sans-semibold text-sm">
-                    {formatRecordValue(record, language)}
+                    {formatRecordValue(record, unit, language)}
                   </Text>
                 </View>
               );

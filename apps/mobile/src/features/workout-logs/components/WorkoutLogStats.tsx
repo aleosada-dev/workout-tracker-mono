@@ -1,10 +1,11 @@
+import { DEFAULT_WEIGHT_PREFERENCE } from '@workout-tracker/domain';
 import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
 import { CheckCircle2, Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatTotalTime } from '@/features/shared/lib/utils/format-time';
-import { formatWeight } from '@/features/shared/lib/utils/format-weight';
+import { formatVolume } from '@/features/shared/lib/utils/format-weight';
 import type { WorkoutLogDetail } from '@/features/workout-logs/api/workout-logs';
 import { summarizeDetail } from '@/features/workout-logs/lib/detail-format';
 
@@ -16,6 +17,7 @@ export function WorkoutLogStats({ detail }: WorkoutLogStatsProps) {
   const { t, i18n } = useTranslation();
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
   const { durationSeconds, totalSets, totalVolumeKg } = summarizeDetail(detail, includeWarmup);
 
   return (
@@ -33,7 +35,7 @@ export function WorkoutLogStats({ detail }: WorkoutLogStatsProps) {
       <StatCard
         icon={Dumbbell}
         label={t('workoutLogDetail.stats.volume')}
-        value={formatWeight(totalVolumeKg, i18n.language)}
+        value={formatVolume(totalVolumeKg, unit, i18n.language)}
       />
     </View>
   );

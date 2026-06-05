@@ -10,10 +10,9 @@ async function resetPreferences() {
 		{
 			json: {
 				defaultRestSeconds: null,
-				weightUnit: "kg",
+				weight: { unit: "kg", rounding: null },
 				countWarmupSets: false,
 				autoStartRestTimer: true,
-				loadRounding: "none",
 			},
 		},
 		{ headers: authHeaders("athlete") },
@@ -36,10 +35,9 @@ describe("GET /api/v1/preferences", () => {
 		expect(res.status).toBe(200);
 		expect(await res.json()).toEqual({
 			defaultRestSeconds: null,
-			weightUnit: "kg",
+			weight: { unit: "kg", rounding: null },
 			countWarmupSets: false,
 			autoStartRestTimer: true,
-			loadRounding: "none",
 		});
 	});
 
@@ -83,13 +81,13 @@ describe("PATCH /api/v1/preferences", () => {
 			{ headers: authHeaders("athlete") },
 		);
 		const res = await client.api.v1.preferences.$patch(
-			{ json: { weightUnit: "lb" } },
+			{ json: { weight: { unit: "lb", rounding: 5 } } },
 			{ headers: authHeaders("athlete") },
 		);
 
 		const body = await res.json();
 		expect(body.defaultRestSeconds).toBe(90);
-		expect(body.weightUnit).toBe("lb");
+		expect(body.weight).toEqual({ unit: "lb", rounding: 5 });
 	});
 
 	test("a null defaultRestSeconds resets it back to the default", async () => {
@@ -107,22 +105,21 @@ describe("PATCH /api/v1/preferences", () => {
 		expect((await res.json()).defaultRestSeconds).toBeNull();
 	});
 
-	test("persists the load rounding mode", async () => {
+	test("persists the weight preference with a rounding increment", async () => {
 		const client = getTestClient();
 
 		const res = await client.api.v1.preferences.$patch(
-			{ json: { loadRounding: "2.5" } },
+			{ json: { weight: { unit: "kg", rounding: 2.5 } } },
 			{ headers: authHeaders("athlete") },
 		);
 
-		expect((await res.json()).loadRounding).toBe("2.5");
+		expect((await res.json()).weight).toEqual({ unit: "kg", rounding: 2.5 });
 	});
 
-	test("rejects an invalid load rounding mode with 400", async () => {
+	test("rejects a rounding increment invalid for the unit with 400", async () => {
 		const client = getTestClient();
 		const res = await client.api.v1.preferences.$patch(
-			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
-			{ json: { loadRounding: "3" as any } },
+			{ json: { weight: { unit: "kg", rounding: 5 } } },
 			{ headers: authHeaders("athlete") },
 		);
 
@@ -133,7 +130,7 @@ describe("PATCH /api/v1/preferences", () => {
 		const client = getTestClient();
 		const res = await client.api.v1.preferences.$patch(
 			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
-			{ json: { weightUnit: "oz" as any } },
+			{ json: { weight: { unit: "oz", rounding: 1 } as any } },
 			{ headers: authHeaders("athlete") },
 		);
 

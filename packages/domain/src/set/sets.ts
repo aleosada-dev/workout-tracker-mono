@@ -1,4 +1,4 @@
-import type { LoadRoundingMode } from '../preferences/user-preferences';
+import type { WeightPreference } from '../preferences/user-preferences';
 import {
   greaterThan,
   greaterThanOrNull,
@@ -6,6 +6,7 @@ import {
   positiveNumberOrNull,
 } from '../shared/numbers';
 import { ValidationError, type ValidationIssue } from '../shared/validation-error';
+import { convertWeight } from '../shared/weight-conversion';
 
 export const WORKOUT_SET_TYPES = ['warmup', 'normal', 'drop', 'cluster'] as const;
 export type WorkoutSetType = (typeof WORKOUT_SET_TYPES)[number];
@@ -160,13 +161,19 @@ export function setVolume({ weight, reps }: VolumeSetLike): number {
 
 // ---------- Suggested load (drop / cluster sets) ----------
 
-/** Rounds a kg value according to the user's load-rounding preference. */
-export function roundLoad(value: number, mode: LoadRoundingMode): number {
-  if (mode === 'none') {
-    return Math.round(value * 100) / 100;
+/**
+ * Rounds a kg value according to the user's weight preference. The rounding
+ * increment is expressed in the athlete's unit (kg or lb), so the value is
+ * converted into that unit, snapped to the increment, then converted back to kg
+ * for storage. With no increment it only trims to two decimals.
+ */
+export function roundLoad(kgValue: number, weight: WeightPreference): number {
+  if (weight.rounding == null) {
+    return Math.round(kgValue * 100) / 100;
   }
-  const step = Number(mode);
-  return Math.round(value / step) * step;
+  const inUnit = convertWeight(kgValue, 'kg', weight.unit);
+  const snapped = Math.round(inUnit / weight.rounding) * weight.rounding;
+  return Math.round(convertWeight(snapped, weight.unit, 'kg') * 100) / 100;
 }
 
 /**
@@ -176,9 +183,9 @@ export function roundLoad(value: number, mode: LoadRoundingMode): number {
 export function computeLinkedLoad(
   baseKg: number,
   loadPercentOfPrevious: number,
-  mode: LoadRoundingMode,
+  weight: WeightPreference,
 ): number {
-  return roundLoad((baseKg * loadPercentOfPrevious) / 100, mode);
+  return roundLoad((baseKg * loadPercentOfPrevious) / 100, weight);
 }
 
 // ---------- Union ----------

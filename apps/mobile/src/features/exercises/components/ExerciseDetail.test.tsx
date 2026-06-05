@@ -24,6 +24,9 @@ jest.mock('react-i18next', () => ({
     i18n: { language: 'pt' },
   }),
 }));
+jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
+  useUserPreferences: () => ({ data: { weight: { unit: 'kg', rounding: null } } }),
+}));
 
 describe('<ExerciseDetail />', () => {
   const data = getMockExerciseDetail('ex-1', 'Abdução de Quadril no Cabo', 'c/ banco inclinado');

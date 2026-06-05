@@ -1,3 +1,4 @@
+import { DEFAULT_WEIGHT_PREFERENCE, type WeightUnit } from '@workout-tracker/domain';
 import { Card, Icon, SectionHeading, Text } from '@workout-tracker/ui-mobile';
 import { Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,8 @@ import {
   type ExerciseMetricKey,
 } from '@/features/exercises/lib/detail-types';
 import { formatCount } from '@/features/exercises/lib/format';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
+import { formatWeightInUnit } from '@/features/shared/lib/utils/format-weight';
 import type {
   SessionExerciseRecord,
   SessionRecordMetric,
@@ -45,6 +48,8 @@ export function WorkoutSessionRecords({ exercises }: WorkoutSessionRecordsProps)
 
 function ExerciseRecord({ exercise }: { exercise: SessionExerciseRecord }) {
   const { t, i18n } = useTranslation();
+  const { data: preferences } = useUserPreferences();
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
 
   const ordered = EXERCISE_METRIC_KEYS.map((metric) =>
     exercise.records.find((record) => record.metric === metric),
@@ -70,9 +75,9 @@ function ExerciseRecord({ exercise }: { exercise: SessionExerciseRecord }) {
               {t(`workoutExecutionSummaryScreen.records.metrics.${record.metric}`)}
             </Text>
             <Text className="text-sm">
-              {formatMetricValue(record.metric, record.previous, i18n.language)}
+              {formatMetricValue(record.metric, record.previous, unit, i18n.language)}
               {' → '}
-              {formatMetricValue(record.metric, record.current, i18n.language)}
+              {formatMetricValue(record.metric, record.current, unit, i18n.language)}
             </Text>
           </View>
         ))}
@@ -81,7 +86,13 @@ function ExerciseRecord({ exercise }: { exercise: SessionExerciseRecord }) {
   );
 }
 
-function formatMetricValue(metric: ExerciseMetricKey, value: number, language: string): string {
-  const formatted = formatCount(value, language);
-  return EXERCISE_METRIC_UNIT[metric] === 'kg' ? `${formatted}kg` : formatted;
+function formatMetricValue(
+  metric: ExerciseMetricKey,
+  value: number,
+  unit: WeightUnit,
+  language: string,
+): string {
+  return EXERCISE_METRIC_UNIT[metric] === 'kg'
+    ? formatWeightInUnit(value, unit, language)
+    : formatCount(value, language);
 }

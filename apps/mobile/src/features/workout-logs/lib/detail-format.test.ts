@@ -37,19 +37,24 @@ const exercise = (overrides: Partial<WorkoutLogDetailExercise> = {}): WorkoutLog
 
 describe('formatSetValue', () => {
   test('weight + reps', () => {
-    expect(formatSetValue(set({ weightKg: 80.5, reps: 8 }), 'en')).toBe('80.5 kg × 8');
+    expect(formatSetValue(set({ weightKg: 80.5, reps: 8 }), 'kg', 'en')).toBe('80.5 kg × 8');
+  });
+
+  test('converts weight to the user unit', () => {
+    expect(formatSetValue(set({ weightKg: 100, reps: 8 }), 'lb', 'en')).toBe('220.46 lb × 8');
   });
 
   test('reps only', () => {
-    expect(formatSetValue(set({ measurementType: 'reps', weightKg: null, reps: 12 }), 'en')).toBe(
-      '12',
-    );
+    expect(
+      formatSetValue(set({ measurementType: 'reps', weightKg: null, reps: 12 }), 'kg', 'en'),
+    ).toBe('12');
   });
 
   test('duration only', () => {
     expect(
       formatSetValue(
         set({ measurementType: 'duration', weightKg: null, reps: null, durationSeconds: 45 }),
+        'kg',
         'en',
       ),
     ).toBe('00:45');

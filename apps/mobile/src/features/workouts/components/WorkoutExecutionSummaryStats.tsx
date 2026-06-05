@@ -1,9 +1,10 @@
+import { DEFAULT_WEIGHT_PREFERENCE } from '@workout-tracker/domain';
 import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
 import { CheckCircle2, Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
-import { formatTotalTime, formatWeight } from '@/features/shared/lib/utils';
+import { formatTotalTime, formatVolume } from '@/features/shared/lib/utils';
 import {
   type CompletedExecution,
   summarizeExecution,
@@ -23,6 +24,7 @@ export function WorkoutExecutionSummaryStats({
   const { t, i18n } = useTranslation();
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
   const { completedSets, totalVolumeKg } = summarizeExecution(execution, includeWarmup);
 
   return (
@@ -41,7 +43,7 @@ export function WorkoutExecutionSummaryStats({
       <StatCard
         icon={Dumbbell}
         label={t('workoutExecutionSummaryScreen.stats.totalVolume')}
-        value={formatWeight(totalVolumeKg, i18n.language)}
+        value={formatVolume(totalVolumeKg, unit, i18n.language)}
       />
     </View>
   );

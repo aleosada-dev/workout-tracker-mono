@@ -1,22 +1,21 @@
 import type { UserPreferences } from '@workout-tracker/domain';
 import {
-  Button,
   Label,
   RequestErrorState,
   SectionHeading,
   Separator,
   Skeleton,
-  Text,
 } from '@workout-tracker/ui-mobile';
 import { Dumbbell, SlidersHorizontal } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { preferencesObservability } from '@/features/observability/lib';
 import { DefaultRestSecondsField } from '@/features/preferences/components/default-rest-seconds-field';
-import { LoadRoundingSelect } from '@/features/preferences/components/load-rounding-select';
+import { PreferencesActions } from '@/features/preferences/components/PreferencesActions';
 import { PreferenceSwitchRow } from '@/features/preferences/components/preference-switch-row';
-import { WeightUnitSelect } from '@/features/preferences/components/weight-unit-select';
+import { WeightPreferenceField } from '@/features/preferences/components/weight-preference-field';
 import { useUpdateUserPreferences } from '@/features/preferences/hooks/use-update-user-preferences';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { LanguageSelect } from '@/features/settings/components/language-select';
@@ -24,32 +23,30 @@ import { ThemeToggle } from '@/features/settings/components/theme-toggle';
 
 type WorkoutDraft = Pick<
   UserPreferences,
-  'weightUnit' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer' | 'loadRounding'
+  'weight' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
   return {
-    weightUnit: preferences.weightUnit,
+    weight: preferences.weight,
     defaultRestSeconds: preferences.defaultRestSeconds,
     countWarmupSets: preferences.countWarmupSets,
     autoStartRestTimer: preferences.autoStartRestTimer,
-    loadRounding: preferences.loadRounding,
   };
 }
 
 function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
   return (
-    a.weightUnit === b.weightUnit &&
+    a.weight.unit === b.weight.unit &&
+    a.weight.rounding === b.weight.rounding &&
     a.defaultRestSeconds === b.defaultRestSeconds &&
     a.countWarmupSets === b.countWarmupSets &&
-    a.autoStartRestTimer === b.autoStartRestTimer &&
-    a.loadRounding === b.loadRounding
+    a.autoStartRestTimer === b.autoStartRestTimer
   );
 }
 
 export default function PreferencesScreen() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const { data, isLoading, isError, refetch } = useUserPreferences();
   const { mutate, isPending } = useUpdateUserPreferences();
   const [draft, setDraft] = useState<WorkoutDraft | null>(null);
@@ -63,6 +60,33 @@ export default function PreferencesScreen() {
 
   const showForm = !isLoading && !isError && !!data && !!draft;
   const dirty = showForm && !isSameDraft(draft, toDraft(data));
+
+  const handleSave = () => {
+    if (!draft) return;
+    mutate(draft, {
+      onSuccess: () => {
+        preferencesObservability.trackAction('preferences_updated');
+        Toast.show({
+          type: 'success',
+          text1: t('preferencesScreen.saved.title'),
+        });
+      },
+      onError: (error) => {
+        preferencesObservability.captureError(error, { action: 'update_preferences' });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      },
+    });
+  };
+
+  // The native iOS toolbar button captures its onPress once, so route it through
+  // a ref to keep the handler reading the latest draft/state on every tap.
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+  const onSave = useRef(() => handleSaveRef.current()).current;
 
   return (
     <View className="flex-1">
@@ -106,26 +130,10 @@ export default function PreferencesScreen() {
           </View>
         ) : (
           <>
-            <View className="gap-2">
-              <Label>{t('preferencesScreen.weightUnit.label')}</Label>
-              <WeightUnitSelect
-                value={draft.weightUnit}
-                onValueChange={(weightUnit) => setDraft((prev) => prev && { ...prev, weightUnit })}
-              />
-            </View>
-
-            <View className="gap-2">
-              <Label>{t('preferencesScreen.loadRounding.label')}</Label>
-              <Text variant="muted" className="text-sm">
-                {t('preferencesScreen.loadRounding.description')}
-              </Text>
-              <LoadRoundingSelect
-                value={draft.loadRounding}
-                onValueChange={(loadRounding) =>
-                  setDraft((prev) => prev && { ...prev, loadRounding })
-                }
-              />
-            </View>
+            <WeightPreferenceField
+              value={draft.weight}
+              onChange={(weight) => setDraft((prev) => prev && { ...prev, weight })}
+            />
 
             <DefaultRestSecondsField
               value={draft.defaultRestSeconds}
@@ -155,22 +163,7 @@ export default function PreferencesScreen() {
         )}
       </ScrollView>
 
-      {showForm ? (
-        <View
-          pointerEvents="box-none"
-          className="absolute right-0 bottom-0 left-0 px-4 pt-3"
-          style={{ paddingBottom: insets.bottom + 12 }}
-        >
-          <Button
-            onPress={() => mutate(draft)}
-            disabled={!dirty || isPending}
-            className="h-12 rounded-full"
-            testID="preferences.save"
-          >
-            <Text className="font-sans-semibold">{t('preferencesScreen.save')}</Text>
-          </Button>
-        </View>
-      ) : null}
+      {showForm ? <PreferencesActions onSave={onSave} isPending={isPending} dirty={dirty} /> : null}
     </View>
   );
 }

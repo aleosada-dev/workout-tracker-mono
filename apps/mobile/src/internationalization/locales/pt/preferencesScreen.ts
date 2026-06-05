@@ -1,25 +1,25 @@
 export default {
   save: 'Salvar',
+  saved: {
+    title: 'Preferências salvas',
+  },
   sections: {
     general: 'Geral',
     workout: 'Treino',
   },
   defaultRestSeconds: {
-    label: 'Tempo padrão de descanso (s)',
-    placeholder: 'Sem padrão',
+    label: 'Tempo padrão de descanso',
+    description: 'Pré-preenche o tempo de descanso de novas séries.',
+    placeholder: 'Sem definição',
+    pickerTitle: 'Tempo de descanso',
+    confirm: 'Confirmar',
+    clear: 'Limpar',
   },
-  weightUnit: {
-    label: 'Unidade de peso',
-  },
-  loadRounding: {
-    label: 'Arredondamento da carga',
-    description: 'Arredonda a carga sugerida das séries drop e cluster.',
-    modes: {
-      none: 'Não',
-      half: '0,5',
-      one: '1',
-      twoAndHalf: '2,5',
-    },
+  weight: {
+    unitLabel: 'Unidade de peso',
+    roundingLabel: 'Arredondamento da carga',
+    roundingDescription: 'Arredonda a carga sugerida em qualquer cálculo de peso.',
+    roundingNone: 'Não',
   },
   countWarmupSets: {
     label: 'Contabilizar séries de aquecimento',

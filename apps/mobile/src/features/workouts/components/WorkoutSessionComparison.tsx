@@ -1,11 +1,13 @@
+import { DEFAULT_WEIGHT_PREFERENCE, displayWeight, type WeightUnit } from '@workout-tracker/domain';
 import { Card, Icon, SectionHeading, Separator, Text } from '@workout-tracker/ui-mobile';
 import { format } from 'date-fns';
 import { Equal, Minus, Plus, TrendingUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { formatCount } from '@/features/exercises/lib/format';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
-import { formatWeight } from '@/features/shared/lib/utils';
+import { formatVolume } from '@/features/shared/lib/utils';
 import type {
   ComparisonStatus,
   SessionComparison,
@@ -63,7 +65,9 @@ export function WorkoutSessionComparison({ comparison }: WorkoutSessionCompariso
 
 function ComparisonRow({ exercise }: { exercise: SessionComparisonExercise }) {
   const { t, i18n } = useTranslation();
+  const { data: preferences } = useUserPreferences();
   const language = i18n.language;
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
 
   return (
     <View className="gap-2">
@@ -94,14 +98,14 @@ function ComparisonRow({ exercise }: { exercise: SessionComparisonExercise }) {
         />
         <MetricLine
           label={t('workoutExecutionSummaryScreen.comparison.volume')}
-          current={formatWeight(exercise.currentVolumeKg, language)}
+          current={formatVolume(exercise.currentVolumeKg, unit, language)}
           previous={
             exercise.previousVolumeKg !== null
-              ? formatWeight(exercise.previousVolumeKg, language)
+              ? formatVolume(exercise.previousVolumeKg, unit, language)
               : null
           }
           previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
-          delta={renderVolumeDelta(exercise, language)}
+          delta={renderVolumeDelta(exercise, unit, language)}
         />
       </View>
     </View>
@@ -166,18 +170,23 @@ function renderSetsDelta(
   };
 }
 
-function renderVolumeDelta(exercise: SessionComparisonExercise, language: string): DeltaContent {
+function renderVolumeDelta(
+  exercise: SessionComparisonExercise,
+  unit: WeightUnit,
+  language: string,
+): DeltaContent {
   if (exercise.status === 'new') {
+    const current = Math.round(displayWeight(exercise.currentVolumeKg, unit));
     return {
-      text: `+${formatCount(Math.round(exercise.currentVolumeKg), language)} kg`,
+      text: `+${formatCount(current, language)} ${unit}`,
       className: 'text-success',
     };
   }
   const previous = exercise.previousVolumeKg ?? 0;
-  const diff = exercise.currentVolumeKg - previous;
+  const diff = displayWeight(exercise.currentVolumeKg, unit) - displayWeight(previous, unit);
   if (Math.round(diff) === 0) return null;
   return {
-    text: `${sign(diff)}${formatCount(Math.abs(Math.round(diff)), language)} kg`,
+    text: `${sign(diff)}${formatCount(Math.abs(Math.round(diff)), language)} ${unit}`,
     className: deltaClassName(diff),
   };
 }

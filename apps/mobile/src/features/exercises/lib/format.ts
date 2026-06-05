@@ -1,8 +1,10 @@
+import type { WeightUnit } from '@workout-tracker/domain';
 import type { TFunction } from 'i18next';
 import type {
   ListExercisesResponseExercise,
   ListExercisesResponseVariation,
 } from '@/features/exercises/api/exercises';
+import { formatWeightInUnit } from '@/features/shared/lib/utils/format-weight';
 import { EXERCISE_METRIC_UNIT, type PersonalRecord } from './detail-types';
 import type { ExerciseListItem } from './list.types';
 
@@ -81,17 +83,14 @@ export function toExercise(
 
 type FractionDigits = { min?: number; max?: number };
 
-/** Formats a weight in kg using the locale's number formatting (comma decimals in pt). */
+/** Formats a weight (stored in kg) in the user's unit using the locale's number formatting. */
 export function formatKg(
   value: number,
+  unit: WeightUnit,
   language: string,
-  { min = 0, max = 2 }: FractionDigits = {},
+  opts: FractionDigits = {},
 ): string {
-  const n = new Intl.NumberFormat(language, {
-    minimumFractionDigits: min,
-    maximumFractionDigits: max,
-  }).format(value);
-  return `${n} kg`;
+  return formatWeightInUnit(value, unit, language, opts);
 }
 
 /** Formats an integer count with the locale's grouping. */
@@ -100,10 +99,14 @@ export function formatCount(value: number, language: string): string {
 }
 
 /** Renders a personal-record value with the unit appropriate to its metric. */
-export function formatRecordValue(record: PersonalRecord, language: string): string {
+export function formatRecordValue(
+  record: PersonalRecord,
+  unit: WeightUnit,
+  language: string,
+): string {
   switch (EXERCISE_METRIC_UNIT[record.metric]) {
     case 'kg':
-      return formatKg(record.value, language, { min: 2, max: 2 });
+      return formatKg(record.value, unit, language, { min: 2, max: 2 });
     case 'reps':
     case 'count':
       return formatCount(record.value, language);

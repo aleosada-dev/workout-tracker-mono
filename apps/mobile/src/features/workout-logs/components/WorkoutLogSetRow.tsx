@@ -1,7 +1,9 @@
+import { DEFAULT_WEIGHT_PREFERENCE } from '@workout-tracker/domain';
 import { Text } from '@workout-tracker/ui-mobile';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import type { WorkoutLogDetailSet } from '@/features/workout-logs/api/workout-logs';
 import { formatSetValue } from '@/features/workout-logs/lib/detail-format';
 
@@ -13,6 +15,8 @@ type WorkoutLogSetRowProps = {
 
 export function WorkoutLogSetRow({ set, index, showSetType = true }: WorkoutLogSetRowProps) {
   const { t, i18n } = useTranslation();
+  const { data: preferences } = useUserPreferences();
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
   const config = SET_TYPE_CONFIG[set.setType as SetType];
   const target =
     set.repsMin !== null && set.repsMax !== null
@@ -31,7 +35,7 @@ export function WorkoutLogSetRow({ set, index, showSetType = true }: WorkoutLogS
           {t(`sets.${set.setType}.token` as never)}
         </Text>
       ) : null}
-      <Text className="flex-1 font-sans-medium">{formatSetValue(set, i18n.language)}</Text>
+      <Text className="flex-1 font-sans-medium">{formatSetValue(set, unit, i18n.language)}</Text>
       {target ? (
         <Text variant="muted" className="text-xs">
           {target}

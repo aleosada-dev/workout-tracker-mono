@@ -155,24 +155,33 @@ describe('formatSetTarget', () => {
 });
 
 describe('weightPlaceholder', () => {
+  const noRounding = { unit: 'kg', rounding: null } as const;
+  const round2_5 = { unit: 'kg', rounding: 2.5 } as const;
+
   test('returns undefined when there is no previous load', () => {
-    expect(weightPlaceholder(null, 90, 'none')).toBeUndefined();
-    expect(weightPlaceholder(undefined, 90, 'none')).toBeUndefined();
+    expect(weightPlaceholder(null, 90, noRounding)).toBeUndefined();
+    expect(weightPlaceholder(undefined, 90, noRounding)).toBeUndefined();
   });
 
   test('falls back to the previous load when there is no adjustment', () => {
-    expect(weightPlaceholder(100, null, 'none')).toBe('100');
-    expect(weightPlaceholder(100, undefined, '2.5')).toBe('100');
+    expect(weightPlaceholder(100, null, noRounding)).toBe('100');
+    expect(weightPlaceholder(100, undefined, round2_5)).toBe('100');
   });
 
   test('scales the previous load by the adjustment percentage', () => {
-    expect(weightPlaceholder(100, 90, 'none')).toBe('90');
-    expect(weightPlaceholder(80, 105, 'none')).toBe('84');
+    expect(weightPlaceholder(100, 90, noRounding)).toBe('90');
+    expect(weightPlaceholder(80, 105, noRounding)).toBe('84');
   });
 
   test('rounds the scaled load per the rounding preference', () => {
-    expect(weightPlaceholder(83, 90, '2.5')).toBe('75');
-    expect(weightPlaceholder(83, 90, 'none')).toBe('74.7');
+    expect(weightPlaceholder(83, 90, round2_5)).toBe('75');
+    expect(weightPlaceholder(83, 90, noRounding)).toBe('74.7');
+  });
+
+  test('converts the suggested load to the user unit', () => {
+    const lb = { unit: 'lb', rounding: null } as const;
+    expect(weightPlaceholder(100, null, lb)).toBe('220.46');
+    expect(weightPlaceholder(100, 90, lb)).toBe('198.42');
   });
 });
 

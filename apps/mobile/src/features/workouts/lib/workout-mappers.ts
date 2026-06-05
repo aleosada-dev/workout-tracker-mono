@@ -1,9 +1,10 @@
 import {
   computeLinkedLoad,
+  displayWeight,
   isSupersetGroup,
-  type LoadRoundingMode,
   type MeasurementType,
   measurementDimensions,
+  type WeightPreference,
   type WorkoutExerciseType,
 } from '@workout-tracker/domain';
 import type { TFunction } from 'i18next';
@@ -67,19 +68,19 @@ export function formatSetTarget(repsMin: number | null, repsMax: number | null):
 }
 
 /**
- * Weight-input placeholder for a normal set. With a periodization `loadPercent`
- * adjustment it suggests the previous session's load scaled by that percentage
- * (rounded per preference); otherwise it falls back to the previous load. No
- * previous load means no placeholder.
+ * Weight-input placeholder for a normal set, shown in the user's unit. With a
+ * periodization `loadPercent` adjustment it suggests the previous session's load
+ * scaled by that percentage (rounded per preference); otherwise it falls back to
+ * the previous load. No previous load means no placeholder.
  */
 export function weightPlaceholder(
   lastKg: number | null | undefined,
   loadPercent: number | null | undefined,
-  mode: LoadRoundingMode,
+  weight: WeightPreference,
 ): string | undefined {
   if (lastKg == null) return undefined;
-  if (loadPercent == null) return String(lastKg);
-  return String(computeLinkedLoad(lastKg, loadPercent, mode));
+  const kg = loadPercent == null ? lastKg : computeLinkedLoad(lastKg, loadPercent, weight);
+  return String(displayWeight(kg, weight.unit));
 }
 
 export type ColumnLayout = { weight: boolean; reps: boolean; duration: boolean };

@@ -1,8 +1,9 @@
+import type { WeightUnit } from '@workout-tracker/domain';
 import {
   EXERCISE_METRIC_UNIT,
   type ExerciseMetricKey,
 } from '@/features/exercises/lib/detail-types';
-import { formatCount, formatKg } from '@/features/exercises/lib/format';
+import { formatCount } from '@/features/exercises/lib/format';
 
 /**
  * A 0-based numeric axis with a "nice" round step (≈4 ticks) derived from the
@@ -29,13 +30,18 @@ export function niceYAxis(values: number[]): { domain: [number, number]; ticks: 
   return { domain: [0, top], ticks };
 }
 
-/** Formats a chart axis tick for the given exercise metric (e.g. `8 kg`, `12`). */
+/**
+ * Formats a chart axis tick for the given exercise metric (e.g. `8 kg`, `12`).
+ * `value` is already expressed in the chart's display unit — the caller converts
+ * weight series to the user's unit before building the domain/ticks.
+ */
 export function formatMetricTick(
   metric: ExerciseMetricKey,
   value: number,
+  unit: WeightUnit,
   language: string,
 ): string {
   return EXERCISE_METRIC_UNIT[metric] === 'kg'
-    ? formatKg(value, language, { min: 0, max: 0 })
+    ? `${formatCount(value, language)} ${unit}`
     : formatCount(value, language);
 }

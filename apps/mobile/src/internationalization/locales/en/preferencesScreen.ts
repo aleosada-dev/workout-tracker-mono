@@ -1,25 +1,25 @@
 export default {
   save: 'Save',
+  saved: {
+    title: 'Preferences saved',
+  },
   sections: {
     general: 'General',
     workout: 'Workout',
   },
   defaultRestSeconds: {
-    label: 'Default rest time (s)',
+    label: 'Default rest time',
+    description: 'Pre-fills the rest time for new sets.',
     placeholder: 'No default',
+    pickerTitle: 'Rest time',
+    confirm: 'Confirm',
+    clear: 'Clear',
   },
-  weightUnit: {
-    label: 'Weight unit',
-  },
-  loadRounding: {
-    label: 'Load rounding',
-    description: 'Round the suggested load of drop and cluster sets.',
-    modes: {
-      none: 'Off',
-      half: '0.5',
-      one: '1',
-      twoAndHalf: '2.5',
-    },
+  weight: {
+    unitLabel: 'Weight unit',
+    roundingLabel: 'Load rounding',
+    roundingDescription: 'Round the suggested load in any weight calculation.',
+    roundingNone: 'Off',
   },
   countWarmupSets: {
     label: 'Count warmup sets',

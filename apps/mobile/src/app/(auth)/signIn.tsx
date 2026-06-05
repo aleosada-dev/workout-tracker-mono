@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Card, CardContent, Icon, Input, Label, Text } from '@workout-tracker/ui-mobile';
 import { Link } from 'expo-router';
-import { Dumbbell, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { signInErrorMessageKey } from '@/features/auth/lib/auth-error';
 import { LanguageMenuButton } from '@/features/settings/components/language-menu-button';
 import { ThemeToggle } from '@/features/settings/components/theme-toggle';
+import { AppLogo } from '@/features/shared/components/AppLogo';
 import { supabase } from '@/features/shared/lib/supabase';
 
 const signInSchema = z.object({
@@ -85,9 +86,7 @@ export default function SignInScreen() {
         bottomOffset={20}
       >
         <View className="items-center">
-          <View className="h-20 w-20 items-center justify-center rounded-2xl bg-primary">
-            <Icon as={Dumbbell} size={40} className="text-primary-foreground" />
-          </View>
+          <AppLogo size={112} />
           <Text variant="h2" className="mt-6 border-b-0 pb-0 text-foreground">
             {t('signInScreen.welcome')}
           </Text>

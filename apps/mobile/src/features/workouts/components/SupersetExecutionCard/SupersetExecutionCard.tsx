@@ -1,4 +1,4 @@
-import { getValidSetTypesAt } from '@workout-tracker/domain';
+import { DEFAULT_WEIGHT_PREFERENCE, getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import {
@@ -18,7 +18,7 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
-import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { formatRestSeconds, sanitizeInteger } from '@/features/shared/lib/utils';
 import {
   SetTypePickerSheet,
   type SetTypePickerSheetRef,
@@ -30,6 +30,7 @@ import {
   type SupersetAddSetsSheetRef,
 } from '@/features/workouts/components/SupersetAddSetsSheet';
 import { SupersetHelpDialog } from '@/features/workouts/components/SupersetHelpDialog';
+import { WeightInput } from '@/features/workouts/components/WeightInput';
 import {
   autofillFromLast,
   type ExecutionFormInput,
@@ -46,8 +47,6 @@ import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
 import type { SupersetExecutionCardProps } from './types';
 
-const MAX_WEIGHT_INTEGER_DIGITS = 3;
-const MAX_WEIGHT_FRACTION_DIGITS = 2;
 const MAX_REPS = 99;
 
 const SET_TYPE_INITIAL: Record<SetType, string> = {
@@ -103,6 +102,9 @@ export function SupersetExecutionCard({
   onLongPress,
 }: SupersetExecutionCardProps) {
   const { t } = useTranslation();
+  const { data: preferences } = useUserPreferences();
+  const unit = preferences?.weight.unit ?? DEFAULT_WEIGHT_PREFERENCE.unit;
+  const effectiveRestSeconds = restSeconds ?? preferences?.defaultRestSeconds ?? null;
   const [collapsed, setCollapsed] = useState(true);
   const isCollapsed = selectable || collapsed;
   const [expandedNotes, setExpandedNotes] = useState<ReadonlySet<number>>(() => new Set());
@@ -401,10 +403,10 @@ export function SupersetExecutionCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-          {restSeconds != null ? (
+          {effectiveRestSeconds != null ? (
             <View className="flex-row items-center justify-end gap-2 px-4 pt-3 pb-4">
               <Icon as={Timer} size={16} className="text-foreground" />
-              <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
+              <Text className="text-sm">{formatRestSeconds(effectiveRestSeconds)}</Text>
             </View>
           ) : null}
           <View className="px-4">
@@ -418,9 +420,12 @@ export function SupersetExecutionCard({
                   <SetTypesHelpDialog />
                 </View>
               </View>
-              <View className="flex-1 pr-2 pl-3">
-                <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {t('workoutExecutionScreen.exercise.headers.weight')}
+              <View className="flex-[1.6] pr-2 pl-3">
+                <Text
+                  numberOfLines={1}
+                  className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider"
+                >
+                  {t('workoutExecutionScreen.exercise.headers.weight', { unit })}
                 </Text>
               </View>
               <View className="flex-1 px-2">
@@ -428,8 +433,11 @@ export function SupersetExecutionCard({
                   {t('workoutExecutionScreen.exercise.headers.reps')}
                 </Text>
               </View>
-              <View className="w-20 px-2">
-                <Text className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+              <View className="w-16 px-2">
+                <Text
+                  numberOfLines={1}
+                  className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider"
+                >
                   {t('workoutExecutionScreen.exercise.headers.target')}
                 </Text>
               </View>
@@ -566,7 +574,8 @@ function SupersetMemberCell({
   const loadPercent = useWatch({ control, name: `${basePath}.loadPercent` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
   const adjusted = loadPercent != null;
-  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, preferences?.loadRounding ?? 'none');
+  const weight = preferences?.weight ?? DEFAULT_WEIGHT_PREFERENCE;
+  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, weight);
 
   return (
     <View className="flex-row items-center py-0.5">
@@ -606,25 +615,17 @@ function SupersetMemberCell({
           }}
         />
       </View>
-      <View className="flex-1 pr-2 pl-3">
+      <View className="flex-[1.6] pr-2 pl-3">
         <Controller
           control={control}
           name={`${basePath}.kg`}
           render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="decimal-pad"
+            <WeightInput
               value={field.value}
-              onChangeText={(text) =>
-                field.onChange(
-                  sanitizeDecimal(text, {
-                    maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
-                    maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
-                  }),
-                )
-              }
+              onChange={field.onChange}
+              unit={weight.unit}
               onBlur={field.onBlur}
-              aria-invalid={fieldState.invalid}
+              invalid={fieldState.invalid}
               className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
               placeholder={kgPlaceholder}
             />
@@ -650,7 +651,7 @@ function SupersetMemberCell({
           )}
         />
       </View>
-      <View className="w-20 px-2">
+      <View className="w-16 px-2">
         <Text
           className={`text-center text-xs ${adjusted ? 'font-sans-semibold text-primary' : 'text-muted-foreground'}`}
         >

@@ -1,6 +1,6 @@
 import {
   computeLinkedLoad,
-  type LoadRoundingMode,
+  DEFAULT_WEIGHT_PREFERENCE,
   measurementDimensions,
 } from '@workout-tracker/domain';
 import { Icon, Input, Text } from '@workout-tracker/ui-mobile';
@@ -11,12 +11,13 @@ import { Pressable, View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { useCountdownTimer } from '@/features/shared/hooks/use-countdown-timer';
 import { useStopwatch } from '@/features/shared/hooks/use-stopwatch';
-import { formatTime, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { formatTime, sanitizeInteger } from '@/features/shared/lib/utils';
 import { parseLocalizedNumber } from '@/features/shared/lib/utils/numeric-input';
 import {
   DurationPickerSheet,
   type DurationPickerSheetRef,
 } from '@/features/workouts/components/DurationPickerSheet';
+import { WeightInput } from '@/features/workouts/components/WeightInput';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 import {
   type ColumnLayout,
@@ -24,8 +25,6 @@ import {
   weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
 
-const MAX_WEIGHT_INTEGER_DIGITS = 3;
-const MAX_WEIGHT_FRACTION_DIGITS = 2;
 const MAX_REPS = 99;
 
 type SetRowBodyProps = {
@@ -60,9 +59,9 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
   const loadPercent = useWatch({ control, name: `${basePath}.loadPercent` });
   const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
-  const mode: LoadRoundingMode = preferences?.loadRounding ?? 'none';
+  const weight = preferences?.weight ?? DEFAULT_WEIGHT_PREFERENCE;
   const adjusted = loadPercent != null;
-  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, mode);
+  const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, weight);
 
   // Cascades the suggested load down the exercise's set chain. `linkedSetId`
   // points to the set directly above, so a drop/cluster set takes a percentage
@@ -82,7 +81,7 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
       if (!measurementDimensions(set.measurementType).weight) return;
       const base = effectiveKg.get(set.linkedSetId);
       if (base == null) return;
-      const kg = computeLinkedLoad(base, set.loadPercentOfPrevious, mode);
+      const kg = computeLinkedLoad(base, set.loadPercentOfPrevious, weight);
       effectiveKg.set(set.id, kg);
       setValue(`exercises.${exerciseIndex}.sets.${i}.kg`, String(kg), {
         shouldDirty: true,
@@ -93,35 +92,27 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
 
   return (
     <>
-      <View className="w-20 pr-2 pl-3">
+      <View className="w-24 pr-2 pl-3">
         <Controller
           control={control}
           name={`${basePath}.kg`}
           render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="decimal-pad"
+            <WeightInput
               value={field.value}
-              onChangeText={(text) =>
-                field.onChange(
-                  sanitizeDecimal(text, {
-                    maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
-                    maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
-                  }),
-                )
-              }
+              onChange={field.onChange}
+              unit={weight.unit}
               onBlur={() => {
                 field.onBlur();
                 fillLinkedLoads();
               }}
-              aria-invalid={fieldState.invalid}
+              invalid={fieldState.invalid}
               className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
               placeholder={kgPlaceholder}
             />
           )}
         />
       </View>
-      <View className="w-20 px-2">
+      <View className="w-16 px-2">
         <Controller
           control={control}
           name={`${basePath}.reps`}
@@ -155,8 +146,8 @@ export function RepsSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyProps)
 
   return (
     <>
-      {layout.weight ? <View className="w-20 pr-2 pl-3" /> : null}
-      <View className="w-20 px-2">
+      {layout.weight ? <View className="w-24 pr-2 pl-3" /> : null}
+      <View className="w-16 px-2">
         <Controller
           control={control}
           name={`${basePath}.reps`}
@@ -228,7 +219,7 @@ export function DurationSetRow({
 
   return (
     <>
-      {layout.weight ? <View className="w-20 pr-2 pl-3" /> : null}
+      {layout.weight ? <View className="w-24 pr-2 pl-3" /> : null}
       <View className="w-28 flex-row items-center gap-3 px-2">
         <Controller
           control={control}

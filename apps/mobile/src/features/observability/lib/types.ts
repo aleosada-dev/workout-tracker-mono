@@ -6,6 +6,7 @@ export type BreadcrumbCategory =
   | 'workout'
   | 'exercise'
   | 'workout-log'
+  | 'preferences'
   | 'sync'
   | 'ui'
   | 'http';
