@@ -54,7 +54,7 @@ export function ExerciseCard({
               <Text className="text-muted-foreground text-xs">{exercise.variationName}</Text>
             )}
             <View className="mt-1 flex-row items-center gap-1.5">
-              <Text className="text-foreground text-xs" numberOfLines={1}>
+              <Text className="shrink text-foreground text-xs" numberOfLines={1}>
                 {exercise.primaryMuscle}
               </Text>
               <Text className="text-muted-foreground text-xs">·</Text>
@@ -62,7 +62,7 @@ export function ExerciseCard({
                 {t(`exercises.type.${exercise.type}`, { defaultValue: exercise.type })}
               </Text>
               <Text className="text-muted-foreground text-xs">·</Text>
-              <View className="shrink flex-row items-center gap-1">
+              <View className="shrink-0 flex-row items-center gap-1">
                 <Icon as={visibility.icon} size={12} className="text-muted-foreground" />
                 <Text className="text-muted-foreground text-xs" numberOfLines={1}>
                   {t(visibility.labelKey)}
