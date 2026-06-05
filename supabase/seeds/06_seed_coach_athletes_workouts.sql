@@ -672,7 +672,7 @@ BEGIN
     (athlete7_id, var_rosca_direta,       20.00,  720.00, 12, 3),
     (athlete7_id, var_elevacao_lat,       10.00,  450.00, 15, 3)
 
-  ON CONFLICT (user_id, variation_id) DO NOTHING;
+  ON CONFLICT (user_id, variation_id, alias_id) DO NOTHING;
 
 END $$;
 

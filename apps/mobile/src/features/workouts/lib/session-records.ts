@@ -89,7 +89,12 @@ export function buildSessionRecords(
   baseline: ExerciseRecordsResponse,
   includeWarmup: boolean,
 ): SessionExerciseRecord[] {
-  const baselineByVariation = new Map(baseline.map((record) => [record.variationId, record]));
+  // Records vêm segmentados por alias; o PR a comparar é o geral (aliasId null).
+  const baselineByVariation = new Map(
+    baseline
+      .filter((record) => record.aliasId === null)
+      .map((record) => [record.variationId, record]),
+  );
   const result: SessionExerciseRecord[] = [];
   const aggregateByVariationVar = aggregateByVariation(execution, includeWarmup);
 

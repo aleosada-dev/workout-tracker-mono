@@ -14,7 +14,7 @@ import {
 } from '@/features/workouts/lib/execution-form';
 
 type TemplateSet = GetWorkoutResponse['exercises'][number]['sets'][number];
-type LastSetRef = ExerciseLastSetsResponse[number]['sets'][number];
+type LastSetRef = ExerciseLastSetsResponse[number]['buckets'][number]['sets'][number];
 
 const VARIATION_A = '11111111-1111-1111-1111-111111111111';
 const VARIATION_B = '22222222-2222-2222-2222-222222222222';
@@ -74,7 +74,7 @@ function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
 }
 
 function lastSets(variationId: string, sets: LastSetRef[]): ExerciseLastSetsResponse {
-  return [{ variationId, sets }];
+  return [{ variationId, lastUsedAliasId: null, buckets: [{ aliasId: null, sets }] }];
 }
 
 describe('buildExecutionFromWorkout', () => {

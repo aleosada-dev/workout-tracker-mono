@@ -1,7 +1,6 @@
 import {
   ConflictError,
   type CreateExerciseInput,
-  type ExerciseLastSet,
   type ExerciseListItem,
   type ExerciseRepository,
   type ListExerciseName,
@@ -18,9 +17,15 @@ import {
   toExerciseDetail,
 } from './supabase-exercises-detail-mappers';
 import { type ExerciseForEditRow, toExerciseForEdit } from './supabase-exercises-edit-mappers';
+import { toExerciseLastSets } from './supabase-exercises-last-sets-mapper';
 import toExerciseListItems, {
   type ListExerciseItemRpcRow,
 } from './supabase-exercises-list-mappers';
+import {
+  toVariationAlias,
+  VARIATION_ALIAS_COLUMNS,
+  type VariationAliasRow,
+} from './supabase-variation-aliases-mapper';
 
 export type SupabaseExerciseRepositoryDeps = {
   /** Turns an uploaded video's R2 object key into a playable URL. */
@@ -102,7 +107,7 @@ export function makeSupabaseExerciseRepository(
     async getExerciseRecords({ userId, variationIds }) {
       const { data, error } = await supabase
         .from('workout_variation_records')
-        .select('variation_id, max_weight_kg, max_volume_kg, max_reps, max_sets')
+        .select('variation_id, alias_id, max_weight_kg, max_volume_kg, max_reps, max_sets')
         .eq('user_id', userId)
         .in('variation_id', variationIds);
 
@@ -112,6 +117,7 @@ export function makeSupabaseExerciseRepository(
 
       return (data ?? []).map((row) => ({
         variationId: row.variation_id,
+        aliasId: row.alias_id ?? null,
         maxWeightKg: row.max_weight_kg,
         maxVolumeKg: row.max_volume_kg,
         maxReps: row.max_reps,
@@ -120,8 +126,6 @@ export function makeSupabaseExerciseRepository(
     },
 
     async getLastSets({ userId, variationIds }) {
-      // A função já devolve o último set por (variation, logical_key) em todo o
-      // histórico; aqui só agrupamos as flat rows por variation.
       const { data, error } = await supabase.rpc('wt_last_sets_by_variations', {
         p_user_id: userId,
         p_variation_ids: variationIds,
@@ -131,20 +135,7 @@ export function makeSupabaseExerciseRepository(
         throw supabaseError('Failed to get last sets', error);
       }
 
-      const byVariation = new Map<string, { variationId: string; sets: ExerciseLastSet[] }>();
-      for (const row of data ?? []) {
-        let entry = byVariation.get(row.variation_id);
-        if (!entry) {
-          entry = { variationId: row.variation_id, sets: [] };
-          byVariation.set(row.variation_id, entry);
-        }
-        entry.sets.push({
-          logicalKey: row.logical_key,
-          weightKg: row.weight_kg ?? null,
-          reps: row.reps ?? null,
-        });
-      }
-      return Array.from(byVariation.values());
+      return toExerciseLastSets(data ?? []);
     },
 
     async getExerciseForEdit({ userId, variationId }) {
@@ -256,6 +247,81 @@ export function makeSupabaseExerciseRepository(
       }
 
       return { copiedCount: data ?? 0 };
+    },
+
+    async listVariationAliases({ userId, variationIds }) {
+      const { data, error } = await supabase
+        .from('variation_aliases')
+        .select(VARIATION_ALIAS_COLUMNS)
+        .eq('user_id', userId)
+        .in('variation_id', variationIds)
+        .is('deleted_at', null)
+        .order('name', { ascending: true });
+
+      if (error) {
+        throw supabaseError('Failed to list variation aliases', error);
+      }
+
+      return (data ?? []).map(toVariationAlias);
+    },
+
+    async createVariationAlias({ userId, variationId, locationId, name }) {
+      const { data, error } = await supabase
+        .from('variation_aliases')
+        .insert({ user_id: userId, variation_id: variationId, location_id: locationId, name })
+        .select(VARIATION_ALIAS_COLUMNS)
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new ConflictError('variation alias already exists');
+        }
+        throw supabaseError('Failed to create variation alias', error);
+      }
+
+      return toVariationAlias(data as VariationAliasRow);
+    },
+
+    async updateVariationAlias({ userId, aliasId, name, locationId }) {
+      const patch: { name?: string; location_id?: string | null } = {};
+      if (name !== undefined) patch.name = name;
+      if (locationId !== undefined) patch.location_id = locationId;
+
+      const { data, error } = await supabase
+        .from('variation_aliases')
+        .update(patch)
+        .eq('id', aliasId)
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+        .select(VARIATION_ALIAS_COLUMNS)
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new ConflictError('variation alias already exists');
+        }
+        throw supabaseError('Failed to update variation alias', error);
+      }
+
+      if (!data) return null;
+      return toVariationAlias(data as VariationAliasRow);
+    },
+
+    async deleteVariationAlias({ userId, aliasId }) {
+      const { data, error } = await supabase
+        .from('variation_aliases')
+        .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+        .eq('id', aliasId)
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+        .select('id')
+        .maybeSingle();
+
+      if (error) {
+        throw supabaseError('Failed to delete variation alias', error);
+      }
+
+      return { deleted: data !== null };
     },
   };
 }

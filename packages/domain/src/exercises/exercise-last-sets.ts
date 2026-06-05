@@ -2,6 +2,10 @@
  * Último set executado por slot lógico (warmup-1, normal-1, ...) ao longo de todo o
  * histórico, por variation. Usado para os placeholders durante a execução do treino.
  * A `logicalKey` segue a definição de `assignLogicalKeys` (workouts/matching).
+ *
+ * Segmentado por alias (máquina): cada variation traz um bucket por alias usado no
+ * histórico — incluindo o bucket "sem alias" (`aliasId: null`) — e o `lastUsedAliasId`
+ * (alias do log mais recente) para a pré-seleção na execução.
  */
 export type ExerciseLastSet = {
   logicalKey: string;
@@ -9,9 +13,15 @@ export type ExerciseLastSet = {
   reps: number | null;
 };
 
+export type ExerciseLastSetsBucket = {
+  aliasId: string | null;
+  sets: ExerciseLastSet[];
+};
+
 export type ExerciseLastSets = {
   variationId: string;
-  sets: ExerciseLastSet[];
+  lastUsedAliasId: string | null;
+  buckets: ExerciseLastSetsBucket[];
 };
 
 export type GetExerciseLastSetsFilter = {

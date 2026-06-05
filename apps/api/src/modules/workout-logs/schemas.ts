@@ -136,6 +136,7 @@ const CreateWorkoutLogSetSchema = z
 
 const CreateWorkoutLogExerciseSchema = z.object({
 	variationId: z.uuid(),
+	aliasId: z.uuid().nullable().default(null),
 	exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
 	position: z.int().nonnegative(),
 	note: z.string().trim().min(1).nullable(),

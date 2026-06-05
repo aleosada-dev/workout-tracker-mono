@@ -15,6 +15,7 @@ export type CreateWorkoutLogSet = {
 
 export type CreateWorkoutLogExercise = {
   variationId: string;
+  aliasId: string | null;
   exerciseType: WorkoutExerciseType;
   position: number;
   note: string | null;

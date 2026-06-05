@@ -8,6 +8,13 @@ import type { ExerciseListItem, ListExercisesFilter } from './exercise-list';
 import type { ListExerciseName, ListExerciseNamesFilter } from './exercise-name';
 import type { ExerciseRecords, GetExerciseRecordsFilter } from './exercise-records';
 import type { UpdateExerciseInput } from './update-exercise';
+import type {
+  CreateVariationAliasInput,
+  DeleteVariationAliasInput,
+  ListVariationAliasesFilter,
+  UpdateVariationAliasInput,
+  VariationAlias,
+} from './variation-alias';
 
 export interface ExerciseRepository {
   list(filter: ListExercisesFilter): Promise<ExerciseListItem[]>;
@@ -20,4 +27,8 @@ export interface ExerciseRepository {
   updateExercise(input: UpdateExerciseInput): Promise<{ id: string }>;
   deleteExercises(input: DeleteExercisesInput): Promise<DeleteExercisesResult>;
   copyExercises(input: CopyExercisesInput): Promise<CopyExercisesResult>;
+  listVariationAliases(filter: ListVariationAliasesFilter): Promise<VariationAlias[]>;
+  createVariationAlias(input: CreateVariationAliasInput): Promise<VariationAlias>;
+  updateVariationAlias(input: UpdateVariationAliasInput): Promise<VariationAlias | null>;
+  deleteVariationAlias(input: DeleteVariationAliasInput): Promise<{ deleted: boolean }>;
 }

@@ -1676,6 +1676,44 @@ export type Database = {
           },
         ]
       }
+      training_locations: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_locations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string
@@ -1707,6 +1745,71 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      variation_aliases: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          location_id: string | null
+          name: string
+          updated_at: string
+          user_id: string
+          variation_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          location_id?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+          variation_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          location_id?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+          variation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variation_aliases_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "training_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variation_aliases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variation_aliases_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variation_aliases_variation_id_fkey"
+            columns: ["variation_id"]
+            isOneToOne: false
+            referencedRelation: "variations_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1862,6 +1965,8 @@ export type Database = {
       }
       workout_exercise_logs: {
         Row: {
+          alias_id: string | null
+          alias_name: string | null
           created_at: string
           exercise_name: string | null
           exercise_type: string
@@ -1876,6 +1981,8 @@ export type Database = {
           workout_log_id: string
         }
         Insert: {
+          alias_id?: string | null
+          alias_name?: string | null
           created_at?: string
           exercise_name?: string | null
           exercise_type?: string
@@ -1890,6 +1997,8 @@ export type Database = {
           workout_log_id: string
         }
         Update: {
+          alias_id?: string | null
+          alias_name?: string | null
           created_at?: string
           exercise_name?: string | null
           exercise_type?: string
@@ -1904,6 +2013,13 @@ export type Database = {
           workout_log_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_exercise_logs_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: false
+            referencedRelation: "variation_aliases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_exercise_logs_variation_id_fkey"
             columns: ["variation_id"]
@@ -2258,6 +2374,7 @@ export type Database = {
       }
       workout_variation_records: {
         Row: {
+          alias_id: string | null
           created_at: string
           id: string
           max_reps: number | null
@@ -2269,6 +2386,7 @@ export type Database = {
           variation_id: string
         }
         Insert: {
+          alias_id?: string | null
           created_at?: string
           id?: string
           max_reps?: number | null
@@ -2280,6 +2398,7 @@ export type Database = {
           variation_id: string
         }
         Update: {
+          alias_id?: string | null
           created_at?: string
           id?: string
           max_reps?: number | null
@@ -2291,6 +2410,13 @@ export type Database = {
           variation_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_variation_records_alias_id_fkey"
+            columns: ["alias_id"]
+            isOneToOne: false
+            referencedRelation: "variation_aliases"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_variation_records_variation_id_fkey"
             columns: ["variation_id"]
@@ -2919,6 +3045,8 @@ export type Database = {
       wt_last_sets_by_variations: {
         Args: { p_user_id: string; p_variation_ids: string[] }
         Returns: {
+          alias_id: string
+          last_used_alias_id: string
           logical_key: string
           reps: number
           variation_id: string

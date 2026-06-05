@@ -31,6 +31,7 @@ export {
 export { createSupabaseClient, type Supabase } from './supabase/client';
 export { supabaseError } from './supabase/supabase-error';
 export type { Database, Json } from './supabase/types';
+export { makeSupabaseTrainingLocationRepository } from './training-locations/supabase-training-locations-adapter';
 export { makeSupabaseWorkoutLogRepository } from './workout-logs/supabase-workout-logs-adapter';
 export { makeSupabaseWorkoutRepository } from './workouts/supabase-workouts-adapter';
 export { makeSupabaseWorkoutFolderRepository } from './workouts/supabase-workouts-folder-adapter';

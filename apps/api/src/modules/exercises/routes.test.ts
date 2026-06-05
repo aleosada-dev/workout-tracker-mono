@@ -1102,13 +1102,15 @@ describe("GET /api/v1/exercises/last", () => {
 		const requested = new Set(variationIds);
 		for (const item of data) {
 			expect(requested.has(item.variationId)).toBeTrue();
-			// one row per logical slot — keys are unique and well-formed
-			const keys = item.sets.map((s) => s.logicalKey);
-			expect(new Set(keys).size).toBe(keys.length);
-			for (const set of item.sets) {
-				expect(set.logicalKey).toMatch(LOGICAL_KEY);
-				expect(set.weightKg === null || typeof set.weightKg === "number").toBeTrue();
-				expect(set.reps === null || typeof set.reps === "number").toBeTrue();
+			for (const bucket of item.buckets) {
+				// one row per logical slot within each alias bucket — keys unique/well-formed
+				const keys = bucket.sets.map((s) => s.logicalKey);
+				expect(new Set(keys).size).toBe(keys.length);
+				for (const set of bucket.sets) {
+					expect(set.logicalKey).toMatch(LOGICAL_KEY);
+					expect(set.weightKg === null || typeof set.weightKg === "number").toBeTrue();
+					expect(set.reps === null || typeof set.reps === "number").toBeTrue();
+				}
 			}
 		}
 	});

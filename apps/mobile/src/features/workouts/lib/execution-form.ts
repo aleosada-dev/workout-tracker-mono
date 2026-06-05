@@ -114,8 +114,24 @@ export type ExecutionExerciseInput = ExecutionFormInput['exercises'][number];
 export type ExecutionSetInput = ExecutionExerciseInput['sets'][number];
 export type ExecutionExerciseVariation = z.infer<typeof ExecutionExerciseVariationSchema>;
 
-type LastSetsExerciseSets = ExerciseLastSetsResponse[number]['sets'];
+type LastSetsExerciseItem = ExerciseLastSetsResponse[number];
+type LastSetsExerciseSets = LastSetsExerciseItem['buckets'][number]['sets'];
 type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
+
+/**
+ * Resolve o bucket de última-carga a ser usado para uma variation. Por ora
+ * (sem seletor de máquina na UI), usa o último alias usado — fallback para o
+ * bucket "sem alias" e, por fim, o primeiro disponível. A seleção explícita de
+ * alias entra na fase do mobile.
+ */
+export function resolveLastBucketSets(
+  item: LastSetsExerciseItem | undefined,
+): LastSetsExerciseSets | undefined {
+  if (!item || item.buckets.length === 0) return undefined;
+  const byLastUsed = item.buckets.find((bucket) => bucket.aliasId === item.lastUsedAliasId);
+  const byNoAlias = item.buckets.find((bucket) => bucket.aliasId === null);
+  return (byLastUsed ?? byNoAlias ?? item.buckets[0]).sets;
+}
 
 type LastValues = { lastKg: number | null; lastReps: number | null };
 type TargetValues = {
@@ -272,7 +288,7 @@ export function buildExecutionFromWorkout(
         loadPercent: set.loadPercent,
         loadPercentOfPrevious: set.loadPercentOfPrevious,
       }));
-      const matched = matchExecutionSetsByLogicalKey(sets, lastExercise?.sets);
+      const matched = matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise));
       return {
         id: exercise.id,
         exerciseType: exercise.exerciseType,

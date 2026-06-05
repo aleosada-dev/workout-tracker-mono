@@ -17,6 +17,7 @@ import { musclesRouter } from "./modules/muscles/routes";
 import { periodizationsRouter } from "./modules/periodizations/routes";
 import { preferencesRouter } from "./modules/preferences/routes";
 import { profilesRouter } from "./modules/profiles/routes";
+import { trainingLocationsRouter } from "./modules/training-locations/routes";
 import { workoutLogsRouter } from "./modules/workout-logs/routes";
 import { workoutsRouter } from "./modules/workouts/routes";
 import { bearerAuthMiddleware } from "./shared/http/auth-middleware";
@@ -45,7 +46,8 @@ const apiApp = new Hono<AppBindings>()
 	.route("/coachs", coachesRouter)
 	.route("/coach-sessions", coachSessionsRouter)
 	.route("/preferences", preferencesRouter)
-	.route("/periodizations", periodizationsRouter);
+	.route("/periodizations", periodizationsRouter)
+	.route("/training-locations", trainingLocationsRouter);
 
 const openApiSpec = await buildOpenApiSpec(apiApp, "/api/v1");
 

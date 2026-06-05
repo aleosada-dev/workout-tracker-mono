@@ -59,6 +59,7 @@ import {
   ExecutionFormSchema,
   type ExecutionFormValues,
   matchExecutionSetsByLogicalKey,
+  resolveLastBucketSets,
 } from '@/features/workouts/lib/execution-form';
 import {
   combineIntoSuperset,
@@ -263,7 +264,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     const exercises = form.getValues('exercises') ?? [];
     exercises.forEach((exercise, exerciseIndex) => {
       const lastExercise = lastSetsData.find((e) => e.variationId === exercise.variation.id);
-      matchExecutionSetsByLogicalKey(exercise.sets, lastExercise?.sets).forEach(
+      matchExecutionSetsByLogicalKey(exercise.sets, resolveLastBucketSets(lastExercise)).forEach(
         (last, setIndex) => {
           const base = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
           if (form.getValues(`${base}.lastKg`) !== last.lastKg) {

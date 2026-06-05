@@ -25,6 +25,7 @@ import {
 	toExerciseListItemResponse,
 	UpdateExerciseRequestSchema,
 } from "./schemas";
+import { variationAliasesRouter } from "./variation-aliases.routes";
 
 /**
  * Validates a device video already uploaded to R2 before the exercise is
@@ -56,6 +57,7 @@ async function validateUploadedVideo(
 }
 
 export const exercisesRouter = new Hono<AppBindings>()
+	.route("/variation-aliases", variationAliasesRouter)
 	.get(
 		"/",
 		describeRoute({

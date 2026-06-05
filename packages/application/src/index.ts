@@ -6,5 +6,6 @@ export * from './muscles';
 export * from './periodizations';
 export * from './preferences';
 export * from './profiles';
+export * from './training-locations';
 export * from './workout-logs';
 export * from './workouts';

@@ -35,6 +35,7 @@ import {
   type ExecutionFormInput,
   matchExecutionSetsByLogicalKey,
   matchExecutionSetsToTemplate,
+  resolveLastBucketSets,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 import {
@@ -135,10 +136,12 @@ export function SupersetExecutionCard({
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsByLogicalKey(memberSets, lastExercise?.sets).forEach((last, i) => {
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
-    });
+    matchExecutionSetsByLogicalKey(memberSets, resolveLastBucketSets(lastExercise)).forEach(
+      (last, i) => {
+        setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+      },
+    );
 
     const templateExercise = activeWorkout$.workoutTemplate
       .peek()

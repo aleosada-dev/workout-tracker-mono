@@ -56,6 +56,7 @@ function record(
 ): ExerciseRecordsResponse[number] {
   return {
     variationId: 'var-1',
+    aliasId: null,
     maxWeightKg: null,
     maxVolumeKg: null,
     maxReps: null,

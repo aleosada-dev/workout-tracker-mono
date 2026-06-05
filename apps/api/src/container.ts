@@ -6,6 +6,7 @@ import {
 	makeMuscleApp,
 	makePeriodizationApp,
 	makeProfileApp,
+	makeTrainingLocationApp,
 	makeUserPreferencesApp,
 	makeWorkoutApp,
 	makeWorkoutLogApp,
@@ -24,6 +25,7 @@ import {
 	makeSupabasePeriodizationAdjustmentRepository,
 	makeSupabasePeriodizationOccurrenceRepository,
 	makeSupabaseProfileRepository,
+	makeSupabaseTrainingLocationRepository,
 	makeSupabaseUserPreferencesRepository,
 	makeSupabaseWorkoutFolderRepository,
 	makeSupabaseWorkoutLogRepository,
@@ -48,6 +50,7 @@ export function buildContainer(env: Env, accessToken?: string) {
 	const userPreferencesRepository = makeSupabaseUserPreferencesRepository(supabase);
 	const periodizationOccurrenceRepository = makeSupabasePeriodizationOccurrenceRepository(supabase);
 	const periodizationAdjustmentRepository = makeSupabasePeriodizationAdjustmentRepository(supabase);
+	const trainingLocationRepository = makeSupabaseTrainingLocationRepository(supabase);
 
 	return {
 		muscles: makeMuscleApp(muscleRepository),
@@ -59,6 +62,7 @@ export function buildContainer(env: Env, accessToken?: string) {
 		coaches: makeCoachApp(coachRepository),
 		coachSessions: makeCoachSessionApp(coachSessionRepository),
 		userPreferences: makeUserPreferencesApp(userPreferencesRepository),
+		trainingLocations: makeTrainingLocationApp(trainingLocationRepository),
 		periodizations: makePeriodizationApp(
 			periodizationOccurrenceRepository,
 			periodizationAdjustmentRepository,

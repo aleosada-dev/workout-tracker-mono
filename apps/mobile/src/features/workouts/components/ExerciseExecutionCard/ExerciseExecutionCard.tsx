@@ -33,6 +33,7 @@ import {
   type ExecutionFormInput,
   matchExecutionSetsByLogicalKey,
   matchExecutionSetsToTemplate,
+  resolveLastBucketSets,
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 import { type ColumnLayout, exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
@@ -92,7 +93,7 @@ export function ExerciseExecutionCard({
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsByLogicalKey(sets, lastExercise?.sets).forEach((last, i) => {
+    matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise)).forEach((last, i) => {
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
       setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
     });

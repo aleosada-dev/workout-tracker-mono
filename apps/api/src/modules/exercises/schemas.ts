@@ -268,6 +268,8 @@ export type ExerciseRecordsQuery = z.infer<typeof ExerciseRecordsQuerySchema>;
 
 const ExerciseRecordsItemSchema = z.object({
 	variationId: z.uuid(),
+	// null = PR geral (máximo entre todas as máquinas); senão, PR daquela máquina.
+	aliasId: z.uuid().nullable(),
 	maxWeightKg: z.number().nullable(),
 	maxVolumeKg: z.number().nullable(),
 	maxReps: z.number().int().nullable(),
@@ -285,14 +287,22 @@ export const ExerciseLastSetsQuerySchema = z.object({
 
 export type ExerciseLastSetsQuery = z.infer<typeof ExerciseLastSetsQuerySchema>;
 
+const ExerciseLastSetSchema = z.object({
+	logicalKey: z.string(),
+	weightKg: z.number().nullable(),
+	reps: z.number().int().nullable(),
+});
+
 const ExerciseLastSetItemSchema = z.object({
 	variationId: z.uuid(),
-	// Último set por slot lógico (warmup-1, normal-1, ...) em todo o histórico.
-	sets: z.array(
+	// Alias do log mais recente da variation, para pré-seleção na execução.
+	lastUsedAliasId: z.uuid().nullable(),
+	// Último set por slot lógico (warmup-1, normal-1, ...) em todo o histórico,
+	// segmentado por alias (máquina). bucket aliasId null = "sem alias".
+	buckets: z.array(
 		z.object({
-			logicalKey: z.string(),
-			weightKg: z.number().nullable(),
-			reps: z.number().int().nullable(),
+			aliasId: z.uuid().nullable(),
+			sets: z.array(ExerciseLastSetSchema),
 		}),
 	),
 });

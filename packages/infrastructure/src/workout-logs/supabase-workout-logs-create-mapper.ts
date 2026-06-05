@@ -1,9 +1,5 @@
 import type { CreateWorkoutLogInput } from '@workout-tracker/domain';
 
-/**
- * Maps the domain create input into the camelCase `payload` consumed by the
- * `wt_insert_workout_log` RPC (which reads `payload->>'...'` per field).
- */
 export function toWorkoutLogCreatePayload(input: CreateWorkoutLogInput) {
   return {
     userId: input.userId,
@@ -16,6 +12,7 @@ export function toWorkoutLogCreatePayload(input: CreateWorkoutLogInput) {
     periodizationOccurrenceId: input.periodizationOccurrenceId,
     exercises: input.exercises.map((exercise) => ({
       variationId: exercise.variationId,
+      aliasId: exercise.aliasId,
       exerciseType: exercise.exerciseType,
       position: exercise.position,
       note: exercise.note,
