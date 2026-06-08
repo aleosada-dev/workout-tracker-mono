@@ -4,6 +4,7 @@ import { syncObservable } from '@legendapp/state/sync';
 import type {
   ExerciseLastSetsResponse,
   ExerciseRecordsResponse,
+  VariationAlias,
 } from '@/features/exercises/api/exercises';
 import type {
   GetWorkoutLastLogResponse,
@@ -27,6 +28,9 @@ export type ActiveWorkout = {
   lastLog: GetWorkoutLastLogResponse;
   lastSets: ExerciseLastSetsResponse | null;
   records: ExerciseRecordsResponse | null;
+  selectedLocationId: string | null;
+  locationChosen: boolean;
+  variationAliases: VariationAlias[] | null;
 };
 
 export const activeWorkout$ = observable<ActiveWorkout | null>(null);

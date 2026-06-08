@@ -26,6 +26,9 @@ jest.mock('expo-crypto', () => {
 jest.mock('@/features/workouts/state/rest-timer-bridge', () => ({
   startRestTimer: jest.fn(),
 }));
+jest.mock('@/features/workouts/components/AliasSelector', () => ({
+  AliasSelector: () => null,
+}));
 jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
   useUserPreferences: () => ({
     data: {
@@ -40,6 +43,7 @@ jest.mock('@/features/workouts/state/active-workout-store', () => ({
   activeWorkout$: {
     lastSets: { peek: () => null },
     workoutTemplate: { peek: () => null },
+    athleteId: { peek: () => null },
   },
 }));
 jest.mock('react-i18next', () => ({
@@ -91,6 +95,7 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
     supersetOrder: index,
     note: null,
     restSeconds,
+    aliasId: null,
     variation: {
       id: index === 0 ? 'va' : 'vb',
       slug: null,

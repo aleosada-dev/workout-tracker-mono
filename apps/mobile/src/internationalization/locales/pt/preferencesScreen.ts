@@ -18,6 +18,11 @@ export default {
   weightUnit: {
     label: 'Unidade de peso',
   },
+  defaultLocation: {
+    label: 'Local de treino padrão',
+    description: 'Vem pré-selecionado ao abrir um treino.',
+    none: 'Sem local',
+  },
   loadRounding: {
     label: 'Arredondamento da carga',
     description: 'Arredonda a carga sugerida das séries drop e cluster.',

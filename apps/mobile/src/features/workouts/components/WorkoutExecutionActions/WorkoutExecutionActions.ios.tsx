@@ -15,6 +15,7 @@ export function WorkoutExecutionActions({
   onNotes,
   onAddExercise,
   onKgLbsCalculator,
+  onLocation,
   timer,
 }: WorkoutExecutionActionsProps) {
   const { t } = useTranslation();
@@ -43,6 +44,9 @@ export function WorkoutExecutionActions({
           </Stack.Toolbar.MenuAction>
           <Stack.Toolbar.MenuAction icon="plus.forwardslash.minus" onPress={onKgLbsCalculator}>
             {t('workoutExecutionScreen.actions.kgLbsCalculator')}
+          </Stack.Toolbar.MenuAction>
+          <Stack.Toolbar.MenuAction icon="map" onPress={onLocation}>
+            {t('workoutExecutionScreen.actions.location')}
           </Stack.Toolbar.MenuAction>
         </Stack.Toolbar.Menu>
       </Stack.Toolbar>

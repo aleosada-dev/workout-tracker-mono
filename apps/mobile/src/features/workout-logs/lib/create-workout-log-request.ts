@@ -28,6 +28,7 @@ export function buildCreateWorkoutLogRequest(input: {
     periodizationOccurrenceId: input.periodizationOccurrenceId,
     exercises: input.execution.exercises.map((exercise) => ({
       variationId: exercise.variation.id,
+      aliasId: exercise.aliasId,
       exerciseType: exercise.exerciseType,
       position: exercise.position,
       note: normalizeNote(exercise.note),

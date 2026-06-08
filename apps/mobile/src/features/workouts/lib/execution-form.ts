@@ -100,6 +100,8 @@ export const ExecutionExerciseSchema = z.object({
   supersetOrder: z.int().nonnegative(),
   note: z.string().nullable(),
   restSeconds: z.int().nonnegative().nullable(),
+  // Máquina (alias) selecionada para este exercício; null = sem máquina.
+  aliasId: z.string().nullable(),
   variation: ExecutionExerciseVariationSchema,
   sets: z.array(ExecutionSetSchema),
 });
@@ -119,15 +121,19 @@ type LastSetsExerciseSets = LastSetsExerciseItem['buckets'][number]['sets'];
 type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
 
 /**
- * Resolve o bucket de última-carga a ser usado para uma variation. Por ora
- * (sem seletor de máquina na UI), usa o último alias usado — fallback para o
- * bucket "sem alias" e, por fim, o primeiro disponível. A seleção explícita de
- * alias entra na fase do mobile.
+ * Resolve o bucket de última-carga para uma variation, dado o alias selecionado.
+ * Se o alias selecionado tem histórico, usa-o. Senão (máquina nova ou sem
+ * seleção), cai para o log mais recente geral: último alias usado → bucket "sem
+ * alias" → primeiro bucket. `selectedAliasId` undefined = sem seleção; null =
+ * seleção explícita de "sem máquina".
  */
 export function resolveLastBucketSets(
   item: LastSetsExerciseItem | undefined,
+  selectedAliasId?: string | null,
 ): LastSetsExerciseSets | undefined {
   if (!item || item.buckets.length === 0) return undefined;
+  const exact = item.buckets.find((bucket) => bucket.aliasId === selectedAliasId);
+  if (exact && exact.sets.length > 0) return exact.sets;
   const byLastUsed = item.buckets.find((bucket) => bucket.aliasId === item.lastUsedAliasId);
   const byNoAlias = item.buckets.find((bucket) => bucket.aliasId === null);
   return (byLastUsed ?? byNoAlias ?? item.buckets[0]).sets;
@@ -221,6 +227,7 @@ export function buildExecutionExerciseFromPicked(
     supersetOrder: 0,
     note: null,
     restSeconds: null,
+    aliasId: null,
     variation: {
       id: picked.variation.id,
       slug: picked.variation.slug,
@@ -288,7 +295,12 @@ export function buildExecutionFromWorkout(
         loadPercent: set.loadPercent,
         loadPercentOfPrevious: set.loadPercentOfPrevious,
       }));
-      const matched = matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise));
+      // Pré-seleciona o último alias usado naquela variation (fallback: sem máquina).
+      const aliasId = lastExercise?.lastUsedAliasId ?? null;
+      const matched = matchExecutionSetsByLogicalKey(
+        sets,
+        resolveLastBucketSets(lastExercise, aliasId),
+      );
       return {
         id: exercise.id,
         exerciseType: exercise.exerciseType,
@@ -297,6 +309,7 @@ export function buildExecutionFromWorkout(
         supersetOrder: exercise.supersetOrder,
         note: exercise.note,
         restSeconds: exercise.restSeconds,
+        aliasId,
         variation: exercise.variation,
         sets: sets.map((set, i) => ({ ...set, ...matched[i] })),
       };

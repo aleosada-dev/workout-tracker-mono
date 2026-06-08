@@ -28,6 +28,7 @@ function exercise(
     supersetOrder: 0,
     note: null,
     restSeconds: null,
+    aliasId: null,
     variation: {
       id: `var-${overrides.id}`,
       slug: 'supino-reto',

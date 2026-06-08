@@ -9,6 +9,7 @@ export default {
     notes: 'Notas',
     addExercise: 'Adicionar exercício',
     kgLbsCalculator: 'Calculadora kg x libras',
+    location: 'Definir local',
     review: 'Revisar treino',
     more: 'Mais opções',
   },
@@ -71,6 +72,27 @@ export default {
     rules:
       'Aquecimentos devem vir antes das demais séries. Drop sets e cluster sets devem ser seguidos por uma série normal ou por outra série do mesmo tipo.',
     removeSet: 'Excluir série',
+  },
+  aliasPicker: {
+    add: 'Personalizar',
+    title: 'Personalizar exercício',
+    subtitle:
+      'Dê um nome à sua versão deste exercício (ex.: a máquina usada). A carga sugerida e os recordes ficam separados por personalização.',
+    none: 'Sem personalização',
+    newMachine: 'Nova personalização',
+    namePlaceholder: 'Ex: Leg press azul',
+    locationPlaceholder: 'Local (opcional)',
+    create: 'Criar',
+    cancel: 'Cancelar',
+  },
+  locationPrompt: {
+    title: 'Onde você vai treinar?',
+    subtitle: 'Escolher o local pré-seleciona a personalização daquele lugar.',
+    none: 'Sem local',
+    confirm: 'Confirmar',
+  },
+  locationPicker: {
+    title: 'Local de treino',
   },
   addSetsSheet: {
     title: 'Adicionar séries',

@@ -32,6 +32,7 @@ function completedExercise(
     supersetOrder: 0,
     note: null,
     restSeconds: 90,
+    aliasId: null,
     variation: {
       id: '22222222-2222-2222-2222-222222222222',
       slug: 'supino-reto',
@@ -82,6 +83,7 @@ describe('buildCreateWorkoutLogRequest', () => {
       exercises: [
         {
           variationId: '22222222-2222-2222-2222-222222222222',
+          aliasId: null,
           exerciseType: 'strength',
           position: 0,
           note: null,
@@ -103,6 +105,17 @@ describe('buildCreateWorkoutLogRequest', () => {
         },
       ],
     });
+  });
+
+  test('passes the selected aliasId per exercise', () => {
+    const request = buildCreateWorkoutLogRequest({
+      ...base,
+      execution: execution([
+        completedExercise([completedSet()], { aliasId: '44444444-4444-4444-4444-444444444444' }),
+      ]),
+    });
+
+    expect(request.exercises[0].aliasId).toBe('44444444-4444-4444-4444-444444444444');
   });
 
   test('assigns setOrder by position within the exercise', () => {

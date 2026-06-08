@@ -8,7 +8,15 @@ import {
   Text,
   useTheme,
 } from '@workout-tracker/ui-mobile';
-import { Calculator, Check, MoreHorizontal, Plus, StickyNote, Timer } from 'lucide-react-native';
+import {
+  Calculator,
+  Check,
+  MapPin,
+  MoreHorizontal,
+  Plus,
+  StickyNote,
+  Timer,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { ColorValue } from 'react-native';
 import { Pressable, View } from 'react-native';
@@ -25,6 +33,7 @@ export function WorkoutExecutionActions({
   onNotes,
   onAddExercise,
   onKgLbsCalculator,
+  onLocation,
   timer,
 }: WorkoutExecutionActionsProps) {
   const { t } = useTranslation();
@@ -83,6 +92,12 @@ export function WorkoutExecutionActions({
             icon={Calculator}
             label={t('workoutExecutionScreen.actions.kgLbsCalculator')}
             onPress={onKgLbsCalculator}
+            color={navTheme.colors.text}
+          />
+          <MenuItem
+            icon={MapPin}
+            label={t('workoutExecutionScreen.actions.location')}
+            onPress={onLocation}
             color={navTheme.colors.text}
           />
         </PopoverContent>

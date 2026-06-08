@@ -11,6 +11,7 @@ export const UserPreferencesResponseSchema = z.object({
 	countWarmupSets: z.boolean(),
 	autoStartRestTimer: z.boolean(),
 	loadRounding: z.enum(LOAD_ROUNDING_MODES),
+	defaultTrainingLocationId: z.uuid().nullable(),
 });
 
 export type UserPreferencesResponse = z.infer<typeof UserPreferencesResponseSchema>;
@@ -25,6 +26,7 @@ export const UpdateUserPreferencesRequestSchema = z
 		countWarmupSets: z.boolean(),
 		autoStartRestTimer: z.boolean(),
 		loadRounding: z.enum(LOAD_ROUNDING_MODES),
+		defaultTrainingLocationId: z.uuid().nullable(),
 	})
 	.partial();
 
@@ -37,6 +39,7 @@ export function toUserPreferencesResponse(preferences: UserPreferences): UserPre
 		countWarmupSets: preferences.countWarmupSets,
 		autoStartRestTimer: preferences.autoStartRestTimer,
 		loadRounding: preferences.loadRounding,
+		defaultTrainingLocationId: preferences.defaultTrainingLocationId,
 	};
 }
 

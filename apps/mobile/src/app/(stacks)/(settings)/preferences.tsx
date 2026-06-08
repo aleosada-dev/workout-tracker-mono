@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { preferencesObservability } from '@/features/observability/lib';
+import { DefaultLocationField } from '@/features/preferences/components/default-location-field';
 import { DefaultRestSecondsField } from '@/features/preferences/components/default-rest-seconds-field';
 import { LoadRoundingSelect } from '@/features/preferences/components/load-rounding-select';
 import { PreferencesActions } from '@/features/preferences/components/PreferencesActions';
@@ -25,7 +26,12 @@ import { ThemeToggle } from '@/features/settings/components/theme-toggle';
 
 type WorkoutDraft = Pick<
   UserPreferences,
-  'weightUnit' | 'defaultRestSeconds' | 'countWarmupSets' | 'autoStartRestTimer' | 'loadRounding'
+  | 'weightUnit'
+  | 'defaultRestSeconds'
+  | 'countWarmupSets'
+  | 'autoStartRestTimer'
+  | 'loadRounding'
+  | 'defaultTrainingLocationId'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
@@ -35,6 +41,7 @@ function toDraft(preferences: UserPreferences): WorkoutDraft {
     countWarmupSets: preferences.countWarmupSets,
     autoStartRestTimer: preferences.autoStartRestTimer,
     loadRounding: preferences.loadRounding,
+    defaultTrainingLocationId: preferences.defaultTrainingLocationId,
   };
 }
 
@@ -44,7 +51,8 @@ function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
     a.defaultRestSeconds === b.defaultRestSeconds &&
     a.countWarmupSets === b.countWarmupSets &&
     a.autoStartRestTimer === b.autoStartRestTimer &&
-    a.loadRounding === b.loadRounding
+    a.loadRounding === b.loadRounding &&
+    a.defaultTrainingLocationId === b.defaultTrainingLocationId
   );
 }
 
@@ -138,6 +146,19 @@ export default function PreferencesScreen() {
               <WeightUnitSelect
                 value={draft.weightUnit}
                 onValueChange={(weightUnit) => setDraft((prev) => prev && { ...prev, weightUnit })}
+              />
+            </View>
+
+            <View className="gap-2">
+              <Label>{t('preferencesScreen.defaultLocation.label')}</Label>
+              <Text variant="muted" className="text-sm">
+                {t('preferencesScreen.defaultLocation.description')}
+              </Text>
+              <DefaultLocationField
+                value={draft.defaultTrainingLocationId}
+                onValueChange={(defaultTrainingLocationId) =>
+                  setDraft((prev) => prev && { ...prev, defaultTrainingLocationId })
+                }
               />
             </View>
 

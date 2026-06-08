@@ -30,7 +30,7 @@ jest.mock('react-native-reanimated', () => {
 
 jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
-  const { View, ScrollView } = require('react-native');
+  const { View, ScrollView, TextInput } = require('react-native');
   const passthrough = ({ children }: { children: React.ReactNode }) =>
     React.createElement(View, null, children);
   return {
@@ -40,6 +40,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
     BottomSheetBackdrop: () => null,
     BottomSheetScrollView: ScrollView,
     BottomSheetView: View,
+    BottomSheetTextInput: TextInput,
     BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
   };
 });

@@ -18,6 +18,11 @@ export default {
   weightUnit: {
     label: 'Weight unit',
   },
+  defaultLocation: {
+    label: 'Default training location',
+    description: 'Comes pre-selected when you open a workout.',
+    none: 'No location',
+  },
   loadRounding: {
     label: 'Load rounding',
     description: 'Round the suggested load of drop and cluster sets.',

@@ -167,6 +167,28 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].lastReps).toBeNull();
   });
 
+  test('pre-selects the last used alias and seeds load from its bucket', () => {
+    const result = buildExecutionFromWorkout(workout(VARIATION_A, [templateSet({ id: 's1' })]), [
+      {
+        variationId: VARIATION_A,
+        lastUsedAliasId: 'alias-2',
+        buckets: [
+          { aliasId: 'alias-1', sets: [refSet('normal-1', 60, 12)] },
+          { aliasId: 'alias-2', sets: [refSet('normal-1', 90, 6)] },
+        ],
+      },
+    ]);
+
+    expect(result.exercises[0].aliasId).toBe('alias-2');
+    expect(result.exercises[0].sets[0].lastKg).toBe(90);
+    expect(result.exercises[0].sets[0].lastReps).toBe(6);
+  });
+
+  test('defaults aliasId to null when the variation has no history', () => {
+    const result = buildExecutionFromWorkout(workout(VARIATION_A, [templateSet({ id: 's1' })]));
+    expect(result.exercises[0].aliasId).toBeNull();
+  });
+
   test('leaves unmatched template sets null when fewer logical slots exist', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [

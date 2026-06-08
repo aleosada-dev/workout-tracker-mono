@@ -14,6 +14,7 @@ async function resetPreferences() {
 				countWarmupSets: false,
 				autoStartRestTimer: true,
 				loadRounding: "none",
+				defaultTrainingLocationId: null,
 			},
 		},
 		{ headers: authHeaders("athlete") },
@@ -40,6 +41,7 @@ describe("GET /api/v1/preferences", () => {
 			countWarmupSets: false,
 			autoStartRestTimer: true,
 			loadRounding: "none",
+			defaultTrainingLocationId: null,
 		});
 	});
 
@@ -123,6 +125,33 @@ describe("PATCH /api/v1/preferences", () => {
 		const res = await client.api.v1.preferences.$patch(
 			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
 			{ json: { loadRounding: "3" as any } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status).toBe(400);
+	});
+
+	test("persists and resets the default training location", async () => {
+		const client = getTestClient();
+		const locationId = "11111111-1111-4111-8111-111111111111";
+
+		const setRes = await client.api.v1.preferences.$patch(
+			{ json: { defaultTrainingLocationId: locationId } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect((await setRes.json()).defaultTrainingLocationId).toBe(locationId);
+
+		const resetRes = await client.api.v1.preferences.$patch(
+			{ json: { defaultTrainingLocationId: null } },
+			{ headers: authHeaders("athlete") },
+		);
+		expect((await resetRes.json()).defaultTrainingLocationId).toBeNull();
+	});
+
+	test("rejects a non-uuid default training location with 400", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.preferences.$patch(
+			{ json: { defaultTrainingLocationId: "not-a-uuid" } },
 			{ headers: authHeaders("athlete") },
 		);
 

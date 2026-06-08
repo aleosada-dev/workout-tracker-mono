@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Cog,
   GripVertical,
   Plus,
   StickyNote,
@@ -19,6 +20,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatRestSeconds } from '@/features/shared/lib/utils';
+import { AliasSelector } from '@/features/workouts/components/AliasSelector';
 import {
   MeasurementTypePickerSheet,
   type MeasurementTypePickerSheetRef,
@@ -85,18 +87,26 @@ export function ExerciseExecutionCard({
     measurementTypes.map((measurementType) => ({ measurementType })),
   );
   const showSetType = getValues(`exercises.${exerciseIndex}.exerciseType`) !== 'preparatory';
+  const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
+  const equipmentName = t(
+    `equipment.${getValues(`exercises.${exerciseIndex}.variation.equipment.slug`)}`,
+  );
+  const athleteId = activeWorkout$.athleteId.peek();
 
   const rematchExercise = () => {
     const sets = getValues(`exercises.${exerciseIndex}.sets`);
     const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
 
+    const aliasId = getValues(`exercises.${exerciseIndex}.aliasId`);
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise)).forEach((last, i) => {
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
-    });
+    matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise, aliasId)).forEach(
+      (last, i) => {
+        setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+      },
+    );
 
     const templateExercise = activeWorkout$.workoutTemplate
       .peek()
@@ -175,6 +185,23 @@ export function ExerciseExecutionCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+          {showSetType ? (
+            <View className="flex-row items-center gap-2 px-4 pb-3">
+              <View className="shrink flex-row items-center gap-1.5">
+                <Icon as={Cog} size={14} className="text-muted-foreground" />
+                <Text variant="muted" className="shrink text-sm" numberOfLines={1}>
+                  {equipmentName}
+                </Text>
+              </View>
+              <View className="h-4 w-px bg-border" />
+              <AliasSelector
+                exerciseIndex={exerciseIndex}
+                variationId={variationId}
+                userId={athleteId}
+                onChanged={rematchExercise}
+              />
+            </View>
+          ) : null}
           {restSeconds != null || (note != null && note.length > 0) ? (
             <View className="flex-row items-start gap-3 px-4 pb-4">
               <View className="flex-1 flex-row items-start gap-2">

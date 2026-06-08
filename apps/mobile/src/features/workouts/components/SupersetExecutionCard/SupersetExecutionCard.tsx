@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Cog,
   GripVertical,
   Plus,
   StickyNote,
@@ -19,6 +20,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import { AliasSelector } from '@/features/workouts/components/AliasSelector';
 import {
   SetTypePickerSheet,
   type SetTypePickerSheetRef,
@@ -118,6 +120,7 @@ export function SupersetExecutionCard({
       return next;
     });
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const athleteId = activeWorkout$.athleteId.peek();
   const memberSetsNames = members.map((m) => `exercises.${m.exerciseIndex}.sets` as const);
   const watchedMemberSets = useWatch({ control, name: memberSetsNames }) as
     | MemberSets[]
@@ -133,15 +136,17 @@ export function SupersetExecutionCard({
     const memberSets = getValues(`exercises.${exerciseIndex}.sets`);
     const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
 
+    const aliasId = getValues(`exercises.${exerciseIndex}.aliasId`);
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
-    matchExecutionSetsByLogicalKey(memberSets, resolveLastBucketSets(lastExercise)).forEach(
-      (last, i) => {
-        setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
-      },
-    );
+    matchExecutionSetsByLogicalKey(
+      memberSets,
+      resolveLastBucketSets(lastExercise, aliasId),
+    ).forEach((last, i) => {
+      setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
+      setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+    });
 
     const templateExercise = activeWorkout$.workoutTemplate
       .peek()
@@ -355,6 +360,9 @@ export function SupersetExecutionCard({
               : undefined;
           const hasNote = member.note != null && member.note.length > 0;
           const noteExpanded = expandedNotes.has(member.exerciseIndex);
+          const equipmentName = t(
+            `equipment.${getValues(`exercises.${member.exerciseIndex}.variation.equipment.slug`)}`,
+          );
           return (
             <View key={member.exerciseIndex} className="gap-1">
               <Pressable
@@ -381,6 +389,23 @@ export function SupersetExecutionCard({
                   ) : null}
                 </View>
               </Pressable>
+              {!isCollapsed ? (
+                <View className="flex-row items-center gap-2 pl-7">
+                  <View className="shrink flex-row items-center gap-1.5">
+                    <Icon as={Cog} size={14} className="text-muted-foreground" />
+                    <Text variant="muted" className="shrink text-sm" numberOfLines={1}>
+                      {equipmentName}
+                    </Text>
+                  </View>
+                  <View className="h-4 w-px bg-border" />
+                  <AliasSelector
+                    exerciseIndex={member.exerciseIndex}
+                    variationId={member.variationId}
+                    userId={athleteId}
+                    onChanged={() => rematchMember(member.exerciseIndex)}
+                  />
+                </View>
+              ) : null}
               {hasNote && !isCollapsed ? (
                 <Pressable
                   className="flex-row items-start gap-1.5 pl-7"

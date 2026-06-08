@@ -26,6 +26,7 @@ export type CompletedExercise = {
   supersetOrder: number;
   note: string | null;
   restSeconds: number | null;
+  aliasId: string | null;
   variation: ExecutionExerciseVariation;
   sets: CompletedSet[];
 };
@@ -45,6 +46,7 @@ export function buildCompletedExecution(values: ExecutionFormValues): CompletedE
         supersetOrder: exercise.supersetOrder,
         note: exercise.note,
         restSeconds: exercise.restSeconds,
+        aliasId: exercise.aliasId,
         variation: exercise.variation,
         sets: exercise.sets
           .filter((set) => set.done)

@@ -33,6 +33,7 @@ function completedExercise(
     supersetOrder: 0,
     note: null,
     restSeconds: null,
+    aliasId: null,
     variation: {
       id: 'var-1',
       slug: 'supino-reto',

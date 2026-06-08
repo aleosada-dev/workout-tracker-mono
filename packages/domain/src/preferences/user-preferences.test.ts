@@ -26,6 +26,7 @@ describe('parseStoredPreferences', () => {
       { key: 'count_warmup_sets', value: true },
       { key: 'auto_start_rest_timer', value: false },
       { key: 'load_rounding', value: '2.5' },
+      { key: 'default_training_location_id', value: 'loc-1' },
     ]);
 
     expect(prefs).toEqual({
@@ -34,6 +35,7 @@ describe('parseStoredPreferences', () => {
       countWarmupSets: true,
       autoStartRestTimer: false,
       loadRounding: '2.5',
+      defaultTrainingLocationId: 'loc-1',
     });
   });
 
@@ -64,6 +66,15 @@ describe('preferencesPatchToStored', () => {
   test('omits keys that are absent from the patch', () => {
     expect(preferencesPatchToStored({ countWarmupSets: true })).toEqual({
       count_warmup_sets: true,
+    });
+  });
+
+  test('maps default training location, preserving null as reset', () => {
+    expect(preferencesPatchToStored({ defaultTrainingLocationId: 'loc-1' })).toEqual({
+      default_training_location_id: 'loc-1',
+    });
+    expect(preferencesPatchToStored({ defaultTrainingLocationId: null })).toEqual({
+      default_training_location_id: null,
     });
   });
 });

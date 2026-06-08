@@ -9,6 +9,7 @@ export default {
     notes: 'Notes',
     addExercise: 'Add exercise',
     kgLbsCalculator: 'kg / lbs calculator',
+    location: 'Set location',
     review: 'Review workout',
     more: 'More options',
   },
@@ -71,6 +72,27 @@ export default {
     rules:
       'Warmup sets must come before the others. Drop sets and cluster sets must be followed by a normal set or another set of the same type.',
     removeSet: 'Delete set',
+  },
+  aliasPicker: {
+    add: 'Personalize',
+    title: 'Personalize exercise',
+    subtitle:
+      'Name your version of this exercise (e.g. the machine you used). The suggested load and records stay separate per personalization.',
+    none: 'No personalization',
+    newMachine: 'New personalization',
+    namePlaceholder: 'e.g. Blue leg press',
+    locationPlaceholder: 'Location (optional)',
+    create: 'Create',
+    cancel: 'Cancel',
+  },
+  locationPrompt: {
+    title: 'Where are you training?',
+    subtitle: 'Picking a location pre-selects the personalization from that place.',
+    none: 'No location',
+    confirm: 'Confirm',
+  },
+  locationPicker: {
+    title: 'Training location',
   },
   addSetsSheet: {
     title: 'Add sets',

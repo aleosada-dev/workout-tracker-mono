@@ -171,21 +171,29 @@ CREATE UNIQUE INDEX "workout_variation_records_user_variation_alias_uidx"
     NULLS NOT DISTINCT;
 
 -- ----------------------------------------------------------------------------
--- recalculate_variation_records (legado PWA, sem prefixo, DEFINER): nenhum
--- trigger/caminho do mobile a invoca, mas seu ON CONFLICT (user_id, variation_id)
--- deixaria de casar com a unique nova. Ajuste mínimo e defensivo: aponta o
--- conflito para (user_id, variation_id, alias_id). Como ela não grava alias_id,
--- escreve sempre a linha geral (alias NULL) — comportamento inalterado sob
--- NULLS NOT DISTINCT. Corpo idêntico ao da última definição; só muda o alvo.
+-- recalculate_variation_records (legado PWA, sem prefixo, DEFINER): continua viva
+-- e chamada pelo PWA enquanto os dois apps coexistem no mesmo banco. Dois ajustes
+-- para conviver com a segmentação por alias:
+--   1. O DELETE passa a escopar alias_id IS NULL — antes apagava TODAS as linhas
+--      da variação (geral + por alias) e reinseria só a geral, destruindo os PRs
+--      por máquina que o mobile calcula. Agora só toca na linha geral, que é a
+--      única que ela sabe manter (não grava alias_id).
+--   2. O ON CONFLICT aponta para (user_id, variation_id, alias_id) para casar com
+--      a unique nova (NULLS NOT DISTINCT). Como sempre grava alias_id NULL, segue
+--      cuidando apenas do PR geral.
+-- Semântica do valor geral diverge da do mobile (normal-only vs todos os tipos +
+-- pref) — divergência que já existia entre as duas funções; fora do escopo aqui.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION "public"."recalculate_variation_records"("p_user_id" "uuid", "p_variation_ids" "uuid"[]) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 BEGIN
+  -- Só a linha geral (alias NULL); as linhas por alias são mantidas pelo mobile.
   DELETE FROM public.workout_variation_records
   WHERE user_id = p_user_id
-    AND variation_id = ANY(p_variation_ids);
+    AND variation_id = ANY(p_variation_ids)
+    AND alias_id IS NULL;
 
   INSERT INTO public.workout_variation_records (
     user_id, variation_id, max_weight_kg, max_volume_kg, max_reps, max_sets

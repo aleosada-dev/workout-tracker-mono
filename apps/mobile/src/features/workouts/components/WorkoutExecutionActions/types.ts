@@ -13,5 +13,6 @@ export interface WorkoutExecutionActionsProps {
   onNotes: () => void;
   onAddExercise: () => void;
   onKgLbsCalculator: () => void;
+  onLocation: () => void;
   timer: WorkoutExecutionActionsTimer;
 }

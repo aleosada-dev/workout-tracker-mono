@@ -51,27 +51,31 @@ Conteúdo entregue:
 
 ---
 
-## Fase 3 — Mobile: execução com alias (núcleo, estado completo)
+## Fase 3 — Mobile: execução com alias (núcleo) — CONCLUÍDA
 
-Entrega o app utilizável de ponta a ponta com aliases na execução, **sem** local ainda (pré-seleção cai em `lastUsedAliasId → sem alias`).
+App utilizável de ponta a ponta com aliases na execução, **sem** local ainda (pré-seleção cai em `lastUsedAliasId → sem alias`).
 
-- [ ] Estender `execution-form` / `active-workout-store` com `aliasId` selecionado por exercício e o mapa `variação → alias → sets`.
-- [ ] Lógica de pré-seleção (`lastUsedAliasId` → sem alias) e fallback de carga (alias sem histórico → último log geral) com testes Jest (`test()`).
-- [ ] Seletor de máquina **só no card expandido**: chip + sheet (lista, "Sem máquina", "+ Nova máquina"); para variação sem aliases, link discreto "+ Máquina". Componente reutilizável (avaliar `packages/ui-mobile`).
-- [ ] Criação inline do alias (Supabase via `apiClient`), seleciona e recarrega cargas.
-- [ ] Enviar `aliasId` no salvamento do log.
-- [ ] E2E Maestro: executar → adicionar máquina → trocar muda carga sugerida (inicia com `subflows/launch-fresh.yaml`).
+- [x] `execution-form`: `aliasId` por exercício no schema; pré-seleção em `buildExecutionFromWorkout` (= `lastUsedAliasId`); `resolveLastBucketSets(item, aliasId)` resolve a carga pelo alias selecionado (fallback último usado → sem alias → primeiro).
+- [x] `aliasId` propagado em `buildCompletedExecution` → `buildCreateWorkoutLogRequest` (salvo no log).
+- [x] API client + hooks (`useVariationAliases`/`useCreateVariationAlias`/update/delete).
+- [x] Seletor **só no card expandido**: `AliasSelector` (chip + "+ Máquina" quando sem aliases) + `VariationAliasPickerSheet` (lista, "Sem máquina", "+ Nova máquina" inline). Integrado no card simples e por membro no superset; trocar alias re-semeia a carga.
+- [x] i18n pt/en (`aliasPicker`).
+- [x] Testes: lógica (pré-seleção/resolve/request builder) + `AliasSelector` (4); suíte mobile 390 testes; typecheck 7/7; Biome limpo.
+- [ ] **E2E Maestro** (executar → adicionar máquina → trocar muda carga) — pendente de device; testIDs `workout-execution.alias.chip`/`.add` prontos.
 
 > ⏸ **PAUSA** para revisão.
 
 ---
 
-## Fase 4 — Mobile: local (estado completo)
+## Fase 4 — Mobile: local — CONCLUÍDA
 
-- [ ] Autocomplete de local (padrão `Autocomplete`/`CoachAthleteAutocomplete`) na criação/edição de máquina, com criação por texto novo.
-- [ ] Campo de local no início da execução; grava `selectedLocationId` no `active-workout-store`; pré-seleção por local (Seção 2 do spec).
-- [ ] Gestão de locais (renomear/soft-delete) em Configurações/Preferências.
-- [ ] Testes Jest da pré-seleção por local; E2E: escolher local pré-treino pré-seleciona alias.
+- [x] API client + hooks `training-locations` (list/create/update/delete).
+- [x] Autocomplete de local na **criação inline** da máquina (`VariationAliasPickerSheet`), com criação por texto novo (resolve/cria o local antes de criar o alias).
+- [x] **Centralização**: `activeWorkout$` ganha `selectedLocationId` + `variationAliases`; a tela busca os aliases de todas as variações e sincroniza no store; `AliasSelector` passa a ler do store.
+- [x] **Seletor de local na sessão** (`SessionLocationBar` + `LocationPickerSheet`) no topo da execução; ao escolher um local, pré-seleciona o alias daquela variação associado ao local (quando único) e re-semeia as cargas.
+- [x] **Gestão de locais** em Configurações (`/training-locations`): adicionar, renomear, excluir; MenuCard + rota registrada; i18n pt/en.
+- [x] Verificação: typecheck 7/7, Biome limpo, mobile 390 testes (AliasSelector adaptado para ler do store). 
+- [ ] **E2E Maestro** (escolher local pré-treino pré-seleciona alias) — pendente de device.
 
 > ⏸ **PAUSA** para revisão.
 

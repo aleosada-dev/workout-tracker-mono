@@ -31,6 +31,9 @@ jest.mock('@/features/shared/lib/notifications', () => ({
 jest.mock('@/features/workouts/state/rest-timer-bridge', () => ({
   startRestTimer: jest.fn(),
 }));
+jest.mock('@/features/workouts/components/AliasSelector', () => ({
+  AliasSelector: () => null,
+}));
 jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
   useUserPreferences: () => ({
     data: {
@@ -45,6 +48,7 @@ jest.mock('@/features/workouts/state/active-workout-store', () => ({
   activeWorkout$: {
     lastSets: { peek: () => null },
     workoutTemplate: { peek: () => null },
+    athleteId: { peek: () => null },
   },
 }));
 jest.mock('react-i18next', () => ({
@@ -95,6 +99,7 @@ function exercise(
     supersetOrder: 0,
     note: null,
     restSeconds: 60,
+    aliasId: null,
     variation: {
       id: 'va',
       slug: null,

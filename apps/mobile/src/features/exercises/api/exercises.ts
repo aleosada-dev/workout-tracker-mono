@@ -13,6 +13,10 @@ const $delete = honoClient.api.v1.exercises[':id'].$delete;
 const $bulkDelete = honoClient.api.v1.exercises.$delete;
 const $bulkCopy = honoClient.api.v1.exercises.copy.$post;
 const $videoUploadUrls = honoClient.api.v1.medias['video-upload-urls'].$post;
+const $getAliases = honoClient.api.v1.exercises['variation-aliases'].$get;
+const $postAlias = honoClient.api.v1.exercises['variation-aliases'].$post;
+const $patchAlias = honoClient.api.v1.exercises['variation-aliases'][':id'].$patch;
+const $deleteAlias = honoClient.api.v1.exercises['variation-aliases'][':id'].$delete;
 
 export type ListExercisesResponse = InferResponseType<typeof $get, 200>;
 export type ExerciseListParams = InferRequestType<typeof $get>;
@@ -48,6 +52,13 @@ export type ExerciseDetailResponse = InferResponseType<typeof $getDetail, 200>;
 export type ExerciseDetailResponseVariation = ExerciseDetailResponse['variation'];
 export type ExerciseDetailResponseSession = ExerciseDetailResponse['sessions'][number];
 export type ExerciseDetailResponseSet = ExerciseDetailResponseSession['sets'][number];
+
+export type VariationAliasesResponse = InferResponseType<typeof $getAliases, 200>;
+export type VariationAlias = VariationAliasesResponse[number];
+export type CreateVariationAliasRequest = InferRequestType<typeof $postAlias>['json'];
+export type CreateVariationAliasResponse = InferResponseType<typeof $postAlias, 201>;
+export type UpdateVariationAliasRequest = InferRequestType<typeof $patchAlias>['json'];
+export type UpdateVariationAliasResponse = InferResponseType<typeof $patchAlias, 200>;
 
 export const EMPTY_EXERCISE_LIST_PARAMS: ExerciseListParams = { query: {} };
 
@@ -159,4 +170,38 @@ export async function createVideoUploadUrls(
   const response = await $videoUploadUrls({ json: body });
   if (!response.ok) throw await buildApiError(response);
   return response.json();
+}
+
+export async function fetchVariationAliases(
+  variationIds: string[],
+  { userId, signal }: { userId?: string; signal?: AbortSignal } = {},
+): Promise<VariationAliasesResponse> {
+  const response = await $getAliases(
+    { query: { variationIds, ...(userId ? { userId } : {}) } },
+    { init: { signal } },
+  );
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function createVariationAlias(
+  body: CreateVariationAliasRequest,
+): Promise<CreateVariationAliasResponse> {
+  const response = await $postAlias({ json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function updateVariationAlias(
+  aliasId: string,
+  body: UpdateVariationAliasRequest,
+): Promise<UpdateVariationAliasResponse> {
+  const response = await $patchAlias({ param: { id: aliasId }, json: body });
+  if (!response.ok) throw await buildApiError(response);
+  return response.json();
+}
+
+export async function deleteVariationAlias(aliasId: string): Promise<void> {
+  const response = await $deleteAlias({ param: { id: aliasId }, json: {} });
+  if (!response.ok) throw await buildApiError(response);
 }

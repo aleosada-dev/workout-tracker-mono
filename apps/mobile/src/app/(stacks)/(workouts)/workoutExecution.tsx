@@ -23,6 +23,7 @@ import {
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useExerciseLastSets } from '@/features/exercises/hooks/use-exercise-last-sets';
 import { useExerciseRecords } from '@/features/exercises/hooks/use-exercise-records';
+import { useVariationAliases } from '@/features/exercises/hooks/use-variation-aliases';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { workoutObservability } from '@/features/observability/lib';
 import { useOccurrenceWorkout } from '@/features/periodizations/hooks/use-occurrence-workout';
@@ -34,6 +35,11 @@ import {
   KgLbsCalculatorSheet,
   type KgLbsCalculatorSheetRef,
 } from '@/features/workouts/components/KgLbsCalculatorSheet';
+import { SessionLocationPrompt } from '@/features/workouts/components/SessionLocationPrompt';
+import {
+  SessionLocationSheet,
+  type SessionLocationSheetRef,
+} from '@/features/workouts/components/SessionLocationSheet';
 import {
   SupersetReorderSheet,
   type SupersetReorderSheetRef,
@@ -112,6 +118,7 @@ export default function WorkoutExecutionScreen() {
   const recordsUserId = (active?.workoutTemplate ?? workoutTemplate)?.userId;
   const records = useExerciseRecords(recordsVariationIds, recordsUserId);
   const lastSets = useExerciseLastSets(recordsVariationIds, recordsUserId);
+  const variationAliases = useVariationAliases(recordsVariationIds, recordsUserId);
 
   const hasInitializedRef = useRef(false);
   useEffect(() => {
@@ -120,7 +127,7 @@ export default function WorkoutExecutionScreen() {
       return;
     }
     if (hasInitializedRef.current || !workoutTemplate) return;
-    if (lastLog.isPending || lastSets.isLoading) return;
+    if (lastLog.isPending || lastSets.isLoading || variationAliases.isLoading) return;
     hasInitializedRef.current = true;
     activeWorkout$.set({
       startedAt: new Date().toISOString(),
@@ -135,6 +142,9 @@ export default function WorkoutExecutionScreen() {
       lastLog: lastLog.data ?? null,
       lastSets: lastSets.data ?? null,
       records: null,
+      selectedLocationId: null,
+      locationChosen: false,
+      variationAliases: variationAliases.data ?? null,
     });
   }, [
     active,
@@ -143,6 +153,8 @@ export default function WorkoutExecutionScreen() {
     lastLog.data,
     lastSets.isLoading,
     lastSets.data,
+    variationAliases.isLoading,
+    variationAliases.data,
     athleteName,
     userId,
     occurrenceId,
@@ -158,6 +170,11 @@ export default function WorkoutExecutionScreen() {
     if (!active || !lastSets.data) return;
     activeWorkout$.lastSets.set(lastSets.data);
   }, [active, lastSets.data]);
+
+  useEffect(() => {
+    if (!active || !variationAliases.data) return;
+    activeWorkout$.variationAliases.set(variationAliases.data);
+  }, [active, variationAliases.data]);
 
   if (!active) {
     return (
@@ -179,6 +196,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
   const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
   const timerSheetRef = useRef<TimerSheetRef>(null);
+  const locationSheetRef = useRef<SessionLocationSheetRef>(null);
   const reorderSheetRef = useRef<SupersetReorderSheetRef>(null);
   const restTimer = useRestTimerController();
   const restTimerRef = useRef(restTimer);
@@ -264,17 +282,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     const exercises = form.getValues('exercises') ?? [];
     exercises.forEach((exercise, exerciseIndex) => {
       const lastExercise = lastSetsData.find((e) => e.variationId === exercise.variation.id);
-      matchExecutionSetsByLogicalKey(exercise.sets, resolveLastBucketSets(lastExercise)).forEach(
-        (last, setIndex) => {
-          const base = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
-          if (form.getValues(`${base}.lastKg`) !== last.lastKg) {
-            form.setValue(`${base}.lastKg`, last.lastKg);
-          }
-          if (form.getValues(`${base}.lastReps`) !== last.lastReps) {
-            form.setValue(`${base}.lastReps`, last.lastReps);
-          }
-        },
-      );
+      matchExecutionSetsByLogicalKey(
+        exercise.sets,
+        resolveLastBucketSets(lastExercise, exercise.aliasId),
+      ).forEach((last, setIndex) => {
+        const base = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+        if (form.getValues(`${base}.lastKg`) !== last.lastKg) {
+          form.setValue(`${base}.lastKg`, last.lastKg);
+        }
+        if (form.getValues(`${base}.lastReps`) !== last.lastReps) {
+          form.setValue(`${base}.lastReps`, last.lastReps);
+        }
+      });
     });
   }, [lastSetsData, form]);
 
@@ -515,6 +534,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
             onNotes={() => notesSheetRef.current?.present()}
             onAddExercise={handleAddExercise}
             onKgLbsCalculator={() => kgLbsCalculatorSheetRef.current?.present()}
+            onLocation={() => locationSheetRef.current?.present()}
             timer={{
               active: restTimer.isActive,
               label: restTimer.label,
@@ -528,6 +548,8 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         <WorkoutNotesSheet ref={notesSheetRef} />
         <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
         <TimerSheet ref={timerSheetRef} controller={restTimer} />
+        <SessionLocationSheet ref={locationSheetRef} userId={active.athleteId} />
+        <SessionLocationPrompt userId={active.athleteId} />
         <SupersetReorderSheet ref={reorderSheetRef} />
         <ConfirmDialog
           open={incompleteOpen}
