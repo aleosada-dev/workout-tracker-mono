@@ -137,7 +137,11 @@ export default function WorkoutExecutionScreen() {
       occurrenceNote,
       note: null,
       workoutTemplate: structuredClone(workoutTemplate),
-      workoutExecution: buildExecutionFromWorkout(workoutTemplate, lastSets.data ?? null),
+      workoutExecution: buildExecutionFromWorkout(
+        workoutTemplate,
+        lastSets.data ?? null,
+        variationAliases.data ?? null,
+      ),
       completedExecution: null,
       lastLog: lastLog.data ?? null,
       lastSets: lastSets.data ?? null,

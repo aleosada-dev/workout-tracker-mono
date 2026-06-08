@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import type { VariationAlias } from '@/features/exercises/api/exercises';
 import {
+  useDeleteVariationAlias,
+  useUpdateVariationAlias,
+} from '@/features/exercises/hooks/use-variation-aliases';
+import {
   VariationAliasPickerSheet,
   type VariationAliasPickerSheetRef,
 } from '@/features/workouts/components/VariationAliasPickerSheet';
@@ -18,9 +22,10 @@ type ExerciseAliasContextProps = {
 };
 
 /**
- * Equipment name + a select-only personalization picker for the detail screen.
- * Unlike the execution card, it cannot create/edit aliases — choosing one only
- * re-scopes the screen's data (sessions, records) to that personalization.
+ * Equipment name + a personalization picker for the detail screen. Unlike the
+ * execution card it cannot create aliases, but it can rename/edit and delete
+ * existing ones inline; choosing one re-scopes the screen's data (sessions,
+ * records) to that personalization.
  */
 export function ExerciseAliasContext({
   equipmentName,
@@ -31,6 +36,8 @@ export function ExerciseAliasContext({
 }: ExerciseAliasContextProps) {
   const { t } = useTranslation();
   const sheetRef = useRef<VariationAliasPickerSheetRef>(null);
+  const updateAlias = useUpdateVariationAlias({ userId });
+  const deleteAlias = useDeleteVariationAlias();
 
   const selected = aliases.find((alias) => alias.id === aliasId);
   const label = selected?.name ?? t('workoutExecutionScreen.aliasPicker.none');
@@ -40,6 +47,12 @@ export function ExerciseAliasContext({
       aliases,
       currentAliasId: aliasId,
       onSelect: onChange,
+      onUpdate: async (id, name, locationId) => {
+        await updateAlias.mutateAsync({ aliasId: id, body: { name, locationId } });
+      },
+      onDelete: async (id) => {
+        await deleteAlias.mutateAsync(id);
+      },
     });
 
   return (

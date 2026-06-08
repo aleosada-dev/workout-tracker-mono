@@ -270,7 +270,16 @@ export function buildExecutionExerciseFromPicked(
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
   lastSets: ExerciseLastSetsResponse | null = null,
+  /**
+   * Personalizações ativas (já filtradas por deleted_at). Quando fornecidas, o
+   * alias pré-selecionado (`lastUsedAliasId`, vindo dos logs e que NÃO filtra
+   * alias excluído) é reconciliado contra elas: se a última usada foi excluída,
+   * cai para "sem personalização" — evita semear um alias morto (carga escopada
+   * errada e save rejeitado pelo insert). `null` = não reconciliar.
+   */
+  aliases: readonly { id: string }[] | null = null,
 ): ExecutionFormInput {
+  const validAliasIds = aliases ? new Set(aliases.map((a) => a.id)) : null;
   return {
     exercises: workout.exercises.map((exercise) => {
       const lastExercise = lastSets?.find((e) => e.variationId === exercise.variation.id);
@@ -296,7 +305,12 @@ export function buildExecutionFromWorkout(
         loadPercentOfPrevious: set.loadPercentOfPrevious,
       }));
       // Pré-seleciona o último alias usado naquela variation (fallback: sem máquina).
-      const aliasId = lastExercise?.lastUsedAliasId ?? null;
+      // Ignora um alias que não está mais na lista ativa (ex.: excluído).
+      const lastUsedAliasId = lastExercise?.lastUsedAliasId ?? null;
+      const aliasId =
+        lastUsedAliasId != null && (validAliasIds === null || validAliasIds.has(lastUsedAliasId))
+          ? lastUsedAliasId
+          : null;
       const matched = matchExecutionSetsByLogicalKey(
         sets,
         resolveLastBucketSets(lastExercise, aliasId),

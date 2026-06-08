@@ -26,6 +26,8 @@ jest.mock('@/features/workouts/state/active-workout-store', () => ({
 
 jest.mock('@/features/exercises/hooks/use-variation-aliases', () => ({
   useCreateVariationAlias: () => ({ mutateAsync: mockMutateAsync }),
+  useUpdateVariationAlias: () => ({ mutateAsync: mockMutateAsync }),
+  useDeleteVariationAlias: () => ({ mutateAsync: mockMutateAsync }),
 }));
 
 let capturedArgs: VariationAliasPickerArgs | null = null;

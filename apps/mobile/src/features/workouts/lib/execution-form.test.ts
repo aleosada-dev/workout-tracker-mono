@@ -184,6 +184,44 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].lastReps).toBe(6);
   });
 
+  test('keeps the last-used alias when it is still in the active list', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [templateSet({ id: 's1' })]),
+      [
+        {
+          variationId: VARIATION_A,
+          lastUsedAliasId: 'alias-2',
+          buckets: [{ aliasId: 'alias-2', sets: [refSet('normal-1', 90, 6)] }],
+        },
+      ],
+      [{ id: 'alias-2' }],
+    );
+
+    expect(result.exercises[0].aliasId).toBe('alias-2');
+    expect(result.exercises[0].sets[0].lastKg).toBe(90);
+  });
+
+  test('ignores a last-used alias absent from the active list (deleted) and falls back to no-alias', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [templateSet({ id: 's1' })]),
+      [
+        {
+          variationId: VARIATION_A,
+          lastUsedAliasId: 'alias-deleted',
+          buckets: [
+            { aliasId: null, sets: [refSet('normal-1', 50, 10)] },
+            { aliasId: 'alias-deleted', sets: [refSet('normal-1', 90, 6)] },
+          ],
+        },
+      ],
+      [{ id: 'alias-1' }],
+    );
+
+    expect(result.exercises[0].aliasId).toBeNull();
+    expect(result.exercises[0].sets[0].lastKg).toBe(50);
+    expect(result.exercises[0].sets[0].lastReps).toBe(10);
+  });
+
   test('defaults aliasId to null when the variation has no history', () => {
     const result = buildExecutionFromWorkout(workout(VARIATION_A, [templateSet({ id: 's1' })]));
     expect(result.exercises[0].aliasId).toBeNull();

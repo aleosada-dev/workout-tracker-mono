@@ -5,7 +5,11 @@ import { useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { useCreateVariationAlias } from '@/features/exercises/hooks/use-variation-aliases';
+import {
+  useCreateVariationAlias,
+  useDeleteVariationAlias,
+  useUpdateVariationAlias,
+} from '@/features/exercises/hooks/use-variation-aliases';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import {
@@ -37,6 +41,8 @@ export function AliasSelector({
     (activeWorkout$.variationAliases.get() ?? []).filter((a) => a.variationId === variationId),
   );
   const createAlias = useCreateVariationAlias({ userId });
+  const updateAlias = useUpdateVariationAlias({ userId });
+  const deleteAlias = useDeleteVariationAlias();
 
   const select = (next: string | null) => {
     setValue(`exercises.${exerciseIndex}.aliasId`, next, { shouldDirty: true });
@@ -56,6 +62,22 @@ export function AliasSelector({
           created,
         ]);
         select(created.id);
+      },
+      onUpdate: async (aliasId, name, locationId) => {
+        await updateAlias.mutateAsync({ aliasId, body: { name, locationId } });
+        // Reflete de imediato no store enquanto o refetch do RQ não chega.
+        activeWorkout$.variationAliases.set(
+          (activeWorkout$.variationAliases.peek() ?? []).map((a) =>
+            a.id === aliasId ? { ...a, name, locationId } : a,
+          ),
+        );
+      },
+      onDelete: async (deletedId) => {
+        await deleteAlias.mutateAsync(deletedId);
+        // Remove do store de imediato enquanto o refetch do RQ não chega.
+        activeWorkout$.variationAliases.set(
+          (activeWorkout$.variationAliases.peek() ?? []).filter((a) => a.id !== deletedId),
+        );
       },
     });
   };
