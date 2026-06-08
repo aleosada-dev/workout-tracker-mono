@@ -13,7 +13,10 @@ import { Check, Plus } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import type { VariationAlias } from '@/features/exercises/api/exercises';
+import { exerciseObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
 import {
   useCreateTrainingLocation,
   useTrainingLocations,
@@ -87,7 +90,17 @@ export function VariationAliasPickerSheet({
     try {
       const locationId = await resolveLocationId();
       await args.onCreate(trimmed, locationId);
+      exerciseObservability.trackAction('variation_alias_created');
       sheetRef.current?.dismiss();
+    } catch (error) {
+      handleLocalError((err) => {
+        exerciseObservability.captureError(err, { action: 'create_variation_alias' });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      })(error);
     } finally {
       setSubmitting(false);
     }

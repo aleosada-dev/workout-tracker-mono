@@ -33,19 +33,34 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
+}));
+jest.mock('@/features/observability/lib', () => ({
+  trainingLocationObservability: { trackAction: jest.fn(), captureError: jest.fn() },
+}));
+
 const mockUseTrainingLocations = jest.fn();
 const mockCreateMutateAsync = jest.fn();
+const mockUpdateMutateAsync = jest.fn();
 const mockDeleteMutate = jest.fn();
 
 jest.mock('@/features/training-locations/hooks/use-training-locations', () => ({
   useTrainingLocations: () => mockUseTrainingLocations(),
   useCreateTrainingLocation: () => ({ mutateAsync: mockCreateMutateAsync, isPending: false }),
+  useUpdateTrainingLocation: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
   useDeleteTrainingLocation: () => ({ mutate: mockDeleteMutate }),
 }));
 
 import { PortalHost } from '@rn-primitives/portal';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import Toast from 'react-native-toast-message';
+import { trainingLocationObservability } from '@/features/observability/lib';
 import { DefaultLocationField } from '@/features/preferences/components/default-location-field';
+
+const mockToastShow = Toast.show as jest.Mock;
+const mockCaptureError = trainingLocationObservability.captureError as jest.Mock;
 
 const LOCATIONS = [
   { id: 'loc-1', userId: 'u', name: 'Smart Fit', createdAt: '', updatedAt: '' },
@@ -67,7 +82,10 @@ function setup(value: string | null) {
 beforeEach(() => {
   mockUseTrainingLocations.mockReset();
   mockCreateMutateAsync.mockReset();
+  mockUpdateMutateAsync.mockReset();
   mockDeleteMutate.mockReset();
+  mockToastShow.mockReset();
+  mockCaptureError.mockReset();
 });
 
 describe('<DefaultLocationField />', () => {
@@ -104,6 +122,62 @@ describe('<DefaultLocationField />', () => {
     expect(mockCreateMutateAsync).toHaveBeenCalledWith({ name: 'CrossBox' });
   });
 
+  test('editing a location inline saves the trimmed name and disables selection', async () => {
+    const { getByTestId, queryByTestId } = setup(null);
+
+    fireEvent.press(getByTestId('preferences.defaultLocation'));
+    fireEvent.press(getByTestId('preferences.defaultLocation.option.loc-1.edit'));
+
+    fireEvent.changeText(
+      getByTestId('preferences.defaultLocation.option.loc-1.edit-input'),
+      '  Smart Fit Centro  ',
+    );
+
+    // Selecting another location is disabled while editing.
+    expect(getByTestId('preferences.defaultLocation.option.loc-2')).toBeDisabled();
+    expect(getByTestId('preferences.defaultLocation.option.none')).toBeDisabled();
+
+    fireEvent.press(getByTestId('preferences.defaultLocation.option.loc-1.edit-save'));
+    expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+      locationId: 'loc-1',
+      body: { name: 'Smart Fit Centro' },
+    });
+    await waitFor(() =>
+      expect(queryByTestId('preferences.defaultLocation.option.loc-1.edit-input')).toBeNull(),
+    );
+  });
+
+  test('a failed create reports telemetry and shows an error toast', async () => {
+    mockCreateMutateAsync.mockRejectedValueOnce(new Error('boom'));
+    const { getByTestId } = setup(null);
+
+    fireEvent.press(getByTestId('preferences.defaultLocation'));
+    fireEvent.changeText(getByTestId('preferences.defaultLocation.newName'), 'CrossBox');
+    fireEvent.press(getByTestId('preferences.defaultLocation.add'));
+
+    await waitFor(() =>
+      expect(mockCaptureError).toHaveBeenCalledWith(expect.any(Error), {
+        action: 'create_training_location',
+      }),
+    );
+    expect(mockToastShow).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+  });
+
+  test('cancelling an inline edit does not call the update mutation', () => {
+    const { getByTestId, queryByTestId } = setup(null);
+
+    fireEvent.press(getByTestId('preferences.defaultLocation'));
+    fireEvent.press(getByTestId('preferences.defaultLocation.option.loc-1.edit'));
+    fireEvent.changeText(
+      getByTestId('preferences.defaultLocation.option.loc-1.edit-input'),
+      'Changed',
+    );
+    fireEvent.press(getByTestId('preferences.defaultLocation.option.loc-1.edit-cancel'));
+
+    expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
+    expect(queryByTestId('preferences.defaultLocation.option.loc-1.edit-input')).toBeNull();
+  });
+
   test('deleting the active location resets the preference to null after confirmation', () => {
     const { getByTestId, onValueChange } = setup('loc-1');
 
@@ -112,6 +186,6 @@ describe('<DefaultLocationField />', () => {
     fireEvent.press(getByTestId('preferences.defaultLocation.delete-confirm'));
 
     expect(onValueChange).toHaveBeenCalledWith(null);
-    expect(mockDeleteMutate).toHaveBeenCalledWith('loc-1');
+    expect(mockDeleteMutate).toHaveBeenCalledWith('loc-1', expect.any(Object));
   });
 });

@@ -12,6 +12,7 @@ export type CreateTrainingLocationRequest = InferRequestType<typeof $post>['json
 export type CreateTrainingLocationResponse = InferResponseType<typeof $post, 201>;
 export type UpdateTrainingLocationRequest = InferRequestType<typeof $patch>['json'];
 export type UpdateTrainingLocationResponse = InferResponseType<typeof $patch, 200>;
+export type DeleteTrainingLocationRequest = InferRequestType<typeof $delete>['json'];
 
 export async function fetchTrainingLocations({
   userId,
@@ -42,7 +43,10 @@ export async function updateTrainingLocation(
   return response.json();
 }
 
-export async function deleteTrainingLocation(locationId: string): Promise<void> {
-  const response = await $delete({ param: { id: locationId }, json: {} });
+export async function deleteTrainingLocation(
+  locationId: string,
+  body: DeleteTrainingLocationRequest = {},
+): Promise<void> {
+  const response = await $delete({ param: { id: locationId }, json: body });
   if (!response.ok) throw await buildApiError(response);
 }

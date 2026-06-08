@@ -8,6 +8,7 @@ export { ObservabilityErrorBoundary } from './error-boundary';
 export {
   exerciseObservability,
   preferencesObservability,
+  trainingLocationObservability,
   workoutLogObservability,
   workoutObservability,
 } from './modules';

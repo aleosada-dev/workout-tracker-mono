@@ -57,11 +57,13 @@ export function useUpdateTrainingLocation(options: { userId?: string | null } = 
   });
 }
 
-export function useDeleteTrainingLocation() {
+export function useDeleteTrainingLocation(options: { userId?: string | null } = {}) {
   const queryClient = useQueryClient();
+  const { userId } = options;
 
   return useMutation({
-    mutationFn: (locationId: string) => deleteTrainingLocation(locationId),
+    mutationFn: (locationId: string) =>
+      deleteTrainingLocation(locationId, { ...(userId ? { userId } : {}) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRAINING_LOCATIONS_KEY });
     },

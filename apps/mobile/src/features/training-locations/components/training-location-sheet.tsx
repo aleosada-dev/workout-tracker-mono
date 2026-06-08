@@ -17,15 +17,19 @@ import {
   Skeleton,
   Text,
 } from '@workout-tracker/ui-mobile';
-import { Check, Plus, Trash2 } from 'lucide-react-native';
+import { Check, Pencil, Plus, Save, Trash2, X } from 'lucide-react-native';
 import { type Ref, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { trainingLocationObservability } from '@/features/observability/lib';
+import { handleLocalError } from '@/features/query/lib/error-handling';
 import type { TrainingLocation } from '@/features/training-locations/api/training-locations';
 import {
   useCreateTrainingLocation,
   useDeleteTrainingLocation,
   useTrainingLocations,
+  useUpdateTrainingLocation,
 } from '@/features/training-locations/hooks/use-training-locations';
 
 export type TrainingLocationSheetRef = {
@@ -52,12 +56,15 @@ export function TrainingLocationSheet({
 }: TrainingLocationSheetProps) {
   const { t } = useTranslation();
   const { data: locations, isLoading } = useTrainingLocations(userId);
-  const createLocation = useCreateTrainingLocation();
-  const deleteLocation = useDeleteTrainingLocation();
+  const createLocation = useCreateTrainingLocation({ userId });
+  const updateLocation = useUpdateTrainingLocation({ userId });
+  const deleteLocation = useDeleteTrainingLocation({ userId });
 
   const sheetRef = useRef<BottomSheetRef>(null);
   const [newName, setNewName] = useState('');
   const [pendingDelete, setPendingDelete] = useState<TrainingLocation | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   useImperativeHandle(ref, () => ({
     present: () => sheetRef.current?.present(),
@@ -66,16 +73,56 @@ export function TrainingLocationSheet({
 
   const tid = (suffix: string) => (testIDPrefix ? `${testIDPrefix}.${suffix}` : undefined);
 
+  const isEditing = editingId != null;
+
+  const reportError = (error: unknown, action: string) =>
+    handleLocalError((err) => {
+      trainingLocationObservability.captureError(err, { action });
+      Toast.show({
+        type: 'error',
+        text1: t('errors.unexpected.title'),
+        text2: t('errors.unexpected.message'),
+      });
+    })(error);
+
   const handleSelect = (id: string | null) => {
+    if (isEditing) return;
     onValueChange(id);
     sheetRef.current?.dismiss();
+  };
+
+  const startEdit = (location: TrainingLocation) => {
+    setEditingId(location.id);
+    setEditingName(location.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const saveEdit = async () => {
+    const name = editingName.trim();
+    if (!editingId || name.length === 0 || updateLocation.isPending) return;
+    try {
+      await updateLocation.mutateAsync({ locationId: editingId, body: { name } });
+      trainingLocationObservability.trackAction('training_location_updated');
+      cancelEdit();
+    } catch (error) {
+      reportError(error, 'update_training_location');
+    }
   };
 
   const handleAdd = async () => {
     const name = newName.trim();
     if (name.length === 0 || createLocation.isPending) return;
-    await createLocation.mutateAsync({ name });
-    setNewName('');
+    try {
+      await createLocation.mutateAsync({ name });
+      trainingLocationObservability.trackAction('training_location_created');
+      setNewName('');
+    } catch (error) {
+      reportError(error, 'create_training_location');
+    }
   };
 
   const confirmDelete = () => {
@@ -83,7 +130,10 @@ export function TrainingLocationSheet({
     setPendingDelete(null);
     if (!target) return;
     if (target.id === value) onValueChange(null);
-    deleteLocation.mutate(target.id);
+    deleteLocation.mutate(target.id, {
+      onSuccess: () => trainingLocationObservability.trackAction('training_location_deleted'),
+      onError: (error) => reportError(error, 'delete_training_location'),
+    });
   };
 
   return (
@@ -105,6 +155,7 @@ export function TrainingLocationSheet({
               <LocationRow
                 label={t('trainingLocationsScreen.none')}
                 selected={value == null}
+                selectDisabled={isEditing}
                 onPress={() => handleSelect(null)}
                 testID={tid('option.none')}
               />
@@ -118,8 +169,16 @@ export function TrainingLocationSheet({
                     key={location.id}
                     label={location.name}
                     selected={value === location.id}
+                    selectDisabled={isEditing}
                     onPress={() => handleSelect(location.id)}
-                    onDelete={() => setPendingDelete(location)}
+                    editing={editingId === location.id}
+                    editingName={editingName}
+                    onEditNameChange={setEditingName}
+                    onStartEdit={isEditing ? undefined : () => startEdit(location)}
+                    onSaveEdit={saveEdit}
+                    onCancelEdit={cancelEdit}
+                    saveDisabled={editingName.trim().length === 0 || updateLocation.isPending}
+                    onDelete={isEditing ? undefined : () => setPendingDelete(location)}
                     testID={tid(`option.${location.id}`)}
                   />
                 ))
@@ -182,31 +241,96 @@ export function TrainingLocationSheet({
 function LocationRow({
   label,
   selected,
+  selectDisabled,
   onPress,
+  onStartEdit,
   onDelete,
+  editing,
+  editingName,
+  onEditNameChange,
+  onSaveEdit,
+  onCancelEdit,
+  saveDisabled,
   testID,
 }: {
   label: string;
   selected: boolean;
+  selectDisabled?: boolean;
   onPress: () => void;
+  onStartEdit?: () => void;
   onDelete?: () => void;
+  editing?: boolean;
+  editingName?: string;
+  onEditNameChange?: (value: string) => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
+  saveDisabled?: boolean;
   testID?: string;
 }) {
+  if (editing) {
+    return (
+      <View className="flex-row items-center gap-3 rounded-lg border border-primary p-3">
+        <View className="flex-1">
+          <BottomSheetInput
+            value={editingName}
+            onChangeText={onEditNameChange}
+            onSubmitEditing={onSaveEdit}
+            autoFocus
+            testID={testID ? `${testID}.edit-input` : undefined}
+          />
+        </View>
+        <Pressable
+          onPress={onSaveEdit}
+          disabled={saveDisabled}
+          accessibilityRole="button"
+          hitSlop={8}
+          testID={testID ? `${testID}.edit-save` : undefined}
+        >
+          <Icon
+            as={Save}
+            size={18}
+            className={cn('text-primary', saveDisabled && 'text-muted-foreground/50')}
+          />
+        </Pressable>
+        <Pressable
+          onPress={onCancelEdit}
+          accessibilityRole="button"
+          hitSlop={8}
+          testID={testID ? `${testID}.edit-cancel` : undefined}
+        >
+          <Icon as={X} size={18} className="text-muted-foreground" />
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <Pressable
       onPress={onPress}
+      disabled={selectDisabled}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled: selectDisabled }}
       testID={testID}
       className={cn(
-        'flex-row items-center gap-2 rounded-lg border border-border p-3',
+        'flex-row items-center gap-3 rounded-lg border border-border p-3',
         selected && 'border-primary bg-primary/5',
+        selectDisabled && 'opacity-50',
       )}
     >
       <Text className="flex-1 font-sans-semibold text-sm" numberOfLines={1}>
         {label}
       </Text>
       {selected ? <Icon as={Check} size={16} className="text-primary" /> : null}
+      {onStartEdit ? (
+        <Pressable
+          onPress={onStartEdit}
+          accessibilityRole="button"
+          hitSlop={8}
+          testID={testID ? `${testID}.edit` : undefined}
+        >
+          <Icon as={Pencil} size={16} className="text-muted-foreground" />
+        </Pressable>
+      ) : null}
       {onDelete ? (
         <Pressable
           onPress={onDelete}
