@@ -61,7 +61,7 @@ export function SessionLocationPrompt({
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent>
+      <AlertDialogContent className="gap-2">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-center">
             {t('workoutExecutionScreen.locationPrompt.title')}
@@ -73,7 +73,11 @@ export function SessionLocationPrompt({
         <AlertDialogDescription className="text-left">
           {t('workoutExecutionScreen.locationPrompt.subtitle')}
         </AlertDialogDescription>
-        <ScrollView className="max-h-72" contentContainerClassName="gap-2">
+        <ScrollView
+          className="max-h-72"
+          contentContainerClassName="gap-2"
+          showsVerticalScrollIndicator={false}
+        >
           <Option
             label={t('workoutExecutionScreen.locationPrompt.none')}
             selected={selected === NONE}
@@ -93,6 +97,7 @@ export function SessionLocationPrompt({
             variant="outline"
             onPress={onAddLocation}
             testID="workout-execution.location.prompt-add"
+            className="mb-4"
           >
             <Icon as={Plus} size={16} className="text-foreground" />
             <Text>{t('workoutExecutionScreen.locationPrompt.add')}</Text>
