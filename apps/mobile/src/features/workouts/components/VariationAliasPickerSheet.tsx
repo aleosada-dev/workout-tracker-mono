@@ -26,7 +26,8 @@ export type VariationAliasPickerArgs = {
   aliases: VariationAlias[];
   currentAliasId: string | null;
   onSelect: (aliasId: string | null) => void;
-  onCreate: (name: string, locationId: string | null) => Promise<void>;
+  /** Omit to make the picker select-only (no create/edit), e.g. on the detail screen. */
+  onCreate?: (name: string, locationId: string | null) => Promise<void>;
 };
 
 export type VariationAliasPickerSheetRef = {
@@ -85,7 +86,7 @@ export function VariationAliasPickerSheet({
 
   const handleCreate = async () => {
     const trimmed = name.trim();
-    if (!args || trimmed.length === 0 || submitting) return;
+    if (!args?.onCreate || trimmed.length === 0 || submitting) return;
     setSubmitting(true);
     try {
       const locationId = await resolveLocationId();
@@ -172,12 +173,14 @@ export function VariationAliasPickerSheet({
                 onPress={() => handleSelect(alias.id)}
               />
             ))}
-            <Button variant="outline" onPress={() => setCreating(true)}>
-              <Icon as={Plus} size={16} className="text-foreground" />
-              <Text className="font-sans-semibold text-sm">
-                {t('workoutExecutionScreen.aliasPicker.newMachine')}
-              </Text>
-            </Button>
+            {args?.onCreate ? (
+              <Button variant="outline" onPress={() => setCreating(true)}>
+                <Icon as={Plus} size={16} className="text-foreground" />
+                <Text className="font-sans-semibold text-sm">
+                  {t('workoutExecutionScreen.aliasPicker.newMachine')}
+                </Text>
+              </Button>
+            ) : null}
           </View>
         )}
       </BottomSheetView>

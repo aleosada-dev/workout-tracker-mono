@@ -90,6 +90,7 @@ export default {
     subtitle: 'Escolher o local pré-seleciona a personalização daquele lugar.',
     none: 'Sem local',
     confirm: 'Confirmar',
+    add: 'Adicionar local',
   },
   locationPicker: {
     title: 'Local de treino',

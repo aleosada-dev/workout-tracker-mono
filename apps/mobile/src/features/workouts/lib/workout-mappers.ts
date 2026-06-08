@@ -30,6 +30,7 @@ export type ExerciseExecutionItem = {
   id: string;
   exerciseIndex: number;
   variationId: string;
+  aliasId: string | null;
   name: string;
   variationName: string | null;
   note: string | null;
@@ -41,6 +42,7 @@ export type SupersetLetter = 'A' | 'B' | 'C';
 export type SupersetMember = {
   exerciseIndex: number;
   variationId: string;
+  aliasId: string | null;
   letter: SupersetLetter;
   name: string;
   variationName: string | null;
@@ -120,6 +122,7 @@ function toExerciseExecutionItem(
     id: exercise.id,
     exerciseIndex,
     variationId: variation.id,
+    aliasId: exercise.aliasId ?? null,
     name,
     variationName,
     note: exercise.note,
@@ -306,6 +309,7 @@ export function toExecutionListItems(
       return {
         exerciseIndex,
         variationId: item.variationId,
+        aliasId: item.aliasId,
         letter: SUPERSET_LETTERS[i] ?? SUPERSET_LETTERS[SUPERSET_LETTERS.length - 1],
         name: item.name,
         variationName: item.variationName,

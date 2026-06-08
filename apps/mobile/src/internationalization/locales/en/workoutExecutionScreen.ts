@@ -90,6 +90,7 @@ export default {
     subtitle: 'Picking a location pre-selects the personalization from that place.',
     none: 'No location',
     confirm: 'Confirm',
+    add: 'Add location',
   },
   locationPicker: {
     title: 'Training location',

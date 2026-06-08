@@ -48,6 +48,7 @@ export function toExerciseDetailData(
 ): ExerciseDetailData {
   const sessions = sortedSessions(response.sessions);
   const lastSession = response.lastSession;
+  const equipmentName = t(`equipment.${response.variation.equipmentSlug}`);
   return {
     id: response.variationId,
     variationUserId: response.variation.userId,
@@ -61,7 +62,7 @@ export function toExerciseDetailData(
           response.variation.exerciseName,
           t,
         ),
-        equipmentName: t(`equipment.${response.variation.equipmentSlug}`),
+        equipmentName,
         equipmentPreposition: response.variation.equipmentPreposition,
       },
       language,
@@ -71,6 +72,7 @@ export function toExerciseDetailData(
       response.variation.variationName,
       t,
     ),
+    equipmentName,
     primaryMuscle: t(`muscles.${response.variation.muscleSlug}`),
     secondaryMuscle: response.variation.secondaryMuscleSlug
       ? t(`muscles.${response.variation.secondaryMuscleSlug}`)

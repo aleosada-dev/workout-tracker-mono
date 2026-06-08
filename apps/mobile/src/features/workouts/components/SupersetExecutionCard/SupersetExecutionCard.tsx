@@ -356,7 +356,7 @@ export function SupersetExecutionCard({
           const onPress = selectable
             ? onToggleSelect
             : onPressMember
-              ? () => onPressMember(member.variationId)
+              ? () => onPressMember(member.variationId, member.aliasId)
               : undefined;
           const hasNote = member.note != null && member.note.length > 0;
           const noteExpanded = expandedNotes.has(member.exerciseIndex);

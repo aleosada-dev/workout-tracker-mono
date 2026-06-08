@@ -69,6 +69,7 @@ const MEMBERS: SupersetMember[] = [
   {
     exerciseIndex: 0,
     variationId: 'va',
+    aliasId: null,
     letter: 'A',
     name: 'Exercise A',
     variationName: null,
@@ -78,6 +79,7 @@ const MEMBERS: SupersetMember[] = [
   {
     exerciseIndex: 1,
     variationId: 'vb',
+    aliasId: null,
     letter: 'B',
     name: 'Exercise B',
     variationName: null,

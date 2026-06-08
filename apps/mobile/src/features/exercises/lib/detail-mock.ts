@@ -38,6 +38,7 @@ export function getMockExerciseDetail(
     deletedByName: null,
     name: name?.trim() || 'Abdução de Quadril no Cabo',
     variationName: variationName ?? 'c/ banco inclinado',
+    equipmentName: 'Cabo',
     primaryMuscle: 'Glúteos',
     secondaryMuscle: 'Abdutores',
     videoUrl: SAMPLE_VIDEO_URL,

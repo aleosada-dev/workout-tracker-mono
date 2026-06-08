@@ -43,6 +43,7 @@ type TrainingLocationSheetProps = {
   onValueChange: (value: string | null) => void;
   userId?: string | null;
   testIDPrefix?: string;
+  onDismiss?: () => void;
   ref?: Ref<TrainingLocationSheetRef>;
 };
 
@@ -52,6 +53,7 @@ export function TrainingLocationSheet({
   onValueChange,
   userId,
   testIDPrefix,
+  onDismiss,
   ref,
 }: TrainingLocationSheetProps) {
   const { t } = useTranslation();
@@ -138,7 +140,7 @@ export function TrainingLocationSheet({
 
   return (
     <>
-      <BottomSheet ref={sheetRef}>
+      <BottomSheet ref={sheetRef} onDismiss={onDismiss}>
         <BottomSheetView className="gap-4 px-5 pt-2 pb-8">
           <Text variant="h4" className="text-center">
             {title}

@@ -133,6 +133,11 @@ export const ExerciseIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+/** Query of GET /exercises/:id/detail — optional alias scopes the screen's data. */
+export const ExerciseDetailQuerySchema = z.object({
+	aliasId: z.uuid().optional(),
+});
+
 /** Body of PUT /exercises/:id — same fields as create, minus the path-supplied id. */
 export const UpdateExerciseRequestSchema = z.object({
 	exerciseName: z.string().trim().min(1),

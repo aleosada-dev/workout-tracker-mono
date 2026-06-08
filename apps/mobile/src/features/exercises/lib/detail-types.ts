@@ -35,6 +35,7 @@ export type ExerciseDetailData = {
   deletedByName: string | null;
   name: string;
   variationName: string | null;
+  equipmentName: string;
   primaryMuscle: string;
   secondaryMuscle: string | null;
   videoUrl: string | null;

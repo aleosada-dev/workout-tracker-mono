@@ -107,9 +107,12 @@ export async function fetchExerciseLastSets(
 
 export async function fetchExerciseDetail(
   variationId: string,
-  { signal }: { signal?: AbortSignal } = {},
+  { aliasId, signal }: { aliasId?: string | null; signal?: AbortSignal } = {},
 ): Promise<ExerciseDetailResponse> {
-  const response = await $getDetail({ param: { id: variationId } }, { init: { signal } });
+  const response = await $getDetail(
+    { param: { id: variationId }, query: aliasId ? { aliasId } : {} },
+    { init: { signal } },
+  );
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

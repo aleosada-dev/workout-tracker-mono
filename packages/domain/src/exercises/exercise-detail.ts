@@ -58,4 +58,5 @@ export type ExerciseDetail = {
 export type GetExerciseDetailFilter = {
   userId: string;
   variationId: string;
+  aliasId?: string | null;
 };

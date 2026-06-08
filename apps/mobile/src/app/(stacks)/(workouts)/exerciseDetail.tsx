@@ -1,13 +1,15 @@
 import { RequestErrorState, Skeleton, Text } from '@workout-tracker/ui-mobile';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '@/features/auth/hooks/useSession';
+import { ExerciseAliasContext } from '@/features/exercises/components/ExerciseAliasContext';
 import { ExerciseDetail } from '@/features/exercises/components/ExerciseDetail';
 import { useExerciseDetail } from '@/features/exercises/hooks/use-exercise-detail';
+import { useVariationAliases } from '@/features/exercises/hooks/use-variation-aliases';
 import { toExerciseDetailData } from '@/features/exercises/lib/detail';
 import { useReportRequestError } from '@/features/observability/hooks/use-report-request-error';
 import { exerciseObservability } from '@/features/observability/lib';
@@ -15,13 +17,19 @@ import { useNavTheme } from '@/features/shared/lib/theme';
 
 type Params = {
   id?: string;
+  aliasId?: string;
 };
 
 export default function ExerciseDetailScreen() {
   const { t, i18n } = useTranslation();
-  const { id } = useLocalSearchParams<Params>();
+  const { id, aliasId } = useLocalSearchParams<Params>();
   const variationId = id ?? '';
-  const { data, isLoading, isError, error, refetch } = useExerciseDetail(variationId);
+  const [selectedAliasId, setSelectedAliasId] = useState<string | null>(aliasId ?? null);
+  const { data, isLoading, isError, error, refetch } = useExerciseDetail(
+    variationId,
+    selectedAliasId,
+  );
+  const { data: aliases } = useVariationAliases([variationId], null);
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercise_detail',
     extra: { exerciseId: variationId },
@@ -93,7 +101,17 @@ export default function ExerciseDetailScreen() {
           contentInsetAdjustmentBehavior="automatic"
           testID="exercise-detail"
         >
-          <ExerciseDetail data={detail} />
+          <ExerciseDetail
+            data={detail}
+            aliasContext={
+              <ExerciseAliasContext
+                equipmentName={detail.equipmentName}
+                aliases={aliases ?? []}
+                aliasId={selectedAliasId}
+                onChange={setSelectedAliasId}
+              />
+            }
+          />
         </ScrollView>
       ) : (
         <RequestErrorState

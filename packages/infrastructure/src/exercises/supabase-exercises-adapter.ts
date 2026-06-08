@@ -85,10 +85,11 @@ export function makeSupabaseExerciseRepository(
       return toExerciseListItems(rows);
     },
 
-    async getExerciseDetail({ userId, variationId }) {
+    async getExerciseDetail({ userId, variationId, aliasId }) {
       const { data, error } = await supabase.rpc('wt_get_exercise_history', {
         p_user_id: userId,
         p_variation_id: variationId,
+        ...(aliasId ? { p_alias_id: aliasId } : {}),
       });
 
       if (error) {

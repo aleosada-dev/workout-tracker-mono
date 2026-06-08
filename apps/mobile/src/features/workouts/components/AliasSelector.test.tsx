@@ -138,7 +138,7 @@ describe('<AliasSelector />', () => {
     const { getByTestId, onChanged, form } = renderSelector(null);
 
     fireEvent.press(getByTestId('workout-execution.alias.add'));
-    await capturedArgs?.onCreate('Nova', null);
+    await capturedArgs?.onCreate?.('Nova', null);
 
     expect(mockMutateAsync).toHaveBeenCalledWith({
       variationId: VARIATION_ID,

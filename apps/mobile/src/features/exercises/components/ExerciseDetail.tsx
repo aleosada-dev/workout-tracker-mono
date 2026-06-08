@@ -8,8 +8,8 @@ import {
   Text,
 } from '@workout-tracker/ui-mobile';
 import { format } from 'date-fns';
-import { Archive, Dumbbell, LineChart, Trophy } from 'lucide-react-native';
-import { useState } from 'react';
+import { Archive, BicepsFlexed, Dumbbell, LineChart, Trophy } from 'lucide-react-native';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import {
@@ -26,10 +26,12 @@ import { ExerciseMetricChart } from './ExerciseMetricChart';
 
 export type ExerciseDetailProps = {
   data: ExerciseDetailData;
+  /** Equipment + personalization row, rendered under the "Equipamento" heading. */
+  aliasContext?: ReactNode;
 };
 
 /** Read-only detail view for one exercise: video, metric chart, last session and PRs. */
-export function ExerciseDetail({ data }: ExerciseDetailProps) {
+export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
   const locale = useDateFnsLocale();
@@ -51,7 +53,13 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
       {data.isDeleted && data.deletedAt ? (
         <ArchivedBanner deletedAt={data.deletedAt} deletedByName={data.deletedByName} />
       ) : null}
-      <View className="px-1">
+
+      <ExerciseDemoVideo uploadedUrl={data.videoUrl} youtubeUrl={data.youtubeUrl} />
+
+      {aliasContext}
+
+      <View className="flex-row items-center gap-2 px-1">
+        <Icon as={BicepsFlexed} size={18} className="text-muted-foreground" />
         <View className="flex-row items-center gap-3 self-start rounded-full bg-success/5 px-3 py-2">
           <View
             accessible
@@ -78,8 +86,6 @@ export function ExerciseDetail({ data }: ExerciseDetailProps) {
           ) : null}
         </View>
       </View>
-
-      <ExerciseDemoVideo uploadedUrl={data.videoUrl} youtubeUrl={data.youtubeUrl} />
 
       <View className="gap-3">
         <SectionHeading

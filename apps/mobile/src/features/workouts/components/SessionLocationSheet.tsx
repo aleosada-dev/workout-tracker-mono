@@ -16,9 +16,11 @@ export type SessionLocationSheetRef = {
 
 export function SessionLocationSheet({
   userId,
+  onDismiss,
   ref,
 }: {
   userId?: string | null;
+  onDismiss?: () => void;
   ref?: Ref<SessionLocationSheetRef>;
 }) {
   const { t } = useTranslation();
@@ -38,6 +40,7 @@ export function SessionLocationSheet({
       onValueChange={(locationId) => applySessionLocation(locationId, { getValues, setValue })}
       userId={userId}
       testIDPrefix="workout-execution.location"
+      onDismiss={onDismiss}
     />
   );
 }

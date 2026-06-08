@@ -6,11 +6,12 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
   cn,
   Icon,
   Text,
 } from '@workout-tracker/ui-mobile';
-import { Check, MapPin } from 'lucide-react-native';
+import { Check, MapPin, Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -23,33 +24,36 @@ import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 
 const NONE = '__none__';
 
-export function SessionLocationPrompt({ userId }: { userId?: string | null }) {
+export function SessionLocationPrompt({
+  userId,
+  dismissed = false,
+  onAddLocation,
+}: {
+  userId?: string | null;
+  dismissed?: boolean;
+  onAddLocation?: () => void;
+}) {
   const { t } = useTranslation();
   const { getValues, setValue } = useFormContext<ExecutionFormInput>();
   const chosen = useValue(activeWorkout$.locationChosen);
-  const { data: locations, isLoading: locationsLoading } = useTrainingLocations(userId);
-  const { data: preferences, isLoading: prefsLoading } = useUserPreferences();
+  const { data: locations } = useTrainingLocations(userId);
+  const { data: preferences } = useUserPreferences();
   const [selected, setSelected] = useState<string>(NONE);
   const [seeded, setSeeded] = useState(false);
 
   // Pré-seleciona a preferência do atleta (se ela existe entre os locais), uma vez.
+  // Aguarda data !== undefined (não isLoading): query desabilitada — sessão ainda
+  // carregando, sem userId — reporta isLoading=false, e semear cedo abriria o
+  // prompt antes dos locais carregarem.
   useEffect(() => {
-    if (seeded || locationsLoading || prefsLoading) return;
+    if (seeded || locations === undefined || preferences === undefined) return;
     const pref = preferences?.defaultTrainingLocationId ?? null;
-    const exists = pref ? (locations ?? []).some((l) => l.id === pref) : false;
+    const exists = pref ? locations.some((l) => l.id === pref) : false;
     setSelected(exists && pref ? pref : NONE);
     setSeeded(true);
-  }, [seeded, locationsLoading, prefsLoading, preferences, locations]);
+  }, [seeded, preferences, locations]);
 
-  // Sem locais cadastrados não há o que perguntar: resolve como "Sem local".
-  useEffect(() => {
-    if (!seeded || chosen) return;
-    if ((locations?.length ?? 0) === 0) {
-      applySessionLocation(null, { getValues, setValue });
-    }
-  }, [seeded, chosen, locations, getValues, setValue]);
-
-  const open = !chosen && seeded && (locations?.length ?? 0) > 0;
+  const open = !chosen && seeded && !dismissed;
 
   const confirm = () => {
     applySessionLocation(selected === NONE ? null : selected, { getValues, setValue });
@@ -84,6 +88,16 @@ export function SessionLocationPrompt({ userId }: { userId?: string | null }) {
             />
           ))}
         </ScrollView>
+        {onAddLocation ? (
+          <Button
+            variant="outline"
+            onPress={onAddLocation}
+            testID="workout-execution.location.prompt-add"
+          >
+            <Icon as={Plus} size={16} className="text-foreground" />
+            <Text>{t('workoutExecutionScreen.locationPrompt.add')}</Text>
+          </Button>
+        ) : null}
         <AlertDialogAction onPress={confirm} testID="workout-execution.location.prompt-confirm">
           <Text>{t('workoutExecutionScreen.locationPrompt.confirm')}</Text>
         </AlertDialogAction>

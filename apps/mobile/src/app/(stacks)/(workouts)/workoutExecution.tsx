@@ -239,6 +239,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     mode: 'onTouched',
   });
 
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(false);
   const [incompleteOpen, setIncompleteOpen] = useState(false);
   const [incompleteNames, setIncompleteNames] = useState<string[]>([]);
   const pendingValuesRef = useRef<ExecutionFormValues | null>(null);
@@ -548,8 +549,19 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         <WorkoutNotesSheet ref={notesSheetRef} />
         <KgLbsCalculatorSheet ref={kgLbsCalculatorSheetRef} />
         <TimerSheet ref={timerSheetRef} controller={restTimer} />
-        <SessionLocationSheet ref={locationSheetRef} userId={active.athleteId} />
-        <SessionLocationPrompt userId={active.athleteId} />
+        <SessionLocationSheet
+          ref={locationSheetRef}
+          userId={active.athleteId}
+          onDismiss={() => setLocationPromptDismissed(false)}
+        />
+        <SessionLocationPrompt
+          userId={active.athleteId}
+          dismissed={locationPromptDismissed}
+          onAddLocation={() => {
+            setLocationPromptDismissed(true);
+            locationSheetRef.current?.present();
+          }}
+        />
         <SupersetReorderSheet ref={reorderSheetRef} />
         <ConfirmDialog
           open={incompleteOpen}
