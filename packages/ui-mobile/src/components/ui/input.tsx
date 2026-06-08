@@ -42,8 +42,16 @@ function Input({ className, variant, ...props }: InputProps) {
   // selectionColor for the caret, Android reads cursorColor).
   const primary = rgb(theme.primary);
 
+  // Android's native EditText doesn't repaint its hint when only the
+  // `placeholder` prop changes while the text buffer stays the same, so a
+  // placeholder that updates from state (e.g. suggested load) stays blank until
+  // the user types. Re-key the field on Android so it remounts with the new
+  // hint already applied; iOS/web update the placeholder reactively.
+  const placeholderKey = Platform.OS === 'android' ? props.placeholder : undefined;
+
   return (
     <TextInput
+      key={placeholderKey}
       selectionColor={primary}
       cursorColor={primary}
       className={cn(
