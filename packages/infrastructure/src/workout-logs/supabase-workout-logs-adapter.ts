@@ -31,6 +31,7 @@ const LAST_SELECT = `
 const DETAIL_SELECT = `
   id,
   user_id,
+  started_by,
   started_at,
   finished_at,
   note,

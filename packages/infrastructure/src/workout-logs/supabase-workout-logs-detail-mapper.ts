@@ -11,6 +11,7 @@ import { pickOne, type Relation } from '../supabase/relation';
 export type DetailRow = {
   id: string;
   user_id: string;
+  started_by: string;
   started_at: string;
   finished_at: string;
   note: string | null;
@@ -108,6 +109,7 @@ export function toWorkoutLogDetail(row: DetailRow): WorkoutLogDetail {
   return {
     workoutLogId: row.id,
     userId: row.user_id,
+    startedBy: row.started_by,
     title: workout?.name?.trim() || snapshot?.workoutName?.trim() || null,
     startedAt: row.started_at,
     finishedAt: row.finished_at,

@@ -26,8 +26,15 @@ export async function fetchWorkoutLogSummaries(
   return response.json();
 }
 
-export async function fetchWorkoutLog(id: string, signal?: AbortSignal): Promise<WorkoutLogDetail> {
-  const response = await $getWorkoutLog({ param: { id } }, { init: { signal } });
+export async function fetchWorkoutLog(
+  id: string,
+  userId?: string | null,
+  signal?: AbortSignal,
+): Promise<WorkoutLogDetail> {
+  const response = await $getWorkoutLog(
+    { param: { id }, query: userId ? { userId } : {} },
+    { init: { signal } },
+  );
   if (!response.ok) throw await buildApiError(response);
   return response.json();
 }

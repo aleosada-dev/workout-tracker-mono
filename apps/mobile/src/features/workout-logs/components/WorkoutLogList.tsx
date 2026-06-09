@@ -93,7 +93,7 @@ export function WorkoutLogList({
           onPress={() =>
             router.push({
               pathname: '/(stacks)/(workouts)/workoutLogDetail',
-              params: { id: item.id },
+              params: { id: item.id, ...(userId ? { userId } : {}) },
             })
           }
           testID={`workout-log-card.${item.id}`}

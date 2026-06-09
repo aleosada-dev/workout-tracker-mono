@@ -56,6 +56,12 @@ export const WorkoutLogIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+export const GetWorkoutLogQuerySchema = z.object({
+	userId: z.uuid().optional(),
+});
+
+export type GetWorkoutLogQuery = z.infer<typeof GetWorkoutLogQuerySchema>;
+
 const WorkoutLogDetailSetSchema = z.object({
 	setOrder: z.int().nonnegative(),
 	roundOrder: z.int().nonnegative(),
@@ -84,6 +90,7 @@ const WorkoutLogDetailExerciseSchema = z.object({
 export const WorkoutLogDetailResponseSchema = z.object({
 	workoutLogId: z.uuid(),
 	userId: z.uuid(),
+	startedBy: z.uuid(),
 	title: z.string().nullable(),
 	startedAt: z.iso.datetime({ offset: true }),
 	finishedAt: z.iso.datetime({ offset: true }),

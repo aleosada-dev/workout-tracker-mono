@@ -5,6 +5,7 @@ import { validationHook } from "../../shared/http/validation-hook";
 import {
 	CreateWorkoutLogRequestSchema,
 	CreateWorkoutLogResponseSchema,
+	GetWorkoutLogQuerySchema,
 	ListWorkoutLogSummariesQuerySchema,
 	toCreateWorkoutLogResponse,
 	toWorkoutLogDetailResponse,
@@ -94,13 +95,16 @@ export const workoutLogsRouter = new Hono<AppBindings>()
 			},
 		}),
 		validator("param", WorkoutLogIdParamSchema),
+		validator("query", GetWorkoutLogQuerySchema),
 		async (c) => {
-			const userId = c.get("userClaims")?.sub;
-			if (!userId) {
+			const authUserId = c.get("userClaims")?.sub;
+			if (!authUserId) {
 				return c.json({ error: "Missing user identity" }, 401);
 			}
 
 			const { id } = c.req.valid("param");
+			const { userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? authUserId;
 			const { getById } = c.get("container").workoutLogs;
 			const detail = await getById({ userId, workoutLogId: id });
 			if (!detail) {

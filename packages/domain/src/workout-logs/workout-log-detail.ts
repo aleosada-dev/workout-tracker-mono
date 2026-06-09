@@ -29,6 +29,7 @@ export type WorkoutLogDetailExercise = {
 export type WorkoutLogDetail = {
   workoutLogId: string;
   userId: string;
+  startedBy: string;
   title: string | null;
   startedAt: string;
   finishedAt: string;

@@ -28,8 +28,8 @@ export default function WorkoutLogDetailScreen() {
   const { t } = useTranslation();
   const navTheme = useNavTheme();
   const { session } = useSession();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: detail, isLoading, isError, error } = useWorkoutLogDetail(id);
+  const { id, userId } = useLocalSearchParams<{ id: string; userId?: string }>();
+  const { data: detail, isLoading, isError, error } = useWorkoutLogDetail(id, userId);
   const { mutate: deleteWorkoutLog, isPending: isDeleting } = useDeleteWorkoutLog();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -93,7 +93,7 @@ export default function WorkoutLogDetailScreen() {
   }
 
   const items = groupDetailExercises(detail.exercises);
-  const isOwner = detail.userId === session?.user?.id;
+  const canDelete = detail.userId === session?.user?.id || detail.startedBy === session?.user?.id;
 
   return (
     <View className="flex-1 bg-background">
@@ -112,7 +112,7 @@ export default function WorkoutLogDetailScreen() {
               >
                 <Pencil size={20} color={navTheme.colors.text} />
               </Pressable>
-              {isOwner ? (
+              {canDelete ? (
                 <Pressable
                   onPress={() => setDeleteOpen(true)}
                   disabled={isDeleting}
