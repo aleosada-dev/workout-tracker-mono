@@ -1,4 +1,4 @@
-import type { ExerciseType } from '../exercises/models';
+import type { ExerciseMeasurementType, ExerciseType } from '../exercises/models';
 import type { MeasurementType, WorkoutSetType } from '../set/sets';
 import type { WorkoutFolderColor } from './workout-folder';
 
@@ -47,6 +47,8 @@ export type WorkoutDetailExerciseVariation = {
   slug: string | null;
   name: string | null;
   exercise: { slug: string | null; name: string; type: ExerciseType };
+  /** How the variation is measured; drives the set UI during execution. */
+  measurementType: ExerciseMeasurementType;
   equipment: { slug: string; preposition: string };
   muscle: { slug: string };
   secondaryMuscle: { slug: string } | null;

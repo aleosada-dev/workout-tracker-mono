@@ -105,6 +105,7 @@ function exercise(
       slug: null,
       name: null,
       exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
+      measurementType: 'weight_reps',
       equipment: { slug: 'barra', preposition: 'com' },
       muscle: { slug: 'chest' },
       secondaryMuscle: null,
@@ -182,34 +183,14 @@ describe('<ExerciseExecutionCard />', () => {
     expect(form().getValues('exercises.0.sets.0.duration')).toBe('0');
   });
 
-  test('switching the measurement type applies to every set and updates the header', async () => {
-    const { getByTestId, getByText, queryByText, form } = renderCard(
+  test('a preparatory set is removed via the remove-set sheet when more than one exists', async () => {
+    const { getByTestId, form } = renderCard(
       [set('s1', 'reps', null), set('s2', 'reps', null)],
       'preparatory',
     );
 
-    expect(queryByText('workoutExecutionScreen.exercise.headers.weight')).toBeNull();
-
-    fireEvent.press(getByTestId('workout-execution.set-0.measurement'));
-    fireEvent.press(
-      getByText('workoutExecutionScreen.measurementTypePicker.options.weight_reps.label'),
-    );
-
-    await waitFor(() =>
-      expect(form().getValues('exercises.0.sets.0.measurementType')).toBe('weight_reps'),
-    );
-    expect(form().getValues('exercises.0.sets.1.measurementType')).toBe('weight_reps');
-    expect(queryByText('workoutExecutionScreen.exercise.headers.weight')).not.toBeNull();
-  });
-
-  test('the measurement picker deletes the set when more than one exists', async () => {
-    const { getByTestId, getByText, form } = renderCard(
-      [set('s1', 'reps', null), set('s2', 'reps', null)],
-      'preparatory',
-    );
-
-    fireEvent.press(getByTestId('workout-execution.set-0.measurement'));
-    fireEvent.press(getByText('workoutExecutionScreen.measurementTypePicker.removeSet'));
+    fireEvent.press(getByTestId('workout-execution.set-0.options'));
+    fireEvent.press(getByTestId('workout-execution.remove-set.confirm'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(1));
   });

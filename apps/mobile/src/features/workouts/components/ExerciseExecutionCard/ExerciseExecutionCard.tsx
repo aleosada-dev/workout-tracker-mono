@@ -22,9 +22,9 @@ import { useUserPreferences } from '@/features/preferences/hooks/use-user-prefer
 import { formatRestSeconds } from '@/features/shared/lib/utils';
 import { AliasSelector } from '@/features/workouts/components/AliasSelector';
 import {
-  MeasurementTypePickerSheet,
-  type MeasurementTypePickerSheetRef,
-} from '@/features/workouts/components/MeasurementTypePickerSheet';
+  RemoveSetSheet,
+  type RemoveSetSheetRef,
+} from '@/features/workouts/components/RemoveSetSheet';
 import {
   SetTypePickerSheet,
   type SetTypePickerSheetRef,
@@ -78,7 +78,7 @@ export function ExerciseExecutionCard({
   });
   const hasError = Boolean(errors.exercises?.[exerciseIndex]);
   const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
-  const measurementPickerRef = useRef<MeasurementTypePickerSheetRef>(null);
+  const removeSetSheetRef = useRef<RemoveSetSheetRef>(null);
   const measurementTypes = useWatch({
     control,
     name: fields.map((_, i) => `exercises.${exerciseIndex}.sets.${i}.measurementType` as const),
@@ -271,29 +271,12 @@ export function ExerciseExecutionCard({
                 setIndex={setIndex}
                 layout={layout}
                 showSetType={showSetType}
-                onPressMeasurement={() => {
-                  const current = getValues(
-                    `exercises.${exerciseIndex}.sets.${setIndex}.measurementType`,
-                  );
-                  measurementPickerRef.current?.present(
-                    current,
-                    (next) => {
-                      const sets = getValues(`exercises.${exerciseIndex}.sets`);
-                      sets.forEach((_, i) => {
-                        setValue(`exercises.${exerciseIndex}.sets.${i}.measurementType`, next, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      });
-                      rematchExercise();
-                    },
-                    fields.length > 1
-                      ? () => {
-                          remove(setIndex);
-                          rematchExercise();
-                        }
-                      : undefined,
-                  );
+                canRemove={fields.length > 1}
+                onRemoveSet={() => {
+                  removeSetSheetRef.current?.present(() => {
+                    remove(setIndex);
+                    rematchExercise();
+                  });
                 }}
                 onPressType={(currentType, onChange) => {
                   const sets = getValues(`exercises.${exerciseIndex}.sets`);
@@ -337,7 +320,7 @@ export function ExerciseExecutionCard({
         </Animated.View>
       ) : null}
       <SetTypePickerSheet ref={setTypePickerRef} />
-      <MeasurementTypePickerSheet ref={measurementPickerRef} />
+      <RemoveSetSheet ref={removeSetSheetRef} />
     </Card>
   );
 }
@@ -347,16 +330,19 @@ function SetRow({
   setIndex,
   layout,
   showSetType,
+  canRemove,
   onPressType,
-  onPressMeasurement,
+  onRemoveSet,
 }: {
   exerciseIndex: number;
   setIndex: number;
   layout: ColumnLayout;
   showSetType: boolean;
+  canRemove: boolean;
   onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
-  onPressMeasurement: () => void;
+  onRemoveSet: () => void;
 }) {
+  const { t } = useTranslation();
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
@@ -422,19 +408,26 @@ function SetRow({
               );
             }}
           />
-        ) : (
+        ) : canRemove ? (
           <Pressable
-            onPress={onPressMeasurement}
+            onPress={onRemoveSet}
             hitSlop={8}
             className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
             accessibilityRole="button"
-            testID={`workout-execution.set-${setIndex}.measurement`}
+            accessibilityLabel={t('workoutExecutionScreen.removeSetSheet.title')}
+            testID={`workout-execution.set-${setIndex}.options`}
           >
             <Text className="w-5 text-center font-sans-semibold text-foreground text-sm">
               {setIndex + 1}
             </Text>
             <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
           </Pressable>
+        ) : (
+          <View className="h-8 items-center justify-center">
+            <Text className="w-5 text-center font-sans-semibold text-foreground text-sm">
+              {setIndex + 1}
+            </Text>
+          </View>
         )}
       </View>
       {measurementType === 'reps' ? (

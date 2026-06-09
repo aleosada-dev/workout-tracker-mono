@@ -115,25 +115,10 @@ export default {
     cancel: 'Cancelar',
     deleteRound: 'Excluir série',
   },
-  measurementTypePicker: {
-    title: 'Tipo de medição',
-    notice:
-      'A medição vale para todas as séries do exercício — elas não podem ter tipos diferentes.',
-    options: {
-      weight_reps: {
-        label: 'Peso e repetições',
-        description: 'Registre a carga e as repetições de cada série.',
-      },
-      reps: {
-        label: 'Repetições',
-        description: 'Registre apenas as repetições, sem carga.',
-      },
-      duration: {
-        label: 'Tempo',
-        description: 'Registre a duração da série.',
-      },
-    },
-    removeSet: 'Excluir série',
+  removeSetSheet: {
+    title: 'Série',
+    confirm: 'Excluir série',
+    cancel: 'Cancelar',
   },
   durationPicker: {
     title: 'Definir tempo',

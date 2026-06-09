@@ -2305,7 +2305,6 @@ export type Database = {
           id: string
           linked_set_id: string | null
           load_percent_of_previous: number | null
-          measurement_type: string
           reps_max: number | null
           reps_min: number | null
           round_order: number
@@ -2320,7 +2319,6 @@ export type Database = {
           id?: string
           linked_set_id?: string | null
           load_percent_of_previous?: number | null
-          measurement_type?: string
           reps_max?: number | null
           reps_min?: number | null
           round_order?: number
@@ -2335,7 +2333,6 @@ export type Database = {
           id?: string
           linked_set_id?: string | null
           load_percent_of_previous?: number | null
-          measurement_type?: string
           reps_max?: number | null
           reps_min?: number | null
           round_order?: number
@@ -2638,26 +2635,6 @@ export type Database = {
           updated_at: string | null
           variation_id: string | null
           workout_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          duration_type?: never
-          id?: string | null
-          note?: string | null
-          position?: number | null
-          updated_at?: string | null
-          variation_id?: string | null
-          workout_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          duration_type?: never
-          id?: string | null
-          note?: string | null
-          position?: number | null
-          updated_at?: string | null
-          variation_id?: string | null
-          workout_id?: string | null
         }
         Relationships: [
           {

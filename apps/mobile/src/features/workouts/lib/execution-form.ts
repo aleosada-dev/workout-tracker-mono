@@ -1,13 +1,17 @@
 import {
   assignLogicalKeys,
   deriveRoundOrders,
+  EXERCISE_MEASUREMENT_TYPES,
   EXERCISE_TYPES,
+  type ExerciseMeasurementType,
   MEASUREMENT_TYPES,
+  type MeasurementType,
   matchSets,
   measurementDimensions,
   type SetLike,
   WORKOUT_EXERCISE_TYPES,
   WORKOUT_SET_TYPES,
+  type WorkoutExerciseType,
 } from '@workout-tracker/domain';
 import { z } from 'zod';
 import type { ExerciseLastSetsResponse } from '@/features/exercises/api/exercises';
@@ -84,6 +88,7 @@ export const ExecutionExerciseVariationSchema = z.object({
     name: z.string(),
     type: z.enum(EXERCISE_TYPES),
   }),
+  measurementType: z.enum(EXERCISE_MEASUREMENT_TYPES),
   equipment: z.object({
     slug: z.string(),
     preposition: z.string(),
@@ -235,15 +240,34 @@ export function restTimerDuration(restSeconds: number | null | undefined): numbe
   return restSeconds;
 }
 
+/**
+ * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set (6
+ * valores). `distance` ainda não tem UI de set, então cai em `weight_reps`.
+ */
+export function setMeasurementTypeForVariation(
+  measurementType: ExerciseMeasurementType,
+): MeasurementType {
+  switch (measurementType) {
+    case 'reps':
+      return 'reps';
+    case 'duration':
+      return 'duration';
+    default:
+      return 'weight_reps';
+  }
+}
+
 export function buildExecutionExerciseFromPicked(
   picked: PickedExercise,
   position: number,
   generateId: () => string,
+  /** Seção (aba) ativa no momento do clique em adicionar; define onde o exercício entra. */
+  exerciseType: WorkoutExerciseType,
 ): ExecutionExerciseInput {
   const id = generateId();
   return {
     id,
-    exerciseType: picked.exercise.type === 'preparatorio' ? 'preparatory' : 'strength',
+    exerciseType,
     position,
     supersetGroupId: id,
     supersetOrder: 0,
@@ -259,6 +283,7 @@ export function buildExecutionExerciseFromPicked(
         name: picked.exercise.name,
         type: picked.exercise.type,
       },
+      measurementType: picked.variation.measurementType,
       equipment: {
         slug: picked.variation.equipment.slug,
         preposition: picked.variation.equipment.preposition,
@@ -272,7 +297,7 @@ export function buildExecutionExerciseFromPicked(
       {
         id: generateId(),
         type: 'normal',
-        measurementType: 'weight_reps',
+        measurementType: setMeasurementTypeForVariation(picked.variation.measurementType),
         roundOrder: 0,
         repsMin: null,
         repsMax: null,
@@ -308,10 +333,11 @@ export function buildExecutionFromWorkout(
       const fallbackRounds = deriveRoundOrders(
         exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
       );
+      const setMeasurementType = setMeasurementTypeForVariation(exercise.variation.measurementType);
       const sets: ExecutionSetInput[] = exercise.sets.map((set, i) => ({
         id: set.id,
         type: set.setType ?? 'normal',
-        measurementType: set.measurementType ?? 'weight_reps',
+        measurementType: setMeasurementType,
         roundOrder: set.roundOrder ?? fallbackRounds[i],
         repsMin: set.repsMin,
         repsMax: set.repsMax,

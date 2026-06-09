@@ -59,14 +59,14 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
           workout_exercises (
             id, position, superset_group_id, superset_order, note, rest_seconds, exercise_type,
             variation:variations (
-              id, slug, name,
+              id, slug, name, measurement_type,
               exercise:exercises ( slug, name, exercise_type ),
               equipment:equipments ( slug, preposition ),
               muscle:muscles!muscle_id ( slug ),
               secondary_muscle:muscles!secondary_muscle_id ( slug )
             ),
             workout_sets (
-              id, set_order, set_type, measurement_type, reps_min, reps_max, duration_seconds, linked_set_id, load_percent_of_previous, round_order
+              id, set_order, set_type, reps_min, reps_max, duration_seconds, linked_set_id, load_percent_of_previous, round_order
             )
           )
         `,

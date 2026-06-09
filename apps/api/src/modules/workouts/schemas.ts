@@ -1,5 +1,6 @@
 import {
 	assignLogicalKeys,
+	EXERCISE_MEASUREMENT_TYPES,
 	EXERCISE_TYPES,
 	MEASUREMENT_TYPES,
 	WORKOUT_EXERCISE_TYPES,
@@ -116,6 +117,7 @@ export const WorkoutDetailExerciseVariationSchema = z.object({
 		name: z.string(),
 		type: z.enum(EXERCISE_TYPES),
 	}),
+	measurementType: z.enum(EXERCISE_MEASUREMENT_TYPES),
 	equipment: z.object({
 		slug: z.string(),
 		preposition: z.string(),
@@ -177,6 +179,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 					name: exercise.variation.exercise.name,
 					type: exercise.variation.exercise.type,
 				},
+				measurementType: exercise.variation.measurementType,
 				equipment: {
 					slug: exercise.variation.equipment.slug,
 					preposition: exercise.variation.equipment.preposition,

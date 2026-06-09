@@ -1,4 +1,5 @@
 import type {
+  ExerciseMeasurementType,
   ExerciseType,
   MeasurementType,
   Workout,
@@ -93,7 +94,6 @@ type WorkoutSetRow = {
   id: string;
   set_order: number;
   set_type: WorkoutSetType | null;
-  measurement_type: MeasurementType;
   reps_min: number | null;
   reps_max: number | null;
   duration_seconds: number | null;
@@ -107,6 +107,7 @@ type DetailVariationRow = {
   slug: string | null;
   name: string | null;
   exercise: { slug: string | null; name: string; exercise_type: ExerciseType } | null;
+  measurement_type: ExerciseMeasurementType;
   equipment: { slug: string; preposition: string } | null;
   muscle: { slug: string } | null;
   secondary_muscle: { slug: string } | null;
@@ -135,12 +136,27 @@ export type WorkoutDetailRow = {
   workout_exercises: DetailWorkoutExerciseRow[] | null;
 };
 
-function toWorkoutSet(row: WorkoutSetRow): WorkoutDetailSet {
+/**
+ * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set (6
+ * valores). `distance` ainda não tem UI de set, então cai em `weight_reps`.
+ */
+function setMeasurementForVariation(measurementType: ExerciseMeasurementType): MeasurementType {
+  switch (measurementType) {
+    case 'reps':
+      return 'reps';
+    case 'duration':
+      return 'duration';
+    default:
+      return 'weight_reps';
+  }
+}
+
+function toWorkoutSet(row: WorkoutSetRow, measurementType: MeasurementType): WorkoutDetailSet {
   return {
     id: row.id,
     setOrder: row.set_order,
     setType: row.set_type ?? 'normal',
-    measurementType: row.measurement_type ?? 'weight_reps',
+    measurementType,
     repsMin: row.reps_min,
     repsMax: row.reps_max,
     durationSeconds: row.duration_seconds,
@@ -170,6 +186,7 @@ function toWorkoutExercise(row: DetailWorkoutExerciseRow): WorkoutDetailExercise
         name: variation?.exercise?.name ?? '',
         type: variation?.exercise?.exercise_type ?? 'musculacao',
       },
+      measurementType: variation?.measurement_type ?? 'weight_reps',
       equipment: {
         slug: variation?.equipment?.slug ?? '',
         preposition: variation?.equipment?.preposition ?? '',
@@ -179,7 +196,11 @@ function toWorkoutExercise(row: DetailWorkoutExerciseRow): WorkoutDetailExercise
         ? { slug: variation.secondary_muscle.slug }
         : null,
     },
-    sets: [...(row.workout_sets ?? [])].sort((a, b) => a.set_order - b.set_order).map(toWorkoutSet),
+    sets: [...(row.workout_sets ?? [])]
+      .sort((a, b) => a.set_order - b.set_order)
+      .map((set) =>
+        toWorkoutSet(set, setMeasurementForVariation(variation?.measurement_type ?? 'weight_reps')),
+      ),
   };
 }
 

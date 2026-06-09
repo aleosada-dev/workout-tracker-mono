@@ -103,6 +103,7 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
       slug: null,
       name: null,
       exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
+      measurementType: 'weight_reps',
       equipment: { slug: 'barra', preposition: 'com' },
       muscle: { slug: 'chest' },
       secondaryMuscle: null,

@@ -1,5 +1,6 @@
 import type {
   AdjustmentPayload,
+  ExerciseMeasurementType,
   PeriodizationAdjustment,
   WorkoutOverrideNewExercise,
   WorkoutOverrideOp,
@@ -75,6 +76,8 @@ function parseNewExercise(value: unknown, variationId: string): WorkoutOverrideN
       slug: null,
       name: asString(value.variationName),
       exercise: { slug: null, name, type: 'musculacao' },
+      measurementType: (asString(value.measurementType) ??
+        'weight_reps') as ExerciseMeasurementType,
       equipment: { slug: '', preposition: asString(value.equipmentPreposition) ?? '' },
       muscle: { slug: '' },
       secondaryMuscle: null,

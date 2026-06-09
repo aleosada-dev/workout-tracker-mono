@@ -1,4 +1,8 @@
-import type { MeasurementType, WorkoutSetType } from '@workout-tracker/domain';
+import type {
+  ExerciseMeasurementType,
+  MeasurementType,
+  WorkoutSetType,
+} from '@workout-tracker/domain';
 import type { ExerciseLastSetsResponse } from '@/features/exercises/api/exercises';
 import type { PickedExercise } from '@/features/exercises/state/exercise-picker-bridge';
 import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
@@ -45,7 +49,11 @@ function refSet(
   return { logicalKey, weightKg, reps, finishedAt };
 }
 
-function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
+function workout(
+  variationId: string,
+  sets: TemplateSet[],
+  measurementType: ExerciseMeasurementType = 'weight_reps',
+): GetWorkoutResponse {
   return {
     id: 'w1',
     userId: 'u1',
@@ -68,6 +76,7 @@ function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
           slug: 'supino-reto',
           name: null,
           exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
+          measurementType,
           equipment: { slug: 'barra', preposition: 'com' },
           muscle: { slug: 'chest' },
           secondaryMuscle: null,
@@ -116,17 +125,20 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].type).toBe('normal');
   });
 
-  test('carries the measurement type and duration target through', () => {
+  test('derives the set measurement type from the variation and keeps the duration target', () => {
     const result = buildExecutionFromWorkout(
-      workout(VARIATION_A, [
-        templateSet({
-          id: 's1',
-          measurementType: 'duration',
-          repsMin: null,
-          repsMax: null,
-          durationSeconds: 30,
-        }),
-      ]),
+      workout(
+        VARIATION_A,
+        [
+          templateSet({
+            id: 's1',
+            repsMin: null,
+            repsMax: null,
+            durationSeconds: 30,
+          }),
+        ],
+        'duration',
+      ),
     );
 
     expect(result.exercises[0].sets[0].measurementType).toBe('duration');
@@ -542,6 +554,7 @@ describe('buildExecutionExerciseFromPicked', () => {
         id: VARIATION_A,
         slug: 'bench-press-barbell',
         name: 'Supino com barra',
+        measurementType: 'weight_reps',
         equipment: { slug: 'barbell', preposition: 'com' },
         muscle: { slug: 'chest' },
         secondaryMuscle: { slug: 'triceps' },
@@ -559,7 +572,12 @@ describe('buildExecutionExerciseFromPicked', () => {
   }
 
   test('starts a new exercise with a single set that has no rep target', () => {
-    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 0, sequentialIds());
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('forca'),
+      0,
+      sequentialIds(),
+      'strength',
+    );
 
     expect(result.sets).toHaveLength(1);
     expect(result.sets[0]).toMatchObject({
@@ -569,25 +587,44 @@ describe('buildExecutionExerciseFromPicked', () => {
     });
   });
 
-  test('maps forca to a strength exercise and keeps the given position', () => {
-    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 3, sequentialIds());
-
-    expect(result.exerciseType).toBe('strength');
-    expect(result.position).toBe(3);
-  });
-
-  test('maps preparatorio to a preparatory exercise', () => {
-    const result = buildExecutionExerciseFromPicked(
+  test('places the exercise in the active section, ignoring its exercise type', () => {
+    const strength = buildExecutionExerciseFromPicked(
       pickedExercise('preparatorio'),
+      3,
+      sequentialIds(),
+      'strength',
+    );
+    expect(strength.exerciseType).toBe('strength');
+    expect(strength.position).toBe(3);
+
+    const preparatory = buildExecutionExerciseFromPicked(
+      pickedExercise('forca'),
       0,
       sequentialIds(),
+      'preparatory',
+    );
+    expect(preparatory.exerciseType).toBe('preparatory');
+  });
+
+  test('derives the seeded set measurement type from the variation', () => {
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('forca', { measurementType: 'duration' }),
+      0,
+      sequentialIds(),
+      'strength',
     );
 
-    expect(result.exerciseType).toBe('preparatory');
+    expect(result.variation.measurementType).toBe('duration');
+    expect(result.sets[0].measurementType).toBe('duration');
   });
 
   test('uses the generated id as its own superset group anchor', () => {
-    const result = buildExecutionExerciseFromPicked(pickedExercise('forca'), 0, sequentialIds());
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('forca'),
+      0,
+      sequentialIds(),
+      'strength',
+    );
 
     expect(result.id).toBe('id-1');
     expect(result.supersetGroupId).toBe('id-1');
@@ -600,6 +637,7 @@ describe('buildExecutionExerciseFromPicked', () => {
       pickedExercise('forca', { secondaryMuscle: null }),
       0,
       sequentialIds(),
+      'strength',
     );
 
     expect(result.variation.secondaryMuscle).toBeNull();

@@ -336,7 +336,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
         const currentFormExercises = form.getValues('exercises') ?? [];
         const startPosition = currentFormExercises.length;
         const additions = picked.map((p, i) =>
-          buildExecutionExerciseFromPicked(p, startPosition + i, Crypto.randomUUID),
+          buildExecutionExerciseFromPicked(p, startPosition + i, Crypto.randomUUID, tab),
         );
         form.setValue('exercises', [...currentFormExercises, ...additions], {
           shouldDirty: true,
