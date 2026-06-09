@@ -65,8 +65,10 @@ export function ExerciseExecutionCard({
   onLongPress,
 }: ExerciseExecutionCardProps) {
   const { t } = useTranslation();
+  const { data: preferences } = useUserPreferences();
   const [collapsed, setCollapsed] = useState(true);
   const isCollapsed = selectable || collapsed;
+  const effectiveRestSeconds = restSeconds ?? preferences?.defaultRestSeconds ?? null;
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -205,7 +207,7 @@ export function ExerciseExecutionCard({
               />
             </View>
           ) : null}
-          {restSeconds != null || (note != null && note.length > 0) ? (
+          {effectiveRestSeconds != null || (note != null && note.length > 0) ? (
             <View className="flex-row items-start gap-3 px-4 pb-4">
               <View className="flex-1 flex-row items-start gap-2">
                 {note != null && note.length > 0 ? (
@@ -215,10 +217,10 @@ export function ExerciseExecutionCard({
                   </>
                 ) : null}
               </View>
-              {restSeconds != null ? (
+              {effectiveRestSeconds != null ? (
                 <View className="flex-row items-center gap-2">
                   <Icon as={Timer} size={16} className="text-foreground" />
-                  <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
+                  <Text className="text-sm">{formatRestSeconds(effectiveRestSeconds)}</Text>
                 </View>
               ) : null}
             </View>

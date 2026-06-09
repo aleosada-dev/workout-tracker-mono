@@ -112,8 +112,10 @@ export function SupersetExecutionCard({
   onLongPress,
 }: SupersetExecutionCardProps) {
   const { t } = useTranslation();
+  const { data: preferences } = useUserPreferences();
   const [collapsed, setCollapsed] = useState(true);
   const isCollapsed = selectable || collapsed;
+  const effectiveRestSeconds = restSeconds ?? preferences?.defaultRestSeconds ?? null;
   const [expandedNotes, setExpandedNotes] = useState<ReadonlySet<number>>(() => new Set());
   const toggleNote = (exerciseIndex: number) =>
     setExpandedNotes((prev) => {
@@ -407,10 +409,10 @@ export function SupersetExecutionCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-          {restSeconds != null ? (
+          {effectiveRestSeconds != null ? (
             <View className="flex-row items-center justify-end gap-2 px-4 pt-3 pb-4">
               <Icon as={Timer} size={16} className="text-foreground" />
-              <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
+              <Text className="text-sm">{formatRestSeconds(effectiveRestSeconds)}</Text>
             </View>
           ) : null}
           <View className="px-4">

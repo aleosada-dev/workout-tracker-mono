@@ -34,15 +34,19 @@ jest.mock('@/features/workouts/state/rest-timer-bridge', () => ({
 jest.mock('@/features/workouts/components/AliasSelector', () => ({
   AliasSelector: () => null,
 }));
+const mockPreferencesData: {
+  defaultRestSeconds: number | null;
+  weightUnit: string;
+  countWarmupSets: boolean;
+  autoStartRestTimer: boolean;
+} = {
+  defaultRestSeconds: null,
+  weightUnit: 'kg',
+  countWarmupSets: false,
+  autoStartRestTimer: true,
+};
 jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
-  useUserPreferences: () => ({
-    data: {
-      defaultRestSeconds: null,
-      weightUnit: 'kg',
-      countWarmupSets: false,
-      autoStartRestTimer: true,
-    },
-  }),
+  useUserPreferences: () => ({ data: mockPreferencesData }),
 }));
 jest.mock('@/features/workouts/state/active-workout-store', () => ({
   activeWorkout$: {
@@ -145,6 +149,23 @@ function renderCard(
 }
 
 describe('<ExerciseExecutionCard />', () => {
+  afterEach(() => {
+    mockPreferencesData.defaultRestSeconds = null;
+  });
+
+  test('falls back to the default rest preference for the rest indicator when no per-exercise rest is set', () => {
+    mockPreferencesData.defaultRestSeconds = 90;
+    const { queryByText } = renderCard([set('s1', 'weight_reps', null)]);
+
+    expect(queryByText('1min 30s')).not.toBeNull();
+  });
+
+  test('shows no rest indicator when neither a per-exercise rest nor a default preference is set', () => {
+    const { queryByText } = renderCard([set('s1', 'weight_reps', null)]);
+
+    expect(queryByText('1min 30s')).toBeNull();
+  });
+
   test('a duration-only exercise shows the time header and target, not weight/reps', () => {
     const { queryByText, getAllByText } = renderCard([set('s1', 'duration', 30)]);
 
