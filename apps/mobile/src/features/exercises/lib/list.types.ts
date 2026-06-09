@@ -4,6 +4,7 @@ export type ExerciseListItem = {
   variationName: string | null;
   primaryMuscle: string;
   type: string;
+  measurementType: string;
   visibility: string;
   userId: string | null;
 };

@@ -85,6 +85,7 @@ export function WorkoutCard({
                     exerciseName: resolveExerciseName(exercise.slug, exercise.name, t),
                     equipmentName: t(`equipment.${exercise.equipmentSlug}`),
                     equipmentPreposition: exercise.equipmentPreposition,
+                    equipmentSlug: exercise.equipmentSlug,
                   },
                   i18n.language,
                 );

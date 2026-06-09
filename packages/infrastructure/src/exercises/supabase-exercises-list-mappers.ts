@@ -1,5 +1,6 @@
 import {
   ExerciseListItem,
+  type ExerciseMeasurementType,
   type ExerciseType,
   type VariationListItem,
 } from '@workout-tracker/domain';
@@ -61,6 +62,7 @@ function toVariation(row: ListExerciseItemRpcRow): VariationListItem {
       slug: row.equipment_slug,
       preposition: row.equipment_preposition,
     },
+    measurementType: row.measurement_type as ExerciseMeasurementType,
     video: hasVideo
       ? {
           url: row.video_url,

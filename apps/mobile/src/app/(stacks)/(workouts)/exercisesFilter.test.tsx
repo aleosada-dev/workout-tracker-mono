@@ -63,18 +63,36 @@ beforeEach(() => {
 });
 
 describe('<ExercisesFilterScreen />', () => {
-  test('Apply forwards the draft (with a type toggled off) to filters$', () => {
-    exerciseFilters$.set({
-      query: { visibility: 'all', exerciseTypes: ['musculacao', 'preparatorio'] },
-    });
+  test('does not render the exercise-type filter section', () => {
+    const { queryByTestId } = render(<ExercisesFilterScreen />);
+
+    expect(queryByTestId('exercises-filter.type.musculacao')).toBeNull();
+    expect(queryByTestId('exercises-filter.type.preparatorio')).toBeNull();
+  });
+
+  test('deselecting a measurement type forwards the remaining types on Apply', () => {
     const { getByTestId } = render(<ExercisesFilterScreen />);
 
-    fireEvent.press(getByTestId('exercises-filter.type.musculacao'));
+    fireEvent.press(getByTestId('exercises-filter.measurementType.duration'));
     fireEvent.press(getByTestId('exercises-filter.apply'));
 
     expect(mockBack).toHaveBeenCalledTimes(1);
     expect(exerciseFilters$.get()).toEqual<ExerciseListParams>({
-      query: { visibility: 'all', exerciseTypes: ['preparatorio'] },
+      query: { measurementTypes: ['weight_reps', 'reps', 'distance'] },
+    });
+  });
+
+  test('re-selecting all measurement types clears the filter', () => {
+    exerciseFilters$.set({
+      query: { visibility: 'all', measurementTypes: ['weight_reps', 'reps', 'duration'] },
+    });
+    const { getByTestId } = render(<ExercisesFilterScreen />);
+
+    fireEvent.press(getByTestId('exercises-filter.measurementType.distance'));
+    fireEvent.press(getByTestId('exercises-filter.apply'));
+
+    expect(exerciseFilters$.get()).toEqual<ExerciseListParams>({
+      query: { visibility: 'all', measurementTypes: undefined },
     });
   });
 

@@ -11,7 +11,15 @@ export type ExerciseNameParts = {
   exerciseName: string;
   equipmentName: string;
   equipmentPreposition: string;
+  equipmentSlug: string;
 };
+
+/**
+ * Equipment whose name adds nothing to the exercise label, so the display name
+ * is just the exercise name (no preposition, no equipment): "Bodyweight" and
+ * "Other".
+ */
+const NAME_ONLY_EQUIPMENT_SLUGS = new Set(['bodyweight', 'other']);
 
 /**
  * Display name for an exercise variation.
@@ -19,13 +27,17 @@ export type ExerciseNameParts = {
  * Other languages drop the preposition and lead with the equipment:
  * `<equipment> <exercise>` ("Machine Abdominal").
  *
+ * For bodyweight/other equipment the name is just the exercise name, since the
+ * equipment carries no useful information.
+ *
  * The variation suffix (the API's `name`) is not part of the display name — it
  * is rendered separately by the UI.
  */
 export function composeExerciseName(
-  { exerciseName, equipmentName, equipmentPreposition }: ExerciseNameParts,
+  { exerciseName, equipmentName, equipmentPreposition, equipmentSlug }: ExerciseNameParts,
   language: string,
 ): string {
+  if (NAME_ONLY_EQUIPMENT_SLUGS.has(equipmentSlug)) return exerciseName;
   if (language === 'pt') return `${exerciseName} ${equipmentPreposition} ${equipmentName}`;
   return `${equipmentName} ${exerciseName}`;
 }
@@ -67,12 +79,14 @@ export function toExercise(
         exerciseName: resolveExerciseName(exercise.slug, exercise.name, t),
         equipmentName: t(`equipment.${variation.equipment.slug}`),
         equipmentPreposition: variation.equipment.preposition,
+        equipmentSlug: variation.equipment.slug,
       },
       language,
     ),
     variationName: resolveVariationName(variation.slug, variation.name, t),
     primaryMuscle: t(`muscles.${variation.muscle.slug}`),
     type: exercise.type.toString(),
+    measurementType: variation.measurementType,
     visibility:
       exercise.userId == null ? 'public' : exercise.userId === currentUserId ? 'owned' : 'shared',
     userId: exercise.userId,

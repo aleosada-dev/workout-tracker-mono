@@ -59,7 +59,9 @@ export function ExerciseCard({
               </Text>
               <Text className="text-muted-foreground text-xs">·</Text>
               <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-                {t(`exercises.type.${exercise.type}`, { defaultValue: exercise.type })}
+                {t(`exercises.measurementType.${exercise.measurementType}`, {
+                  defaultValue: exercise.measurementType,
+                })}
               </Text>
               <Text className="text-muted-foreground text-xs">·</Text>
               <View className="shrink-0 flex-row items-center gap-1">

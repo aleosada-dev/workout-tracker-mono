@@ -1,4 +1,5 @@
 import {
+	EXERCISE_MEASUREMENT_TYPES,
 	EXERCISE_TYPES,
 	type ExerciseListItem,
 	MAX_VIDEO_DURATION_SECONDS,
@@ -12,12 +13,14 @@ import { VideoContentTypeSchema } from "../medias/schemas";
 
 export const VisibilitySchema = z.enum(VISIBILITIES);
 export const ExerciseTypeSchema = z.enum(EXERCISE_TYPES);
+export const ExerciseMeasurementTypeSchema = z.enum(EXERCISE_MEASUREMENT_TYPES);
 
 export const ListExercisesQuerySchema = z.object({
 	visibility: VisibilitySchema.default("all"),
 	muscleIds: arrayQuery(z.uuid()).optional(),
 	equipmentIds: arrayQuery(z.uuid()).optional(),
 	exerciseTypes: arrayQuery(ExerciseTypeSchema).optional(),
+	measurementTypes: arrayQuery(ExerciseMeasurementTypeSchema).optional(),
 });
 
 export type ListExercisesQuery = z.infer<typeof ListExercisesQuerySchema>;
@@ -58,6 +61,7 @@ export const VariationResponseSchema = z.object({
 	muscle: VariationMuscleSchema,
 	secondaryMuscle: VariationSecondaryMuscleSchema.nullable(),
 	equipment: VariationEquipmentSchema,
+	measurementType: ExerciseMeasurementTypeSchema,
 	video: VariationVideoSchema.nullable(),
 	imageUrl: z.string().nullable(),
 });
@@ -112,7 +116,7 @@ export const CreateExerciseRequestSchema = z.object({
 	// Minted by the client so the device video can be uploaded to R2 up front.
 	variationId: z.uuid(),
 	exerciseName: z.string().trim().min(1),
-	exerciseType: ExerciseTypeSchema,
+	measurementType: ExerciseMeasurementTypeSchema,
 	variationName: z.string().trim().min(1).nullable(),
 	muscleId: z.uuid(),
 	secondaryMuscleId: z.uuid().nullable(),
@@ -141,7 +145,7 @@ export const ExerciseDetailQuerySchema = z.object({
 /** Body of PUT /exercises/:id — same fields as create, minus the path-supplied id. */
 export const UpdateExerciseRequestSchema = z.object({
 	exerciseName: z.string().trim().min(1),
-	exerciseType: ExerciseTypeSchema,
+	measurementType: ExerciseMeasurementTypeSchema,
 	variationName: z.string().trim().min(1).nullable(),
 	muscleId: z.uuid(),
 	secondaryMuscleId: z.uuid().nullable(),
@@ -198,7 +202,7 @@ const ExerciseForEditVideoSchema = z.object({
 export const ExerciseForEditResponseSchema = z.object({
 	variationId: z.uuid(),
 	exerciseName: z.string(),
-	exerciseType: ExerciseTypeSchema,
+	measurementType: ExerciseMeasurementTypeSchema,
 	variationName: z.string().nullable(),
 	muscleId: z.uuid(),
 	secondaryMuscleId: z.uuid().nullable(),

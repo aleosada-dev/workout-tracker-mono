@@ -1,16 +1,11 @@
 import {
-  EXERCISE_TYPES,
-  type ExerciseType,
+  EXERCISE_MEASUREMENT_TYPES,
+  type ExerciseMeasurementType,
   VISIBILITIES,
   type Visibility,
 } from '@workout-tracker/domain';
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Button,
-  Checkbox,
-  cn,
   Label,
   Select,
   SelectContent,
@@ -21,8 +16,7 @@ import {
 } from '@workout-tracker/ui-mobile';
 import { router } from 'expo-router';
 import type { TFunction } from 'i18next';
-import { AlertTriangle } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,6 +25,8 @@ import {
   EMPTY_EXERCISE_LIST_PARAMS,
   type ExerciseListParams,
 } from '@/features/exercises/api/exercises';
+import { MeasurementTypeHelpDialog } from '@/features/exercises/components/MeasurementTypeHelpDialog';
+import { MeasurementTypeSelector } from '@/features/exercises/components/MeasurementTypeSelector';
 import { exerciseFilters$ } from '@/features/exercises/state/exercise-list-filter-store';
 import { MuscleMultiSelect } from '@/features/muscles/components/muscle-multi-select';
 
@@ -38,51 +34,6 @@ export default function ExercisesFilterScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<ExerciseListParams>(() => exerciseFilters$.get());
-  const [showTypeWarning, setShowTypeWarning] = useState(false);
-  const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearWarningTimer = useCallback(() => {
-    if (warningTimer.current) {
-      clearTimeout(warningTimer.current);
-      warningTimer.current = null;
-    }
-  }, []);
-
-  const dismissTypeWarning = () => {
-    clearWarningTimer();
-    setShowTypeWarning(false);
-  };
-
-  const triggerTypeWarning = useCallback(() => {
-    clearWarningTimer();
-    setShowTypeWarning(true);
-    warningTimer.current = setTimeout(() => {
-      warningTimer.current = null;
-      setShowTypeWarning(false);
-    }, 3000);
-  }, [clearWarningTimer]);
-
-  useEffect(() => clearWarningTimer, [clearWarningTimer]);
-
-  const toggleType = useCallback(
-    (type: ExerciseType) => {
-      const current = draft.query.exerciseTypes;
-      const arr = current ? (Array.isArray(current) ? current : [current]) : [...EXERCISE_TYPES];
-      const has = arr.includes(type);
-      if (has && arr.length === 1) {
-        triggerTypeWarning();
-        return;
-      }
-      setDraft((prev) => ({
-        ...prev,
-        query: {
-          ...prev.query,
-          exerciseTypes: has ? arr.filter((x) => x !== type) : [...arr, type],
-        },
-      }));
-    },
-    [draft.query.exerciseTypes, triggerTypeWarning],
-  );
 
   const setVisibility = (visibility: Visibility) => {
     setDraft((prev) => ({ ...prev, query: { ...prev.query, visibility } }));
@@ -99,6 +50,20 @@ export default function ExercisesFilterScreen() {
     setDraft((prev) => ({
       ...prev,
       query: { ...prev.query, equipmentIds: equipmentId ? [equipmentId] : undefined },
+    }));
+  };
+
+  // O seletor exige no mínimo 1 tipo; "todos selecionados" equivale a sem filtro.
+  const current = draft.query.measurementTypes;
+  const selectedMeasurementTypes: ExerciseMeasurementType[] = current
+    ? ((Array.isArray(current) ? current : [current]) as ExerciseMeasurementType[])
+    : [...EXERCISE_MEASUREMENT_TYPES];
+
+  const setMeasurementTypes = (types: ExerciseMeasurementType[]) => {
+    const allSelected = types.length === EXERCISE_MEASUREMENT_TYPES.length;
+    setDraft((prev) => ({
+      ...prev,
+      query: { ...prev.query, measurementTypes: allSelected ? undefined : types },
     }));
   };
 
@@ -119,45 +84,6 @@ export default function ExercisesFilterScreen() {
         contentContainerClassName="gap-5 px-4 pb-3"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="gap-2">
-          <Label className="uppercase tracking-wider">
-            {t('exerciseListScreen.filter.sections.type')}
-          </Label>
-          {showTypeWarning ? (
-            <Alert
-              variant="warning"
-              icon={AlertTriangle}
-              onDismiss={dismissTypeWarning}
-              dismissAccessibilityLabel={t('common.close')}
-              testID="exercises-filter.type.warning"
-            >
-              <AlertTitle>{t('exerciseListScreen.filter.warnings.typeMinOne.title')}</AlertTitle>
-              <AlertDescription>
-                {t('exerciseListScreen.filter.warnings.typeMinOne.message')}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-          <View className="flex-row gap-4">
-            {EXERCISE_TYPES.map((type) => {
-              const checked = draft.query.exerciseTypes
-                ? !!(Array.isArray(draft.query.exerciseTypes)
-                    ? draft.query.exerciseTypes.includes(type)
-                    : draft.query.exerciseTypes === type)
-                : true;
-              return (
-                <CheckboxRow
-                  key={type}
-                  label={t(`exercises.type.${type}`)}
-                  checked={checked}
-                  onChange={() => toggleType(type)}
-                  testID={`exercises-filter.type.${type}`}
-                  className="flex-1"
-                />
-              );
-            })}
-          </View>
-        </View>
-
         <View className="gap-2">
           <Label className="uppercase tracking-wider">
             {t('exerciseListScreen.filter.sections.visibility')}
@@ -198,6 +124,21 @@ export default function ExercisesFilterScreen() {
               ))}
             </SelectContent>
           </Select>
+        </View>
+
+        <View className="gap-2">
+          <View className="flex-row items-center gap-2">
+            <Label className="uppercase tracking-wider">
+              {t('exerciseListScreen.filter.sections.measurementType')}
+            </Label>
+            <MeasurementTypeHelpDialog />
+          </View>
+          <MeasurementTypeSelector
+            multiple
+            value={selectedMeasurementTypes}
+            onValueChange={setMeasurementTypes}
+            testID="exercises-filter.measurementType"
+          />
         </View>
 
         <View className="gap-2">
@@ -259,27 +200,4 @@ function visibilityLabel(v: Visibility, t: TFunction): string {
   return v === 'all'
     ? t('exerciseListScreen.filter.visibility.all')
     : t(`exercises.visibility.${v}`);
-}
-
-function CheckboxRow({
-  label,
-  checked,
-  onChange,
-  testID,
-  className,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-  testID?: string;
-  className?: string;
-}) {
-  return (
-    <View className={cn('flex-row items-center gap-3 py-1.5', className)}>
-      <Checkbox checked={checked} onCheckedChange={onChange} testID={testID} />
-      <Text className="font-sans text-base text-foreground" onPress={onChange}>
-        {label}
-      </Text>
-    </View>
-  );
 }

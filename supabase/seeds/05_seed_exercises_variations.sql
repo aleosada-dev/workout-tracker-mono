@@ -706,6 +706,30 @@ INSERT INTO public.variations (id, name, exercise_id, muscle_id, secondary_muscl
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------
+-- MEASUREMENT TYPE
+-- A maioria das variações é peso+repetições (DEFAULT 'weight_reps' da coluna).
+-- Aqui ajustamos os exercícios cuja medição natural é tempo ou repetições puras
+-- (alongamentos, mobilidade, cardio e isometria).
+-- ------------------------------------------------
+UPDATE public.variations SET measurement_type = 'duration'
+WHERE exercise_id IN (
+  '4847c7ab-ea7e-419d-aa3e-c32a5896a35b', -- Prancha
+  '0fe01367-8314-4ee0-bc36-67b826c04e81', -- Alongamento de Posterior
+  '81813c26-484c-470d-a557-9fb8a36cd8ce', -- Alongamento de Peitoral
+  '95358b8e-d2b7-4728-9119-28b9e6716327', -- Mobilidade de Quadril
+  '49a46ea8-7dcf-4ad8-9489-86f5a7d4b029', -- Corrida Estacionária
+  '3ff45d16-7e94-463f-80db-6b116bd262fa'  -- Pular Corda
+);
+
+UPDATE public.variations SET measurement_type = 'reps'
+WHERE exercise_id IN (
+  '6c1b1d7b-7994-4ff1-aa63-20e0ca3df1fd', -- Rotação de Ombros
+  '541a09fb-2535-4dd5-ba6e-80072de7ce9c', -- Flexão Prancha
+  '2b8c06dd-59b2-4b87-ba43-97b72a5f50ee', -- Burpee
+  '78592840-103a-49a8-abe8-70849f37df96'  -- Polichinelo
+);
+
+-- ------------------------------------------------
 -- COMPARTILHAMENTO DE VARIAÇÕES PRIVADAS
 -- As variações criadas pelo coach precisam ficar visíveis para o atleta
 -- nos testes de listagem mobile.

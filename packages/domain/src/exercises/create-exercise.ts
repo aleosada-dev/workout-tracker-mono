@@ -1,5 +1,5 @@
 import type { VideoContentType } from '../media/video';
-import type { ExerciseType } from './models';
+import type { ExerciseMeasurementType } from './models';
 
 export type CreateExerciseVideoInput = {
   objectKey: string;
@@ -14,7 +14,7 @@ export type CreateExerciseInput = {
   /** Variation id minted by the client so the R2 upload can happen up front. */
   variationId: string;
   exerciseName: string;
-  exerciseType: ExerciseType;
+  measurementType: ExerciseMeasurementType;
   variationName: string | null;
   muscleId: string;
   secondaryMuscleId: string | null;

@@ -40,6 +40,7 @@ const sampleItem = {
       },
       secondaryMuscle: null,
       equipment: { id: 'eq1', name: 'Máquina', slug: 'maquina', preposition: 'na' },
+      measurementType: 'weight_reps',
       video: null,
       imageUrl: null,
     },

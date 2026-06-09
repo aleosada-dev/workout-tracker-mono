@@ -64,6 +64,7 @@ export function toExerciseDetailData(
         ),
         equipmentName,
         equipmentPreposition: response.variation.equipmentPreposition,
+        equipmentSlug: response.variation.equipmentSlug,
       },
       language,
     ),

@@ -53,6 +53,7 @@ function makeVariation(
     },
     secondaryMuscle: null,
     equipment: { id: 'eq1', name: 'Máquina', slug: 'maquina', preposition: 'na' },
+    measurementType: 'weight_reps',
     video: null,
     imageUrl: null,
     ...overrides,
@@ -64,7 +65,12 @@ describe('composeExerciseName', () => {
     test('joins exercise name, preposition and equipment', () => {
       expect(
         composeExerciseName(
-          { exerciseName: 'Abdominal', equipmentName: 'Máquina', equipmentPreposition: 'na' },
+          {
+            exerciseName: 'Abdominal',
+            equipmentName: 'Máquina',
+            equipmentPreposition: 'na',
+            equipmentSlug: 'machine',
+          },
           'pt',
         ),
       ).toBe('Abdominal na Máquina');
@@ -75,7 +81,12 @@ describe('composeExerciseName', () => {
     test('leads with the equipment, no preposition', () => {
       expect(
         composeExerciseName(
-          { exerciseName: 'Abdominal', equipmentName: 'Machine', equipmentPreposition: 'na' },
+          {
+            exerciseName: 'Abdominal',
+            equipmentName: 'Machine',
+            equipmentPreposition: 'na',
+            equipmentSlug: 'machine',
+          },
           'en',
         ),
       ).toBe('Machine Abdominal');
@@ -84,10 +95,45 @@ describe('composeExerciseName', () => {
     test('passes the equipment name through unchanged', () => {
       expect(
         composeExerciseName(
-          { exerciseName: 'Abdominal', equipmentName: 'Unknown', equipmentPreposition: 'na' },
+          {
+            exerciseName: 'Abdominal',
+            equipmentName: 'Unknown',
+            equipmentPreposition: 'na',
+            equipmentSlug: 'unknown',
+          },
           'en',
         ),
       ).toBe('Unknown Abdominal');
+    });
+  });
+
+  describe('name-only equipment', () => {
+    test('pt: bodyweight uses just the exercise name', () => {
+      expect(
+        composeExerciseName(
+          {
+            exerciseName: 'Flexão',
+            equipmentName: 'Peso Corporal',
+            equipmentPreposition: 'com',
+            equipmentSlug: 'bodyweight',
+          },
+          'pt',
+        ),
+      ).toBe('Flexão');
+    });
+
+    test('en: other uses just the exercise name', () => {
+      expect(
+        composeExerciseName(
+          {
+            exerciseName: 'Plank',
+            equipmentName: 'Other',
+            equipmentPreposition: 'with',
+            equipmentSlug: 'other',
+          },
+          'en',
+        ),
+      ).toBe('Plank');
     });
   });
 });
@@ -103,6 +149,7 @@ describe('toExercise', () => {
         variationName: null,
         primaryMuscle: 'Reto Abdominal',
         type: 'musculacao',
+        measurementType: 'weight_reps',
         visibility: 'public',
         userId: null,
       },
@@ -117,6 +164,7 @@ describe('toExercise', () => {
         variationName: null,
         primaryMuscle: 'Rectus Abdominis',
         type: 'musculacao',
+        measurementType: 'weight_reps',
         visibility: 'public',
         userId: null,
       },
@@ -169,6 +217,20 @@ describe('toExercise', () => {
         CURRENT_USER_ID,
       ).name,
     ).toBe('Supino na Máquina');
+  });
+
+  test('pt: bodyweight equipment leaves the display name uncomposed', () => {
+    expect(
+      toExercise(
+        makeExercise({ slug: 'benchPress' }),
+        makeVariation({
+          equipment: { id: 'eq2', name: 'Peso Corporal', slug: 'bodyweight', preposition: 'com' },
+        }),
+        'pt',
+        makeT('pt'),
+        CURRENT_USER_ID,
+      ).name,
+    ).toBe('Supino');
   });
 
   test('translates the variation name from its slug', () => {

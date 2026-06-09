@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PortalHost } from '@rn-primitives/portal';
-import { EXERCISE_TYPES } from '@workout-tracker/domain';
+import { EXERCISE_MEASUREMENT_TYPES } from '@workout-tracker/domain';
 import {
   Button,
   Field,
@@ -8,8 +8,6 @@ import {
   RequestErrorState,
   Skeleton,
   Text,
-  ToggleGroup,
-  ToggleGroupItem,
   UploadProgressBar,
 } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
@@ -35,6 +33,8 @@ import {
   type SelectedVideo,
 } from '@/features/exercises/components/ExerciseVideoPicker';
 import { ExerciseYouTubeCard } from '@/features/exercises/components/ExerciseYouTubeCard';
+import { MeasurementTypeHelpDialog } from '@/features/exercises/components/MeasurementTypeHelpDialog';
+import { MeasurementTypeSelector } from '@/features/exercises/components/MeasurementTypeSelector';
 import { useCreateExercise } from '@/features/exercises/hooks/use-create-exercise';
 import { useDeleteExercise } from '@/features/exercises/hooks/use-delete-exercise';
 import { useExerciseForEdit } from '@/features/exercises/hooks/use-exercise-for-edit';
@@ -68,8 +68,8 @@ const SCREEN_PADDING = 20;
 // componente e não tem acesso ao `t`.
 const exerciseFormSchema = z.object({
   name: z.string().trim().min(1, 'exerciseListScreen.addExercise.validation.name'),
-  exerciseType: z.enum(EXERCISE_TYPES, {
-    error: 'exerciseListScreen.addExercise.validation.exerciseType',
+  measurementType: z.enum(EXERCISE_MEASUREMENT_TYPES, {
+    error: 'exerciseListScreen.addExercise.validation.measurementType',
   }),
   variationName: z
     .string()
@@ -135,7 +135,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
     defaultValues: editData
       ? {
           name: editData.exerciseName,
-          exerciseType: editData.exerciseType,
+          measurementType: editData.measurementType,
           variationName: editData.variationName ?? '',
           primaryMuscleId: editData.muscleId,
           secondaryMuscleId: editData.secondaryMuscleId ?? '',
@@ -144,7 +144,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
         }
       : {
           name: '',
-          exerciseType: 'musculacao',
+          measurementType: 'weight_reps',
           variationName: '',
           primaryMuscleId: '',
           secondaryMuscleId: '',
@@ -180,6 +180,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
           exerciseName: editData.exerciseName,
           equipmentName: t(`equipment.${editData.equipmentSlug}`),
           equipmentPreposition: editData.equipmentPreposition,
+          equipmentSlug: editData.equipmentSlug,
         },
         i18n.language,
       )
@@ -280,7 +281,7 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
 
     const fields = {
       exerciseName: values.name,
-      exerciseType: values.exerciseType,
+      measurementType: values.measurementType,
       variationName: values.variationName,
       muscleId: values.primaryMuscleId,
       secondaryMuscleId: values.secondaryMuscleId,
@@ -395,19 +396,6 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
           />
         </Field>
 
-        <Field
-          label={t('exerciseListScreen.addExercise.fields.exerciseType')}
-          error={errors.exerciseType?.message && t(errors.exerciseType.message)}
-        >
-          <Controller
-            control={control}
-            name="exerciseType"
-            render={({ field }) => (
-              <ExerciseTypeToggleGroup value={field.value} onValueChange={field.onChange} />
-            )}
-          />
-        </Field>
-
         <Field label={t('exerciseListScreen.addExercise.fields.variation')}>
           <Controller
             control={control}
@@ -419,6 +407,20 @@ function ExerciseForm({ editData }: { editData: ExerciseForEditResponse | null }
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
               />
+            )}
+          />
+        </Field>
+
+        <Field
+          label={t('exerciseListScreen.addExercise.fields.measurementType')}
+          error={errors.measurementType?.message && t(errors.measurementType.message)}
+          labelAccessory={<MeasurementTypeHelpDialog />}
+        >
+          <Controller
+            control={control}
+            name="measurementType"
+            render={({ field }) => (
+              <MeasurementTypeSelector value={field.value} onValueChange={field.onChange} />
             )}
           />
         </Field>
@@ -581,7 +583,7 @@ function ExerciseFormFallback({
   );
 }
 
-const LOADING_FIELD_KEYS = ['name', 'type', 'variation', 'muscle', 'equipment'] as const;
+const LOADING_FIELD_KEYS = ['name', 'measurement', 'variation', 'muscle', 'equipment'] as const;
 
 function HeaderCloseButton({ color }: { color: ColorValue }) {
   return (
@@ -594,36 +596,5 @@ function HeaderCloseButton({ color }: { color: ColorValue }) {
     >
       <X size={22} color={color} />
     </Pressable>
-  );
-}
-
-function ExerciseTypeToggleGroup({
-  value,
-  onValueChange,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <ToggleGroup
-      type="single"
-      value={value}
-      onValueChange={(next) => onValueChange(next ?? '')}
-      variant="outline"
-    >
-      {EXERCISE_TYPES.map((type, index) => (
-        <ToggleGroupItem
-          key={type}
-          value={type}
-          isFirst={index === 0}
-          isLast={index === EXERCISE_TYPES.length - 1}
-          className="flex-1"
-        >
-          <Text>{t(`exercises.type.${type}`)}</Text>
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
   );
 }

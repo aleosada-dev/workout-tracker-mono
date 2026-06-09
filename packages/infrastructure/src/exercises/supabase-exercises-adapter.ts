@@ -75,6 +75,7 @@ export function makeSupabaseExerciseRepository(
         p_equipment_ids: filter.equipmentIds ?? [],
         p_visibility: filter.visibility,
         p_exercise_types: filter.exerciseTypes ?? [],
+        p_measurement_types: filter.measurementTypes ?? [],
       });
 
       if (error) {
@@ -143,8 +144,8 @@ export function makeSupabaseExerciseRepository(
       const { data, error } = await supabase
         .from('variations')
         .select(
-          `id, name, muscle_id, secondary_muscle_id, equipment_id, video_url, user_id,
-           exercise:exercises!inner(name, exercise_type),
+          `id, name, muscle_id, secondary_muscle_id, equipment_id, video_url, user_id, measurement_type,
+           exercise:exercises!inner(name),
            equipment:equipments!inner(slug, preposition),
            video:variation_videos(object_key, thumbnail_key, duration_seconds, size_bytes, content_type, processing_status)`,
         )
@@ -167,7 +168,7 @@ export function makeSupabaseExerciseRepository(
       const { error } = await supabase.rpc('wt_create_user_exercise', {
         p_variation_id: input.variationId,
         p_exercise_name: input.exerciseName,
-        p_exercise_type: input.exerciseType,
+        p_measurement_type: input.measurementType,
         // @ts-expect-error
         p_variation_name: input.variationName,
         p_muscle_id: input.muscleId,
@@ -197,7 +198,7 @@ export function makeSupabaseExerciseRepository(
       const { error } = await supabase.rpc('wt_update_user_exercise', {
         p_variation_id: input.variationId,
         p_exercise_name: input.exerciseName,
-        p_exercise_type: input.exerciseType,
+        p_measurement_type: input.measurementType,
         // @ts-expect-error
         p_variation_name: input.variationName,
         p_muscle_id: input.muscleId,

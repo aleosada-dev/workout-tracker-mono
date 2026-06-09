@@ -1,6 +1,12 @@
 import type { MuscleProps } from '../muscles/muscle';
 import type { Nullable } from '../shared/type-helpers';
-import type { ExerciseProps, ExerciseType, ExerciseVideoProps, Visibility } from './models';
+import type {
+  ExerciseMeasurementType,
+  ExerciseProps,
+  ExerciseType,
+  ExerciseVideoProps,
+  Visibility,
+} from './models';
 
 export type ListExercisesFilter = {
   userId: string;
@@ -8,6 +14,7 @@ export type ListExercisesFilter = {
   muscleIds?: string[];
   equipmentIds?: string[];
   exerciseTypes?: ExerciseType[];
+  measurementTypes?: ExerciseMeasurementType[];
 };
 
 type MuscleSummary = Pick<MuscleProps, 'id' | 'name' | 'slug'>;
@@ -38,6 +45,7 @@ export type VariationListItem = {
   muscle: VariationListItemMuscle;
   secondaryMuscle: VariationListItemSecondaryMuscle | null;
   equipment: VariationListItemEquipment;
+  measurementType: ExerciseMeasurementType;
   video: VariationListItemVideo | null;
   imageUrl: string | null;
 };

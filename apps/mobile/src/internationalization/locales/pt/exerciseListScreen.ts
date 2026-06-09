@@ -33,7 +33,7 @@ export default {
     },
     fields: {
       name: 'Nome do exercício',
-      exerciseType: 'Tipo de exercício',
+      measurementType: 'Tipo de medição',
       variation: 'Variação',
       primaryMuscle: 'Músculo primário',
       secondaryMuscle: 'Músculo secundário',
@@ -42,7 +42,7 @@ export default {
     },
     validation: {
       name: 'Informe o nome do exercício',
-      exerciseType: 'Selecione o tipo de exercício',
+      measurementType: 'Selecione o tipo de medição',
       primaryMuscle: 'Selecione o músculo primário',
       equipment: 'Selecione um equipamento',
       youtubeVideoUrl: 'Informe uma URL do YouTube válida',
@@ -151,7 +151,7 @@ export default {
     apply: 'Aplicar',
     clear: 'Limpar',
     sections: {
-      type: 'Tipo',
+      measurementType: 'Tipo de medição',
       visibility: 'Visibilidade',
       primaryMuscle: 'Músculo primário',
       equipment: 'Equipamento',
@@ -162,12 +162,6 @@ export default {
     placeholders: {
       primaryMuscle: 'Selecionar músculo',
       equipment: 'Selecionar equipamento',
-    },
-    warnings: {
-      typeMinOne: {
-        title: 'Selecione ao menos um tipo',
-        message: 'Pelo menos um tipo de exercício deve estar selecionado.',
-      },
     },
   },
 };

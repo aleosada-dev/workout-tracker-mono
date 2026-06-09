@@ -193,6 +193,33 @@ describe("GET /api/v1/exercises", () => {
 			expect(data.some((e) => e.type === "musculacao")).toBeTrue();
 		});
 
+		test("measurementTypes=[duration] returns only duration variations", async () => {
+			const client = getTestClient();
+			const res = await client.api.v1.exercises.$get(
+				{ query: { measurementTypes: ["duration"] } },
+				{ headers: authHeaders("athlete") },
+			);
+
+			const data = (await res.json()) as ExerciseListItemResponse[];
+
+			expect(res.status).toBe(200);
+			expect(data).toBeArray();
+			expect(data.length).toBeGreaterThan(0);
+			expect(
+				data.every((e) => e.variations.every((v) => v.measurementType === "duration")),
+			).toBeTrue();
+		});
+
+		test("invalid measurementTypes value returns 400", async () => {
+			const client = getTestClient();
+			const res = await client.api.v1.exercises.$get(
+				{ query: { measurementTypes: ["cardio"] as never } },
+				{ headers: authHeaders("athlete") },
+			);
+
+			expect(res.status as number).toBe(400);
+		});
+
 		test("muscleIds with level-2 muscle expands to children (Peito)", async () => {
 			const client = getTestClient();
 			const res = await client.api.v1.exercises.$get(
@@ -409,7 +436,7 @@ function newExerciseBody(): CreateExerciseRequest {
 	return {
 		variationId: crypto.randomUUID(),
 		exerciseName: `Test Exercise ${crypto.randomUUID()}`,
-		exerciseType: "musculacao",
+		measurementType: "weight_reps",
 		variationName: "Barra",
 		muscleId: SEED_MUSCLE_PEITO_ID,
 		secondaryMuscleId: null,
@@ -445,6 +472,16 @@ describe("POST /api/v1/exercises", () => {
 		expect(created).toBeDefined();
 		expect(created?.userId).toBe(getTestUserAuth("athlete").userId);
 		expect(created?.variations.some((v) => v.id === body.variationId)).toBeTrue();
+	});
+
+	test("returns 400 for an invalid measurementType", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$post(
+			{ json: { ...newExerciseBody(), measurementType: "cardio" as never } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
 	});
 
 	test("returns 400 when the video keys are not under the user's prefix", async () => {
@@ -540,7 +577,7 @@ describe("GET /api/v1/exercises/:id", () => {
 		expect(data).toMatchObject({
 			variationId: body.variationId,
 			exerciseName: body.exerciseName,
-			exerciseType: body.exerciseType,
+			measurementType: body.measurementType,
 			variationName: body.variationName,
 			muscleId: body.muscleId,
 			equipmentId: body.equipmentId,
@@ -602,7 +639,7 @@ describe("PUT /api/v1/exercises/:id", () => {
 				param: { id: body.variationId },
 				json: {
 					exerciseName: body.exerciseName,
-					exerciseType: body.exerciseType,
+					measurementType: body.measurementType,
 					variationName: "Halteres",
 					muscleId: body.muscleId,
 					secondaryMuscleId: null,
@@ -642,7 +679,7 @@ describe("PUT /api/v1/exercises/:id", () => {
 				param: { id: publicVariationId },
 				json: {
 					exerciseName: "Hacked",
-					exerciseType: "musculacao",
+					measurementType: "weight_reps",
 					variationName: null,
 					muscleId: SEED_MUSCLE_PEITO_ID,
 					secondaryMuscleId: null,
@@ -667,7 +704,7 @@ describe("PUT /api/v1/exercises/:id", () => {
 				param: { id: body.variationId },
 				json: {
 					exerciseName: "",
-					exerciseType: "musculacao",
+					measurementType: "weight_reps",
 					variationName: null,
 					muscleId: SEED_MUSCLE_PEITO_ID,
 					secondaryMuscleId: null,
@@ -695,7 +732,7 @@ describe("PUT /api/v1/exercises/:id", () => {
 				param: { id: second.variationId },
 				json: {
 					exerciseName: first.exerciseName,
-					exerciseType: first.exerciseType,
+					measurementType: first.measurementType,
 					variationName: first.variationName,
 					muscleId: first.muscleId,
 					secondaryMuscleId: null,

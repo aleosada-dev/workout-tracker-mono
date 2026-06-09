@@ -33,7 +33,7 @@ export default {
     },
     fields: {
       name: 'Exercise name',
-      exerciseType: 'Exercise type',
+      measurementType: 'Measurement type',
       variation: 'Variation',
       primaryMuscle: 'Primary muscle',
       secondaryMuscle: 'Secondary muscle',
@@ -42,7 +42,7 @@ export default {
     },
     validation: {
       name: 'Enter the exercise name',
-      exerciseType: 'Select the exercise type',
+      measurementType: 'Select the measurement type',
       primaryMuscle: 'Select the primary muscle',
       equipment: 'Select an equipment',
       youtubeVideoUrl: 'Enter a valid YouTube URL',
@@ -150,7 +150,7 @@ export default {
     apply: 'Apply',
     clear: 'Clear',
     sections: {
-      type: 'Type',
+      measurementType: 'Measurement type',
       visibility: 'Visibility',
       primaryMuscle: 'Primary muscle',
       equipment: 'Equipment',
@@ -161,12 +161,6 @@ export default {
     placeholders: {
       primaryMuscle: 'Select muscle',
       equipment: 'Select equipment',
-    },
-    warnings: {
-      typeMinOne: {
-        title: 'Select at least one type',
-        message: 'At least one exercise type must be selected.',
-      },
     },
   },
 };

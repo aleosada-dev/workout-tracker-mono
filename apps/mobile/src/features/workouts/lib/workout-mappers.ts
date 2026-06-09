@@ -114,6 +114,7 @@ function toExerciseExecutionItem(
       exerciseName: resolveExerciseName(variation.exercise.slug, variation.exercise.name, t),
       equipmentName: t(`equipment.${variation.equipment.slug}`),
       equipmentPreposition: variation.equipment.preposition,
+      equipmentSlug: variation.equipment.slug,
     },
     language,
   );

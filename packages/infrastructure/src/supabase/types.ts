@@ -1887,6 +1887,7 @@ export type Database = {
           exercise_id: string
           id: string
           image_url: string | null
+          measurement_type: string
           muscle_id: string
           name: string | null
           secondary_muscle_id: string | null
@@ -1905,6 +1906,7 @@ export type Database = {
           exercise_id: string
           id?: string
           image_url?: string | null
+          measurement_type?: string
           muscle_id: string
           name?: string | null
           secondary_muscle_id?: string | null
@@ -1923,6 +1925,7 @@ export type Database = {
           exercise_id?: string
           id?: string
           image_url?: string | null
+          measurement_type?: string
           muscle_id?: string
           name?: string | null
           secondary_muscle_id?: string | null
@@ -2515,6 +2518,7 @@ export type Database = {
           exercise_type: string | null
           id: string | null
           image_url: string | null
+          measurement_type: string | null
           muscle_id: string | null
           muscle_level2_name: string | null
           muscle_level2_slug: string | null
@@ -3006,7 +3010,7 @@ export type Database = {
         Args: {
           p_equipment_id: string
           p_exercise_name: string
-          p_exercise_type: string
+          p_measurement_type: string
           p_muscle_id: string
           p_secondary_muscle_id?: string
           p_variation_id: string
@@ -3058,6 +3062,7 @@ export type Database = {
         Args: {
           p_equipment_ids: string[]
           p_exercise_types: string[]
+          p_measurement_types: string[]
           p_muscle_ids: string[]
           p_user_id: string
           p_visibility: string
@@ -3073,6 +3078,7 @@ export type Database = {
           exercise_type: string
           id: string
           image_url: string
+          measurement_type: string
           muscle_id: string
           muscle_level2_name: string
           muscle_level2_slug: string
@@ -3120,7 +3126,7 @@ export type Database = {
         Args: {
           p_equipment_id: string
           p_exercise_name: string
-          p_exercise_type: string
+          p_measurement_type: string
           p_muscle_id: string
           p_secondary_muscle_id?: string
           p_variation_id: string

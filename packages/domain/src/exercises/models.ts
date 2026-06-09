@@ -1,6 +1,11 @@
 export const EXERCISE_TYPES = ['preparatorio', 'musculacao'] as const;
 export type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
+// Como cada exercício/variação é medido. Conjunto próprio do módulo de
+// exercícios — independente dos measurement types compostos de workout_sets.
+export const EXERCISE_MEASUREMENT_TYPES = ['weight_reps', 'reps', 'duration', 'distance'] as const;
+export type ExerciseMeasurementType = (typeof EXERCISE_MEASUREMENT_TYPES)[number];
+
 export const VISIBILITIES = ['all', 'public', 'shared', 'owned'] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
 
@@ -27,6 +32,7 @@ export type ExerciseVariationProps = {
   muscleId: string;
   secondaryMuscleId: string | null;
   equipmentId: string;
+  measurementType: ExerciseMeasurementType;
   video: ExerciseVideoProps | null;
   youtubeVideoUrl: string | null;
   imageUrl: string | null;

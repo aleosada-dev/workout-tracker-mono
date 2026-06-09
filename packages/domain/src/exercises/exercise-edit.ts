@@ -1,5 +1,5 @@
 import type { VideoContentType } from '../media/video';
-import type { ExerciseType } from './models';
+import type { ExerciseMeasurementType } from './models';
 
 export type GetExerciseForEditFilter = {
   userId: string;
@@ -22,7 +22,7 @@ export type ExerciseForEditVideo = {
 export type ExerciseForEdit = {
   variationId: string;
   exerciseName: string;
-  exerciseType: ExerciseType;
+  measurementType: ExerciseMeasurementType;
   variationName: string | null;
   muscleId: string;
   secondaryMuscleId: string | null;

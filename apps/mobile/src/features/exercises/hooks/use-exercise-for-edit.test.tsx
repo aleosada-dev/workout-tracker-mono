@@ -18,7 +18,7 @@ const variationId = 'd3f0e8a2-3333-4ba2-b2c3-324a63844771';
 const editData: ExerciseForEditResponse = {
   variationId,
   exerciseName: 'Supino',
-  exerciseType: 'musculacao',
+  measurementType: 'weight_reps',
   variationName: 'Barra',
   muscleId: 'b1d0e8a2-1111-4ba2-b2c3-324a63844771',
   secondaryMuscleId: null,

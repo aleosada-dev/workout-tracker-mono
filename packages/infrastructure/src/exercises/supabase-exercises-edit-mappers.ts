@@ -1,4 +1,8 @@
-import type { ExerciseForEdit, ExerciseType, VideoContentType } from '@workout-tracker/domain';
+import type {
+  ExerciseForEdit,
+  ExerciseMeasurementType,
+  VideoContentType,
+} from '@workout-tracker/domain';
 import type { BuildUploadedVideoUrl } from '../r2';
 
 type ExerciseForEditVideoRow = {
@@ -21,7 +25,8 @@ export type ExerciseForEditRow = {
   equipment_id: string;
   video_url: string | null;
   user_id: string | null;
-  exercise: { name: string; exercise_type: string };
+  measurement_type: string;
+  exercise: { name: string };
   equipment: { slug: string; preposition: string };
   video: ExerciseForEditVideoRow | null;
 };
@@ -35,7 +40,7 @@ export async function toExerciseForEdit(
   return {
     variationId: row.id,
     exerciseName: row.exercise.name,
-    exerciseType: row.exercise.exercise_type as ExerciseType,
+    measurementType: row.measurement_type as ExerciseMeasurementType,
     variationName: row.name,
     muscleId: row.muscle_id,
     secondaryMuscleId: row.secondary_muscle_id,
