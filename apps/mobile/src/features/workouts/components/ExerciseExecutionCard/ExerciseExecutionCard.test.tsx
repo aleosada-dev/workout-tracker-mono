@@ -183,6 +183,34 @@ describe('<ExerciseExecutionCard />', () => {
     expect(form().getValues('exercises.0.sets.0.duration')).toBe('0');
   });
 
+  test('marking a duration set done fills the empty time field with the target', async () => {
+    const { getAllByRole, form } = renderCard([set('s1', 'duration', 30)], 'preparatory');
+
+    fireEvent.press(getAllByRole('checkbox')[0]);
+
+    await waitFor(() => expect(form().getValues('exercises.0.sets.0.done')).toBe(true));
+    expect(form().getValues('exercises.0.sets.0.duration')).toBe('30');
+  });
+
+  test('marking a duration set done keeps a time already entered', async () => {
+    const { getAllByRole, form } = renderCard([set('s1', 'duration', 30)], 'preparatory');
+    form().setValue('exercises.0.sets.0.duration', '45');
+
+    fireEvent.press(getAllByRole('checkbox')[0]);
+
+    await waitFor(() => expect(form().getValues('exercises.0.sets.0.done')).toBe(true));
+    expect(form().getValues('exercises.0.sets.0.duration')).toBe('45');
+  });
+
+  test('marking a targetless duration set done leaves the time field empty', async () => {
+    const { getAllByRole, form } = renderCard([set('s1', 'duration', null)], 'preparatory');
+
+    fireEvent.press(getAllByRole('checkbox')[0]);
+
+    await waitFor(() => expect(form().getValues('exercises.0.sets.0.done')).toBe(true));
+    expect(form().getValues('exercises.0.sets.0.duration')).toBe('');
+  });
+
   test('a preparatory set is removed via the remove-set sheet when more than one exists', async () => {
     const { getByTestId, form } = renderCard(
       [set('s1', 'reps', null), set('s2', 'reps', null)],

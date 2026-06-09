@@ -373,6 +373,13 @@ function SetRow({
       if (reps != null) {
         setValue(`${basePath}.reps`, reps, { shouldDirty: true, shouldValidate: true });
       }
+      const duration = autofillFromLast(
+        getValues(`${basePath}.duration`),
+        getValues(`${basePath}.durationTarget`),
+      );
+      if (duration != null) {
+        setValue(`${basePath}.duration`, duration, { shouldDirty: true, shouldValidate: true });
+      }
       fireRestTimer();
     }
   };
