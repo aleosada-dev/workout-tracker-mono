@@ -66,6 +66,7 @@ const WorkoutLogDetailSetSchema = z.object({
 	repsMin: z.int().nullable(),
 	repsMax: z.int().nullable(),
 	durationSeconds: z.int().nullable(),
+	distanceMeters: z.int().nullable(),
 });
 
 const WorkoutLogDetailExerciseSchema = z.object({
@@ -108,6 +109,7 @@ const CreateWorkoutLogSetSchema = z
 		repsMin: z.int().positive().nullable(),
 		repsMax: z.int().positive().nullable(),
 		durationSeconds: z.int().positive().nullable(),
+		distanceMeters: z.int().positive().nullable(),
 	})
 	.superRefine((set, ctx) => {
 		const dims = measurementDimensions(set.measurementType);
@@ -130,6 +132,13 @@ const CreateWorkoutLogSetSchema = z
 				code: "custom",
 				path: ["durationSeconds"],
 				message: "validation.duration_required",
+			});
+		}
+		if (dims.distance && set.distanceMeters === null) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["distanceMeters"],
+				message: "validation.distance_required",
 			});
 		}
 	});

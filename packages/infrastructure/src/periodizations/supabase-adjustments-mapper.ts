@@ -39,6 +39,7 @@ function parseSetValue(value: unknown): WorkoutSetValue | null {
   const repsMin = asIntOrNull(value.repsMin);
   const repsMax = asIntOrNull(value.repsMax);
   const durationSeconds = asIntOrNull(value.durationSeconds) ?? null;
+  const distanceMeters = asIntOrNull(value.distanceMeters) ?? null;
   const loadPercent = asIntOrNull(value.loadPercent);
   if (repsMin === undefined || repsMax === undefined || loadPercent === undefined) {
     return null;
@@ -51,6 +52,7 @@ function parseSetValue(value: unknown): WorkoutSetValue | null {
     repsMin,
     repsMax,
     durationSeconds,
+    distanceMeters,
     loadPercent: intraSession ? null : loadPercent,
     loadPercentOfPrevious: intraSession ? loadPercent : null,
   };

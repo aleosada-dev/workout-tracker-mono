@@ -2049,6 +2049,7 @@ export type Database = {
       workout_exercise_set_logs: {
         Row: {
           created_at: string
+          distance_meters: number | null
           duration_seconds: number | null
           id: string
           measurement_type: string
@@ -2064,6 +2065,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          distance_meters?: number | null
           duration_seconds?: number | null
           id?: string
           measurement_type?: string
@@ -2079,6 +2081,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          distance_meters?: number | null
           duration_seconds?: number | null
           id?: string
           measurement_type?: string
@@ -2301,6 +2304,7 @@ export type Database = {
       workout_sets: {
         Row: {
           created_at: string
+          distance_meters: number | null
           duration_seconds: number | null
           id: string
           linked_set_id: string | null
@@ -2315,6 +2319,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          distance_meters?: number | null
           duration_seconds?: number | null
           id?: string
           linked_set_id?: string | null
@@ -2329,6 +2334,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          distance_meters?: number | null
           duration_seconds?: number | null
           id?: string
           linked_set_id?: string | null

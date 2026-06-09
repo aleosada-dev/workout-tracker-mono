@@ -19,6 +19,7 @@ const set = (overrides: Partial<WorkoutLogDetailSet> = {}): WorkoutLogDetailSet 
   repsMin: null,
   repsMax: null,
   durationSeconds: null,
+  distanceMeters: null,
   ...overrides,
 });
 

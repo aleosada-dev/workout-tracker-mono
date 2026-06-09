@@ -37,7 +37,9 @@ export function RemoveSetSheet({ ref }: { ref?: Ref<RemoveSetSheetRef> }) {
   return (
     <BottomSheet ref={sheetRef}>
       <BottomSheetView className="gap-4 px-5 pt-2 pb-8">
-        <Text variant="h4">{t('workoutExecutionScreen.removeSetSheet.title')}</Text>
+        <Text variant="h4" className="text-center">
+          {t('workoutExecutionScreen.removeSetSheet.title')}
+        </Text>
         <View className="gap-2">
           <Button
             variant="destructive"

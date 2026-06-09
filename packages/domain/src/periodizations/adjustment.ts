@@ -11,6 +11,7 @@ export type WorkoutSetValue = {
   repsMin: number | null;
   repsMax: number | null;
   durationSeconds: number | null;
+  distanceMeters: number | null;
   loadPercent: number | null;
   loadPercentOfPrevious: number | null;
 };

@@ -88,7 +88,11 @@ const MEMBERS: SupersetMember[] = [
   },
 ];
 
-function member(index: number, restSeconds: number): ExecutionFormInput['exercises'][number] {
+function member(
+  index: number,
+  restSeconds: number,
+  measurementType: ExecutionFormInput['exercises'][number]['sets'][number]['measurementType'] = 'weight_reps',
+): ExecutionFormInput['exercises'][number] {
   return {
     id: `ex-${index}`,
     exerciseType: 'strength',
@@ -112,14 +116,16 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
       {
         id: `s-${index}`,
         type: 'normal',
-        measurementType: 'weight_reps',
+        measurementType,
         roundOrder: 0,
         repsMin: null,
         repsMax: null,
         durationTarget: null,
+        distanceTarget: null,
         kg: '',
         reps: '',
         duration: '',
+        distance: '',
         done: false,
         lastKg: null,
         lastReps: null,
@@ -128,11 +134,11 @@ function member(index: number, restSeconds: number): ExecutionFormInput['exercis
   };
 }
 
-function renderCard() {
+function renderCard(exercises: ExecutionFormInput['exercises'] = [member(0, 0), member(1, 60)]) {
   const ref: { current: UseFormReturn<ExecutionFormInput> | null } = { current: null };
   function Harness() {
     const form = useForm<ExecutionFormInput>({
-      defaultValues: { exercises: [member(0, 0), member(1, 60)] },
+      defaultValues: { exercises },
     });
     ref.current = form;
     return (
@@ -167,6 +173,27 @@ describe('<SupersetExecutionCard />', () => {
     expect(form().getValues('exercises.1.sets.0.done')).toBe(true);
     expect(startRestTimer).toHaveBeenCalledTimes(1);
     expect(startRestTimer).toHaveBeenCalledWith(60);
+  });
+
+  test('renders each member by its measurement type (distance gets a distance input, no weight)', () => {
+    const { getByTestId, queryByText } = renderCard([
+      member(0, 0, 'distance'),
+      member(1, 60, 'distance'),
+    ]);
+
+    expect(queryByText('workoutExecutionScreen.exercise.headers.distance')).not.toBeNull();
+    expect(queryByText('workoutExecutionScreen.exercise.headers.weight')).toBeNull();
+    expect(getByTestId('workout-execution.superset.set-0.exercise-0.distance')).toBeTruthy();
+  });
+
+  test('a distance input stores the value in meters, converting from km', () => {
+    const { getByTestId, form } = renderCard([member(0, 0, 'distance'), member(1, 60, 'distance')]);
+
+    const input = getByTestId('workout-execution.superset.set-0.exercise-0.distance');
+    fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.distance.unit'));
+    fireEvent.changeText(input, '5');
+
+    expect(form().getValues('exercises.0.sets.0.distance')).toBe('5000');
   });
 
   test('add set defaults to one normal set per member', async () => {
@@ -249,7 +276,7 @@ describe('<SupersetExecutionCard />', () => {
     expect(form().getValues('exercises.1.sets')).toHaveLength(1);
   });
 
-  test('the set-type sheet deletes only the edited line', async () => {
+  test('pressing a set type opens the round editor and removing its line deletes only that member', async () => {
     const { getByText, getByTestId, form } = renderCard();
 
     fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
@@ -258,10 +285,9 @@ describe('<SupersetExecutionCard />', () => {
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(2));
 
     fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.type'));
-    await waitFor(() =>
-      expect(getByText('workoutExecutionScreen.setTypePicker.removeSet')).toBeTruthy(),
-    );
-    fireEvent.press(getByText('workoutExecutionScreen.setTypePicker.removeSet'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.entry.0.remove')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.entry.0.remove'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets')).toHaveLength(1));
     expect(form().getValues('exercises.1.sets')).toHaveLength(2);
@@ -284,12 +310,13 @@ describe('<SupersetExecutionCard />', () => {
     expect(form().getValues('exercises.1.sets.1.roundOrder')).toBe(0);
   });
 
-  test('changing a set type updates only that member', async () => {
-    const { getByText, getByTestId, form } = renderCard();
+  test('changing a set type through the round editor updates only that member', async () => {
+    const { getByTestId, form } = renderCard();
 
     fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.type'));
-    await waitFor(() => expect(getByText('sets.warmup.token — sets.warmup.label')).toBeTruthy());
-    fireEvent.press(getByText('sets.warmup.token — sets.warmup.label'));
+    await waitFor(() => expect(getByTestId('superset-add-sets.entry.0.type.warmup')).toBeTruthy());
+    fireEvent.press(getByTestId('superset-add-sets.entry.0.type.warmup'));
+    fireEvent.press(getByTestId('superset-add-sets.confirm'));
 
     await waitFor(() => expect(form().getValues('exercises.0.sets.0.type')).toBe('warmup'));
     expect(form().getValues('exercises.1.sets.0.type')).toBe('normal');

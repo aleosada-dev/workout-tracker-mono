@@ -46,7 +46,15 @@ export function groupDetailExercises(
   return items;
 }
 
-/** Human-readable value for a logged set, e.g. "80,5 kg × 8", "12 reps", "0:45". */
+function formatDistanceMeters(meters: number, language: string): string {
+  if (meters >= 1000) {
+    const km = new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(meters / 1000);
+    return `${km} km`;
+  }
+  return `${meters} m`;
+}
+
+/** Human-readable value for a logged set, e.g. "80,5 kg × 8", "12 reps", "0:45", "5 km". */
 export function formatSetValue(set: WorkoutLogDetailSet, language: string): string {
   const dims = measurementDimensions(set.measurementType);
   const parts: string[] = [];
@@ -60,6 +68,9 @@ export function formatSetValue(set: WorkoutLogDetailSet, language: string): stri
   }
   if (dims.duration && set.durationSeconds !== null) {
     parts.push(formatTime(set.durationSeconds));
+  }
+  if (dims.distance && set.distanceMeters !== null) {
+    parts.push(formatDistanceMeters(set.distanceMeters, language));
   }
 
   return parts.join(' ');

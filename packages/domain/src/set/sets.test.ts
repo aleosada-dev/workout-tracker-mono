@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { getIssues } from '../test/validation';
 import {
+  applicableSetTypes,
   computeLinkedLoad,
   deriveRoundOrders,
   getValidSetTypesAt,
@@ -231,11 +232,17 @@ describe('measurementDimensions', () => {
       weight: true,
       reps: true,
       duration: false,
+      distance: false,
     });
   });
 
   it('reps tracks reps only', () => {
-    expect(measurementDimensions('reps')).toEqual({ weight: false, reps: true, duration: false });
+    expect(measurementDimensions('reps')).toEqual({
+      weight: false,
+      reps: true,
+      duration: false,
+      distance: false,
+    });
   });
 
   it('duration tracks duration only', () => {
@@ -243,6 +250,7 @@ describe('measurementDimensions', () => {
       weight: false,
       reps: false,
       duration: true,
+      distance: false,
     });
   });
 
@@ -251,6 +259,7 @@ describe('measurementDimensions', () => {
       weight: false,
       reps: true,
       duration: true,
+      distance: false,
     });
   });
 
@@ -259,6 +268,7 @@ describe('measurementDimensions', () => {
       weight: true,
       reps: false,
       duration: true,
+      distance: false,
     });
   });
 
@@ -267,6 +277,16 @@ describe('measurementDimensions', () => {
       weight: true,
       reps: true,
       duration: true,
+      distance: false,
+    });
+  });
+
+  it('distance tracks distance only', () => {
+    expect(measurementDimensions('distance')).toEqual({
+      weight: false,
+      reps: false,
+      duration: false,
+      distance: true,
     });
   });
 });
@@ -366,6 +386,29 @@ describe('getValidSetTypesAt', () => {
 
   it('allows the same type currently at the position', () => {
     expect(getValidSetTypesAt(seq('normal', 'drop'), 1)).toContain('drop');
+  });
+});
+
+describe('applicableSetTypes', () => {
+  it('offers every type when the measurement loads both weight and reps', () => {
+    expect(applicableSetTypes('weight_reps')).toEqual(['warmup', 'normal', 'drop', 'cluster']);
+    expect(applicableSetTypes('weight_reps_duration')).toEqual([
+      'warmup',
+      'normal',
+      'drop',
+      'cluster',
+    ]);
+  });
+
+  it('drops drop/cluster when the measurement is time or duration based', () => {
+    expect(applicableSetTypes('duration')).toEqual(['warmup', 'normal']);
+    expect(applicableSetTypes('duration_reps')).toEqual(['warmup', 'normal']);
+    expect(applicableSetTypes('weight_duration')).toEqual(['warmup', 'normal']);
+  });
+
+  it('drops drop/cluster for reps-only and distance', () => {
+    expect(applicableSetTypes('reps')).toEqual(['warmup', 'normal']);
+    expect(applicableSetTypes('distance')).toEqual(['warmup', 'normal']);
   });
 });
 

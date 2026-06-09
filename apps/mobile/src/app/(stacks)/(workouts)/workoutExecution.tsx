@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSelector, useValue } from '@legendapp/state/react';
+import { isSupersetMeasurementType } from '@workout-tracker/domain';
 import {
   ConfirmDialog,
   Icon,
@@ -352,11 +353,18 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     item.kind === 'superset' ? item.members.length : 1;
   const totalMembers = orderedSelectedItems.reduce((sum, item) => sum + memberCount(item), 0);
   const supersetsSelected = orderedSelectedItems.filter((item) => item.kind === 'superset');
+  const itemMemberIndexes = (item: ExecutionListItem) =>
+    item.kind === 'superset' ? item.members.map((m) => m.exerciseIndex) : [item.exerciseIndex];
+  const allMembersCombinable = orderedSelectedItems.flatMap(itemMemberIndexes).every((index) => {
+    const measurementType = exercises[index]?.variation.measurementType;
+    return measurementType != null && isSupersetMeasurementType(measurementType);
+  });
   const canCombine =
     orderedSelectedItems.length >= 2 &&
     totalMembers >= 2 &&
     totalMembers <= 3 &&
-    supersetsSelected.length <= 1;
+    supersetsSelected.length <= 1 &&
+    allMembersCombinable;
   const singleSupersetSelected =
     orderedSelectedItems.length === 1 && orderedSelectedItems[0]?.kind === 'superset';
 
@@ -374,7 +382,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const handleCombine = () => {
     const current = form.getValues('exercises') ?? [];
     const orderedIds = orderedSelectedItems.flatMap((item) => itemExerciseIds(item, current));
-    if (orderedIds.length < 2 || orderedIds.length > 3) return;
+    if (orderedIds.length < 2 || orderedIds.length > 3 || !allMembersCombinable) return;
     form.setValue('exercises', combineIntoSuperset(current, orderedIds, Crypto.randomUUID()), {
       shouldDirty: true,
     });

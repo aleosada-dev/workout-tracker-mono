@@ -44,6 +44,7 @@ export function buildCreateWorkoutLogRequest(input: {
         repsMin: set.repsMin,
         repsMax: set.repsMax,
         durationSeconds: set.durationSeconds,
+        distanceMeters: set.distanceMeters,
       })),
     })),
   };

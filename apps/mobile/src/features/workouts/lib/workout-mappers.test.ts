@@ -54,9 +54,11 @@ function set(
     repsMin: null,
     repsMax: null,
     durationTarget: null,
+    distanceTarget: null,
     kg: '',
     reps: '',
     duration: '',
+    distance: '',
     ...overrides,
   };
 }
@@ -186,7 +188,7 @@ describe('exerciseColumnLayout', () => {
         { measurementType: 'weight_reps' },
         { measurementType: 'weight_reps' },
       ]),
-    ).toEqual({ weight: true, reps: true, duration: false });
+    ).toEqual({ weight: true, reps: true, duration: false, distance: false });
   });
 
   test('a single duration set yields duration only', () => {
@@ -194,19 +196,20 @@ describe('exerciseColumnLayout', () => {
       weight: false,
       reps: false,
       duration: true,
+      distance: false,
     });
   });
 
   test('mixing reps and duration sets unions reps + duration', () => {
     expect(
       exerciseColumnLayout([{ measurementType: 'reps' }, { measurementType: 'duration' }]),
-    ).toEqual({ weight: false, reps: true, duration: true });
+    ).toEqual({ weight: false, reps: true, duration: true, distance: false });
   });
 
   test('mixing weight_reps and reps unions to weight + reps', () => {
     expect(
       exerciseColumnLayout([{ measurementType: 'weight_reps' }, { measurementType: 'reps' }]),
-    ).toEqual({ weight: true, reps: true, duration: false });
+    ).toEqual({ weight: true, reps: true, duration: false, distance: false });
   });
 });
 

@@ -16,6 +16,7 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     repsMin: null,
     repsMax: null,
     durationSeconds: null,
+    distanceMeters: null,
     ...overrides,
   };
 }
@@ -101,6 +102,7 @@ describe('buildCreateWorkoutLogRequest', () => {
               repsMin: 8,
               repsMax: 12,
               durationSeconds: null,
+              distanceMeters: null,
             },
           ],
         },

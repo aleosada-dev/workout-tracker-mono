@@ -17,6 +17,7 @@ function toSet(value: WorkoutSetValue, id: string, setOrder: number): WorkoutDet
     repsMin: value.repsMin,
     repsMax: value.repsMax,
     durationSeconds: value.durationSeconds,
+    distanceMeters: value.distanceMeters,
     linkedSetId: null,
     loadPercent: value.loadPercent,
     loadPercentOfPrevious: value.loadPercentOfPrevious,

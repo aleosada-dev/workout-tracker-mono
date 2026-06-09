@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { isSupersetGroup } from './superset';
+import { isSupersetGroup, isSupersetMeasurementType } from './superset';
 
 function member(id: string, supersetGroupId: string) {
   return { id, supersetGroupId };
@@ -24,5 +24,20 @@ describe('isSupersetGroup', () => {
 
   test('returns false for an empty group', () => {
     expect(isSupersetGroup([])).toBe(false);
+  });
+});
+
+describe('isSupersetMeasurementType', () => {
+  test('allows rep-based measurement types', () => {
+    expect(isSupersetMeasurementType('weight_reps')).toBe(true);
+    expect(isSupersetMeasurementType('reps')).toBe(true);
+  });
+
+  test('rejects time, distance and mixed measurement types', () => {
+    expect(isSupersetMeasurementType('duration')).toBe(false);
+    expect(isSupersetMeasurementType('duration_reps')).toBe(false);
+    expect(isSupersetMeasurementType('weight_duration')).toBe(false);
+    expect(isSupersetMeasurementType('weight_reps_duration')).toBe(false);
+    expect(isSupersetMeasurementType('distance')).toBe(false);
   });
 });

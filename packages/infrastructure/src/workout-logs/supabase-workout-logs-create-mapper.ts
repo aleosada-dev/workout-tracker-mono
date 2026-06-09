@@ -28,6 +28,7 @@ export function toWorkoutLogCreatePayload(input: CreateWorkoutLogInput) {
         repsMin: set.repsMin,
         repsMax: set.repsMax,
         durationSeconds: set.durationSeconds,
+        distanceMeters: set.distanceMeters,
       })),
     })),
   };

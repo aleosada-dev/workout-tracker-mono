@@ -66,7 +66,7 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
               secondary_muscle:muscles!secondary_muscle_id ( slug )
             ),
             workout_sets (
-              id, set_order, set_type, reps_min, reps_max, duration_seconds, linked_set_id, load_percent_of_previous, round_order
+              id, set_order, set_type, reps_min, reps_max, duration_seconds, distance_meters, linked_set_id, load_percent_of_previous, round_order
             )
           )
         `,

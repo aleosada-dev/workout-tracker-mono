@@ -84,7 +84,12 @@ export function weightPlaceholder(
   return String(computeLinkedLoad(lastKg, loadPercent, mode));
 }
 
-export type ColumnLayout = { weight: boolean; reps: boolean; duration: boolean };
+export type ColumnLayout = {
+  weight: boolean;
+  reps: boolean;
+  duration: boolean;
+  distance: boolean;
+};
 
 export function exerciseColumnLayout(sets: { measurementType: MeasurementType }[]): ColumnLayout {
   return sets.reduce<ColumnLayout>(
@@ -94,9 +99,10 @@ export function exerciseColumnLayout(sets: { measurementType: MeasurementType }[
         weight: acc.weight || dims.weight,
         reps: acc.reps || dims.reps,
         duration: acc.duration || dims.duration,
+        distance: acc.distance || dims.distance,
       };
     },
-    { weight: false, reps: false, duration: false },
+    { weight: false, reps: false, duration: false, distance: false },
   );
 }
 

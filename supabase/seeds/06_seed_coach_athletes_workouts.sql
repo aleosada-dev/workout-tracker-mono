@@ -43,6 +43,7 @@ DECLARE
   var_triceps_corda    uuid;
   var_crucifixo        uuid;
   var_pressdown        uuid;
+  var_corrida          uuid;
   var_leg_press        uuid;
   var_mesa_flexora     uuid;
   var_elevacao_pelv    uuid;
@@ -67,6 +68,7 @@ BEGIN
   SELECT id INTO var_triceps_corda    FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Tríceps Corda'        LIMIT 1) LIMIT 1;
   SELECT id INTO var_crucifixo        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Crucifixo'            LIMIT 1) LIMIT 1;
   SELECT id INTO var_pressdown        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Pressdown de Tríceps' LIMIT 1) LIMIT 1;
+  SELECT id INTO var_corrida          FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Corrida'              LIMIT 1) LIMIT 1;
   SELECT id INTO var_leg_press        FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Leg Press 45'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_mesa_flexora     FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Mesa Flexora'         LIMIT 1) LIMIT 1;
   SELECT id INTO var_elevacao_pelv    FROM public.variations WHERE exercise_id = (SELECT id FROM public.exercises WHERE name = 'Elevação Pélvica'     LIMIT 1) LIMIT 1;
@@ -174,6 +176,7 @@ BEGIN
     --   pos 1 → Biset: Supino Inclinado + Tríceps Corda
     --   pos 2 → Crucifixo (isolado)
     --   pos 3 → Pressdown de Tríceps (isolado)
+    --   pos 4 → Corrida (distância, isolado — finalizador)
     -- ══════════════════════════════════════════════
     ('eddbdb00-f86d-473f-8661-cb40d328e425'::uuid,
      '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
@@ -199,6 +202,11 @@ BEGIN
      '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
      var_pressdown, 'Cotovelos colados ao tronco', 60, 3,
      '756d8fec-c7ca-437e-a506-44076700aa13'::uuid, 0),
+
+    ('c0dd1a00-7e5c-4a17-9b2d-4c3e8a1f2b6d'::uuid,
+     '52f2bbe7-0c3f-4728-b7c9-34a2223cf0b8'::uuid,
+     var_corrida, 'Corrida leve de finalização', 120, 4,
+     'c0dd1a00-7e5c-4a17-9b2d-4c3e8a1f2b6d'::uuid, 0),
 
     -- ══════════════════════════════════════════════
     -- Treino B Lucas (wk2): Costas e Bíceps
@@ -378,6 +386,13 @@ BEGIN
     -- Alongamento de Peitoral — 2 séries de 30s (por tempo)
     ('bb110003-0000-4aaa-8aaa-000000000003'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 0, 'normal', NULL, NULL, 30, NULL, NULL, 0),
     ('bb110004-0000-4aaa-8aaa-000000000004'::uuid, 'aa110002-0000-4aaa-8aaa-000000000002'::uuid, 1, 'normal', NULL, NULL, 30, NULL, NULL, 1)
+  ON CONFLICT DO NOTHING;
+
+  -- Set da Corrida (Treino A Lucas) — medição por distância (metros).
+  INSERT INTO public.workout_sets
+    (id, workout_exercise_id, set_order, set_type, distance_meters, round_order)
+  VALUES
+    ('d15ace00-3d1f-4b82-8c7a-4e959f021a8c'::uuid, 'c0dd1a00-7e5c-4a17-9b2d-4c3e8a1f2b6d'::uuid, 0, 'normal', 3000, 0)
   ON CONFLICT DO NOTHING;
 
   -- ================================================

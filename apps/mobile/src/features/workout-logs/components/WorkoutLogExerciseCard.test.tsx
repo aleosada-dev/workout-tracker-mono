@@ -32,6 +32,7 @@ const exercise: WorkoutLogDetailExercise = {
       repsMin: null,
       repsMax: null,
       durationSeconds: null,
+      distanceMeters: null,
     },
     {
       setOrder: 1,
@@ -43,6 +44,7 @@ const exercise: WorkoutLogDetailExercise = {
       repsMin: 6,
       repsMax: 10,
       durationSeconds: null,
+      distanceMeters: null,
     },
   ],
 };

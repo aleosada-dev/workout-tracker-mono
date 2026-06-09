@@ -21,6 +21,7 @@ function set(overrides: Partial<OutputSet> = {}): OutputSet {
     repsMin: null,
     repsMax: null,
     durationTarget: null,
+    distanceTarget: null,
     kg: undefined,
     reps: undefined,
     duration: undefined,
@@ -102,6 +103,7 @@ describe('buildCompletedExecution', () => {
       repsMin: null,
       repsMax: null,
       durationSeconds: 45,
+      distanceMeters: null,
     });
   });
 
@@ -125,6 +127,7 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     repsMin: null,
     repsMax: null,
     durationSeconds: null,
+    distanceMeters: null,
     ...overrides,
   };
 }

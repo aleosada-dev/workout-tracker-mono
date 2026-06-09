@@ -97,6 +97,7 @@ type WorkoutSetRow = {
   reps_min: number | null;
   reps_max: number | null;
   duration_seconds: number | null;
+  distance_meters: number | null;
   linked_set_id: string | null;
   load_percent_of_previous: number | null;
   round_order: number;
@@ -137,8 +138,7 @@ export type WorkoutDetailRow = {
 };
 
 /**
- * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set (6
- * valores). `distance` ainda não tem UI de set, então cai em `weight_reps`.
+ * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set.
  */
 function setMeasurementForVariation(measurementType: ExerciseMeasurementType): MeasurementType {
   switch (measurementType) {
@@ -146,6 +146,8 @@ function setMeasurementForVariation(measurementType: ExerciseMeasurementType): M
       return 'reps';
     case 'duration':
       return 'duration';
+    case 'distance':
+      return 'distance';
     default:
       return 'weight_reps';
   }
@@ -160,6 +162,7 @@ function toWorkoutSet(row: WorkoutSetRow, measurementType: MeasurementType): Wor
     repsMin: row.reps_min,
     repsMax: row.reps_max,
     durationSeconds: row.duration_seconds,
+    distanceMeters: row.distance_meters,
     linkedSetId: row.linked_set_id,
     loadPercent: null,
     loadPercentOfPrevious: row.load_percent_of_previous,

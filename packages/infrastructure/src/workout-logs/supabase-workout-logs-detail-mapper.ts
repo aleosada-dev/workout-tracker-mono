@@ -44,6 +44,7 @@ export type DetailRow = {
       reps_min: number | null;
       reps_max: number | null;
       duration_seconds: number | null;
+      distance_meters: number | null;
     }> | null;
   }> | null;
 };
@@ -70,6 +71,7 @@ const toSet = (
   repsMin: row.reps_min,
   repsMax: row.reps_max,
   durationSeconds: row.duration_seconds,
+  distanceMeters: row.distance_meters,
 });
 
 const toExercise = (

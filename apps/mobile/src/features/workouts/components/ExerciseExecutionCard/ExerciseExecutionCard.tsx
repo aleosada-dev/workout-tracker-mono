@@ -1,4 +1,4 @@
-import { getValidSetTypesAt } from '@workout-tracker/domain';
+import { applicableSetTypes, getValidSetTypesAt } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import {
@@ -41,7 +41,7 @@ import {
 import { type ColumnLayout, exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
-import { DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
+import { DistanceSetRow, DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
 import type { ExerciseExecutionCardProps } from './types';
 
 const SET_TYPE_INITIAL: Record<SetType, string> = {
@@ -116,6 +116,7 @@ export function ExerciseExecutionCard({
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
         setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.distanceTarget`, target.distanceTarget);
       });
     }
   };
@@ -132,9 +133,11 @@ export function ExerciseExecutionCard({
       repsMin: null,
       repsMax: null,
       durationTarget: null,
+      distanceTarget: null,
       kg: '',
       reps: '',
       duration: '',
+      distance: '',
       done: false,
       linkedSetId: null,
       loadPercent: null,
@@ -251,6 +254,13 @@ export function ExerciseExecutionCard({
                   </Text>
                 </View>
               ) : null}
+              {layout.distance ? (
+                <View className="w-32 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.distance')}
+                  </Text>
+                </View>
+              ) : null}
               <View className="w-20 px-2">
                 <Text className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {t('workoutExecutionScreen.exercise.headers.target')}
@@ -281,6 +291,7 @@ export function ExerciseExecutionCard({
                 onPressType={(currentType, onChange) => {
                   const sets = getValues(`exercises.${exerciseIndex}.sets`);
                   const validTypes = getValidSetTypesAt(sets, setIndex);
+                  const options = applicableSetTypes(sets[setIndex].measurementType);
                   setTypePickerRef.current?.present(
                     currentType,
                     validTypes,
@@ -303,6 +314,7 @@ export function ExerciseExecutionCard({
                           },
                         }
                       : undefined,
+                    options,
                   );
                 }}
               />
@@ -446,6 +458,8 @@ function SetRow({
           layout={layout}
           onComplete={handleTimerComplete}
         />
+      ) : measurementType === 'distance' ? (
+        <DistanceSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
       ) : (
         <WeightRepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
       )}

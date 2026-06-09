@@ -25,6 +25,7 @@ export type SetTypePickerSheetRef = {
     validTypes: readonly SetType[],
     onSelect: (type: SetType) => void,
     removal?: SetTypePickerRemoval,
+    options?: readonly SetType[],
   ) => void;
   dismiss: () => void;
 };
@@ -34,14 +35,16 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
   const sheetRef = useRef<BottomSheetRef>(null);
   const [current, setCurrent] = useState<SetType | null>(null);
   const [validTypes, setValidTypes] = useState<readonly SetType[]>(SET_TYPE_ORDER);
+  const [options, setOptions] = useState<readonly SetType[]>(SET_TYPE_ORDER);
   const [removal, setRemoval] = useState<SetTypePickerRemoval>({});
   const onSelectRef = useRef<((type: SetType) => void) | null>(null);
   const onRemoveSetRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    present: (currentType, nextValidTypes, onSelect, nextRemoval) => {
+    present: (currentType, nextValidTypes, onSelect, nextRemoval, nextOptions) => {
       setCurrent(currentType);
       setValidTypes(nextValidTypes);
+      setOptions(nextOptions ?? SET_TYPE_ORDER);
       onSelectRef.current = onSelect;
       onRemoveSetRef.current = nextRemoval?.onRemoveSet ?? null;
       setRemoval({ onRemoveSet: nextRemoval?.onRemoveSet });
@@ -71,7 +74,7 @@ export function SetTypePickerSheet({ ref }: { ref?: Ref<SetTypePickerSheetRef> }
         </View>
 
         <View className="gap-2">
-          {SET_TYPE_ORDER.map((type) => {
+          {options.map((type) => {
             const config = SET_TYPE_CONFIG[type];
             const isSelected = current === type;
             const isDisabled = !validTypes.includes(type);

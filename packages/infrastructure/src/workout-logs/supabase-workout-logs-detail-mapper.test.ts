@@ -31,6 +31,7 @@ const baseRow: DetailRow = {
           reps_min: 6,
           reps_max: 10,
           duration_seconds: null,
+          distance_meters: null,
         },
         {
           set_order: 0,
@@ -42,6 +43,7 @@ const baseRow: DetailRow = {
           reps_min: null,
           reps_max: null,
           duration_seconds: null,
+          distance_meters: null,
         },
       ],
     },

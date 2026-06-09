@@ -1,4 +1,4 @@
-import { getValidSetTypesAt } from '@workout-tracker/domain';
+import { type MeasurementType, measurementDimensions } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import {
@@ -19,12 +19,18 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
-import { formatRestSeconds, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
+import {
+  formatRestSeconds,
+  formatTime,
+  sanitizeDecimal,
+  sanitizeInteger,
+} from '@/features/shared/lib/utils';
 import { AliasSelector } from '@/features/workouts/components/AliasSelector';
 import {
-  SetTypePickerSheet,
-  type SetTypePickerSheetRef,
-} from '@/features/workouts/components/SetTypePickerSheet';
+  DistanceInput,
+  DurationPickerCell,
+  formatDistance,
+} from '@/features/workouts/components/ExerciseExecutionCard/set-cells';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import {
   type AddSetEntry,
@@ -41,6 +47,8 @@ import {
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 import {
+  type ColumnLayout,
+  exerciseColumnLayout,
   formatSetTarget,
   type SupersetMember,
   weightPlaceholder,
@@ -61,8 +69,6 @@ const SET_TYPE_INITIAL: Record<SetType, string> = {
 };
 
 type MemberSets = ExecutionFormInput['exercises'][number]['sets'];
-
-type PressTypeHandler = (exerciseIndex: number, setIndex: number, currentType: SetType) => void;
 
 type RoundMemberView = {
   exerciseIndex: number;
@@ -127,9 +133,13 @@ export function SupersetExecutionCard({
     | undefined;
   const setsByMember = watchedMemberSets ?? [];
   const rounds = buildRounds(members, setsByMember);
+  const layout = exerciseColumnLayout(
+    setsByMember
+      .flatMap((sets) => sets ?? [])
+      .map((set) => ({ measurementType: set.measurementType })),
+  );
   const { errors } = useFormState({ control, name: 'exercises' });
   const hasError = members.some((m) => Boolean(errors.exercises?.[m.exerciseIndex]));
-  const setTypePickerRef = useRef<SetTypePickerSheetRef>(null);
   const addSetsSheetRef = useRef<SupersetAddSetsSheetRef>(null);
 
   const rematchMember = (exerciseIndex: number) => {
@@ -156,6 +166,7 @@ export function SupersetExecutionCard({
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
         setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
         setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
+        setValue(`exercises.${exerciseIndex}.sets.${i}.distanceTarget`, target.distanceTarget);
       });
     }
   };
@@ -187,9 +198,11 @@ export function SupersetExecutionCard({
         repsMin: null,
         repsMax: null,
         durationTarget: null,
+        distanceTarget: null,
         kg: '',
         reps: '',
         duration: '',
+        distance: '',
         done: false,
         linkedSetId: null,
         loadPercent: null,
@@ -208,27 +221,6 @@ export function SupersetExecutionCard({
       existingTypes: getValues(`exercises.${member.exerciseIndex}.sets`).map((set) => set.type),
     }));
     addSetsSheetRef.current?.present(sheetMembers, handleConfirmAddSets);
-  };
-
-  const handleChangeSetType = (exerciseIndex: number, setIndex: number, next: SetType) => {
-    setValue(`exercises.${exerciseIndex}.sets.${setIndex}.type`, next, { shouldDirty: true });
-    if ((next === 'drop' || next === 'cluster') && setIndex > 0) {
-      const previousRound = getValues(`exercises.${exerciseIndex}.sets.${setIndex - 1}.roundOrder`);
-      setValue(`exercises.${exerciseIndex}.sets.${setIndex}.roundOrder`, previousRound, {
-        shouldDirty: true,
-      });
-    }
-    rematchMember(exerciseIndex);
-  };
-
-  const handleRemoveExerciseSet = (exerciseIndex: number, setIndex: number) => {
-    const current = getValues(`exercises.${exerciseIndex}.sets`);
-    setValue(
-      `exercises.${exerciseIndex}.sets`,
-      current.filter((_, i) => i !== setIndex),
-      { shouldDirty: true },
-    );
-    rematchMember(exerciseIndex);
   };
 
   const removeRound = (roundOrder: number) => {
@@ -260,9 +252,11 @@ export function SupersetExecutionCard({
             repsMin: null,
             repsMax: null,
             durationTarget: null,
+            distanceTarget: null,
             kg: '',
             reps: '',
             duration: '',
+            distance: '',
             done: false,
             linkedSetId: null,
             loadPercent: null,
@@ -294,22 +288,6 @@ export function SupersetExecutionCard({
       sheetMembers,
       (entries) => handleConfirmEditRound(roundOrder, entries),
       { initialEntries, onDelete: () => removeRound(roundOrder) },
-    );
-  };
-
-  const handlePressType: PressTypeHandler = (exerciseIndex, setIndex, currentType) => {
-    const exerciseSets = getValues(`exercises.${exerciseIndex}.sets`);
-    const validTypes = getValidSetTypesAt(exerciseSets, setIndex);
-    setTypePickerRef.current?.present(
-      currentType,
-      validTypes,
-      (next) => handleChangeSetType(exerciseIndex, setIndex, next),
-      {
-        onRemoveSet:
-          exerciseSets.length > 1
-            ? () => handleRemoveExerciseSet(exerciseIndex, setIndex)
-            : undefined,
-      },
     );
   };
 
@@ -446,21 +424,40 @@ export function SupersetExecutionCard({
                   <SetTypesHelpDialog />
                 </View>
               </View>
-              <View className="flex-1 pr-2 pl-3">
-                <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {t('workoutExecutionScreen.exercise.headers.weight')}
-                </Text>
-              </View>
-              <View className="flex-1 px-2">
-                <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {t('workoutExecutionScreen.exercise.headers.reps')}
-                </Text>
-              </View>
+              {layout.weight ? (
+                <View className="w-20 pr-2 pl-3">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.weight')}
+                  </Text>
+                </View>
+              ) : null}
+              {layout.reps ? (
+                <View className="w-20 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.reps')}
+                  </Text>
+                </View>
+              ) : null}
+              {layout.duration ? (
+                <View className="w-28 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.duration')}
+                  </Text>
+                </View>
+              ) : null}
+              {layout.distance ? (
+                <View className="w-32 px-2">
+                  <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {t('workoutExecutionScreen.exercise.headers.distance')}
+                  </Text>
+                </View>
+              ) : null}
               <View className="w-20 px-2">
                 <Text className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {t('workoutExecutionScreen.exercise.headers.target')}
                 </Text>
               </View>
+              <View className="flex-1" />
               <View className="w-10 items-center">
                 <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   ✓
@@ -473,7 +470,7 @@ export function SupersetExecutionCard({
                 key={roundMembers.flatMap((m) => m.ids).join('-')}
                 roundOrder={roundOrder}
                 roundMembers={roundMembers}
-                onPressType={handlePressType}
+                layout={layout}
                 onEditRound={handleEditRound}
               />
             ))}
@@ -489,7 +486,6 @@ export function SupersetExecutionCard({
           </View>
         </Animated.View>
       ) : null}
-      <SetTypePickerSheet ref={setTypePickerRef} />
       <SupersetAddSetsSheet ref={addSetsSheetRef} />
     </Card>
   );
@@ -498,12 +494,12 @@ export function SupersetExecutionCard({
 function SupersetSetRow({
   roundOrder,
   roundMembers,
-  onPressType,
+  layout,
   onEditRound,
 }: {
   roundOrder: number;
   roundMembers: RoundMemberView[];
-  onPressType: PressTypeHandler;
+  layout: ColumnLayout;
   onEditRound: (roundOrder: number) => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
@@ -551,7 +547,7 @@ function SupersetSetRow({
               exerciseIndex={member.exerciseIndex}
               setIndex={setIndex}
               letter={member.letter}
-              onPressType={onPressType}
+              layout={layout}
               onPressLetter={() => onEditRound(roundOrder)}
             />
           )),
@@ -571,28 +567,60 @@ function SupersetSetRow({
   );
 }
 
+function memberTarget(
+  measurementType: MeasurementType,
+  values: {
+    repsMin: number | null | undefined;
+    repsMax: number | null | undefined;
+    durationTarget: number | null | undefined;
+    distanceTarget: number | null | undefined;
+  },
+): string {
+  const dims = measurementDimensions(measurementType);
+  if (dims.distance) {
+    return values.distanceTarget != null && values.distanceTarget > 0
+      ? formatDistance(values.distanceTarget)
+      : '';
+  }
+  if (dims.duration && !dims.reps) {
+    return values.durationTarget != null && values.durationTarget > 0
+      ? formatTime(values.durationTarget)
+      : '';
+  }
+  return formatSetTarget(values.repsMin ?? null, values.repsMax ?? null);
+}
+
 function SupersetMemberCell({
   exerciseIndex,
   setIndex,
   letter,
-  onPressType,
+  layout,
   onPressLetter,
 }: {
   exerciseIndex: number;
   setIndex: number;
   letter: SupersetMember['letter'];
-  onPressType: PressTypeHandler;
+  layout: ColumnLayout;
   onPressLetter: () => void;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
+  const durationTarget = useWatch({ control, name: `${basePath}.durationTarget` });
+  const distanceTarget = useWatch({ control, name: `${basePath}.distanceTarget` });
   const loadPercent = useWatch({ control, name: `${basePath}.loadPercent` });
-  const target = formatSetTarget(repsMin ?? null, repsMax ?? null);
+  const dims = measurementDimensions(measurementType);
+  const target = memberTarget(measurementType, {
+    repsMin,
+    repsMax,
+    durationTarget,
+    distanceTarget,
+  });
   const adjusted = loadPercent != null;
   const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, preferences?.loadRounding ?? 'none');
 
@@ -617,7 +645,7 @@ function SupersetMemberCell({
             const typeConfig = SET_TYPE_CONFIG[field.value];
             return (
               <Pressable
-                onPress={() => onPressType(exerciseIndex, setIndex, field.value)}
+                onPress={onPressLetter}
                 hitSlop={8}
                 className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
                 accessibilityRole="button"
@@ -634,50 +662,84 @@ function SupersetMemberCell({
           }}
         />
       </View>
-      <View className="flex-1 pr-2 pl-3">
-        <Controller
-          control={control}
-          name={`${basePath}.kg`}
-          render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="decimal-pad"
-              value={field.value}
-              onChangeText={(text) =>
-                field.onChange(
-                  sanitizeDecimal(text, {
-                    maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
-                    maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
-                  }),
-                )
-              }
-              onBlur={field.onBlur}
-              aria-invalid={fieldState.invalid}
-              className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
-              placeholder={kgPlaceholder}
+      {layout.weight ? (
+        <View className="w-20 pr-2 pl-3">
+          {dims.weight ? (
+            <Controller
+              control={control}
+              name={`${basePath}.kg`}
+              render={({ field, fieldState }) => (
+                <Input
+                  variant="outline-primary"
+                  keyboardType="decimal-pad"
+                  value={field.value}
+                  onChangeText={(text) =>
+                    field.onChange(
+                      sanitizeDecimal(text, {
+                        maxIntegerDigits: MAX_WEIGHT_INTEGER_DIGITS,
+                        maxFractionDigits: MAX_WEIGHT_FRACTION_DIGITS,
+                      }),
+                    )
+                  }
+                  onBlur={field.onBlur}
+                  aria-invalid={fieldState.invalid}
+                  className={`h-8 max-w-[80px] py-0 text-sm ${adjusted ? 'placeholder:font-sans-semibold placeholder:text-primary' : ''}`}
+                  placeholder={kgPlaceholder}
+                />
+              )}
             />
-          )}
-        />
-      </View>
-      <View className="flex-1 px-2">
-        <Controller
-          control={control}
-          name={`${basePath}.reps`}
-          render={({ field, fieldState }) => (
-            <Input
-              variant="outline-primary"
-              keyboardType="number-pad"
-              value={field.value}
-              onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
-              onBlur={field.onBlur}
-              aria-invalid={fieldState.invalid}
-              className="h-8 max-w-[80px] py-0 text-sm"
-              maxLength={2}
-              placeholder={lastReps != null ? String(lastReps) : undefined}
+          ) : null}
+        </View>
+      ) : null}
+      {layout.reps ? (
+        <View className="w-20 px-2">
+          {dims.reps ? (
+            <Controller
+              control={control}
+              name={`${basePath}.reps`}
+              render={({ field, fieldState }) => (
+                <Input
+                  variant="outline-primary"
+                  keyboardType="number-pad"
+                  value={field.value}
+                  onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
+                  onBlur={field.onBlur}
+                  aria-invalid={fieldState.invalid}
+                  className="h-8 max-w-[80px] py-0 text-sm"
+                  maxLength={2}
+                  placeholder={lastReps != null ? String(lastReps) : undefined}
+                />
+              )}
             />
-          )}
-        />
-      </View>
+          ) : null}
+        </View>
+      ) : null}
+      {layout.duration ? (
+        dims.duration ? (
+          <DurationPickerCell exerciseIndex={exerciseIndex} setIndex={setIndex} />
+        ) : (
+          <View className="w-28 px-2" />
+        )
+      ) : null}
+      {layout.distance ? (
+        dims.distance ? (
+          <Controller
+            control={control}
+            name={`${basePath}.distance`}
+            render={({ field, fieldState }) => (
+              <DistanceInput
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                invalid={fieldState.invalid}
+                testID={`workout-execution.superset.set-${setIndex}.exercise-${exerciseIndex}.distance`}
+              />
+            )}
+          />
+        ) : (
+          <View className="w-32 px-2" />
+        )
+      ) : null}
       <View className="w-20 px-2">
         <Text
           className={`text-center text-xs ${adjusted ? 'font-sans-semibold text-primary' : 'text-muted-foreground'}`}

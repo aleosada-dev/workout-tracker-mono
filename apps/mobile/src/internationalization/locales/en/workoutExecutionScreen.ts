@@ -32,6 +32,7 @@ export default {
       weight: 'Weight',
       reps: 'Reps',
       duration: 'Time',
+      distance: 'Distance',
       target: 'Target',
     },
   },

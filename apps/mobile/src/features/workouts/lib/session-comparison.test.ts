@@ -17,6 +17,7 @@ function completedSet(overrides: Partial<CompletedSet> = {}): CompletedSet {
     repsMin: null,
     repsMax: null,
     durationSeconds: null,
+    distanceMeters: null,
     ...overrides,
   };
 }

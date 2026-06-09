@@ -31,6 +31,7 @@ function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>):
     repsMin: 8,
     repsMax: 12,
     durationSeconds: null,
+    distanceMeters: null,
     linkedSetId: null,
     loadPercent: null,
     loadPercentOfPrevious: null,
@@ -118,6 +119,7 @@ describe('buildExecutionFromWorkout', () => {
           repsMin: null,
           repsMax: null,
           durationSeconds: 30,
+          distanceMeters: null,
         }),
       ]),
     );
@@ -135,6 +137,7 @@ describe('buildExecutionFromWorkout', () => {
             repsMin: null,
             repsMax: null,
             durationSeconds: 30,
+            distanceMeters: null,
           }),
         ],
         'duration',
@@ -310,9 +313,11 @@ function execSet(
     repsMin: null,
     repsMax: null,
     durationTarget: null,
+    distanceTarget: null,
     kg: '',
     reps: '',
     duration: '',
+    distance: '',
     done: false,
   };
 }
@@ -397,9 +402,9 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12, durationTarget: null },
-      { repsMin: null, repsMax: null, durationTarget: null },
-      { repsMin: 6, repsMax: 8, durationTarget: null },
+      { repsMin: 8, repsMax: 12, durationTarget: null, distanceTarget: null },
+      { repsMin: null, repsMax: null, durationTarget: null, distanceTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null, distanceTarget: null },
     ]);
   });
 
@@ -415,10 +420,10 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12, durationTarget: null },
-      { repsMin: null, repsMax: null, durationTarget: null },
-      { repsMin: 6, repsMax: 8, durationTarget: null },
-      { repsMin: 6, repsMax: 8, durationTarget: null },
+      { repsMin: 8, repsMax: 12, durationTarget: null, distanceTarget: null },
+      { repsMin: null, repsMax: null, durationTarget: null, distanceTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null, distanceTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null, distanceTarget: null },
     ]);
   });
 
@@ -429,16 +434,18 @@ describe('matchExecutionSetsToTemplate', () => {
     );
 
     expect(result).toEqual([
-      { repsMin: 8, repsMax: 12, durationTarget: null },
-      { repsMin: 6, repsMax: 8, durationTarget: null },
-      { repsMin: 6, repsMax: 8, durationTarget: null },
+      { repsMin: 8, repsMax: 12, durationTarget: null, distanceTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null, distanceTarget: null },
+      { repsMin: 6, repsMax: 8, durationTarget: null, distanceTarget: null },
     ]);
   });
 
   test('returns nulls when there is no template reference', () => {
     const result = matchExecutionSetsToTemplate([execSet('s1', 'normal')], undefined);
 
-    expect(result).toEqual([{ repsMin: null, repsMax: null, durationTarget: null }]);
+    expect(result).toEqual([
+      { repsMin: null, repsMax: null, durationTarget: null, distanceTarget: null },
+    ]);
   });
 
   test('pulls the duration target for a duration template set', () => {
@@ -452,11 +459,14 @@ describe('matchExecutionSetsToTemplate', () => {
           repsMin: null,
           repsMax: null,
           durationSeconds: 45,
+          distanceMeters: null,
         }),
       ],
     );
 
-    expect(result).toEqual([{ repsMin: null, repsMax: null, durationTarget: 45 }]);
+    expect(result).toEqual([
+      { repsMin: null, repsMax: null, durationTarget: 45, distanceTarget: null },
+    ]);
   });
 });
 
@@ -467,6 +477,7 @@ describe('ExecutionSetSchema validation', () => {
     reps: string,
     done = true,
     duration = '',
+    distance = '',
   ) {
     return {
       id: 's1',
@@ -476,9 +487,11 @@ describe('ExecutionSetSchema validation', () => {
       repsMin: null,
       repsMax: null,
       durationTarget: null,
+      distanceTarget: null,
       kg,
       reps,
       duration,
+      distance,
       done,
     };
   }
@@ -502,6 +515,18 @@ describe('ExecutionSetSchema validation', () => {
     expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '60')).success).toBe(true);
     expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '')).success).toBe(false);
     expect(ExecutionSetSchema.safeParse(rawSet('duration', '', '', true, '0')).success).toBe(false);
+  });
+
+  test('distance requires a distance value but not kg or reps when done', () => {
+    expect(ExecutionSetSchema.safeParse(rawSet('distance', '', '', true, '', '400')).success).toBe(
+      true,
+    );
+    expect(ExecutionSetSchema.safeParse(rawSet('distance', '', '', true, '', '')).success).toBe(
+      false,
+    );
+    expect(ExecutionSetSchema.safeParse(rawSet('distance', '', '', true, '', '0')).success).toBe(
+      false,
+    );
   });
 
   test('combo types fall back to requiring weight and reps when done', () => {
@@ -584,6 +609,7 @@ describe('buildExecutionExerciseFromPicked', () => {
       repsMin: null,
       repsMax: null,
       durationTarget: null,
+      distanceTarget: null,
     });
   });
 

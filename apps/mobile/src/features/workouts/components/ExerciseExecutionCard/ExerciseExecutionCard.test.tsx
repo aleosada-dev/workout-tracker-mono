@@ -78,9 +78,11 @@ function set(id: string, measurementType: MeasurementType, durationTarget: numbe
     repsMin: null,
     repsMax: null,
     durationTarget,
+    distanceTarget: null,
     kg: '',
     reps: '',
     duration: '',
+    distance: '',
     done: false,
     lastKg: null,
     lastReps: null,
@@ -150,6 +152,25 @@ describe('<ExerciseExecutionCard />', () => {
     expect(queryByText('workoutExecutionScreen.exercise.headers.weight')).toBeNull();
     expect(queryByText('workoutExecutionScreen.exercise.headers.reps')).toBeNull();
     expect(getAllByText('00:30').length).toBeGreaterThan(0);
+  });
+
+  test('a distance exercise shows the distance header and a distance input, not weight/reps', () => {
+    const { queryByText, getByTestId } = renderCard([set('s1', 'distance', null)]);
+
+    expect(queryByText('workoutExecutionScreen.exercise.headers.distance')).not.toBeNull();
+    expect(queryByText('workoutExecutionScreen.exercise.headers.weight')).toBeNull();
+    expect(getByTestId('workout-execution.set-0.distance')).toBeTruthy();
+  });
+
+  test('a distance input stores meters and converts from km via the unit toggle', () => {
+    const { getByTestId, form } = renderCard([set('s1', 'distance', null)]);
+
+    fireEvent.changeText(getByTestId('workout-execution.set-0.distance'), '800');
+    expect(form().getValues('exercises.0.sets.0.distance')).toBe('800');
+
+    fireEvent.press(getByTestId('workout-execution.set-0.distance.unit'));
+    fireEvent.changeText(getByTestId('workout-execution.set-0.distance'), '1.5');
+    expect(form().getValues('exercises.0.sets.0.distance')).toBe('1500');
   });
 
   test('mixing weight_reps and reps sets unions the weight and reps headers', () => {

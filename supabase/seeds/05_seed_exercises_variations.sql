@@ -203,7 +203,8 @@ INSERT INTO public.exercises (id, name, user_id, exercise_type) VALUES
   ('81813c26-484c-470d-a557-9fb8a36cd8ce', 'Alongamento de Peitoral',                 NULL, 'preparatorio'),
   ('95358b8e-d2b7-4728-9119-28b9e6716327', 'Mobilidade de Quadril',                   NULL, 'preparatorio'),
   ('6c1b1d7b-7994-4ff1-aa63-20e0ca3df1fd', 'Rotação de Ombros',                       NULL, 'preparatorio'),
-  ('49a46ea8-7dcf-4ad8-9489-86f5a7d4b029', 'Corrida Estacionária',                    NULL, 'preparatorio')
+  ('49a46ea8-7dcf-4ad8-9489-86f5a7d4b029', 'Corrida Estacionária',                    NULL, 'preparatorio'),
+  ('7e5c0a17-9b2d-4c3e-8a1f-2b6d4e8c0a17', 'Corrida',                                 NULL, 'musculacao')
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------
@@ -702,7 +703,9 @@ INSERT INTO public.variations (id, name, exercise_id, muscle_id, secondary_muscl
   -- Rosca Spider
   ('4276fe47-44f0-4504-8eee-414814ea8d74', NULL,                  '2b3e8e49-7f18-4021-bd21-5073107a7e8d', m_biceps, NULL,     eq_halt),
   -- Pressdown Inverso
-  ('49eeab88-9906-429d-a1f7-ccab072b5d96', NULL,                  '71619377-b245-438e-8e14-d88710fab79a', m_triceps,NULL,     eq_maq)
+  ('49eeab88-9906-429d-a1f7-ccab072b5d96', NULL,                  '71619377-b245-438e-8e14-d88710fab79a', m_triceps,NULL,     eq_maq),
+  -- Corrida (distância — corrida ao ar livre, peso corporal)
+  ('3d1f6b82-4c7a-4e95-9f02-1a8c5b3e7d40', NULL,                  '7e5c0a17-9b2d-4c3e-8a1f-2b6d4e8c0a17', m_quad,   m_post,    eq_pc)
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------
@@ -727,6 +730,11 @@ WHERE exercise_id IN (
   '541a09fb-2535-4dd5-ba6e-80072de7ce9c', -- Flexão Prancha
   '2b8c06dd-59b2-4b87-ba43-97b72a5f50ee', -- Burpee
   '78592840-103a-49a8-abe8-70849f37df96'  -- Polichinelo
+);
+
+UPDATE public.variations SET measurement_type = 'distance'
+WHERE exercise_id IN (
+  '7e5c0a17-9b2d-4c3e-8a1f-2b6d4e8c0a17'  -- Corrida
 );
 
 -- ------------------------------------------------

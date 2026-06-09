@@ -27,6 +27,7 @@ const MAX_WEIGHT_FRACTION_DIGITS = 2;
 const MIN_REPS = 1;
 const MAX_REPS = 99;
 const MAX_DURATION_SECONDS = 5999;
+const MAX_DISTANCE_METERS = 999999;
 
 const optionalWeightField = z
   .string()
@@ -46,6 +47,11 @@ const optionalDurationField = z
   .transform((v) => (v === '' ? undefined : Number(v)))
   .pipe(z.number().int().min(1).max(MAX_DURATION_SECONDS).optional());
 
+const optionalDistanceField = z
+  .string()
+  .transform((v) => (v === '' ? undefined : Number(v)))
+  .pipe(z.number().int().min(1).max(MAX_DISTANCE_METERS).optional());
+
 export const ExecutionSetSchema = z
   .object({
     id: z.string(),
@@ -55,9 +61,11 @@ export const ExecutionSetSchema = z
     repsMin: z.int().positive().nullable(),
     repsMax: z.int().positive().nullable(),
     durationTarget: z.int().positive().nullable(),
+    distanceTarget: z.int().positive().nullable(),
     kg: optionalWeightField,
     reps: optionalRepsField,
     duration: optionalDurationField,
+    distance: optionalDistanceField,
     done: z.boolean(),
     lastKg: z.number().nonnegative().nullable().optional(),
     lastReps: z.int().positive().nullable().optional(),
@@ -76,6 +84,9 @@ export const ExecutionSetSchema = z
     }
     if (dims.duration && set.duration === undefined) {
       ctx.addIssue({ code: 'custom', path: ['duration'], message: 'duration.required' });
+    }
+    if (dims.distance && set.distance === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['distance'], message: 'distance.required' });
     }
   });
 
@@ -171,6 +182,7 @@ type TargetValues = {
   repsMin: number | null;
   repsMax: number | null;
   durationTarget: number | null;
+  distanceTarget: number | null;
 };
 
 export function matchExecutionSets<R extends SetLike>(
@@ -220,6 +232,7 @@ export function matchExecutionSetsToTemplate(
     repsMin: template?.repsMin ?? null,
     repsMax: template?.repsMax ?? null,
     durationTarget: template?.durationSeconds ?? null,
+    distanceTarget: template?.distanceMeters ?? null,
   }));
 }
 
@@ -241,8 +254,7 @@ export function restTimerDuration(restSeconds: number | null | undefined): numbe
 }
 
 /**
- * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set (6
- * valores). `distance` ainda não tem UI de set, então cai em `weight_reps`.
+ * Mapeia a measurement_type (4 valores) da variação para o vocabulário de set.
  */
 export function setMeasurementTypeForVariation(
   measurementType: ExerciseMeasurementType,
@@ -252,6 +264,8 @@ export function setMeasurementTypeForVariation(
       return 'reps';
     case 'duration':
       return 'duration';
+    case 'distance':
+      return 'distance';
     default:
       return 'weight_reps';
   }
@@ -302,9 +316,11 @@ export function buildExecutionExerciseFromPicked(
         repsMin: null,
         repsMax: null,
         durationTarget: null,
+        distanceTarget: null,
         kg: '',
         reps: '',
         duration: '',
+        distance: '',
         done: false,
         linkedSetId: null,
         loadPercent: null,
@@ -342,9 +358,11 @@ export function buildExecutionFromWorkout(
         repsMin: set.repsMin,
         repsMax: set.repsMax,
         durationTarget: set.durationSeconds ?? null,
+        distanceTarget: set.distanceMeters ?? null,
         kg: '',
         reps: '',
         duration: '',
+        distance: '',
         done: false,
         lastKg: null,
         lastReps: null,

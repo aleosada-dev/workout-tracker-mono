@@ -11,6 +11,7 @@ export type WorkoutLogDetailSet = {
   repsMin: number | null;
   repsMax: number | null;
   durationSeconds: number | null;
+  distanceMeters: number | null;
 };
 
 export type WorkoutLogDetailExercise = {

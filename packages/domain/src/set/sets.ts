@@ -17,6 +17,7 @@ export const MEASUREMENT_TYPES = [
   'duration_reps',
   'weight_duration',
   'weight_reps_duration',
+  'distance',
 ] as const;
 export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
 
@@ -26,22 +27,29 @@ export type WeightMetric = (typeof WEIGHT_METRICS)[number];
 // ---------- Measurement dimensions ----------
 
 /** Which value dimensions a set tracks — i.e. the fields that are required for it. */
-export type MeasurementDimensions = { weight: boolean; reps: boolean; duration: boolean };
+export type MeasurementDimensions = {
+  weight: boolean;
+  reps: boolean;
+  duration: boolean;
+  distance: boolean;
+};
 
 export function measurementDimensions(measurementType: MeasurementType): MeasurementDimensions {
   switch (measurementType) {
     case 'reps':
-      return { weight: false, reps: true, duration: false };
+      return { weight: false, reps: true, duration: false, distance: false };
     case 'duration':
-      return { weight: false, reps: false, duration: true };
+      return { weight: false, reps: false, duration: true, distance: false };
     case 'duration_reps':
-      return { weight: false, reps: true, duration: true };
+      return { weight: false, reps: true, duration: true, distance: false };
     case 'weight_duration':
-      return { weight: true, reps: false, duration: true };
+      return { weight: true, reps: false, duration: true, distance: false };
     case 'weight_reps_duration':
-      return { weight: true, reps: true, duration: true };
+      return { weight: true, reps: true, duration: true, distance: false };
+    case 'distance':
+      return { weight: false, reps: false, duration: false, distance: true };
     default:
-      return { weight: true, reps: true, duration: false };
+      return { weight: true, reps: true, duration: false, distance: false };
   }
 }
 
@@ -186,6 +194,13 @@ export function computeLinkedLoad(
 export type WorkoutSet = RepsSet | TimeSet;
 
 // ---------- Sequence validation ----------
+
+/** Drop and cluster sets only make sense for measurements that load both weight and reps. */
+export function applicableSetTypes(measurementType: MeasurementType): WorkoutSetType[] {
+  const dims = measurementDimensions(measurementType);
+  if (dims.weight && dims.reps) return [...WORKOUT_SET_TYPES];
+  return WORKOUT_SET_TYPES.filter((type) => type !== 'drop' && type !== 'cluster');
+}
 
 export function getValidSetTypesAt<T extends { type: WorkoutSetType }>(
   sets: readonly T[],

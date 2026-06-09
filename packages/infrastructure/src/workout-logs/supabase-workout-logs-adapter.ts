@@ -55,7 +55,8 @@ const DETAIL_SELECT = `
       reps,
       reps_min,
       reps_max,
-      duration_seconds
+      duration_seconds,
+      distance_meters
     )
   )
 ` as const;

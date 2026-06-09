@@ -16,6 +16,7 @@ export type CompletedSet = {
   repsMin: number | null;
   repsMax: number | null;
   durationSeconds: number | null;
+  distanceMeters: number | null;
 };
 
 export type CompletedExercise = {
@@ -60,6 +61,7 @@ export function buildCompletedExecution(values: ExecutionFormValues): CompletedE
             repsMin: set.repsMin,
             repsMax: set.repsMax,
             durationSeconds: set.duration ?? null,
+            distanceMeters: set.distance ?? null,
           })),
       }))
       .filter((exercise) => exercise.sets.length > 0),
