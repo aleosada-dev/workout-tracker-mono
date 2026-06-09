@@ -78,6 +78,7 @@ export function toExerciseDetailData(
     secondaryMuscle: response.variation.secondaryMuscleSlug
       ? t(`muscles.${response.variation.secondaryMuscleSlug}`)
       : null,
+    measurementType: response.variation.measurementType,
     videoUrl: response.variation.videoUrl,
     youtubeUrl: response.variation.youtubeUrl,
     metrics: {

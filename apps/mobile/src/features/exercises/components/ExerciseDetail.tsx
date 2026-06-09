@@ -23,6 +23,7 @@ import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import { ExerciseDemoVideo } from './ExerciseDemoVideo';
 import { ExerciseMetricChart } from './ExerciseMetricChart';
+import { MEASUREMENT_TYPE_ICONS } from './MeasurementTypeSelector';
 
 export type ExerciseDetailProps = {
   data: ExerciseDetailData;
@@ -84,6 +85,24 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
               </View>
             </>
           ) : null}
+        </View>
+      </View>
+
+      <View className="flex-row items-center gap-2 px-1">
+        <Icon
+          as={MEASUREMENT_TYPE_ICONS[data.measurementType]}
+          size={18}
+          className="text-muted-foreground"
+        />
+        <View
+          accessible
+          accessibilityLabel={`${t('exerciseDetailScreen.measurementType')}: ${t(`exercises.measurementType.${data.measurementType}`)}`}
+          className="flex-row items-center gap-2 self-start rounded-full bg-muted/40 px-3 py-2"
+          testID="exercise-detail.measurement-type"
+        >
+          <Text className="font-sans-semibold text-sm">
+            {t(`exercises.measurementType.${data.measurementType}`)}
+          </Text>
         </View>
       </View>
 

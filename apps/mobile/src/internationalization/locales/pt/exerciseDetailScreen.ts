@@ -24,6 +24,7 @@ export default {
     primary: 'Principal',
     secondary: 'Auxiliar',
   },
+  measurementType: 'Medição',
   video: {
     source: {
       uploaded: 'Dispositivo',

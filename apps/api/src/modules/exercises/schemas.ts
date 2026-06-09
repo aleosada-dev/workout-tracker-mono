@@ -250,6 +250,7 @@ const DetailVariationSchema = z.object({
 	equipmentPreposition: z.string().trim().min(1),
 	muscleSlug: z.string().trim().min(1),
 	secondaryMuscleSlug: z.string().trim().min(1).nullable(),
+	measurementType: ExerciseMeasurementTypeSchema,
 	youtubeUrl: z.url().nullable(),
 	videoUrl: z.url().nullable(),
 	userId: z.uuid().nullable(),

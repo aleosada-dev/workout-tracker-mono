@@ -83,6 +83,7 @@ describe('<ExerciseDetail />', () => {
       equipmentName: 'Máquina',
       primaryMuscle: 'Costas',
       secondaryMuscle: null,
+      measurementType: 'weight_reps',
       videoUrl: null,
       youtubeUrl: null,
       metrics: {
@@ -116,6 +117,7 @@ describe('<ExerciseDetail />', () => {
     equipmentName: 'Barra',
     primaryMuscle: 'Costas',
     secondaryMuscle: null,
+    measurementType: 'weight_reps',
     videoUrl: null,
     youtubeUrl: null,
     metrics: {

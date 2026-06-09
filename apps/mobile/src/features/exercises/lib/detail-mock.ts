@@ -41,6 +41,7 @@ export function getMockExerciseDetail(
     equipmentName: 'Cabo',
     primaryMuscle: 'Glúteos',
     secondaryMuscle: 'Abdutores',
+    measurementType: 'weight_reps',
     videoUrl: SAMPLE_VIDEO_URL,
     youtubeUrl: null,
     metrics: {

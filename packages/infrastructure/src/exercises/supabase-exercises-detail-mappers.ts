@@ -2,6 +2,7 @@ import type {
   ExerciseDetail,
   ExerciseDetailSession,
   ExerciseDetailSessionSet,
+  ExerciseMeasurementType,
   WorkoutSetType,
 } from '@workout-tracker/domain';
 import type { BuildUploadedVideoUrl } from '../r2';
@@ -41,6 +42,7 @@ export type GetExerciseDetailRpcResponseVariation = {
   equipment_preposition: string;
   muscle_slug: string;
   secondary_muscle_slug: string | null;
+  measurement_type: string;
   youtube_url: string | null;
   uploaded_video_object_key: string | null;
   variation_user_id: string | null;
@@ -94,6 +96,7 @@ export const toExerciseDetail = async (
       equipmentPreposition: raw.variation.equipment_preposition,
       muscleSlug: raw.variation.muscle_slug,
       secondaryMuscleSlug: raw.variation.secondary_muscle_slug,
+      measurementType: raw.variation.measurement_type as ExerciseMeasurementType,
       youtubeUrl: raw.variation.youtube_url,
       videoUrl,
       userId: raw.variation.variation_user_id,

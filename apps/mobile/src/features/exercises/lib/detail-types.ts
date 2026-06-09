@@ -1,3 +1,4 @@
+import type { ExerciseMeasurementType } from '@workout-tracker/domain';
 import type { MetricChartPoint } from '@/features/charts/lib/types';
 import type { ExerciseDetailResponseSession } from '@/features/exercises/api/exercises';
 import type { SetType } from '@/features/exercises/lib/sets';
@@ -38,6 +39,7 @@ export type ExerciseDetailData = {
   equipmentName: string;
   primaryMuscle: string;
   secondaryMuscle: string | null;
+  measurementType: ExerciseMeasurementType;
   videoUrl: string | null;
   youtubeUrl: string | null;
   metrics: Record<ExerciseMetricKey, ExerciseMetricSeries>;

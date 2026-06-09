@@ -1,4 +1,5 @@
 import type { WorkoutSetType } from '../set/sets';
+import type { ExerciseMeasurementType } from './models';
 
 export type ExerciseDetailSessionSet = {
   setOrder: number;
@@ -35,6 +36,8 @@ export type ExerciseDetailVariation = {
   equipmentPreposition: string;
   muscleSlug: string;
   secondaryMuscleSlug: string | null;
+  /** How the variation is measured (weight_reps, reps, duration, distance). */
+  measurementType: ExerciseMeasurementType;
   youtubeUrl: string | null;
   videoUrl: string | null;
   /** Owner of the variation; `null` for the public library. Drives editability. */
