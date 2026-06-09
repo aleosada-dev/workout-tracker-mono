@@ -122,21 +122,43 @@ type TemplateExerciseSets = GetWorkoutResponse['exercises'][number]['sets'];
 
 /**
  * Resolve o bucket de última-carga para uma variation, dado o alias selecionado.
- * Se o alias selecionado tem histórico, usa-o. Senão (máquina nova ou sem
- * seleção), cai para o log mais recente geral: último alias usado → bucket "sem
- * alias" → primeiro bucket. `selectedAliasId` undefined = sem seleção; null =
- * seleção explícita de "sem máquina".
+ * - alias específico com histórico → usa esse bucket.
+ * - null ("sem máquina") → mescla todos os buckets pegando o set mais recente por
+ *   slot lógico, espelhando o "tudo junto" da tela de detalhes (histórico de
+ *   todas as sessões, qualquer alias).
+ * - sem casar (alias novo) → cai para o log mais recente geral: último alias
+ *   usado → bucket "sem alias" → primeiro bucket.
+ * `selectedAliasId` undefined = sem seleção; null = seleção explícita de "sem máquina".
  */
 export function resolveLastBucketSets(
   item: LastSetsExerciseItem | undefined,
   selectedAliasId?: string | null,
 ): LastSetsExerciseSets | undefined {
   if (!item || item.buckets.length === 0) return undefined;
+  if (selectedAliasId === null) return mergeMostRecentByLogicalKey(item.buckets);
   const exact = item.buckets.find((bucket) => bucket.aliasId === selectedAliasId);
   if (exact && exact.sets.length > 0) return exact.sets;
   const byLastUsed = item.buckets.find((bucket) => bucket.aliasId === item.lastUsedAliasId);
   const byNoAlias = item.buckets.find((bucket) => bucket.aliasId === null);
   return (byLastUsed ?? byNoAlias ?? item.buckets[0]).sets;
+}
+
+/**
+ * Achata os buckets num único conjunto, mantendo, por logical key, o set com o
+ * `finishedAt` mais recente. A ordem da resposta da API não é garantida, então
+ * comparamos explicitamente em vez de confiar num "último a chegar".
+ */
+function mergeMostRecentByLogicalKey(
+  buckets: LastSetsExerciseItem['buckets'],
+): LastSetsExerciseSets {
+  const best = new Map<string, LastSetsExerciseSets[number]>();
+  for (const bucket of buckets) {
+    for (const set of bucket.sets) {
+      const current = best.get(set.logicalKey);
+      if (!current || set.finishedAt > current.finishedAt) best.set(set.logicalKey, set);
+    }
+  }
+  return Array.from(best.values());
 }
 
 type LastValues = { lastKg: number | null; lastReps: number | null };

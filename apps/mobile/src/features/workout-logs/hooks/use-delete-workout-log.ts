@@ -16,6 +16,7 @@ export function useDeleteWorkoutLog() {
       queryClient.removeQueries({ queryKey: ['workout-logs', 'detail', id] });
       queryClient.invalidateQueries({ queryKey: ['exercises', 'records'] });
       queryClient.invalidateQueries({ queryKey: ['exercises', 'last-sets'] });
+      queryClient.invalidateQueries({ queryKey: ['exercises', 'detail'] });
       queryClient.invalidateQueries({ queryKey: ['workouts', 'last-log'] });
     },
   });

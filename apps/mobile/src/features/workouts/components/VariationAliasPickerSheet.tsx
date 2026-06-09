@@ -212,7 +212,9 @@ export function VariationAliasPickerSheet({
       <BottomSheet ref={sheetRef}>
         <BottomSheetView className="gap-4 px-5 pt-2 pb-8">
           <View className="gap-2">
-            <Text variant="h4">{t('workoutExecutionScreen.aliasPicker.title')}</Text>
+            <Text variant="h4" className="text-center">
+              {t('workoutExecutionScreen.aliasPicker.title')}
+            </Text>
             <Text variant="muted" className="text-sm">
               {t('workoutExecutionScreen.aliasPicker.subtitle')}
             </Text>

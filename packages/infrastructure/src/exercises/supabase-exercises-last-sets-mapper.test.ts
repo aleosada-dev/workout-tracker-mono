@@ -8,6 +8,7 @@ function row(overrides: Partial<LastSetsRpcRow>): LastSetsRpcRow {
     logical_key: 'normal-1',
     weight_kg: 100,
     reps: 10,
+    finished_at: '2026-06-01T00:00:00Z',
     last_used_alias_id: null,
     ...overrides,
   };
@@ -31,8 +32,8 @@ describe('toExerciseLastSets', () => {
     expect(variation.buckets).toHaveLength(1);
     expect(variation.buckets[0].aliasId).toBeNull();
     expect(variation.buckets[0].sets).toEqual([
-      { logicalKey: 'warmup-1', weightKg: 40, reps: 12 },
-      { logicalKey: 'normal-1', weightKg: 100, reps: 10 },
+      { logicalKey: 'warmup-1', weightKg: 40, reps: 12, finishedAt: '2026-06-01T00:00:00Z' },
+      { logicalKey: 'normal-1', weightKg: 100, reps: 10, finishedAt: '2026-06-01T00:00:00Z' },
     ]);
   });
 
@@ -48,7 +49,7 @@ describe('toExerciseLastSets', () => {
     expect(variation.lastUsedAliasId).toBe('a-2');
     expect(variation.buckets.map((b) => b.aliasId)).toEqual(['a-1', 'a-2', null]);
     expect(variation.buckets[1].sets).toEqual([
-      { logicalKey: 'normal-1', weightKg: 110, reps: 10 },
+      { logicalKey: 'normal-1', weightKg: 110, reps: 10, finishedAt: '2026-06-01T00:00:00Z' },
     ]);
   });
 
@@ -63,6 +64,7 @@ describe('toExerciseLastSets', () => {
       logicalKey: 'normal-1',
       weightKg: null,
       reps: null,
+      finishedAt: '2026-06-01T00:00:00Z',
     });
   });
 });

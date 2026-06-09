@@ -3038,7 +3038,7 @@ export type Database = {
         Returns: undefined
       }
       wt_get_exercise_history: {
-        Args: { p_user_id: string; p_variation_id: string; p_alias_id?: string }
+        Args: { p_alias_id?: string; p_user_id: string; p_variation_id: string }
         Returns: Json
       }
       wt_insert_workout_log: { Args: { payload: Json }; Returns: Json }
@@ -3046,6 +3046,7 @@ export type Database = {
         Args: { p_user_id: string; p_variation_ids: string[] }
         Returns: {
           alias_id: string
+          finished_at: string
           last_used_alias_id: string
           logical_key: string
           reps: number

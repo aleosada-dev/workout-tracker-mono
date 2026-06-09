@@ -26,6 +26,7 @@ const TOOLTIP_PAD_X = 8;
 const TOOLTIP_PAD_Y = 4;
 const TOOLTIP_OFFSET_Y = 12;
 const DOT_RADIUS = 5;
+const MARK_RADIUS = 4;
 
 export type ExerciseMetricChartProps = {
   metric: ExerciseMetricKey;
@@ -93,6 +94,19 @@ export function ExerciseMetricChart({ metric, points }: ExerciseMetricChartProps
               strokeWidth={2}
               curveType="linear"
             />
+            {/* Marca cada ponto — torna um dataset de ponto único visível (a linha
+                não desenha nada com um só ponto) e dá um alvo de toque para o valor. */}
+            {chartPoints.y.map((point) =>
+              point.y == null ? null : (
+                <Circle
+                  key={point.xValue}
+                  cx={point.x}
+                  cy={point.y}
+                  r={MARK_RADIUS}
+                  color={rgb(theme.chart1)}
+                />
+              ),
+            )}
             {isActive ? (
               <ActiveTooltip
                 xPos={state.x.position}

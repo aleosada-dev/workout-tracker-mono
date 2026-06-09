@@ -36,8 +36,13 @@ function templateSet(overrides: Partial<TemplateSet> & Pick<TemplateSet, 'id'>):
   };
 }
 
-function refSet(logicalKey: string, weightKg: number | null, reps: number | null): LastSetRef {
-  return { logicalKey, weightKg, reps };
+function refSet(
+  logicalKey: string,
+  weightKg: number | null,
+  reps: number | null,
+  finishedAt = '2026-06-01T00:00:00Z',
+): LastSetRef {
+  return { logicalKey, weightKg, reps, finishedAt };
 }
 
 function workout(variationId: string, sets: TemplateSet[]): GetWorkoutResponse {
@@ -201,7 +206,7 @@ describe('buildExecutionFromWorkout', () => {
     expect(result.exercises[0].sets[0].lastKg).toBe(90);
   });
 
-  test('ignores a last-used alias absent from the active list (deleted) and falls back to no-alias', () => {
+  test('ignores a last-used alias absent from the active list (deleted) and seeds the most recent across all buckets', () => {
     const result = buildExecutionFromWorkout(
       workout(VARIATION_A, [templateSet({ id: 's1' })]),
       [
@@ -209,17 +214,54 @@ describe('buildExecutionFromWorkout', () => {
           variationId: VARIATION_A,
           lastUsedAliasId: 'alias-deleted',
           buckets: [
-            { aliasId: null, sets: [refSet('normal-1', 50, 10)] },
-            { aliasId: 'alias-deleted', sets: [refSet('normal-1', 90, 6)] },
+            { aliasId: null, sets: [refSet('normal-1', 50, 10, '2026-05-20T00:00:00Z')] },
+            { aliasId: 'alias-deleted', sets: [refSet('normal-1', 90, 6, '2026-06-01T00:00:00Z')] },
           ],
         },
       ],
       [{ id: 'alias-1' }],
     );
 
+    // aliasId cai para null (alias deletado), mas o seed mescla todos os buckets
+    // pelo set mais recente por slot — igual ao "tudo junto" da tela de detalhes.
     expect(result.exercises[0].aliasId).toBeNull();
-    expect(result.exercises[0].sets[0].lastKg).toBe(50);
-    expect(result.exercises[0].sets[0].lastReps).toBe(10);
+    expect(result.exercises[0].sets[0].lastKg).toBe(90);
+    expect(result.exercises[0].sets[0].lastReps).toBe(6);
+  });
+
+  test('with no alias selected, merges the most recent set per logical slot across buckets', () => {
+    const result = buildExecutionFromWorkout(
+      workout(VARIATION_A, [
+        templateSet({ id: 's1', setType: 'normal', setOrder: 1 }),
+        templateSet({ id: 's2', setType: 'normal', setOrder: 2 }),
+      ]),
+      [
+        {
+          variationId: VARIATION_A,
+          lastUsedAliasId: null,
+          buckets: [
+            {
+              aliasId: 'alias-1',
+              sets: [
+                refSet('normal-1', 60, 12, '2026-06-05T00:00:00Z'),
+                refSet('normal-2', 55, 10, '2026-05-01T00:00:00Z'),
+              ],
+            },
+            {
+              aliasId: null,
+              sets: [
+                refSet('normal-1', 50, 10, '2026-05-10T00:00:00Z'),
+                refSet('normal-2', 70, 8, '2026-06-04T00:00:00Z'),
+              ],
+            },
+          ],
+        },
+      ],
+    );
+
+    const [first, second] = result.exercises[0].sets;
+    expect(first.lastKg).toBe(60); // normal-1 mais recente veio do alias-1
+    expect(second.lastKg).toBe(70); // normal-2 mais recente veio do bucket sem alias
   });
 
   test('defaults aliasId to null when the variation has no history', () => {

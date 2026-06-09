@@ -332,7 +332,11 @@ GRANT ALL ON FUNCTION "public"."wt_recalculate_variation_records"("p_user_id" "u
 -- wt_last_sets_by_variations: agora segmenta a última carga por (variação, alias)
 -- — incluindo o bucket alias NULL — e carrega o last_used_alias_id da variação
 -- (alias do log mais recente) para a pré-seleção na execução, num só round-trip.
--- A mudança de colunas exige DROP antes do CREATE.
+-- Também projeta o `finished_at` do log de origem de cada bucket, para que o
+-- cliente possa, quando nenhum alias está selecionado, mesclar todos os buckets
+-- pelo set mais recente por slot — espelhando o "tudo junto" da tela de detalhes
+-- (wt_get_exercise_history com p_alias_id NULL). A mudança de colunas exige DROP
+-- antes do CREATE.
 -- ----------------------------------------------------------------------------
 DROP FUNCTION IF EXISTS "public"."wt_last_sets_by_variations"("uuid", "uuid"[]);
 
@@ -346,6 +350,7 @@ RETURNS TABLE (
   logical_key text,
   weight_kg numeric,
   reps integer,
+  finished_at timestamptz,
   last_used_alias_id uuid
 )
 LANGUAGE sql
@@ -412,7 +417,7 @@ AS $$
   ),
   last_sets AS (
     SELECT DISTINCT ON (variation_id, alias_id, logical_key)
-      variation_id, alias_id, logical_key, weight_kg, reps
+      variation_id, alias_id, logical_key, weight_kg, reps, finished_at
     FROM with_key
     ORDER BY variation_id, alias_id, logical_key, finished_at DESC, workout_log_id DESC
   )
@@ -422,6 +427,7 @@ AS $$
     ls.logical_key,
     ls.weight_kg,
     ls.reps,
+    ls.finished_at,
     ll.last_used_alias_id
   FROM last_sets ls
   LEFT JOIN last_log ll ON ll.variation_id = ls.variation_id;
