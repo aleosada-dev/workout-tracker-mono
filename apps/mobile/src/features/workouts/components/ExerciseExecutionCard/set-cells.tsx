@@ -1,6 +1,6 @@
 import { Input, Text } from '@workout-tracker/ui-mobile';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
 import { formatTime, sanitizeDecimal, sanitizeInteger } from '@/features/shared/lib/utils';
 import { parseLocalizedNumber } from '@/features/shared/lib/utils/numeric-input';
@@ -54,17 +54,21 @@ export function DistanceInput({
   onChange,
   onBlur,
   invalid,
+  lastMeters: lastMetersValue = null,
   testID,
 }: {
   value: string;
   onChange: (meters: string) => void;
   onBlur: () => void;
   invalid: boolean;
+  lastMeters?: number | null;
   testID?: string;
 }) {
   const [unit, setUnit] = useState<DistanceUnit>('m');
   const [text, setText] = useState(() => metersToText(value, 'm'));
   const lastMeters = useRef(value);
+  const placeholder =
+    lastMetersValue != null ? metersToText(String(lastMetersValue), unit) : undefined;
 
   useEffect(() => {
     if (value !== lastMeters.current) {
@@ -103,6 +107,7 @@ export function DistanceInput({
         onBlur={onBlur}
         aria-invalid={invalid}
         className="h-8 flex-1 py-0 text-sm"
+        placeholder={placeholder}
         testID={testID}
       />
       <Pressable
@@ -132,6 +137,7 @@ export function DurationPickerCell({
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const lastDuration = useWatch({ control, name: `${basePath}.lastDuration` });
   const sheetRef = useRef<DurationPickerSheetRef>(null);
 
   return (
@@ -157,7 +163,7 @@ export function DurationPickerCell({
               }`}
             >
               <Text className={`text-sm ${hasValue ? 'text-foreground' : 'text-muted-foreground'}`}>
-                {formatTime(hasValue ? Number(field.value) : 0)}
+                {formatTime(hasValue ? Number(field.value) : (lastDuration ?? 0))}
               </Text>
             </Pressable>
           );

@@ -16,10 +16,19 @@ export type ExerciseNameParts = {
 
 /**
  * Equipment whose name adds nothing to the exercise label, so the display name
- * is just the exercise name (no preposition, no equipment): "Bodyweight" and
- * "Other".
+ * is just the exercise name (no preposition, no equipment): "Bodyweight",
+ * "Other", and the cardio machines used for duration/distance work (treadmill,
+ * stationary bike, rowing machine, elliptical, stair climber).
  */
-const NAME_ONLY_EQUIPMENT_SLUGS = new Set(['bodyweight', 'other']);
+const NAME_ONLY_EQUIPMENT_SLUGS = new Set([
+  'bodyweight',
+  'other',
+  'treadmill',
+  'stationaryBike',
+  'rowingMachine',
+  'elliptical',
+  'stairClimber',
+]);
 
 /**
  * Display name for an exercise variation.

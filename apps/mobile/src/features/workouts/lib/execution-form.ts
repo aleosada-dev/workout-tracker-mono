@@ -69,6 +69,8 @@ export const ExecutionSetSchema = z
     done: z.boolean(),
     lastKg: z.number().nonnegative().nullable().optional(),
     lastReps: z.int().positive().nullable().optional(),
+    lastDuration: z.int().positive().nullable().optional(),
+    lastDistance: z.int().positive().nullable().optional(),
     linkedSetId: z.string().nullable().optional(),
     loadPercent: z.int().nonnegative().nullable().optional(),
     loadPercentOfPrevious: z.int().nonnegative().nullable().optional(),
@@ -177,7 +179,12 @@ function mergeMostRecentByLogicalKey(
   return Array.from(best.values());
 }
 
-type LastValues = { lastKg: number | null; lastReps: number | null };
+type LastValues = {
+  lastKg: number | null;
+  lastReps: number | null;
+  lastDuration: number | null;
+  lastDistance: number | null;
+};
 type TargetValues = {
   repsMin: number | null;
   repsMax: number | null;
@@ -212,7 +219,12 @@ export function matchExecutionSetsByLogicalKey(
   reference: LastSetsExerciseSets | undefined,
 ): LastValues[] {
   if (!reference || reference.length === 0) {
-    return sets.map(() => ({ lastKg: null, lastReps: null }));
+    return sets.map(() => ({
+      lastKg: null,
+      lastReps: null,
+      lastDuration: null,
+      lastDistance: null,
+    }));
   }
   const keyed = assignLogicalKeys(
     sets.map((set, index) => ({ setType: set.type, setOrder: index })),
@@ -220,7 +232,12 @@ export function matchExecutionSetsByLogicalKey(
   const byKey = new Map(reference.map((ref) => [ref.logicalKey, ref]));
   return keyed.map((k) => {
     const ref = byKey.get(k.logicalKey);
-    return { lastKg: ref?.weightKg ?? null, lastReps: ref?.reps ?? null };
+    return {
+      lastKg: ref?.weightKg ?? null,
+      lastReps: ref?.reps ?? null,
+      lastDuration: ref?.durationSeconds ?? null,
+      lastDistance: ref?.distanceMeters ?? null,
+    };
   });
 }
 
@@ -366,6 +383,8 @@ export function buildExecutionFromWorkout(
         done: false,
         lastKg: null,
         lastReps: null,
+        lastDuration: null,
+        lastDistance: null,
         linkedSetId: set.linkedSetId,
         loadPercent: set.loadPercent,
         loadPercentOfPrevious: set.loadPercentOfPrevious,

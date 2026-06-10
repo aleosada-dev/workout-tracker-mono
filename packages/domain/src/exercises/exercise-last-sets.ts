@@ -11,6 +11,8 @@ export type ExerciseLastSet = {
   logicalKey: string;
   weightKg: number | null;
   reps: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
   /** `finished_at` do log de origem; permite mesclar buckets pelo set mais recente por slot. */
   finishedAt: string;
 };

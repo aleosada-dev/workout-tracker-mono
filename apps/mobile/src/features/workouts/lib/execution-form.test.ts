@@ -46,8 +46,9 @@ function refSet(
   weightKg: number | null,
   reps: number | null,
   finishedAt = '2026-06-01T00:00:00Z',
+  { durationSeconds = null, distanceMeters = null }: Partial<LastSetRef> = {},
 ): LastSetRef {
-  return { logicalKey, weightKg, reps, finishedAt };
+  return { logicalKey, weightKg, reps, durationSeconds, distanceMeters, finishedAt };
 }
 
 function workout(
@@ -326,7 +327,9 @@ describe('matchExecutionSetsByLogicalKey', () => {
   test('returns nulls when there are no reference sets', () => {
     const result = matchExecutionSetsByLogicalKey([execSet('s1', 'normal')], undefined);
 
-    expect(result).toEqual([{ lastKg: null, lastReps: null }]);
+    expect(result).toEqual([
+      { lastKg: null, lastReps: null, lastDuration: null, lastDistance: null },
+    ]);
   });
 
   test('matches existing slots and leaves an added set null', () => {
@@ -338,9 +341,9 @@ describe('matchExecutionSetsByLogicalKey', () => {
     );
 
     expect(afterAdd).toEqual([
-      { lastKg: 60, lastReps: 10 },
-      { lastKg: 65, lastReps: 8 },
-      { lastKg: null, lastReps: null },
+      { lastKg: 60, lastReps: 10, lastDuration: null, lastDistance: null },
+      { lastKg: 65, lastReps: 8, lastDuration: null, lastDistance: null },
+      { lastKg: null, lastReps: null, lastDuration: null, lastDistance: null },
     ]);
   });
 
@@ -349,7 +352,9 @@ describe('matchExecutionSetsByLogicalKey', () => {
 
     const afterRemove = matchExecutionSetsByLogicalKey([execSet('s1', 'normal')], reference);
 
-    expect(afterRemove).toEqual([{ lastKg: 60, lastReps: 10 }]);
+    expect(afterRemove).toEqual([
+      { lastKg: 60, lastReps: 10, lastDuration: null, lastDistance: null },
+    ]);
   });
 
   test('re-matches when a set type changes', () => {
@@ -361,8 +366,8 @@ describe('matchExecutionSetsByLogicalKey', () => {
     );
 
     expect(afterRetype).toEqual([
-      { lastKg: null, lastReps: null },
-      { lastKg: 60, lastReps: 10 },
+      { lastKg: null, lastReps: null, lastDuration: null, lastDistance: null },
+      { lastKg: 60, lastReps: 10, lastDuration: null, lastDistance: null },
     ]);
   });
 
@@ -381,9 +386,24 @@ describe('matchExecutionSetsByLogicalKey', () => {
     );
 
     expect(result).toEqual([
-      { lastKg: 20, lastReps: 15 },
-      { lastKg: 80, lastReps: 8 },
-      { lastKg: 75, lastReps: 6 },
+      { lastKg: 20, lastReps: 15, lastDuration: null, lastDistance: null },
+      { lastKg: 80, lastReps: 8, lastDuration: null, lastDistance: null },
+      { lastKg: 75, lastReps: 6, lastDuration: null, lastDistance: null },
+    ]);
+  });
+
+  test('seeds lastDuration and lastDistance from the matched slot', () => {
+    const reference = [
+      refSet('normal-1', null, null, '2026-06-01T00:00:00Z', {
+        durationSeconds: 90,
+        distanceMeters: 5000,
+      }),
+    ];
+
+    const result = matchExecutionSetsByLogicalKey([execSet('s1', 'normal')], reference);
+
+    expect(result).toEqual([
+      { lastKg: null, lastReps: null, lastDuration: 90, lastDistance: 5000 },
     ]);
   });
 });

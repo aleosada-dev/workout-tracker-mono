@@ -525,6 +525,20 @@ function SupersetSetRow({
           if (reps != null) {
             setValue(`${base}.reps`, reps, { shouldDirty: true, shouldValidate: true });
           }
+          const duration = autofillFromLast(
+            getValues(`${base}.duration`),
+            getValues(`${base}.durationTarget`),
+          );
+          if (duration != null) {
+            setValue(`${base}.duration`, duration, { shouldDirty: true, shouldValidate: true });
+          }
+          const distance = autofillFromLast(
+            getValues(`${base}.distance`),
+            getValues(`${base}.distanceTarget`),
+          );
+          if (distance != null) {
+            setValue(`${base}.distance`, distance, { shouldDirty: true, shouldValidate: true });
+          }
         }
         setValue(`${base}.done`, next, { shouldDirty: true, shouldValidate: true });
       }

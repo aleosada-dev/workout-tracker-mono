@@ -190,6 +190,7 @@ export function DurationSetRow({
   const { control, setValue } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const durationTarget = useWatch({ control, name: `${basePath}.durationTarget` });
+  const lastDuration = useWatch({ control, name: `${basePath}.lastDuration` });
   const target = durationTarget ?? 0;
   const hasTarget = target > 0;
   const durationSheetRef = useRef<DurationPickerSheetRef>(null);
@@ -236,7 +237,11 @@ export function DurationSetRow({
           name={`${basePath}.duration`}
           render={({ field, fieldState }) => {
             const hasValue = field.value !== '';
-            const displaySeconds = running ? liveSeconds : hasValue ? Number(field.value) : 0;
+            const displaySeconds = running
+              ? liveSeconds
+              : hasValue
+                ? Number(field.value)
+                : (lastDuration ?? 0);
             return (
               <Pressable
                 onPress={() =>
@@ -283,6 +288,7 @@ export function DistanceSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyPr
   const { control } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const distanceTarget = useWatch({ control, name: `${basePath}.distanceTarget` });
+  const lastDistance = useWatch({ control, name: `${basePath}.lastDistance` });
   const hasTarget = distanceTarget != null && distanceTarget > 0;
 
   return (
@@ -297,6 +303,7 @@ export function DistanceSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyPr
             onChange={field.onChange}
             onBlur={field.onBlur}
             invalid={fieldState.invalid}
+            lastMeters={lastDistance ?? null}
             testID={`workout-execution.set-${setIndex}.distance`}
           />
         )}

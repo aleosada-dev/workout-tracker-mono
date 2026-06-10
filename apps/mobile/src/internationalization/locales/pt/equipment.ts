@@ -11,4 +11,9 @@ export default {
   suspensionTrainer: 'Suspensão',
   other: 'Outro',
   ezCurlBar: 'Barra W',
+  treadmill: 'Esteira',
+  stationaryBike: 'Bicicleta Ergométrica',
+  rowingMachine: 'Remador',
+  elliptical: 'Elíptico',
+  stairClimber: 'Escada',
 };

@@ -41,6 +41,8 @@ export function applySessionLocation(locationId: string | null, form: SessionLoc
     ).forEach((last, setIndex) => {
       form.setValue(`exercises.${exerciseIndex}.sets.${setIndex}.lastKg`, last.lastKg);
       form.setValue(`exercises.${exerciseIndex}.sets.${setIndex}.lastReps`, last.lastReps);
+      form.setValue(`exercises.${exerciseIndex}.sets.${setIndex}.lastDuration`, last.lastDuration);
+      form.setValue(`exercises.${exerciseIndex}.sets.${setIndex}.lastDistance`, last.lastDistance);
     });
   });
 }

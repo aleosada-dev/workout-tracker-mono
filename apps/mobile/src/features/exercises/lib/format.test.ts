@@ -135,6 +135,26 @@ describe('composeExerciseName', () => {
         ),
       ).toBe('Plank');
     });
+
+    test.each([
+      'treadmill',
+      'stationaryBike',
+      'rowingMachine',
+      'elliptical',
+      'stairClimber',
+    ])('pt: cardio equipment %s uses just the exercise name', (equipmentSlug) => {
+      expect(
+        composeExerciseName(
+          {
+            exerciseName: 'Corrida',
+            equipmentName: 'Esteira',
+            equipmentPreposition: 'na',
+            equipmentSlug,
+          },
+          'pt',
+        ),
+      ).toBe('Corrida');
+    });
   });
 });
 

@@ -8,6 +8,8 @@ function row(overrides: Partial<LastSetsRpcRow>): LastSetsRpcRow {
     logical_key: 'normal-1',
     weight_kg: 100,
     reps: 10,
+    duration_seconds: null,
+    distance_meters: null,
     finished_at: '2026-06-01T00:00:00Z',
     last_used_alias_id: null,
     ...overrides,
@@ -32,8 +34,22 @@ describe('toExerciseLastSets', () => {
     expect(variation.buckets).toHaveLength(1);
     expect(variation.buckets[0].aliasId).toBeNull();
     expect(variation.buckets[0].sets).toEqual([
-      { logicalKey: 'warmup-1', weightKg: 40, reps: 12, finishedAt: '2026-06-01T00:00:00Z' },
-      { logicalKey: 'normal-1', weightKg: 100, reps: 10, finishedAt: '2026-06-01T00:00:00Z' },
+      {
+        logicalKey: 'warmup-1',
+        weightKg: 40,
+        reps: 12,
+        durationSeconds: null,
+        distanceMeters: null,
+        finishedAt: '2026-06-01T00:00:00Z',
+      },
+      {
+        logicalKey: 'normal-1',
+        weightKg: 100,
+        reps: 10,
+        durationSeconds: null,
+        distanceMeters: null,
+        finishedAt: '2026-06-01T00:00:00Z',
+      },
     ]);
   });
 
@@ -49,7 +65,14 @@ describe('toExerciseLastSets', () => {
     expect(variation.lastUsedAliasId).toBe('a-2');
     expect(variation.buckets.map((b) => b.aliasId)).toEqual(['a-1', 'a-2', null]);
     expect(variation.buckets[1].sets).toEqual([
-      { logicalKey: 'normal-1', weightKg: 110, reps: 10, finishedAt: '2026-06-01T00:00:00Z' },
+      {
+        logicalKey: 'normal-1',
+        weightKg: 110,
+        reps: 10,
+        durationSeconds: null,
+        distanceMeters: null,
+        finishedAt: '2026-06-01T00:00:00Z',
+      },
     ]);
   });
 
@@ -64,6 +87,29 @@ describe('toExerciseLastSets', () => {
       logicalKey: 'normal-1',
       weightKg: null,
       reps: null,
+      durationSeconds: null,
+      distanceMeters: null,
+      finishedAt: '2026-06-01T00:00:00Z',
+    });
+  });
+
+  test('carries duration and distance through', () => {
+    const result = toExerciseLastSets([
+      row({
+        logical_key: 'normal-1',
+        weight_kg: null,
+        reps: null,
+        duration_seconds: 90,
+        distance_meters: 5000,
+      }),
+    ]);
+
+    expect(result[0].buckets[0].sets[0]).toEqual({
+      logicalKey: 'normal-1',
+      weightKg: null,
+      reps: null,
+      durationSeconds: 90,
+      distanceMeters: 5000,
       finishedAt: '2026-06-01T00:00:00Z',
     });
   });

@@ -3033,6 +3033,8 @@ export type Database = {
         Args: { p_user_id: string; p_variation_ids: string[] }
         Returns: {
           alias_id: string
+          distance_meters: number
+          duration_seconds: number
           finished_at: string
           last_used_alias_id: string
           logical_key: string

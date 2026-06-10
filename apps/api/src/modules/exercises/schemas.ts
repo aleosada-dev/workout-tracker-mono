@@ -301,6 +301,8 @@ const ExerciseLastSetSchema = z.object({
 	logicalKey: z.string(),
 	weightKg: z.number().nullable(),
 	reps: z.number().int().nullable(),
+	durationSeconds: z.number().int().nullable(),
+	distanceMeters: z.number().int().nullable(),
 	finishedAt: z.string(),
 });
 

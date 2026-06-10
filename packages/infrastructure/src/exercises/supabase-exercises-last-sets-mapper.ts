@@ -10,6 +10,8 @@ export type LastSetsRpcRow = {
   logical_key: string;
   weight_kg: number | null;
   reps: number | null;
+  duration_seconds: number | null;
+  distance_meters: number | null;
   finished_at: string;
   last_used_alias_id: string | null;
 };
@@ -53,6 +55,8 @@ export function toExerciseLastSets(rows: LastSetsRpcRow[]): ExerciseLastSets[] {
       logicalKey: row.logical_key,
       weightKg: row.weight_kg ?? null,
       reps: row.reps ?? null,
+      durationSeconds: row.duration_seconds ?? null,
+      distanceMeters: row.distance_meters ?? null,
       finishedAt: row.finished_at,
     });
   }
