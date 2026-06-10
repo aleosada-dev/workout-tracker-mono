@@ -1,3 +1,4 @@
+import type { ExerciseMeasurementType } from '../exercises/models';
 import type { WorkoutSetType } from '../set/sets';
 
 export type WorkoutLogLastSet = {
@@ -5,12 +6,15 @@ export type WorkoutLogLastSet = {
   setType: WorkoutSetType;
   weightKg: number | null;
   reps: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
 };
 
 export type WorkoutLogLastExercise = {
   variationId: string | null;
   exerciseName: string | null;
   variationName: string | null;
+  measurementType: ExerciseMeasurementType;
   position: number;
   supersetGroupId: string | null;
   sets: WorkoutLogLastSet[];

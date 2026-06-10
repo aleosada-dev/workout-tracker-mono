@@ -1,5 +1,5 @@
-import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
-import { Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
+import { Icon, Text } from '@workout-tracker/ui-mobile';
+import { Clock, Weight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
@@ -26,47 +26,23 @@ export function WorkoutExecutionSummaryStats({
   const { totalVolumeKg } = summarizeExecution(execution, includeWarmup);
 
   return (
-    <View className="flex-row gap-3 px-4 pt-4">
-      <StatCard
-        icon={Clock}
-        label={t('workoutExecutionSummaryScreen.stats.totalTime')}
-        value={formatTotalTime(durationSeconds)}
+    <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1 px-4 pt-4">
+      <Pressable
+        className="flex-row items-center gap-1.5"
         onPress={onEditDuration}
-      />
-      <StatCard
-        icon={Dumbbell}
-        label={t('workoutExecutionSummaryScreen.stats.totalVolume')}
-        value={formatWeight(totalVolumeKg, i18n.language)}
-      />
+        accessibilityRole="button"
+        accessibilityLabel={t('workoutExecutionSummaryScreen.stats.totalTime')}
+      >
+        <Icon as={Clock} size={18} className="text-muted-foreground" />
+        <Text variant="muted">{t('workoutExecutionSummaryScreen.stats.totalTime')}</Text>
+        <Text className="font-sans-semibold underline">{formatTotalTime(durationSeconds)}</Text>
+      </Pressable>
+      <Text variant="muted">·</Text>
+      <View className="flex-row items-center gap-1.5">
+        <Icon as={Weight} size={18} className="text-muted-foreground" />
+        <Text variant="muted">{t('workoutExecutionSummaryScreen.stats.totalVolume')}</Text>
+        <Text className="font-sans-semibold">{formatWeight(totalVolumeKg, i18n.language)}</Text>
+      </View>
     </View>
-  );
-}
-
-type StatCardProps = {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  onPress?: () => void;
-};
-
-function StatCard({ icon, label, value, onPress }: StatCardProps) {
-  const content = (
-    <Card className="flex-1 items-center gap-3 px-1 py-4">
-      <Icon as={icon} size={18} className="text-muted-foreground" />
-      <Text variant="muted" className="flex-1 text-center">
-        {label}
-      </Text>
-      <Text variant="large" className={onPress ? 'underline' : undefined}>
-        {value}
-      </Text>
-    </Card>
-  );
-
-  if (!onPress) return content;
-
-  return (
-    <Pressable className="flex-1" onPress={onPress} accessibilityRole="button">
-      {content}
-    </Pressable>
   );
 }

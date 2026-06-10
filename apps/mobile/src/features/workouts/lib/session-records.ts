@@ -23,6 +23,8 @@ type SessionMetrics = {
   sets: number;
   maxDuration: number | null;
   maxDistance: number | null;
+  totalDuration: number | null;
+  totalDistance: number | null;
 };
 
 type AggregatedExercise = {
@@ -51,6 +53,8 @@ function aggregateByVariation(
           sets: 0,
           maxDuration: null,
           maxDistance: null,
+          totalDuration: null,
+          totalDistance: null,
         },
       };
       byVariation.set(variationId, entry);
@@ -70,12 +74,14 @@ function aggregateByVariation(
           metrics.maxDuration ?? set.durationSeconds,
           set.durationSeconds,
         );
+        metrics.totalDuration = (metrics.totalDuration ?? 0) + set.durationSeconds;
       }
       if (set.distanceMeters !== null) {
         metrics.maxDistance = Math.max(
           metrics.maxDistance ?? set.distanceMeters,
           set.distanceMeters,
         );
+        metrics.totalDistance = (metrics.totalDistance ?? 0) + set.distanceMeters;
       }
       metrics.volume += setVolume({ weight: set.weightKg, reps: set.reps });
       metrics.sets += 1;
@@ -92,6 +98,8 @@ const METRIC_VALUE: Record<ExerciseMetricKey, (m: SessionMetrics) => number | nu
   sets: (m) => m.sets,
   maxDuration: (m) => m.maxDuration,
   maxDistance: (m) => m.maxDistance,
+  totalDuration: (m) => m.totalDuration,
+  totalDistance: (m) => m.totalDistance,
 };
 
 const PREVIOUS_VALUE: Record<
@@ -104,6 +112,8 @@ const PREVIOUS_VALUE: Record<
   sets: (r) => r.maxSets,
   maxDuration: (r) => r.maxDurationSeconds,
   maxDistance: (r) => r.maxDistanceMeters,
+  totalDuration: (r) => r.maxTotalDurationSeconds,
+  totalDistance: (r) => r.maxTotalDistanceMeters,
 };
 
 export function buildSessionRecords(

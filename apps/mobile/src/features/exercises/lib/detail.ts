@@ -42,7 +42,9 @@ const RECORD_VALUE: Record<
   maxReps: (r) => r.maxReps,
   sets: (r) => r.maxSets,
   maxDuration: (r) => r.maxDurationSeconds,
+  totalDuration: (r) => r.maxTotalDurationSeconds,
   maxDistance: (r) => r.maxDistanceMeters,
+  totalDistance: (r) => r.maxTotalDistanceMeters,
 };
 
 const SERIES_VALUE: Record<
@@ -54,7 +56,9 @@ const SERIES_VALUE: Record<
   maxReps: (s) => s.maxReps,
   sets: (s) => s.totalSets,
   maxDuration: (s) => s.maxDurationSeconds,
+  totalDuration: (s) => s.totalDurationSeconds,
   maxDistance: (s) => s.maxDistanceMeters,
+  totalDistance: (s) => s.totalDistanceMeters,
 };
 
 function toPersonalRecords(

@@ -191,6 +191,11 @@ describe('formatMetricValue', () => {
     expect(formatMetricValue('maxReps', 12, 'en')).toBe('12');
     expect(formatMetricValue('sets', 3, 'en')).toBe('3');
   });
+
+  test('formats volume in kg below 1 tonne and switches to t at or above', () => {
+    expect(formatMetricValue('volume', 696, 'en')).toBe('696 kg');
+    expect(formatMetricValue('volume', 2100, 'en')).toBe('2.1 t');
+  });
 });
 
 describe('toExercise', () => {

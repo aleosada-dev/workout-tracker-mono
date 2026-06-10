@@ -21,6 +21,8 @@ export default {
     sets: 'Séries',
     maxDuration: 'Tempo max',
     maxDistance: 'Distância max',
+    totalDuration: 'Tempo total',
+    totalDistance: 'Distância total',
   },
   muscles: {
     primary: 'Principal',

@@ -8,7 +8,7 @@ export default {
   stats: {
     totalTime: 'Duração',
     completedSets: 'Séries',
-    totalVolume: 'Volume',
+    totalVolume: 'Volume total',
   },
   durationEdit: {
     title: 'Ajustar duração',
@@ -33,12 +33,14 @@ export default {
   records: {
     title: 'Recordes da sessão',
     metrics: {
-      maxWeight: 'Maior peso',
-      volume: 'Maior volume',
-      maxReps: 'Mais repetições',
-      sets: 'Mais séries',
-      maxDuration: 'Maior tempo',
-      maxDistance: 'Maior distância',
+      maxWeight: 'Maior peso por série',
+      volume: 'Volume total',
+      maxReps: 'Mais repetições por série',
+      sets: 'Total de séries',
+      maxDuration: 'Maior tempo por série',
+      maxDistance: 'Maior distância por série',
+      totalDuration: 'Tempo total',
+      totalDistance: 'Distância total',
     },
   },
   comparison: {
@@ -46,7 +48,13 @@ export default {
     basedOn: 'Baseado no treino anterior de {{date}}.',
     noPrevious: 'Ainda não existe uma sessão anterior deste mesmo treino para comparação.',
     series: 'Séries:',
+    reps: 'Repetições:',
     volume: 'Volume:',
+    metrics: {
+      volume: 'Volume:',
+      totalDuration: 'Tempo:',
+      totalDistance: 'Distância:',
+    },
     previousSuffix: 'ant.',
     setsUnit_one: 'sér.',
     setsUnit_other: 'sér.',

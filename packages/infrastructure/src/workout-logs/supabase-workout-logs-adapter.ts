@@ -23,8 +23,8 @@ const LAST_SELECT = `
     superset_group_id,
     exercise_name,
     variation_name,
-    variation:variations_view(name, exercise_name),
-    workout_exercise_set_logs(set_order, set_type, weight_kg, reps)
+    variation:variations_view(name, exercise_name, measurement_type),
+    workout_exercise_set_logs(set_order, set_type, weight_kg, reps, duration_seconds, distance_meters)
   )
 ` as const;
 

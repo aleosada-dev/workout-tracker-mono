@@ -66,6 +66,8 @@ function record(
     maxSets: null,
     maxDurationSeconds: null,
     maxDistanceMeters: null,
+    maxTotalDurationSeconds: null,
+    maxTotalDistanceMeters: null,
     ...overrides,
   };
 }
@@ -229,7 +231,7 @@ describe('buildSessionRecords', () => {
     ]);
   });
 
-  test('tracks maxDuration and sets (not weight/volume) for a duration exercise', () => {
+  test('tracks max/total duration and sets (not weight/volume) for a duration exercise', () => {
     const result = buildSessionRecords(
       execution([
         completedExercise(
@@ -257,6 +259,7 @@ describe('buildSessionRecords', () => {
 
     expect(result[0].records).toEqual([
       { metric: 'maxDuration', previous: 0, current: 90 },
+      { metric: 'totalDuration', previous: 0, current: 150 },
       { metric: 'sets', previous: 0, current: 2 },
     ]);
   });
@@ -280,14 +283,28 @@ describe('buildSessionRecords', () => {
 
     const beaten = buildSessionRecords(
       execution([distanceExercise]),
-      [record({ variationId: 'run', maxDistanceMeters: 4200, maxSets: 5 })],
+      [
+        record({
+          variationId: 'run',
+          maxDistanceMeters: 4200,
+          maxSets: 5,
+          maxTotalDistanceMeters: 9000,
+        }),
+      ],
       false,
     );
     expect(beaten[0].records).toEqual([{ metric: 'maxDistance', previous: 4200, current: 5000 }]);
 
     const notBeaten = buildSessionRecords(
       execution([distanceExercise]),
-      [record({ variationId: 'run', maxDistanceMeters: 6000, maxSets: 5 })],
+      [
+        record({
+          variationId: 'run',
+          maxDistanceMeters: 6000,
+          maxSets: 5,
+          maxTotalDistanceMeters: 9000,
+        }),
+      ],
       false,
     );
     expect(notBeaten).toEqual([]);

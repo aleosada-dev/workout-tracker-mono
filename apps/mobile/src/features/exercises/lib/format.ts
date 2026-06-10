@@ -3,7 +3,7 @@ import type {
   ListExercisesResponseExercise,
   ListExercisesResponseVariation,
 } from '@/features/exercises/api/exercises';
-import { formatTime } from '@/features/shared/lib/utils';
+import { formatTime, formatWeight } from '@/features/shared/lib/utils';
 import { EXERCISE_METRIC_UNIT, type ExerciseMetricKey, type PersonalRecord } from './detail-types';
 import type { ExerciseListItem } from './list.types';
 
@@ -138,6 +138,7 @@ export function formatMetricValue(
   value: number,
   language: string,
 ): string {
+  if (metric === 'volume') return formatWeight(value, language);
   switch (EXERCISE_METRIC_UNIT[metric]) {
     case 'kg':
       return formatKg(value, language, { min: 2, max: 2 });

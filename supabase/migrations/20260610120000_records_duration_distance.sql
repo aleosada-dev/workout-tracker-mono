@@ -4,16 +4,21 @@
 -- de duração (prancha, cardio por tempo) e distância (corrida, bike, natação)
 -- agora geram recorde e aparecem corretamente no summary e no detalhe.
 --
--- Modelo (espelha max_weight_kg = melhor set único):
---   max_duration_seconds = MAX(duration_seconds) do melhor set, entre sessões.
---   max_distance_meters  = MAX(distance_meters)  do melhor set, entre sessões.
--- "Maior = melhor" para ambos. Colunas nulas surgem naturalmente onde a
+-- Modelo:
+--   max_duration_seconds       = MAX(duration_seconds) do melhor set, entre sessões.
+--   max_distance_meters        = MAX(distance_meters)  do melhor set, entre sessões.
+--   max_total_duration_seconds = MAX da SOMA de duração por sessão (análogo a
+--                                max_volume_kg: o "volume de tempo" da melhor sessão).
+--   max_total_distance_meters  = MAX da SOMA de distância por sessão.
+-- "Maior = melhor" para todos. Colunas nulas surgem naturalmente onde a
 -- dimensão não existe, sem ramificar por measurement_type.
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE "public"."workout_variation_records"
   ADD COLUMN IF NOT EXISTS "max_duration_seconds" integer,
-  ADD COLUMN IF NOT EXISTS "max_distance_meters" integer;
+  ADD COLUMN IF NOT EXISTS "max_distance_meters" integer,
+  ADD COLUMN IF NOT EXISTS "max_total_duration_seconds" integer,
+  ADD COLUMN IF NOT EXISTS "max_total_distance_meters" integer;
 
 -- ----------------------------------------------------------------------------
 -- wt_recalculate_variation_records: mesma agregação por sessão de antes, agora
@@ -40,7 +45,8 @@ BEGIN
   INSERT INTO public.workout_variation_records (
     user_id, variation_id, alias_id,
     max_weight_kg, max_volume_kg, max_reps, max_sets,
-    max_duration_seconds, max_distance_meters
+    max_duration_seconds, max_distance_meters,
+    max_total_duration_seconds, max_total_distance_meters
   )
   SELECT
     p_user_id,
@@ -51,7 +57,9 @@ BEGIN
     MAX(session_max_reps),
     MAX(session_sets_count),
     MAX(session_max_duration_seconds),
-    MAX(session_max_distance_meters)
+    MAX(session_max_distance_meters),
+    MAX(session_total_duration_seconds),
+    MAX(session_total_distance_meters)
   FROM (
     SELECT
       wel.variation_id,
@@ -60,7 +68,9 @@ BEGIN
       MAX(wesl.reps) AS session_max_reps,
       COUNT(*)::INTEGER AS session_sets_count,
       MAX(wesl.duration_seconds) AS session_max_duration_seconds,
-      MAX(wesl.distance_meters) AS session_max_distance_meters
+      MAX(wesl.distance_meters) AS session_max_distance_meters,
+      SUM(wesl.duration_seconds) AS session_total_duration_seconds,
+      SUM(wesl.distance_meters) AS session_total_distance_meters
     FROM workout_logs wl
     JOIN workout_exercise_logs wel ON wel.workout_log_id = wl.id
     JOIN workout_exercise_set_logs wesl ON wesl.workout_exercise_log_id = wel.id
@@ -77,7 +87,8 @@ BEGIN
   INSERT INTO public.workout_variation_records (
     user_id, variation_id, alias_id,
     max_weight_kg, max_volume_kg, max_reps, max_sets,
-    max_duration_seconds, max_distance_meters
+    max_duration_seconds, max_distance_meters,
+    max_total_duration_seconds, max_total_distance_meters
   )
   SELECT
     p_user_id,
@@ -88,7 +99,9 @@ BEGIN
     MAX(session_max_reps),
     MAX(session_sets_count),
     MAX(session_max_duration_seconds),
-    MAX(session_max_distance_meters)
+    MAX(session_max_distance_meters),
+    MAX(session_total_duration_seconds),
+    MAX(session_total_distance_meters)
   FROM (
     SELECT
       wel.variation_id,
@@ -98,7 +111,9 @@ BEGIN
       MAX(wesl.reps) AS session_max_reps,
       COUNT(*)::INTEGER AS session_sets_count,
       MAX(wesl.duration_seconds) AS session_max_duration_seconds,
-      MAX(wesl.distance_meters) AS session_max_distance_meters
+      MAX(wesl.distance_meters) AS session_max_distance_meters,
+      SUM(wesl.duration_seconds) AS session_total_duration_seconds,
+      SUM(wesl.distance_meters) AS session_total_distance_meters
     FROM workout_logs wl
     JOIN workout_exercise_logs wel ON wel.workout_log_id = wl.id
     JOIN workout_exercise_set_logs wesl ON wesl.workout_exercise_log_id = wel.id
@@ -183,6 +198,8 @@ BEGIN
         'total_sets', COUNT(*) FILTER (WHERE wesl.set_type <> 'warmup')::integer,
         'max_duration_seconds', MAX(wesl.duration_seconds) FILTER (WHERE wesl.set_type <> 'warmup'),
         'max_distance_meters', MAX(wesl.distance_meters) FILTER (WHERE wesl.set_type <> 'warmup'),
+        'total_duration_seconds', SUM(wesl.duration_seconds) FILTER (WHERE wesl.set_type <> 'warmup'),
+        'total_distance_meters', SUM(wesl.distance_meters) FILTER (WHERE wesl.set_type <> 'warmup'),
         'sets', jsonb_agg(
           jsonb_build_object(
             'set_order', wesl.set_order,
@@ -224,7 +241,9 @@ BEGIN
           'max_reps', wvr.max_reps,
           'max_sets', wvr.max_sets,
           'max_duration_seconds', wvr.max_duration_seconds,
-          'max_distance_meters', wvr.max_distance_meters
+          'max_distance_meters', wvr.max_distance_meters,
+          'max_total_duration_seconds', wvr.max_total_duration_seconds,
+          'max_total_distance_meters', wvr.max_total_distance_meters
         )
         FROM public.workout_variation_records wvr
         WHERE wvr.user_id = p_user_id
@@ -237,7 +256,9 @@ BEGIN
         'max_reps', NULL,
         'max_sets', NULL,
         'max_duration_seconds', NULL,
-        'max_distance_meters', NULL
+        'max_distance_meters', NULL,
+        'max_total_duration_seconds', NULL,
+        'max_total_distance_meters', NULL
       )
     )
   )

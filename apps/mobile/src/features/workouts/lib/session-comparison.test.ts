@@ -64,6 +64,8 @@ function lastSet(overrides: Partial<LastLogSet> = {}): LastLogSet {
     setType: 'normal',
     weightKg: null,
     reps: null,
+    durationSeconds: null,
+    distanceMeters: null,
     logicalKey: 'normal-1',
     ...overrides,
   };
@@ -77,6 +79,7 @@ function lastExercise(
     variationId: 'var-1',
     exerciseName: 'Supino',
     variationName: 'Inclinado',
+    measurementType: 'weight_reps',
     position: 0,
     supersetGroupId: null,
     sets,
@@ -112,9 +115,9 @@ describe('buildSessionComparison', () => {
     const current = result?.exercises[0];
     expect(current?.status).toBe('new');
     expect(current?.previousSets).toBeNull();
-    expect(current?.previousVolumeKg).toBeNull();
+    expect(current?.previousPrimary).toBeNull();
     expect(current?.currentSets).toBe(1);
-    expect(current?.currentVolumeKg).toBe(100);
+    expect(current?.currentPrimary).toBe(100);
   });
 
   test('marks an exercise absent from the previous log as new', () => {
@@ -127,9 +130,9 @@ describe('buildSessionComparison', () => {
     const current = result?.exercises.find((e) => e.variationId === 'var-1');
     expect(current?.status).toBe('new');
     expect(current?.previousSets).toBeNull();
-    expect(current?.previousVolumeKg).toBeNull();
+    expect(current?.previousPrimary).toBeNull();
     expect(current?.currentSets).toBe(1);
-    expect(current?.currentVolumeKg).toBe(200);
+    expect(current?.currentPrimary).toBe(200);
   });
 
   test('marks an exercise present in both as kept with current and previous metrics', () => {
@@ -148,8 +151,10 @@ describe('buildSessionComparison', () => {
     expect(kept?.status).toBe('kept');
     expect(kept?.currentSets).toBe(2);
     expect(kept?.previousSets).toBe(1);
-    expect(kept?.currentVolumeKg).toBe(1000);
-    expect(kept?.previousVolumeKg).toBe(400);
+    expect(kept?.currentReps).toBe(20);
+    expect(kept?.previousReps).toBe(10);
+    expect(kept?.currentPrimary).toBe(1000);
+    expect(kept?.previousPrimary).toBe(400);
   });
 
   test('marks an exercise only present in the previous log as removed', () => {
@@ -162,9 +167,9 @@ describe('buildSessionComparison', () => {
     const removed = result?.exercises[0];
     expect(removed?.status).toBe('removed');
     expect(removed?.currentSets).toBe(0);
-    expect(removed?.currentVolumeKg).toBe(0);
+    expect(removed?.currentPrimary).toBe(0);
     expect(removed?.previousSets).toBe(1);
-    expect(removed?.previousVolumeKg).toBe(400);
+    expect(removed?.previousPrimary).toBe(400);
   });
 
   test('excludes warmup sets unless includeWarmup is set', () => {
@@ -183,14 +188,85 @@ describe('buildSessionComparison', () => {
 
     const excluded = buildSessionComparison(exec, previous, false)?.exercises[0];
     expect(excluded?.currentSets).toBe(1);
-    expect(excluded?.currentVolumeKg).toBe(500);
+    expect(excluded?.currentPrimary).toBe(500);
     expect(excluded?.previousSets).toBe(1);
-    expect(excluded?.previousVolumeKg).toBe(400);
+    expect(excluded?.previousPrimary).toBe(400);
 
     const included = buildSessionComparison(exec, previous, true)?.exercises[0];
     expect(included?.currentSets).toBe(2);
-    expect(included?.currentVolumeKg).toBe(700);
+    expect(included?.currentPrimary).toBe(700);
     expect(included?.previousSets).toBe(2);
-    expect(included?.previousVolumeKg).toBe(600);
+    expect(included?.previousPrimary).toBe(600);
+  });
+
+  test('compares total duration for a duration exercise', () => {
+    const durationVariation = {
+      id: 'plank',
+      slug: 'prancha',
+      name: null,
+      exercise: { slug: 'plank', name: 'Prancha', type: 'musculacao' as const },
+      measurementType: 'duration' as const,
+      equipment: { slug: 'bodyweight', preposition: 'com' },
+      muscle: { slug: 'core' },
+      secondaryMuscle: null,
+    };
+    const result = buildSessionComparison(
+      execution([
+        completedExercise(
+          [
+            completedSet({ measurementType: 'duration', durationSeconds: 60 }),
+            completedSet({ id: 'set-2', measurementType: 'duration', durationSeconds: 90 }),
+          ],
+          { variation: durationVariation },
+        ),
+      ]),
+      lastLog([
+        lastExercise([lastSet({ durationSeconds: 60 })], {
+          variationId: 'plank',
+          measurementType: 'duration',
+        }),
+      ]),
+      false,
+    );
+
+    const kept = result?.exercises[0];
+    expect(kept?.primaryMetric).toBe('totalDuration');
+    expect(kept?.currentPrimary).toBe(150);
+    expect(kept?.previousPrimary).toBe(60);
+    expect(kept?.currentReps).toBeNull();
+    expect(kept?.previousReps).toBeNull();
+  });
+
+  test('compares total reps for a reps-only exercise without a primary metric', () => {
+    const repsVariation = {
+      id: 'pullup',
+      slug: 'barra-fixa',
+      name: null,
+      exercise: { slug: 'pullup', name: 'Barra fixa', type: 'musculacao' as const },
+      measurementType: 'reps' as const,
+      equipment: { slug: 'bodyweight', preposition: 'com' },
+      muscle: { slug: 'back' },
+      secondaryMuscle: null,
+    };
+    const result = buildSessionComparison(
+      execution([
+        completedExercise(
+          [
+            completedSet({ measurementType: 'reps', reps: 12 }),
+            completedSet({ id: 'set-2', measurementType: 'reps', reps: 10 }),
+          ],
+          { variation: repsVariation },
+        ),
+      ]),
+      lastLog([
+        lastExercise([lastSet({ reps: 8 })], { variationId: 'pullup', measurementType: 'reps' }),
+      ]),
+      false,
+    );
+
+    const kept = result?.exercises[0];
+    expect(kept?.primaryMetric).toBeNull();
+    expect(kept?.currentReps).toBe(22);
+    expect(kept?.previousReps).toBe(8);
   });
 });

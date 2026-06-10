@@ -473,7 +473,7 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
       <View className="flex-1 bg-background">
         <Stack.Screen
           options={{
-            title: workout.name,
+            title: '',
             headerLeft: undefined,
             headerRight:
               Platform.OS === 'ios'
@@ -491,6 +491,11 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
                 : undefined,
           }}
         />
+        <View className="px-4 pt-2 pb-1">
+          <Text variant="large" className="font-sans-semibold" numberOfLines={2}>
+            {workout.name}
+          </Text>
+        </View>
         <WorkoutInfoBar note={active.occurrenceNote} description={workout.description} />
         <Animated.View style={[{ flex: 1 }, tabsAnimatedStyle]}>
           <Tabs

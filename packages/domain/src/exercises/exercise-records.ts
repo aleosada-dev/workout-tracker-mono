@@ -12,6 +12,8 @@ export type ExerciseRecords = {
   maxSets: number | null;
   maxDurationSeconds: number | null;
   maxDistanceMeters: number | null;
+  maxTotalDurationSeconds: number | null;
+  maxTotalDistanceMeters: number | null;
 };
 
 export type GetExerciseRecordsFilter = {

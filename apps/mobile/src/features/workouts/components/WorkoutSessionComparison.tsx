@@ -3,9 +3,8 @@ import { format } from 'date-fns';
 import { Equal, Minus, Plus, TrendingUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { formatCount } from '@/features/exercises/lib/format';
+import { formatCount, formatMetricValue } from '@/features/exercises/lib/format';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
-import { formatWeight } from '@/features/shared/lib/utils';
 import type {
   ComparisonStatus,
   SessionComparison,
@@ -92,17 +91,28 @@ function ComparisonRow({ exercise }: { exercise: SessionComparisonExercise }) {
           previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
           delta={renderSetsDelta(exercise, t, language)}
         />
-        {exercise.measurementType === 'weight_reps' && (
+        {exercise.currentReps !== null && (
           <MetricLine
-            label={t('workoutExecutionSummaryScreen.comparison.volume')}
-            current={formatWeight(exercise.currentVolumeKg, language)}
+            label={t('workoutExecutionSummaryScreen.comparison.reps')}
+            current={formatCount(exercise.currentReps, language)}
             previous={
-              exercise.previousVolumeKg !== null
-                ? formatWeight(exercise.previousVolumeKg, language)
+              exercise.previousReps !== null ? formatCount(exercise.previousReps, language) : null
+            }
+            previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
+            delta={renderRepsDelta(exercise, language)}
+          />
+        )}
+        {exercise.primaryMetric !== null && (
+          <MetricLine
+            label={t(`workoutExecutionSummaryScreen.comparison.metrics.${exercise.primaryMetric}`)}
+            current={formatMetricValue(exercise.primaryMetric, exercise.currentPrimary, language)}
+            previous={
+              exercise.previousPrimary !== null
+                ? formatMetricValue(exercise.primaryMetric, exercise.previousPrimary, language)
                 : null
             }
             previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
-            delta={renderVolumeDelta(exercise, language)}
+            delta={renderPrimaryDelta(exercise, language)}
           />
         )}
       </View>
@@ -168,18 +178,34 @@ function renderSetsDelta(
   };
 }
 
-function renderVolumeDelta(exercise: SessionComparisonExercise, language: string): DeltaContent {
+function renderRepsDelta(exercise: SessionComparisonExercise, language: string): DeltaContent {
+  const current = exercise.currentReps ?? 0;
+  if (exercise.status === 'new') {
+    return { text: `+${formatCount(current, language)}`, className: 'text-success' };
+  }
+  const previous = exercise.previousReps ?? 0;
+  const diff = current - previous;
+  if (diff === 0) return null;
+  return {
+    text: `${sign(diff)}${formatCount(Math.abs(diff), language)}`,
+    className: deltaClassName(diff),
+  };
+}
+
+function renderPrimaryDelta(exercise: SessionComparisonExercise, language: string): DeltaContent {
+  const metric = exercise.primaryMetric;
+  if (metric === null) return null;
   if (exercise.status === 'new') {
     return {
-      text: `+${formatCount(Math.round(exercise.currentVolumeKg), language)} kg`,
+      text: `+${formatMetricValue(metric, exercise.currentPrimary, language)}`,
       className: 'text-success',
     };
   }
-  const previous = exercise.previousVolumeKg ?? 0;
-  const diff = exercise.currentVolumeKg - previous;
+  const previous = exercise.previousPrimary ?? 0;
+  const diff = exercise.currentPrimary - previous;
   if (Math.round(diff) === 0) return null;
   return {
-    text: `${sign(diff)}${formatCount(Math.abs(Math.round(diff)), language)} kg`,
+    text: `${sign(diff)}${formatMetricValue(metric, Math.abs(diff), language)}`,
     className: deltaClassName(diff),
   };
 }

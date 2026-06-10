@@ -3,7 +3,7 @@ import { ConfirmDialog, EmptyState } from '@workout-tracker/ui-mobile';
 import { router, Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useScheduledSessions } from '@/features/coach-sessions/hooks/use-scheduled-sessions';
 import { workoutLogObservability } from '@/features/observability/lib';
@@ -127,7 +127,10 @@ export default function WorkoutExecutionSummaryScreen() {
       <Stack.Screen options={{ title: t('workoutExecutionSummaryScreen.title') }} />
       {active?.completedExecution ? (
         <>
-          <ScrollView className="flex-1" contentContainerClassName="pb-8">
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName={Platform.OS === 'ios' ? 'pb-24' : 'pb-8'}
+          >
             <CoachedSessionField
               sessions={sessions}
               isCoached={isCoached}

@@ -1,4 +1,5 @@
 import type {
+  ExerciseMeasurementType,
   WorkoutLogLast,
   WorkoutLogLastExercise,
   WorkoutLogLastSet,
@@ -21,12 +22,15 @@ export type LastLogRow = {
     variation: Relation<{
       name: string | null;
       exercise_name: string | null;
+      measurement_type: string | null;
     }>;
     workout_exercise_set_logs: Array<{
       set_order: number;
       set_type: string;
       weight_kg: number | string | null;
       reps: number | null;
+      duration_seconds: number | null;
+      distance_meters: number | null;
     }> | null;
   }> | null;
 };
@@ -48,6 +52,8 @@ const toSet = (
   setType: row.set_type as WorkoutSetType,
   weightKg: toNumber(row.weight_kg),
   reps: row.reps,
+  durationSeconds: row.duration_seconds,
+  distanceMeters: row.distance_meters,
 });
 
 const toExercise = (
@@ -63,6 +69,7 @@ const toExercise = (
     variationId: row.variation_id,
     exerciseName: variation?.exercise_name ?? row.exercise_name,
     variationName: variation?.name ?? row.variation_name,
+    measurementType: (variation?.measurement_type ?? 'weight_reps') as ExerciseMeasurementType,
     position: row.position,
     supersetGroupId: row.superset_group_id,
     sets,

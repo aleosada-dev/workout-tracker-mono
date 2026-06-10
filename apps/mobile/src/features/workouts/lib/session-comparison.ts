@@ -1,5 +1,6 @@
 import type { ExerciseMeasurementType } from '@workout-tracker/domain';
 import { setVolume } from '@workout-tracker/domain';
+import type { ExerciseMetricKey } from '@/features/exercises/lib/detail-types';
 import type { GetWorkoutLastLogResponse } from '@/features/workouts/api/workouts';
 import type { CompletedExecution } from './completed-execution';
 
@@ -13,8 +14,13 @@ export type SessionComparisonExercise = {
   status: ComparisonStatus;
   currentSets: number;
   previousSets: number | null;
-  currentVolumeKg: number;
-  previousVolumeKg: number | null;
+  /** Total reps across the session; null when reps aren't tracked (duration/distance). */
+  currentReps: number | null;
+  previousReps: number | null;
+  /** The metric compared besides sets, picked by measurement type; null for reps. */
+  primaryMetric: ExerciseMetricKey | null;
+  currentPrimary: number;
+  previousPrimary: number | null;
 };
 
 export type SessionComparison = {
@@ -22,30 +28,56 @@ export type SessionComparison = {
   exercises: SessionComparisonExercise[];
 };
 
-type CurrentEntry = {
+type Entry = {
   variationId: string;
   exerciseName: string;
   variationName: string | null;
   measurementType: ExerciseMeasurementType;
   position: number;
   sets: number;
+  reps: number;
   volumeKg: number;
+  durationSeconds: number;
+  distanceMeters: number;
 };
 
-type PreviousEntry = {
-  variationId: string;
-  exerciseName: string;
-  variationName: string | null;
-  position: number;
-  sets: number;
-  volumeKg: number;
-};
+/** Whether total reps are meaningful to compare for this measurement type. */
+function repsApplies(measurementType: ExerciseMeasurementType): boolean {
+  return measurementType === 'weight_reps' || measurementType === 'reps';
+}
+
+/** The metric compared alongside sets for each measurement type. */
+function primaryMetricFor(measurementType: ExerciseMeasurementType): ExerciseMetricKey | null {
+  switch (measurementType) {
+    case 'duration':
+      return 'totalDuration';
+    case 'distance':
+      return 'totalDistance';
+    case 'reps':
+      return null;
+    default:
+      return 'volume';
+  }
+}
+
+function primaryValue(entry: Entry): number {
+  switch (primaryMetricFor(entry.measurementType)) {
+    case 'totalDuration':
+      return entry.durationSeconds;
+    case 'totalDistance':
+      return entry.distanceMeters;
+    case 'volume':
+      return entry.volumeKg;
+    default:
+      return 0;
+  }
+}
 
 function aggregateCurrent(
   execution: CompletedExecution,
   includeWarmup: boolean,
-): Map<string, CurrentEntry> {
-  const byVariation = new Map<string, CurrentEntry>();
+): Map<string, Entry> {
+  const byVariation = new Map<string, Entry>();
 
   for (const exercise of execution.exercises) {
     if (exercise.exerciseType === 'preparatory') continue;
@@ -60,7 +92,10 @@ function aggregateCurrent(
         measurementType: exercise.variation.measurementType,
         position: exercise.position,
         sets: 0,
+        reps: 0,
         volumeKg: 0,
+        durationSeconds: 0,
+        distanceMeters: 0,
       };
       byVariation.set(variationId, entry);
     }
@@ -68,7 +103,10 @@ function aggregateCurrent(
     for (const set of exercise.sets) {
       if (!includeWarmup && set.type === 'warmup') continue;
       entry.sets += 1;
+      entry.reps += set.reps ?? 0;
       entry.volumeKg += setVolume({ weight: set.weightKg, reps: set.reps });
+      entry.durationSeconds += set.durationSeconds ?? 0;
+      entry.distanceMeters += set.distanceMeters ?? 0;
     }
   }
 
@@ -78,8 +116,8 @@ function aggregateCurrent(
 function aggregatePrevious(
   lastLog: NonNullable<GetWorkoutLastLogResponse>,
   includeWarmup: boolean,
-): Map<string, PreviousEntry> {
-  const byVariation = new Map<string, PreviousEntry>();
+): Map<string, Entry> {
+  const byVariation = new Map<string, Entry>();
 
   for (const exercise of lastLog.exercises) {
     if (exercise.variationId === null) continue;
@@ -91,9 +129,13 @@ function aggregatePrevious(
         variationId,
         exerciseName: exercise.exerciseName ?? '',
         variationName: exercise.variationName,
+        measurementType: exercise.measurementType,
         position: exercise.position,
         sets: 0,
+        reps: 0,
         volumeKg: 0,
+        durationSeconds: 0,
+        distanceMeters: 0,
       };
       byVariation.set(variationId, entry);
     }
@@ -101,7 +143,10 @@ function aggregatePrevious(
     for (const set of exercise.sets) {
       if (!includeWarmup && set.setType === 'warmup') continue;
       entry.sets += 1;
+      entry.reps += set.reps ?? 0;
       entry.volumeKg += setVolume({ weight: set.weightKg, reps: set.reps });
+      entry.durationSeconds += set.durationSeconds ?? 0;
+      entry.distanceMeters += set.distanceMeters ?? 0;
     }
   }
 
@@ -114,9 +159,7 @@ export function buildSessionComparison(
   includeWarmup: boolean,
 ): SessionComparison | null {
   const current = aggregateCurrent(execution, includeWarmup);
-  const previous = lastLog
-    ? aggregatePrevious(lastLog, includeWarmup)
-    : new Map<string, PreviousEntry>();
+  const previous = lastLog ? aggregatePrevious(lastLog, includeWarmup) : new Map<string, Entry>();
 
   const exercises: SessionComparisonExercise[] = [];
 
@@ -130,8 +173,11 @@ export function buildSessionComparison(
       status: prev ? 'kept' : 'new',
       currentSets: entry.sets,
       previousSets: prev ? prev.sets : null,
-      currentVolumeKg: entry.volumeKg,
-      previousVolumeKg: prev ? prev.volumeKg : null,
+      currentReps: repsApplies(entry.measurementType) ? entry.reps : null,
+      previousReps: prev && repsApplies(entry.measurementType) ? prev.reps : null,
+      primaryMetric: primaryMetricFor(entry.measurementType),
+      currentPrimary: primaryValue(entry),
+      previousPrimary: prev ? primaryValue(prev) : null,
     });
   }
 
@@ -141,14 +187,15 @@ export function buildSessionComparison(
       variationId: entry.variationId,
       exerciseName: entry.exerciseName,
       variationName: entry.variationName,
-      // O log anterior não carrega measurement type; só séries/volume de peso
-      // são comparáveis para exercícios removidos. Assume weight_reps.
-      measurementType: 'weight_reps',
+      measurementType: entry.measurementType,
       status: 'removed',
       currentSets: 0,
       previousSets: entry.sets,
-      currentVolumeKg: 0,
-      previousVolumeKg: entry.volumeKg,
+      currentReps: repsApplies(entry.measurementType) ? 0 : null,
+      previousReps: repsApplies(entry.measurementType) ? entry.reps : null,
+      primaryMetric: primaryMetricFor(entry.measurementType),
+      currentPrimary: 0,
+      previousPrimary: primaryValue(entry),
     });
   }
 

@@ -54,6 +54,8 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
     totalSets: 3,
     maxDurationSeconds: null,
     maxDistanceMeters: null,
+    totalDurationSeconds: null,
+    totalDistanceMeters: null,
     sets: [
       {
         setOrder: 1,
@@ -91,6 +93,8 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
         totalSets: 3,
         maxDurationSeconds: null,
         maxDistanceMeters: null,
+        totalDurationSeconds: null,
+        totalDistanceMeters: null,
         sets: [],
       },
     ],
@@ -102,6 +106,8 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
       maxSets: 4,
       maxDurationSeconds: null,
       maxDistanceMeters: null,
+      maxTotalDurationSeconds: null,
+      maxTotalDistanceMeters: null,
     },
     ...overrides,
   };
@@ -290,6 +296,8 @@ describe('toExerciseDetailData', () => {
             totalSets: 2,
             maxDurationSeconds: 90,
             maxDistanceMeters: null,
+            totalDurationSeconds: 150,
+            totalDistanceMeters: null,
             sets: [],
           },
         ],
@@ -300,19 +308,25 @@ describe('toExerciseDetailData', () => {
           maxSets: 3,
           maxDurationSeconds: 120,
           maxDistanceMeters: null,
+          maxTotalDurationSeconds: 200,
+          maxTotalDistanceMeters: null,
         },
       }),
       'pt',
       makeT('pt'),
     );
 
-    expect(Object.keys(data.metrics).sort()).toEqual(['maxDuration', 'sets']);
+    expect(Object.keys(data.metrics).sort()).toEqual(['maxDuration', 'sets', 'totalDuration']);
     expect(data.metrics.maxDuration?.unit).toBe('seconds');
     expect(data.metrics.maxDuration?.points).toEqual([
       { date: '2026-04-03T17:39:11.741831+00:00', value: 90 },
     ]);
+    expect(data.metrics.totalDuration?.points).toEqual([
+      { date: '2026-04-03T17:39:11.741831+00:00', value: 150 },
+    ]);
     expect(data.personalRecords).toEqual([
       { metric: 'maxDuration', value: 120 },
+      { metric: 'totalDuration', value: 200 },
       { metric: 'sets', value: 3 },
     ]);
   });

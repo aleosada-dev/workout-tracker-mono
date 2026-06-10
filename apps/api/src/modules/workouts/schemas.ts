@@ -326,6 +326,8 @@ export const WorkoutLogLastSetResponseSchema = z.object({
 	setType: WorkoutSetTypeSchema,
 	weightKg: z.number().nonnegative().nullable(),
 	reps: z.int().positive().nullable(),
+	durationSeconds: z.int().positive().nullable(),
+	distanceMeters: z.int().positive().nullable(),
 	logicalKey: z.string(),
 });
 
@@ -333,6 +335,7 @@ export const WorkoutLogLastExerciseResponseSchema = z.object({
 	variationId: z.uuid().nullable(),
 	exerciseName: z.string().trim().min(1).nullable(),
 	variationName: z.string().trim().min(1).nullable(),
+	measurementType: z.enum(EXERCISE_MEASUREMENT_TYPES),
 	position: z.int().nonnegative(),
 	supersetGroupId: z.uuid().nullable(),
 	sets: z.array(WorkoutLogLastSetResponseSchema),
@@ -360,6 +363,7 @@ export function toWorkoutLogLastResponse(log: WorkoutLogLast): NonNullable<Worko
 			variationId: exercise.variationId,
 			exerciseName: exercise.exerciseName,
 			variationName: exercise.variationName,
+			measurementType: exercise.measurementType,
 			position: exercise.position,
 			supersetGroupId: exercise.supersetGroupId,
 			sets: assignLogicalKeys(exercise.sets).map((set) => ({
@@ -367,6 +371,8 @@ export function toWorkoutLogLastResponse(log: WorkoutLogLast): NonNullable<Worko
 				setType: set.setType,
 				weightKg: set.weightKg,
 				reps: set.reps,
+				durationSeconds: set.durationSeconds,
+				distanceMeters: set.distanceMeters,
 				logicalKey: set.logicalKey,
 			})),
 		})),

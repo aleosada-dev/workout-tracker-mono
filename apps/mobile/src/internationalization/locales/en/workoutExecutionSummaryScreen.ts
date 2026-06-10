@@ -8,7 +8,7 @@ export default {
   stats: {
     totalTime: 'Duration',
     completedSets: 'Sets',
-    totalVolume: 'Volume',
+    totalVolume: 'Total volume',
   },
   durationEdit: {
     title: 'Adjust duration',
@@ -33,12 +33,14 @@ export default {
   records: {
     title: 'Session records',
     metrics: {
-      maxWeight: 'Highest weight',
-      volume: 'Highest volume',
-      maxReps: 'Most reps',
-      sets: 'Most sets',
-      maxDuration: 'Longest time',
-      maxDistance: 'Longest distance',
+      maxWeight: 'Highest weight per set',
+      volume: 'Total volume',
+      maxReps: 'Most reps per set',
+      sets: 'Total sets',
+      maxDuration: 'Longest time per set',
+      maxDistance: 'Longest distance per set',
+      totalDuration: 'Total time',
+      totalDistance: 'Total distance',
     },
   },
   comparison: {
@@ -46,7 +48,13 @@ export default {
     basedOn: 'Based on the previous workout from {{date}}.',
     noPrevious: 'There is no previous session of this same workout to compare against yet.',
     series: 'Sets:',
+    reps: 'Reps:',
     volume: 'Volume:',
+    metrics: {
+      volume: 'Volume:',
+      totalDuration: 'Time:',
+      totalDistance: 'Distance:',
+    },
     previousSuffix: 'prev.',
     setsUnit_one: 'set',
     setsUnit_other: 'sets',
