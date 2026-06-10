@@ -3,6 +3,7 @@ import { authHeaders, getTestUserAuth } from "@/test/test-auth";
 import { getTestClient } from "@/test/test-client";
 import type {
 	CreateExerciseRequest,
+	ExerciseDetailResponse,
 	ExerciseLastSetsResponse,
 	ExerciseListItemResponse,
 	ExerciseNameResponse,
@@ -1226,6 +1227,79 @@ describe("GET /api/v1/exercises/last", () => {
 		const client = getTestClient();
 		const res = await client.api.v1.exercises.last.$get({
 			query: { variationIds: ["00000000-0000-4000-8000-000000000000"] },
+		});
+
+		expect(res.status as number).toBe(401);
+	});
+});
+
+describe("GET /api/v1/exercises/:id/detail", () => {
+	async function athleteVariationId(): Promise<string> {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises.$get(
+			{ query: { visibility: "all" } },
+			{ headers: authHeaders("athlete") },
+		);
+		const exercises = (await res.json()) as ExerciseListItemResponse[];
+		const variationId = exercises.flatMap((e) => e.variations.map((v) => v.id))[0];
+		if (!variationId) throw new Error("no variation available for the athlete");
+		return variationId;
+	}
+
+	test("a coach reads an athlete's detail via the userId param", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const variationId = await athleteVariationId();
+
+		const asAthlete = await client.api.v1.exercises[":id"].detail.$get(
+			{ param: { id: variationId }, query: {} },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(asAthlete.status).toBe(200);
+		const athleteDetail = (await asAthlete.json()) as ExerciseDetailResponse;
+
+		const asCoach = await client.api.v1.exercises[":id"].detail.$get(
+			{ param: { id: variationId }, query: { userId: athleteId } },
+			{ headers: authHeaders("coach") },
+		);
+		expect(asCoach.status).toBe(200);
+		const coachDetail = (await asCoach.json()) as ExerciseDetailResponse;
+
+		expect(coachDetail.sessions).toEqual(athleteDetail.sessions);
+		expect(coachDetail.records).toEqual(athleteDetail.records);
+	});
+
+	test("denies detail for an athlete the caller does not coach", async () => {
+		const client = getTestClient();
+		const coachId = getTestUserAuth("coach").userId;
+		const variationId = await athleteVariationId();
+
+		// The athlete is not a coach of the coach, so the history RPC raises
+		// 'Access denied', which the adapter maps to a 403.
+		const res = await client.api.v1.exercises[":id"].detail.$get(
+			{ param: { id: variationId }, query: { userId: coachId } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(403);
+	});
+
+	test("returns 400 when userId is not a UUID", async () => {
+		const client = getTestClient();
+		const variationId = await athleteVariationId();
+		const res = await client.api.v1.exercises[":id"].detail.$get(
+			{ param: { id: variationId }, query: { userId: "not-a-uuid" } },
+			{ headers: authHeaders("athlete") },
+		);
+
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.exercises[":id"].detail.$get({
+			param: { id: "00000000-0000-4000-8000-000000000000" },
+			query: {},
 		});
 
 		expect(res.status as number).toBe(401);

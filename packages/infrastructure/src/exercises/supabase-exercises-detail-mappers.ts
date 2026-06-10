@@ -24,6 +24,7 @@ export type GetExerciseDetailRpcResponseSession = {
   max_weight_kg: number | null;
   total_volume_kg: number;
   max_reps: number | null;
+  total_reps: number | null;
   total_sets: number;
   max_duration_seconds: number | null;
   max_distance_meters: number | null;
@@ -41,6 +42,7 @@ export type GetExerciseDetailRpcResponseRecords = {
   max_distance_meters: number | null;
   max_total_duration_seconds: number | null;
   max_total_distance_meters: number | null;
+  max_total_reps: number | null;
 };
 
 export type GetExerciseDetailRpcResponseVariation = {
@@ -86,6 +88,7 @@ const toSession = (raw: GetExerciseDetailRpcResponseSession): ExerciseDetailSess
   maxWeightKg: raw.max_weight_kg,
   totalVolumeKg: raw.total_volume_kg,
   maxReps: raw.max_reps,
+  totalReps: raw.total_reps,
   totalSets: raw.total_sets,
   maxDurationSeconds: raw.max_duration_seconds,
   maxDistanceMeters: raw.max_distance_meters,
@@ -131,6 +134,7 @@ export const toExerciseDetail = async (
       maxDistanceMeters: raw.records.max_distance_meters,
       maxTotalDurationSeconds: raw.records.max_total_duration_seconds,
       maxTotalDistanceMeters: raw.records.max_total_distance_meters,
+      maxTotalReps: raw.records.max_total_reps,
     },
   };
 };

@@ -1,6 +1,10 @@
 export default {
   progress: 'Progress',
   edit: 'Edit exercise',
+  viewingAthlete: {
+    named: "{{name}}'s data",
+    generic: "Athlete's data",
+  },
   archived: {
     at: 'Archived on {{when}}.',
     byUserAt: 'Archived by {{name}} on {{when}}.',
@@ -18,6 +22,7 @@ export default {
     maxWeight: 'Max weight',
     volume: 'Volume',
     maxReps: 'Max reps',
+    totalReps: 'Total reps',
     sets: 'Sets',
     maxDuration: 'Max time',
     maxDistance: 'Max distance',

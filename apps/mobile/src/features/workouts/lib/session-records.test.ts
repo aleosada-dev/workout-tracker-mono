@@ -68,6 +68,7 @@ function record(
     maxDistanceMeters: null,
     maxTotalDurationSeconds: null,
     maxTotalDistanceMeters: null,
+    maxTotalReps: null,
     ...overrides,
   };
 }

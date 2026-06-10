@@ -36,6 +36,7 @@ export default {
       maxWeight: 'Highest weight per set',
       volume: 'Total volume',
       maxReps: 'Most reps per set',
+      totalReps: 'Total reps',
       sets: 'Total sets',
       maxDuration: 'Longest time per set',
       maxDistance: 'Longest distance per set',

@@ -36,6 +36,7 @@ export default {
       maxWeight: 'Maior peso por série',
       volume: 'Volume total',
       maxReps: 'Mais repetições por série',
+      totalReps: 'Total de repetições',
       sets: 'Total de séries',
       maxDuration: 'Maior tempo por série',
       maxDistance: 'Maior distância por série',

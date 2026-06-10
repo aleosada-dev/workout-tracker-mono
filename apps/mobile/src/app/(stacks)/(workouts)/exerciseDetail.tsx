@@ -18,18 +18,22 @@ import { useNavTheme } from '@/features/shared/lib/theme';
 type Params = {
   id?: string;
   aliasId?: string;
+  userId?: string;
+  athleteName?: string;
 };
 
 export default function ExerciseDetailScreen() {
   const { t, i18n } = useTranslation();
-  const { id, aliasId } = useLocalSearchParams<Params>();
+  const { id, aliasId, userId, athleteName } = useLocalSearchParams<Params>();
   const variationId = id ?? '';
+  const targetUserId = userId ?? null;
   const [selectedAliasId, setSelectedAliasId] = useState<string | null>(aliasId ?? null);
   const { data, isLoading, isError, error, refetch } = useExerciseDetail(
     variationId,
     selectedAliasId,
+    targetUserId,
   );
-  const { data: aliases } = useVariationAliases([variationId], null);
+  const { data: aliases } = useVariationAliases([variationId], targetUserId);
   useReportRequestError({ isError, error }, exerciseObservability.captureError, {
     action: 'load_exercise_detail',
     extra: { exerciseId: variationId },
@@ -49,6 +53,12 @@ export default function ExerciseDetailScreen() {
     !detail.isDeleted &&
     detail.variationUserId != null &&
     detail.variationUserId === session?.user.id;
+  const viewingOtherUser = targetUserId != null && targetUserId !== session?.user.id;
+  const viewingAthleteLabel = viewingOtherUser
+    ? athleteName
+      ? t('exerciseDetailScreen.viewingAthlete.named', { name: athleteName })
+      : t('exerciseDetailScreen.viewingAthlete.generic')
+    : null;
 
   useEffect(() => {
     if (variationId)
@@ -101,6 +111,14 @@ export default function ExerciseDetailScreen() {
           contentInsetAdjustmentBehavior="automatic"
           testID="exercise-detail"
         >
+          {viewingAthleteLabel ? (
+            <Text
+              className="text-center font-sans-medium text-muted-foreground text-xs"
+              testID="exercise-detail.viewing-athlete"
+            >
+              {viewingAthleteLabel}
+            </Text>
+          ) : null}
           <ExerciseDetail
             data={detail}
             aliasContext={

@@ -222,7 +222,8 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
     return { transform: [{ translateY: -overlap }] };
   });
 
-  const { workoutTemplate: workout } = active;
+  const { workoutTemplate: workout, athleteName } = active;
+  const athleteUserId = workout?.userId ?? null;
   const exercises = useValue(activeWorkout$.workoutExecution.exercises) as ExecutionExerciseInput[];
 
   const warmupItems = useMemo(
@@ -521,6 +522,8 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
                 selectedIds={selection.selected}
                 onToggleSelect={selection.toggle}
                 onLongPressItem={handleLongPressItem}
+                userId={athleteUserId}
+                athleteName={athleteName}
               />
             </TabsContent>
             <TabsContent value="strength" className="flex-1">
@@ -533,6 +536,8 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
                 selectedIds={selection.selected}
                 onToggleSelect={selection.toggle}
                 onLongPressItem={handleLongPressItem}
+                userId={athleteUserId}
+                athleteName={athleteName}
               />
             </TabsContent>
           </Tabs>

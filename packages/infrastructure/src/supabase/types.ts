@@ -2389,6 +2389,7 @@ export type Database = {
           max_sets: number | null
           max_total_distance_meters: number | null
           max_total_duration_seconds: number | null
+          max_total_reps: number | null
           max_volume_kg: number | null
           max_weight_kg: number | null
           updated_at: string
@@ -2405,6 +2406,7 @@ export type Database = {
           max_sets?: number | null
           max_total_distance_meters?: number | null
           max_total_duration_seconds?: number | null
+          max_total_reps?: number | null
           max_volume_kg?: number | null
           max_weight_kg?: number | null
           updated_at?: string
@@ -2421,6 +2423,7 @@ export type Database = {
           max_sets?: number | null
           max_total_distance_meters?: number | null
           max_total_duration_seconds?: number | null
+          max_total_reps?: number | null
           max_volume_kg?: number | null
           max_weight_kg?: number | null
           updated_at?: string

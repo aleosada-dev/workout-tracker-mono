@@ -20,6 +20,7 @@ type SessionMetrics = {
   maxWeight: number | null;
   volume: number;
   maxReps: number | null;
+  totalReps: number | null;
   sets: number;
   maxDuration: number | null;
   maxDistance: number | null;
@@ -50,6 +51,7 @@ function aggregateByVariation(
           maxWeight: null,
           volume: 0,
           maxReps: null,
+          totalReps: null,
           sets: 0,
           maxDuration: null,
           maxDistance: null,
@@ -68,6 +70,7 @@ function aggregateByVariation(
       }
       if (set.reps !== null) {
         metrics.maxReps = Math.max(metrics.maxReps ?? set.reps, set.reps);
+        metrics.totalReps = (metrics.totalReps ?? 0) + set.reps;
       }
       if (set.durationSeconds !== null) {
         metrics.maxDuration = Math.max(
@@ -95,6 +98,7 @@ const METRIC_VALUE: Record<ExerciseMetricKey, (m: SessionMetrics) => number | nu
   maxWeight: (m) => m.maxWeight,
   volume: (m) => m.volume,
   maxReps: (m) => m.maxReps,
+  totalReps: (m) => m.totalReps,
   sets: (m) => m.sets,
   maxDuration: (m) => m.maxDuration,
   maxDistance: (m) => m.maxDistance,
@@ -109,6 +113,7 @@ const PREVIOUS_VALUE: Record<
   maxWeight: (r) => r.maxWeightKg,
   volume: (r) => r.maxVolumeKg,
   maxReps: (r) => r.maxReps,
+  totalReps: (r) => r.maxTotalReps,
   sets: (r) => r.maxSets,
   maxDuration: (r) => r.maxDurationSeconds,
   maxDistance: (r) => r.maxDistanceMeters,

@@ -8,6 +8,7 @@ export type ExerciseMetricKey =
   | 'maxWeight'
   | 'volume'
   | 'maxReps'
+  | 'totalReps'
   | 'sets'
   | 'maxDuration'
   | 'totalDuration'
@@ -67,6 +68,7 @@ export const EXERCISE_METRIC_KEYS: readonly ExerciseMetricKey[] = [
   'maxWeight',
   'volume',
   'maxReps',
+  'totalReps',
   'maxDuration',
   'totalDuration',
   'maxDistance',
@@ -78,6 +80,7 @@ export const EXERCISE_METRIC_UNIT: Record<ExerciseMetricKey, ExerciseMetricUnit>
   maxWeight: 'kg',
   volume: 'kg',
   maxReps: 'reps',
+  totalReps: 'reps',
   sets: 'count',
   maxDuration: 'seconds',
   totalDuration: 'seconds',
@@ -88,12 +91,12 @@ export const EXERCISE_METRIC_UNIT: Record<ExerciseMetricKey, ExerciseMetricUnit>
 /**
  * The metrics that are meaningful for each measurement type, in display order.
  * Single source of truth shared by the detail chart/records and the session
- * summary records. `sets` applies to every type. `totalDuration`/`totalDistance`
- * are the time/distance analogues of `volume` (a per-session sum).
+ * summary records. `sets` applies to every type. `totalReps`/`totalDuration`/
+ * `totalDistance` are the rep/time/distance analogues of `volume` (a per-session sum).
  */
 export const METRICS_BY_MEASUREMENT: Record<ExerciseMeasurementType, ExerciseMetricKey[]> = {
   weight_reps: ['maxWeight', 'volume', 'maxReps', 'sets'],
-  reps: ['maxReps', 'sets'],
+  reps: ['maxReps', 'totalReps', 'sets'],
   duration: ['maxDuration', 'totalDuration', 'sets'],
   distance: ['maxDistance', 'totalDistance', 'sets'],
 };

@@ -18,6 +18,7 @@ export type ExerciseDetailSession = {
   maxWeightKg: number | null;
   totalVolumeKg: number;
   maxReps: number | null;
+  totalReps: number | null;
   totalSets: number;
   maxDurationSeconds: number | null;
   maxDistanceMeters: number | null;
@@ -35,6 +36,7 @@ export type ExerciseDetailRecords = {
   maxDistanceMeters: number | null;
   maxTotalDurationSeconds: number | null;
   maxTotalDistanceMeters: number | null;
+  maxTotalReps: number | null;
 };
 
 export type ExerciseDetailVariation = {

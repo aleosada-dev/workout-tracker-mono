@@ -31,6 +31,10 @@ type ExerciseExecutionListProps = {
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
   onLongPressItem?: (id: string) => void;
+  /** Athlete whose logs the detail screen should show — defaults to the logged-in user. */
+  userId?: string | null;
+  /** Display name of that athlete, surfaced on the detail screen when viewing their data. */
+  athleteName?: string | null;
 };
 
 export function ExerciseExecutionList({
@@ -42,6 +46,8 @@ export function ExerciseExecutionList({
   selectedIds,
   onToggleSelect,
   onLongPressItem,
+  userId,
+  athleteName,
 }: ExerciseExecutionListProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -63,7 +69,12 @@ export function ExerciseExecutionList({
           onPressMember={(variationId, aliasId) =>
             router.push({
               pathname: '/exerciseDetail',
-              params: { id: variationId, ...(aliasId ? { aliasId } : {}) },
+              params: {
+                id: variationId,
+                ...(aliasId ? { aliasId } : {}),
+                ...(userId ? { userId } : {}),
+                ...(userId && athleteName ? { athleteName } : {}),
+              },
             })
           }
         />
@@ -82,12 +93,17 @@ export function ExerciseExecutionList({
           onPressHeader={() =>
             router.push({
               pathname: '/exerciseDetail',
-              params: { id: item.variationId, ...(item.aliasId ? { aliasId: item.aliasId } : {}) },
+              params: {
+                id: item.variationId,
+                ...(item.aliasId ? { aliasId: item.aliasId } : {}),
+                ...(userId ? { userId } : {}),
+                ...(userId && athleteName ? { athleteName } : {}),
+              },
             })
           }
         />
       ),
-    [selectionMode, selectedIds, onToggleSelect, onLongPressItem],
+    [selectionMode, selectedIds, onToggleSelect, onLongPressItem, userId, athleteName],
   );
 
   const estimateItemHeight = useCallback(

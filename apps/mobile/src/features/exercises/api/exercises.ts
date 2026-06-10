@@ -107,10 +107,17 @@ export async function fetchExerciseLastSets(
 
 export async function fetchExerciseDetail(
   variationId: string,
-  { aliasId, signal }: { aliasId?: string | null; signal?: AbortSignal } = {},
+  {
+    aliasId,
+    userId,
+    signal,
+  }: { aliasId?: string | null; userId?: string | null; signal?: AbortSignal } = {},
 ): Promise<ExerciseDetailResponse> {
   const response = await $getDetail(
-    { param: { id: variationId }, query: aliasId ? { aliasId } : {} },
+    {
+      param: { id: variationId },
+      query: { ...(aliasId ? { aliasId } : {}), ...(userId ? { userId } : {}) },
+    },
     { init: { signal } },
   );
   if (!response.ok) throw await buildApiError(response);

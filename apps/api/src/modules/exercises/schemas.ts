@@ -140,6 +140,7 @@ export const ExerciseIdParamSchema = z.object({
 /** Query of GET /exercises/:id/detail — optional alias scopes the screen's data. */
 export const ExerciseDetailQuerySchema = z.object({
 	aliasId: z.uuid().optional(),
+	userId: z.uuid().optional(),
 });
 
 /** Body of PUT /exercises/:id — same fields as create, minus the path-supplied id. */
@@ -232,6 +233,7 @@ const DetailSessionSchema = z.object({
 	maxWeightKg: z.number().nullable(),
 	totalVolumeKg: z.number(),
 	maxReps: z.number().int().nullable(),
+	totalReps: z.number().int().nullable(),
 	totalSets: z.number().int().nonnegative(),
 	maxDurationSeconds: z.number().int().nullable(),
 	maxDistanceMeters: z.number().int().nullable(),
@@ -249,6 +251,7 @@ const DetailRecordsSchema = z.object({
 	maxDistanceMeters: z.number().int().nullable(),
 	maxTotalDurationSeconds: z.number().int().nullable(),
 	maxTotalDistanceMeters: z.number().int().nullable(),
+	maxTotalReps: z.number().int().nullable(),
 });
 
 const DetailVariationSchema = z.object({
@@ -298,6 +301,7 @@ const ExerciseRecordsItemSchema = z.object({
 	maxDistanceMeters: z.number().int().nullable(),
 	maxTotalDurationSeconds: z.number().int().nullable(),
 	maxTotalDistanceMeters: z.number().int().nullable(),
+	maxTotalReps: z.number().int().nullable(),
 });
 
 export const ExerciseRecordsResponseSchema = z.array(ExerciseRecordsItemSchema);

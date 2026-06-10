@@ -225,9 +225,9 @@ export const exercisesRouter = new Hono<AppBindings>()
 		validator("param", ExerciseIdParamSchema),
 		validator("query", ExerciseDetailQuerySchema),
 		async (c) => {
-			const userId = c.get("userId");
 			const { id: variationId } = c.req.valid("param");
-			const { aliasId } = c.req.valid("query");
+			const { aliasId, userId: queryUserId } = c.req.valid("query");
+			const userId = queryUserId ?? c.get("userId");
 			const { getExerciseDetail } = c.get("container").exercises;
 			const detail = await getExerciseDetail({ userId, variationId, aliasId });
 			return c.json(detail);
