@@ -190,7 +190,7 @@ describe('<SupersetExecutionCard />', () => {
     const { getByTestId, form } = renderCard([member(0, 0, 'distance'), member(1, 60, 'distance')]);
 
     const input = getByTestId('workout-execution.superset.set-0.exercise-0.distance');
-    fireEvent.press(getByTestId('workout-execution.superset.set-0.exercise-0.distance.unit'));
+    fireEvent.press(getByTestId('workout-execution.superset.distance-unit'));
     fireEvent.changeText(input, '5');
 
     expect(form().getValues('exercises.0.sets.0.distance')).toBe('5000');

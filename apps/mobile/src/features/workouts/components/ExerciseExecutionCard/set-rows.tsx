@@ -23,7 +23,7 @@ import {
   formatSetTarget,
   weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
-import { DistanceInput, formatDistance } from './set-cells';
+import { DistanceInput, type DistanceUnit, formatDistance } from './set-cells';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
@@ -284,7 +284,14 @@ export function DurationSetRow({
   );
 }
 
-export function DistanceSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyProps) {
+export function DistanceSetRow({
+  exerciseIndex,
+  setIndex,
+  layout,
+  unit,
+}: SetRowBodyProps & {
+  unit: DistanceUnit;
+}) {
   const { control } = useFormContext<ExecutionFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const distanceTarget = useWatch({ control, name: `${basePath}.distanceTarget` });
@@ -304,6 +311,7 @@ export function DistanceSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyPr
             onBlur={field.onBlur}
             invalid={fieldState.invalid}
             lastMeters={lastDistance ?? null}
+            unit={unit}
             testID={`workout-execution.set-${setIndex}.distance`}
           />
         )}

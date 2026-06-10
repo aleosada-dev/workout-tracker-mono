@@ -14,7 +14,12 @@ const MAX_DISTANCE_METERS = 999999;
 const MAX_KM_INTEGER_DIGITS = 3;
 const MAX_KM_FRACTION_DIGITS = 2;
 
-type DistanceUnit = 'm' | 'km';
+export type DistanceUnit = 'm' | 'km';
+
+/** Picks the unit a distance field should default to given its target in meters. */
+export function defaultDistanceUnit(targetMeters: number | null | undefined): DistanceUnit {
+  return targetMeters != null && targetMeters > 1000 ? 'km' : 'm';
+}
 
 /** Renders the stored meters in the display unit, dropping trailing km zeros. */
 function metersToText(meters: string, unit: DistanceUnit): string {
@@ -43,11 +48,37 @@ export function formatDistance(meters: number): string {
   return `${meters} m`;
 }
 
+/** The m/km toggle shown once in the distance column header — the unit is shared
+ * across all of the exercise's distance sets, so a per-row button would be
+ * redundant. Tapping it flips the unit for the whole column. */
+export function DistanceUnitToggle({
+  unit,
+  onToggle,
+  testID,
+}: {
+  unit: DistanceUnit;
+  onToggle: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      hitSlop={8}
+      accessibilityRole="button"
+      testID={testID}
+      className="h-6 w-7 items-center justify-center rounded-md bg-secondary"
+    >
+      <Text className="font-sans-semibold text-secondary-foreground text-xs">{unit}</Text>
+    </Pressable>
+  );
+}
+
 /**
- * Numeric distance input with an m/km unit toggle beside it. The value is always
- * stored in meters; the toggle only changes how it's typed and shown. Local
- * `text` keeps in-progress decimal entry smooth and is re-derived when the unit
- * flips or the stored value changes from outside (e.g. a target autofill).
+ * Numeric distance input. The value is always stored in meters; the `unit` (owned
+ * by the parent and toggled from the column header) only changes how it's typed and
+ * shown, and is shared across the exercise's sets. Local `text` keeps in-progress
+ * decimal entry smooth and is re-derived when the unit flips or the stored value
+ * changes from outside (e.g. a target autofill).
  */
 export function DistanceInput({
   value,
@@ -55,6 +86,7 @@ export function DistanceInput({
   onBlur,
   invalid,
   lastMeters: lastMetersValue = null,
+  unit,
   testID,
 }: {
   value: string;
@@ -62,17 +94,19 @@ export function DistanceInput({
   onBlur: () => void;
   invalid: boolean;
   lastMeters?: number | null;
+  unit: DistanceUnit;
   testID?: string;
 }) {
-  const [unit, setUnit] = useState<DistanceUnit>('m');
-  const [text, setText] = useState(() => metersToText(value, 'm'));
+  const [text, setText] = useState(() => metersToText(value, unit));
   const lastMeters = useRef(value);
+  const lastUnit = useRef(unit);
   const placeholder =
     lastMetersValue != null ? metersToText(String(lastMetersValue), unit) : undefined;
 
   useEffect(() => {
-    if (value !== lastMeters.current) {
+    if (value !== lastMeters.current || unit !== lastUnit.current) {
       lastMeters.current = value;
+      lastUnit.current = unit;
       setText(metersToText(value, unit));
     }
   }, [value, unit]);
@@ -91,14 +125,8 @@ export function DistanceInput({
     onChange(meters);
   };
 
-  const toggleUnit = () => {
-    const next = unit === 'm' ? 'km' : 'm';
-    setUnit(next);
-    setText(metersToText(value, next));
-  };
-
   return (
-    <View className="w-32 flex-row items-center gap-1.5 px-2">
+    <View className="w-32 px-2">
       <Input
         variant="outline-primary"
         keyboardType={unit === 'km' ? 'decimal-pad' : 'number-pad'}
@@ -106,19 +134,10 @@ export function DistanceInput({
         onChangeText={handleText}
         onBlur={onBlur}
         aria-invalid={invalid}
-        className="h-8 flex-1 py-0 text-sm"
+        className="h-8 py-0 text-sm"
         placeholder={placeholder}
         testID={testID}
       />
-      <Pressable
-        onPress={toggleUnit}
-        hitSlop={8}
-        accessibilityRole="button"
-        testID={testID ? `${testID}.unit` : undefined}
-        className="h-8 w-8 items-center justify-center rounded-md bg-secondary"
-      >
-        <Text className="font-sans-semibold text-secondary-foreground text-xs">{unit}</Text>
-      </Pressable>
     </View>
   );
 }

@@ -28,7 +28,10 @@ import {
 import { AliasSelector } from '@/features/workouts/components/AliasSelector';
 import {
   DistanceInput,
+  type DistanceUnit,
+  DistanceUnitToggle,
   DurationPickerCell,
+  defaultDistanceUnit,
   formatDistance,
 } from '@/features/workouts/components/ExerciseExecutionCard/set-cells';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
@@ -128,6 +131,19 @@ export function SupersetExecutionCard({
       return next;
     });
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(() =>
+    defaultDistanceUnit(
+      members.reduce<number | null>(
+        (max, m) =>
+          getValues(`exercises.${m.exerciseIndex}.sets`).reduce<number | null>(
+            (acc, s) =>
+              s.distanceTarget != null && s.distanceTarget > (acc ?? 0) ? s.distanceTarget : acc,
+            max,
+          ),
+        null,
+      ),
+    ),
+  );
   const athleteId = activeWorkout$.athleteId.peek();
   const memberSetsNames = members.map((m) => `exercises.${m.exerciseIndex}.sets` as const);
   const watchedMemberSets = useWatch({ control, name: memberSetsNames }) as
@@ -448,10 +464,15 @@ export function SupersetExecutionCard({
                 </View>
               ) : null}
               {layout.distance ? (
-                <View className="w-32 px-2">
+                <View className="w-32 flex-row items-center gap-1.5 px-2">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     {t('workoutExecutionScreen.exercise.headers.distance')}
                   </Text>
+                  <DistanceUnitToggle
+                    unit={distanceUnit}
+                    onToggle={() => setDistanceUnit((u) => (u === 'm' ? 'km' : 'm'))}
+                    testID="workout-execution.superset.distance-unit"
+                  />
                 </View>
               ) : null}
               <View className="w-20 px-2">
@@ -473,6 +494,7 @@ export function SupersetExecutionCard({
                 roundOrder={roundOrder}
                 roundMembers={roundMembers}
                 layout={layout}
+                distanceUnit={distanceUnit}
                 onEditRound={handleEditRound}
               />
             ))}
@@ -497,11 +519,13 @@ function SupersetSetRow({
   roundOrder,
   roundMembers,
   layout,
+  distanceUnit,
   onEditRound,
 }: {
   roundOrder: number;
   roundMembers: RoundMemberView[];
   layout: ColumnLayout;
+  distanceUnit: DistanceUnit;
   onEditRound: (roundOrder: number) => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
@@ -564,6 +588,7 @@ function SupersetSetRow({
               setIndex={setIndex}
               letter={member.letter}
               layout={layout}
+              distanceUnit={distanceUnit}
               onPressLetter={() => onEditRound(roundOrder)}
             />
           )),
@@ -611,12 +636,14 @@ function SupersetMemberCell({
   setIndex,
   letter,
   layout,
+  distanceUnit,
   onPressLetter,
 }: {
   exerciseIndex: number;
   setIndex: number;
   letter: SupersetMember['letter'];
   layout: ColumnLayout;
+  distanceUnit: DistanceUnit;
   onPressLetter: () => void;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
@@ -748,6 +775,7 @@ function SupersetMemberCell({
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 invalid={fieldState.invalid}
+                unit={distanceUnit}
                 testID={`workout-execution.superset.set-${setIndex}.exercise-${exerciseIndex}.distance`}
               />
             )}

@@ -41,6 +41,7 @@ import {
 import { type ColumnLayout, exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
+import { type DistanceUnit, DistanceUnitToggle, defaultDistanceUnit } from './set-cells';
 import { DistanceSetRow, DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
 import type { ExerciseExecutionCardProps } from './types';
 
@@ -87,6 +88,15 @@ export function ExerciseExecutionCard({
   });
   const layout = exerciseColumnLayout(
     measurementTypes.map((measurementType) => ({ measurementType })),
+  );
+  const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(() =>
+    defaultDistanceUnit(
+      getValues(`exercises.${exerciseIndex}.sets`).reduce<number | null>(
+        (max, s) =>
+          s.distanceTarget != null && s.distanceTarget > (max ?? 0) ? s.distanceTarget : max,
+        null,
+      ),
+    ),
   );
   const showSetType = getValues(`exercises.${exerciseIndex}.exerciseType`) !== 'preparatory';
   const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
@@ -257,10 +267,15 @@ export function ExerciseExecutionCard({
                 </View>
               ) : null}
               {layout.distance ? (
-                <View className="w-32 px-2">
+                <View className="w-32 flex-row items-center gap-1.5 px-2">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     {t('workoutExecutionScreen.exercise.headers.distance')}
                   </Text>
+                  <DistanceUnitToggle
+                    unit={distanceUnit}
+                    onToggle={() => setDistanceUnit((u) => (u === 'm' ? 'km' : 'm'))}
+                    testID="workout-execution.exercise.distance-unit"
+                  />
                 </View>
               ) : null}
               <View className="w-20 px-2">
@@ -283,6 +298,7 @@ export function ExerciseExecutionCard({
                 setIndex={setIndex}
                 layout={layout}
                 showSetType={showSetType}
+                distanceUnit={distanceUnit}
                 canRemove={fields.length > 1}
                 onRemoveSet={() => {
                   removeSetSheetRef.current?.present(() => {
@@ -344,6 +360,7 @@ function SetRow({
   setIndex,
   layout,
   showSetType,
+  distanceUnit,
   canRemove,
   onPressType,
   onRemoveSet,
@@ -352,6 +369,7 @@ function SetRow({
   setIndex: number;
   layout: ColumnLayout;
   showSetType: boolean;
+  distanceUnit: DistanceUnit;
   canRemove: boolean;
   onPressType: (currentType: SetType, onChange: (next: SetType) => void) => void;
   onRemoveSet: () => void;
@@ -468,7 +486,12 @@ function SetRow({
           onComplete={handleTimerComplete}
         />
       ) : measurementType === 'distance' ? (
-        <DistanceSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
+        <DistanceSetRow
+          exerciseIndex={exerciseIndex}
+          setIndex={setIndex}
+          layout={layout}
+          unit={distanceUnit}
+        />
       ) : (
         <WeightRepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
       )}

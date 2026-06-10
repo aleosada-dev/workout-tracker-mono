@@ -73,7 +73,12 @@ import { FormProvider, type UseFormReturn, useForm } from 'react-hook-form';
 import { ExerciseExecutionCard } from '@/features/workouts/components/ExerciseExecutionCard';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 
-function set(id: string, measurementType: MeasurementType, durationTarget: number | null) {
+function set(
+  id: string,
+  measurementType: MeasurementType,
+  durationTarget: number | null,
+  distanceTarget: number | null = null,
+) {
   return {
     id,
     type: 'normal' as const,
@@ -82,7 +87,7 @@ function set(id: string, measurementType: MeasurementType, durationTarget: numbe
     repsMin: null,
     repsMax: null,
     durationTarget,
-    distanceTarget: null,
+    distanceTarget,
     kg: '',
     reps: '',
     duration: '',
@@ -183,15 +188,39 @@ describe('<ExerciseExecutionCard />', () => {
     expect(getByTestId('workout-execution.set-0.distance')).toBeTruthy();
   });
 
-  test('a distance input stores meters and converts from km via the unit toggle', () => {
+  test('a distance input stores meters and converts from km via the header unit toggle', () => {
     const { getByTestId, form } = renderCard([set('s1', 'distance', null)]);
 
     fireEvent.changeText(getByTestId('workout-execution.set-0.distance'), '800');
     expect(form().getValues('exercises.0.sets.0.distance')).toBe('800');
 
-    fireEvent.press(getByTestId('workout-execution.set-0.distance.unit'));
+    fireEvent.press(getByTestId('workout-execution.exercise.distance-unit'));
     fireEvent.changeText(getByTestId('workout-execution.set-0.distance'), '1.5');
     expect(form().getValues('exercises.0.sets.0.distance')).toBe('1500');
+  });
+
+  test('a distance set whose target is over 1000m defaults the header to the km unit', () => {
+    const { getByTestId } = renderCard([set('s1', 'distance', null, 2000)]);
+
+    expect(getByTestId('workout-execution.exercise.distance-unit')).toHaveTextContent('km');
+  });
+
+  test('a distance target under 1000m keeps the header on the m unit', () => {
+    const { getByTestId } = renderCard([set('s1', 'distance', null, 800)]);
+
+    expect(getByTestId('workout-execution.exercise.distance-unit')).toHaveTextContent('m');
+  });
+
+  test('the header unit toggle applies to a newly added distance set', () => {
+    const { getByTestId, getByText, form } = renderCard([set('s1', 'distance', null)]);
+
+    fireEvent.press(getByTestId('workout-execution.exercise.distance-unit'));
+    expect(getByTestId('workout-execution.exercise.distance-unit')).toHaveTextContent('km');
+
+    fireEvent.press(getByText('workoutExecutionScreen.exercise.addSet'));
+
+    fireEvent.changeText(getByTestId('workout-execution.set-1.distance'), '1.5');
+    expect(form().getValues('exercises.0.sets.1.distance')).toBe('1500');
   });
 
   test('mixing weight_reps and reps sets unions the weight and reps headers', () => {
