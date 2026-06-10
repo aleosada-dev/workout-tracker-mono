@@ -92,17 +92,19 @@ function ComparisonRow({ exercise }: { exercise: SessionComparisonExercise }) {
           previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
           delta={renderSetsDelta(exercise, t, language)}
         />
-        <MetricLine
-          label={t('workoutExecutionSummaryScreen.comparison.volume')}
-          current={formatWeight(exercise.currentVolumeKg, language)}
-          previous={
-            exercise.previousVolumeKg !== null
-              ? formatWeight(exercise.previousVolumeKg, language)
-              : null
-          }
-          previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
-          delta={renderVolumeDelta(exercise, language)}
-        />
+        {exercise.measurementType === 'weight_reps' && (
+          <MetricLine
+            label={t('workoutExecutionSummaryScreen.comparison.volume')}
+            current={formatWeight(exercise.currentVolumeKg, language)}
+            previous={
+              exercise.previousVolumeKg !== null
+                ? formatWeight(exercise.previousVolumeKg, language)
+                : null
+            }
+            previousSuffix={t('workoutExecutionSummaryScreen.comparison.previousSuffix')}
+            delta={renderVolumeDelta(exercise, language)}
+          />
+        )}
       </View>
     </View>
   );

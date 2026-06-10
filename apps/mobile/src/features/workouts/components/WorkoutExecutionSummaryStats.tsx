@@ -1,5 +1,5 @@
 import { Card, Icon, Text } from '@workout-tracker/ui-mobile';
-import { CheckCircle2, Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
+import { Clock, Dumbbell, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
@@ -23,7 +23,7 @@ export function WorkoutExecutionSummaryStats({
   const { t, i18n } = useTranslation();
   const { data: preferences } = useUserPreferences();
   const includeWarmup = preferences?.countWarmupSets ?? false;
-  const { completedSets, totalVolumeKg } = summarizeExecution(execution, includeWarmup);
+  const { totalVolumeKg } = summarizeExecution(execution, includeWarmup);
 
   return (
     <View className="flex-row gap-3 px-4 pt-4">
@@ -32,11 +32,6 @@ export function WorkoutExecutionSummaryStats({
         label={t('workoutExecutionSummaryScreen.stats.totalTime')}
         value={formatTotalTime(durationSeconds)}
         onPress={onEditDuration}
-      />
-      <StatCard
-        icon={CheckCircle2}
-        label={t('workoutExecutionSummaryScreen.stats.completedSets')}
-        value={String(completedSets)}
       />
       <StatCard
         icon={Dumbbell}

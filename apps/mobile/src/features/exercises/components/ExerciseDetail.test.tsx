@@ -147,9 +147,30 @@ describe('<ExerciseDetail />', () => {
     lastSession: {
       date: '2026-04-06',
       sets: [
-        { index: 1, type: 'normal', weightKg: 0, reps: 9 },
-        { index: 2, type: 'normal', weightKg: 0, reps: 8 },
-        { index: 3, type: 'normal', weightKg: 0, reps: 7 },
+        {
+          index: 1,
+          type: 'normal',
+          weightKg: 0,
+          reps: 9,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
+        {
+          index: 2,
+          type: 'normal',
+          weightKg: 0,
+          reps: 8,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
+        {
+          index: 3,
+          type: 'normal',
+          weightKg: 0,
+          reps: 7,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
       ],
     },
     personalRecords: [

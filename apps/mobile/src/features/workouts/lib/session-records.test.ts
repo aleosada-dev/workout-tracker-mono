@@ -64,6 +64,8 @@ function record(
     maxVolumeKg: null,
     maxReps: null,
     maxSets: null,
+    maxDurationSeconds: null,
+    maxDistanceMeters: null,
     ...overrides,
   };
 }
@@ -225,5 +227,69 @@ describe('buildSessionRecords', () => {
         ],
       },
     ]);
+  });
+
+  test('tracks maxDuration and sets (not weight/volume) for a duration exercise', () => {
+    const result = buildSessionRecords(
+      execution([
+        completedExercise(
+          [
+            completedSet({ id: 'a', measurementType: 'duration', durationSeconds: 60 }),
+            completedSet({ id: 'b', measurementType: 'duration', durationSeconds: 90 }),
+          ],
+          {
+            variation: {
+              id: 'plank',
+              slug: 'prancha',
+              name: null,
+              exercise: { slug: 'plank', name: 'Prancha', type: 'musculacao' },
+              measurementType: 'duration',
+              equipment: { slug: 'bodyweight', preposition: 'com' },
+              muscle: { slug: 'core' },
+              secondaryMuscle: null,
+            },
+          },
+        ),
+      ]),
+      [],
+      false,
+    );
+
+    expect(result[0].records).toEqual([
+      { metric: 'maxDuration', previous: 0, current: 90 },
+      { metric: 'sets', previous: 0, current: 2 },
+    ]);
+  });
+
+  test('reports a distance PR only when it beats the baseline maxDistanceMeters', () => {
+    const distanceExercise = completedExercise(
+      [completedSet({ measurementType: 'distance', distanceMeters: 5000 })],
+      {
+        variation: {
+          id: 'run',
+          slug: 'corrida',
+          name: null,
+          exercise: { slug: 'run', name: 'Corrida', type: 'musculacao' },
+          measurementType: 'distance',
+          equipment: { slug: 'treadmill', preposition: 'na' },
+          muscle: { slug: 'legs' },
+          secondaryMuscle: null,
+        },
+      },
+    );
+
+    const beaten = buildSessionRecords(
+      execution([distanceExercise]),
+      [record({ variationId: 'run', maxDistanceMeters: 4200, maxSets: 5 })],
+      false,
+    );
+    expect(beaten[0].records).toEqual([{ metric: 'maxDistance', previous: 4200, current: 5000 }]);
+
+    const notBeaten = buildSessionRecords(
+      execution([distanceExercise]),
+      [record({ variationId: 'run', maxDistanceMeters: 6000, maxSets: 5 })],
+      false,
+    );
+    expect(notBeaten).toEqual([]);
   });
 });

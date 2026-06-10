@@ -3,7 +3,8 @@ import type {
   ListExercisesResponseExercise,
   ListExercisesResponseVariation,
 } from '@/features/exercises/api/exercises';
-import { EXERCISE_METRIC_UNIT, type PersonalRecord } from './detail-types';
+import { formatTime } from '@/features/shared/lib/utils';
+import { EXERCISE_METRIC_UNIT, type ExerciseMetricKey, type PersonalRecord } from './detail-types';
 import type { ExerciseListItem } from './list.types';
 
 /** Minimal fields needed to build an exercise's display name. */
@@ -122,13 +123,35 @@ export function formatCount(value: number, language: string): string {
   return new Intl.NumberFormat(language, { maximumFractionDigits: 0 }).format(value);
 }
 
-/** Renders a personal-record value with the unit appropriate to its metric. */
-export function formatRecordValue(record: PersonalRecord, language: string): string {
-  switch (EXERCISE_METRIC_UNIT[record.metric]) {
+/** Formats a stored meters value as `m` below 1km and `km` at or above it. */
+export function formatDistanceMeters(meters: number, language: string): string {
+  if (meters >= 1000) {
+    const km = new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(meters / 1000);
+    return `${km} km`;
+  }
+  return `${formatCount(meters, language)} m`;
+}
+
+/** Renders a metric value with the unit appropriate to its metric key. */
+export function formatMetricValue(
+  metric: ExerciseMetricKey,
+  value: number,
+  language: string,
+): string {
+  switch (EXERCISE_METRIC_UNIT[metric]) {
     case 'kg':
-      return formatKg(record.value, language, { min: 2, max: 2 });
+      return formatKg(value, language, { min: 2, max: 2 });
+    case 'seconds':
+      return formatTime(value);
+    case 'meters':
+      return formatDistanceMeters(value, language);
     case 'reps':
     case 'count':
-      return formatCount(record.value, language);
+      return formatCount(value, language);
   }
+}
+
+/** Renders a personal-record value with the unit appropriate to its metric. */
+export function formatRecordValue(record: PersonalRecord, language: string): string {
+  return formatMetricValue(record.metric, record.value, language);
 }

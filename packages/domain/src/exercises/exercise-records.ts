@@ -10,6 +10,8 @@ export type ExerciseRecords = {
   maxVolumeKg: number | null;
   maxReps: number | null;
   maxSets: number | null;
+  maxDurationSeconds: number | null;
+  maxDistanceMeters: number | null;
 };
 
 export type GetExerciseRecordsFilter = {

@@ -2,12 +2,8 @@ import { Card, Icon, SectionHeading, Text } from '@workout-tracker/ui-mobile';
 import { Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import {
-  EXERCISE_METRIC_KEYS,
-  EXERCISE_METRIC_UNIT,
-  type ExerciseMetricKey,
-} from '@/features/exercises/lib/detail-types';
-import { formatCount } from '@/features/exercises/lib/format';
+import { EXERCISE_METRIC_KEYS } from '@/features/exercises/lib/detail-types';
+import { formatMetricValue } from '@/features/exercises/lib/format';
 import type {
   SessionExerciseRecord,
   SessionRecordMetric,
@@ -79,9 +75,4 @@ function ExerciseRecord({ exercise }: { exercise: SessionExerciseRecord }) {
       </View>
     </View>
   );
-}
-
-function formatMetricValue(metric: ExerciseMetricKey, value: number, language: string): string {
-  const formatted = formatCount(value, language);
-  return EXERCISE_METRIC_UNIT[metric] === 'kg' ? `${formatted}kg` : formatted;
 }

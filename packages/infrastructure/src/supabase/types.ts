@@ -2383,6 +2383,8 @@ export type Database = {
           alias_id: string | null
           created_at: string
           id: string
+          max_distance_meters: number | null
+          max_duration_seconds: number | null
           max_reps: number | null
           max_sets: number | null
           max_volume_kg: number | null
@@ -2395,6 +2397,8 @@ export type Database = {
           alias_id?: string | null
           created_at?: string
           id?: string
+          max_distance_meters?: number | null
+          max_duration_seconds?: number | null
           max_reps?: number | null
           max_sets?: number | null
           max_volume_kg?: number | null
@@ -2407,6 +2411,8 @@ export type Database = {
           alias_id?: string | null
           created_at?: string
           id?: string
+          max_distance_meters?: number | null
+          max_duration_seconds?: number | null
           max_reps?: number | null
           max_sets?: number | null
           max_volume_kg?: number | null

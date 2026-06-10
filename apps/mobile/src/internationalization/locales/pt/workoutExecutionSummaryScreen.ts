@@ -37,6 +37,8 @@ export default {
       volume: 'Maior volume',
       maxReps: 'Mais repetições',
       sets: 'Mais séries',
+      maxDuration: 'Maior tempo',
+      maxDistance: 'Maior distância',
     },
   },
   comparison: {

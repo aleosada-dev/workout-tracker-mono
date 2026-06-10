@@ -7,6 +7,9 @@ import type {
 import {
   EXERCISE_METRIC_UNIT,
   type ExerciseDetailData,
+  type ExerciseMetricKey,
+  type ExerciseMetricSeries,
+  metricsFor,
   type PersonalRecord,
   toSetEntries,
 } from './detail-types';
@@ -30,14 +33,52 @@ function series(
   return points;
 }
 
-function toPersonalRecords(records: ExerciseDetailResponse['records']): PersonalRecord[] {
-  const candidates: Array<[PersonalRecord['metric'], number | null]> = [
-    ['maxWeight', records.maxWeightKg],
-    ['volume', records.maxVolumeKg],
-    ['maxReps', records.maxReps],
-    ['sets', records.maxSets],
-  ];
-  return candidates.flatMap(([metric, value]) => (value != null ? [{ metric, value }] : []));
+const RECORD_VALUE: Record<
+  ExerciseMetricKey,
+  (records: ExerciseDetailResponse['records']) => number | null
+> = {
+  maxWeight: (r) => r.maxWeightKg,
+  volume: (r) => r.maxVolumeKg,
+  maxReps: (r) => r.maxReps,
+  sets: (r) => r.maxSets,
+  maxDuration: (r) => r.maxDurationSeconds,
+  maxDistance: (r) => r.maxDistanceMeters,
+};
+
+const SERIES_VALUE: Record<
+  ExerciseMetricKey,
+  (session: ExerciseDetailResponseSession) => number | null
+> = {
+  maxWeight: (s) => s.maxWeightKg,
+  volume: (s) => s.totalVolumeKg,
+  maxReps: (s) => s.maxReps,
+  sets: (s) => s.totalSets,
+  maxDuration: (s) => s.maxDurationSeconds,
+  maxDistance: (s) => s.maxDistanceMeters,
+};
+
+function toPersonalRecords(
+  records: ExerciseDetailResponse['records'],
+  metrics: ExerciseMetricKey[],
+): PersonalRecord[] {
+  return metrics.flatMap((metric) => {
+    const value = RECORD_VALUE[metric](records);
+    return value != null ? [{ metric, value }] : [];
+  });
+}
+
+function toMetricSeries(
+  sessions: ExerciseDetailResponseSession[],
+  metrics: ExerciseMetricKey[],
+): Partial<Record<ExerciseMetricKey, ExerciseMetricSeries>> {
+  const result: Partial<Record<ExerciseMetricKey, ExerciseMetricSeries>> = {};
+  for (const metric of metrics) {
+    result[metric] = {
+      unit: EXERCISE_METRIC_UNIT[metric],
+      points: series(sessions, SERIES_VALUE[metric]),
+    };
+  }
+  return result;
 }
 
 /** Maps the exercise detail payload to the data the detail screen renders. */
@@ -48,6 +89,7 @@ export function toExerciseDetailData(
 ): ExerciseDetailData {
   const sessions = sortedSessions(response.sessions);
   const lastSession = response.lastSession;
+  const metricKeys = metricsFor(response.variation.measurementType);
   const equipmentName = t(`equipment.${response.variation.equipmentSlug}`);
   return {
     id: response.variationId,
@@ -81,21 +123,10 @@ export function toExerciseDetailData(
     measurementType: response.variation.measurementType,
     videoUrl: response.variation.videoUrl,
     youtubeUrl: response.variation.youtubeUrl,
-    metrics: {
-      maxWeight: {
-        unit: EXERCISE_METRIC_UNIT.maxWeight,
-        points: series(sessions, (s) => s.maxWeightKg),
-      },
-      volume: {
-        unit: EXERCISE_METRIC_UNIT.volume,
-        points: series(sessions, (s) => s.totalVolumeKg),
-      },
-      maxReps: { unit: EXERCISE_METRIC_UNIT.maxReps, points: series(sessions, (s) => s.maxReps) },
-      sets: { unit: EXERCISE_METRIC_UNIT.sets, points: series(sessions, (s) => s.totalSets) },
-    },
+    metrics: toMetricSeries(sessions, metricKeys),
     lastSession: lastSession
       ? { date: lastSession.startedAt, sets: toSetEntries(lastSession) }
       : { date: '', sets: [] },
-    personalRecords: toPersonalRecords(response.records),
+    personalRecords: toPersonalRecords(response.records, metricKeys),
   };
 }

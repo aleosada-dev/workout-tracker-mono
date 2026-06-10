@@ -19,6 +19,8 @@ export default {
     volume: 'Volume',
     maxReps: 'Max reps',
     sets: 'Sets',
+    maxDuration: 'Max time',
+    maxDistance: 'Max distance',
   },
   muscles: {
     primary: 'Primary',
@@ -41,6 +43,8 @@ export default {
       type: 'Type',
       weight: 'Weight',
       reps: 'Reps',
+      duration: 'Time',
+      distance: 'Distance',
     },
     types: {
       helpHint: 'Set types',

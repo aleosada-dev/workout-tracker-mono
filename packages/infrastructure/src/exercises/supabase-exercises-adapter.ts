@@ -109,7 +109,9 @@ export function makeSupabaseExerciseRepository(
     async getExerciseRecords({ userId, variationIds }) {
       const { data, error } = await supabase
         .from('workout_variation_records')
-        .select('variation_id, alias_id, max_weight_kg, max_volume_kg, max_reps, max_sets')
+        .select(
+          'variation_id, alias_id, max_weight_kg, max_volume_kg, max_reps, max_sets, max_duration_seconds, max_distance_meters',
+        )
         .eq('user_id', userId)
         .in('variation_id', variationIds);
 
@@ -124,6 +126,8 @@ export function makeSupabaseExerciseRepository(
         maxVolumeKg: row.max_volume_kg,
         maxReps: row.max_reps,
         maxSets: row.max_sets,
+        maxDurationSeconds: row.max_duration_seconds,
+        maxDistanceMeters: row.max_distance_meters,
       }));
     },
 

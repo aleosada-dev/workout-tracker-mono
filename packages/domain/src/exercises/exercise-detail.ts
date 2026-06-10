@@ -8,6 +8,8 @@ export type ExerciseDetailSessionSet = {
   reps: number | null;
   repsMin: number | null;
   repsMax: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
 };
 
 export type ExerciseDetailSession = {
@@ -17,6 +19,8 @@ export type ExerciseDetailSession = {
   totalVolumeKg: number;
   maxReps: number | null;
   totalSets: number;
+  maxDurationSeconds: number | null;
+  maxDistanceMeters: number | null;
   sets: ExerciseDetailSessionSet[];
 };
 
@@ -25,6 +29,8 @@ export type ExerciseDetailRecords = {
   maxVolumeKg: number | null;
   maxReps: number | null;
   maxSets: number | null;
+  maxDurationSeconds: number | null;
+  maxDistanceMeters: number | null;
 };
 
 export type ExerciseDetailVariation = {

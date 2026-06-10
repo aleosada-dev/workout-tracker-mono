@@ -1,3 +1,4 @@
+import type { ExerciseMeasurementType } from '@workout-tracker/domain';
 import {
   Badge,
   Card,
@@ -13,13 +14,15 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import {
-  EXERCISE_METRIC_KEYS,
   type ExerciseDetailData,
   type ExerciseMetricKey,
+  type ExerciseSetEntry,
+  metricsFor,
 } from '@/features/exercises/lib/detail-types';
-import { formatKg, formatRecordValue } from '@/features/exercises/lib/format';
+import { formatDistanceMeters, formatKg, formatRecordValue } from '@/features/exercises/lib/format';
 import { SET_TYPE_CONFIG } from '@/features/exercises/lib/sets';
 import { useDateFnsLocale } from '@/features/shared/hooks/use-date-fns-locale';
+import { formatTime } from '@/features/shared/lib/utils';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import { ExerciseDemoVideo } from './ExerciseDemoVideo';
 import { ExerciseMetricChart } from './ExerciseMetricChart';
@@ -36,18 +39,19 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
   const { t, i18n } = useTranslation();
   const language = i18n.language;
   const locale = useDateFnsLocale();
-  const [selectedMetric, setSelectedMetric] = useState<ExerciseMetricKey>('maxWeight');
+  const metricKeys = metricsFor(data.measurementType);
+  const [selectedMetric, setSelectedMetric] = useState<ExerciseMetricKey>(metricKeys[0]);
   const selectedSeries = data.metrics[selectedMetric];
   const hasSets = data.lastSession.sets.length > 0;
   const hasRecords = data.personalRecords.length > 0;
   const sessionDate = hasSets ? format(new Date(data.lastSession.date), 'dd MMM', { locale }) : '';
-  const hasSessions = data.metrics.sets.points.length > 0;
+  const hasSessions = (data.metrics.sets?.points.length ?? 0) > 0;
   const isUnloadedMetric =
     hasSessions &&
-    ((selectedMetric === 'maxWeight' && data.metrics.maxWeight.points.length === 0) ||
-      (selectedMetric === 'volume' &&
-        data.metrics.volume.points.length > 0 &&
-        data.metrics.volume.points.every((p) => p.value === 0)));
+    selectedMetric !== 'sets' &&
+    (!selectedSeries ||
+      selectedSeries.points.length === 0 ||
+      selectedSeries.points.every((p) => p.value === 0));
 
   return (
     <View className="gap-4" testID="exercise-detail.content">
@@ -114,7 +118,7 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
         />
         <Card className="gap-4">
           <View className="flex-row flex-wrap gap-1.5 px-4">
-            {EXERCISE_METRIC_KEYS.map((key) => {
+            {metricKeys.map((key) => {
               const active = key === selectedMetric;
               return (
                 <Pressable
@@ -148,7 +152,7 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
                 testID="exercise-detail.chart.empty-unloaded"
               />
             ) : (
-              <ExerciseMetricChart metric={selectedMetric} points={selectedSeries.points} />
+              <ExerciseMetricChart metric={selectedMetric} points={selectedSeries?.points ?? []} />
             )}
           </View>
         </Card>
@@ -174,12 +178,11 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
                 <Text variant="caption">{t('exerciseDetailScreen.sets.headers.type')}</Text>
                 <SetTypesHelpDialog />
               </View>
-              <Text variant="caption" className="flex-1 text-right">
-                {t('exerciseDetailScreen.sets.headers.weight')}
-              </Text>
-              <Text variant="caption" className="w-14 text-right">
-                {t('exerciseDetailScreen.sets.headers.reps')}
-              </Text>
+              {setColumns(data.measurementType).map((column) => (
+                <Text key={column.key} variant="caption" className={column.headerClassName}>
+                  {t(column.header)}
+                </Text>
+              ))}
             </View>
             {data.lastSession.sets.map((set) => {
               const typeConfig = SET_TYPE_CONFIG[set.type];
@@ -194,10 +197,11 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
                   <Text className={cn('flex-1 font-sans-semibold text-sm', typeConfig.textColor)}>
                     {t(typeConfig.label)}
                   </Text>
-                  <Text className="flex-1 text-right text-sm">
-                    {formatKg(set.weightKg, language)}
-                  </Text>
-                  <Text className="w-14 text-right text-sm">{set.reps}</Text>
+                  {setColumns(data.measurementType).map((column) => (
+                    <Text key={column.key} className={cn('text-sm', column.cellClassName)}>
+                      {column.render(set, language)}
+                    </Text>
+                  ))}
                 </View>
               );
             })}
@@ -254,6 +258,61 @@ export function ExerciseDetail({ data, aliasContext }: ExerciseDetailProps) {
       </View>
     </View>
   );
+}
+
+type SetColumn = {
+  key: string;
+  header: string;
+  headerClassName: string;
+  cellClassName: string;
+  render: (set: ExerciseSetEntry, language: string) => string;
+};
+
+const WEIGHT_COLUMN: SetColumn = {
+  key: 'weight',
+  header: 'exerciseDetailScreen.sets.headers.weight',
+  headerClassName: 'flex-1 text-right',
+  cellClassName: 'flex-1 text-right',
+  render: (set, language) => (set.weightKg != null ? formatKg(set.weightKg, language) : '—'),
+};
+
+const REPS_COLUMN: SetColumn = {
+  key: 'reps',
+  header: 'exerciseDetailScreen.sets.headers.reps',
+  headerClassName: 'w-14 text-right',
+  cellClassName: 'w-14 text-right',
+  render: (set) => (set.reps != null ? String(set.reps) : '—'),
+};
+
+const DURATION_COLUMN: SetColumn = {
+  key: 'duration',
+  header: 'exerciseDetailScreen.sets.headers.duration',
+  headerClassName: 'flex-1 text-right',
+  cellClassName: 'flex-1 text-right',
+  render: (set) => (set.durationSeconds != null ? formatTime(set.durationSeconds) : '—'),
+};
+
+const DISTANCE_COLUMN: SetColumn = {
+  key: 'distance',
+  header: 'exerciseDetailScreen.sets.headers.distance',
+  headerClassName: 'flex-1 text-right',
+  cellClassName: 'flex-1 text-right',
+  render: (set, language) =>
+    set.distanceMeters != null ? formatDistanceMeters(set.distanceMeters, language) : '—',
+};
+
+/** Value columns for the last-session set table, by measurement type. */
+function setColumns(measurementType: ExerciseMeasurementType): SetColumn[] {
+  switch (measurementType) {
+    case 'reps':
+      return [REPS_COLUMN];
+    case 'duration':
+      return [DURATION_COLUMN];
+    case 'distance':
+      return [DISTANCE_COLUMN];
+    default:
+      return [WEIGHT_COLUMN, REPS_COLUMN];
+  }
 }
 
 function ArchivedBanner({

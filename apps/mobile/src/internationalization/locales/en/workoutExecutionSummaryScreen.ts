@@ -37,6 +37,8 @@ export default {
       volume: 'Highest volume',
       maxReps: 'Most reps',
       sets: 'Most sets',
+      maxDuration: 'Longest time',
+      maxDistance: 'Longest distance',
     },
   },
   comparison: {

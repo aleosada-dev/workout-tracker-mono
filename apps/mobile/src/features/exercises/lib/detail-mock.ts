@@ -65,9 +65,30 @@ export function getMockExerciseDetail(
     lastSession: {
       date: '2026-04-23',
       sets: [
-        { index: 1, type: 'normal', weightKg: 7.5, reps: 12 },
-        { index: 2, type: 'normal', weightKg: 7.5, reps: 12 },
-        { index: 3, type: 'normal', weightKg: 7.5, reps: 12 },
+        {
+          index: 1,
+          type: 'normal',
+          weightKg: 7.5,
+          reps: 12,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
+        {
+          index: 2,
+          type: 'normal',
+          weightKg: 7.5,
+          reps: 12,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
+        {
+          index: 3,
+          type: 'normal',
+          weightKg: 7.5,
+          reps: 12,
+          durationSeconds: null,
+          distanceMeters: null,
+        },
       ],
     },
     personalRecords: [

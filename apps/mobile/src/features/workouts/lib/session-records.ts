@@ -1,9 +1,6 @@
 import { setVolume } from '@workout-tracker/domain';
 import type { ExerciseRecordsResponse } from '@/features/exercises/api/exercises';
-import {
-  EXERCISE_METRIC_KEYS,
-  type ExerciseMetricKey,
-} from '@/features/exercises/lib/detail-types';
+import { type ExerciseMetricKey, metricsFor } from '@/features/exercises/lib/detail-types';
 import type { CompletedExecution } from './completed-execution';
 import type { ExecutionExerciseVariation } from './execution-form';
 
@@ -24,6 +21,8 @@ type SessionMetrics = {
   volume: number;
   maxReps: number | null;
   sets: number;
+  maxDuration: number | null;
+  maxDistance: number | null;
 };
 
 type AggregatedExercise = {
@@ -45,7 +44,14 @@ function aggregateByVariation(
     if (!entry) {
       entry = {
         variation: exercise.variation,
-        metrics: { maxWeight: null, volume: 0, maxReps: null, sets: 0 },
+        metrics: {
+          maxWeight: null,
+          volume: 0,
+          maxReps: null,
+          sets: 0,
+          maxDuration: null,
+          maxDistance: null,
+        },
       };
       byVariation.set(variationId, entry);
     }
@@ -58,6 +64,18 @@ function aggregateByVariation(
       }
       if (set.reps !== null) {
         metrics.maxReps = Math.max(metrics.maxReps ?? set.reps, set.reps);
+      }
+      if (set.durationSeconds !== null) {
+        metrics.maxDuration = Math.max(
+          metrics.maxDuration ?? set.durationSeconds,
+          set.durationSeconds,
+        );
+      }
+      if (set.distanceMeters !== null) {
+        metrics.maxDistance = Math.max(
+          metrics.maxDistance ?? set.distanceMeters,
+          set.distanceMeters,
+        );
       }
       metrics.volume += setVolume({ weight: set.weightKg, reps: set.reps });
       metrics.sets += 1;
@@ -72,6 +90,8 @@ const METRIC_VALUE: Record<ExerciseMetricKey, (m: SessionMetrics) => number | nu
   volume: (m) => m.volume,
   maxReps: (m) => m.maxReps,
   sets: (m) => m.sets,
+  maxDuration: (m) => m.maxDuration,
+  maxDistance: (m) => m.maxDistance,
 };
 
 const PREVIOUS_VALUE: Record<
@@ -82,6 +102,8 @@ const PREVIOUS_VALUE: Record<
   volume: (r) => r.maxVolumeKg,
   maxReps: (r) => r.maxReps,
   sets: (r) => r.maxSets,
+  maxDuration: (r) => r.maxDurationSeconds,
+  maxDistance: (r) => r.maxDistanceMeters,
 };
 
 export function buildSessionRecords(
@@ -102,7 +124,7 @@ export function buildSessionRecords(
     const previousRecord = baselineByVariation.get(variationId);
     const records: SessionRecordMetric[] = [];
 
-    for (const metric of EXERCISE_METRIC_KEYS) {
+    for (const metric of metricsFor(variation.measurementType)) {
       const current = METRIC_VALUE[metric](metrics);
 
       if (!previousRecord) {

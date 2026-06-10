@@ -1,3 +1,4 @@
+import type { ExerciseMeasurementType } from '@workout-tracker/domain';
 import { setVolume } from '@workout-tracker/domain';
 import type { GetWorkoutLastLogResponse } from '@/features/workouts/api/workouts';
 import type { CompletedExecution } from './completed-execution';
@@ -8,6 +9,7 @@ export type SessionComparisonExercise = {
   variationId: string;
   exerciseName: string;
   variationName: string | null;
+  measurementType: ExerciseMeasurementType;
   status: ComparisonStatus;
   currentSets: number;
   previousSets: number | null;
@@ -24,6 +26,7 @@ type CurrentEntry = {
   variationId: string;
   exerciseName: string;
   variationName: string | null;
+  measurementType: ExerciseMeasurementType;
   position: number;
   sets: number;
   volumeKg: number;
@@ -54,6 +57,7 @@ function aggregateCurrent(
         variationId,
         exerciseName: exercise.variation.exercise.name,
         variationName: exercise.variation.name,
+        measurementType: exercise.variation.measurementType,
         position: exercise.position,
         sets: 0,
         volumeKg: 0,
@@ -122,6 +126,7 @@ export function buildSessionComparison(
       variationId: entry.variationId,
       exerciseName: entry.exerciseName,
       variationName: entry.variationName,
+      measurementType: entry.measurementType,
       status: prev ? 'kept' : 'new',
       currentSets: entry.sets,
       previousSets: prev ? prev.sets : null,
@@ -136,6 +141,9 @@ export function buildSessionComparison(
       variationId: entry.variationId,
       exerciseName: entry.exerciseName,
       variationName: entry.variationName,
+      // O log anterior não carrega measurement type; só séries/volume de peso
+      // são comparáveis para exercícios removidos. Assume weight_reps.
+      measurementType: 'weight_reps',
       status: 'removed',
       currentSets: 0,
       previousSets: entry.sets,

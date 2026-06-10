@@ -52,9 +52,29 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
     totalVolumeKg: 360,
     maxReps: 10,
     totalSets: 3,
+    maxDurationSeconds: null,
+    maxDistanceMeters: null,
     sets: [
-      { setOrder: 1, setType: 'normal' as const, weightKg: 20, reps: 9, repsMin: 6, repsMax: 10 },
-      { setOrder: 0, setType: 'warmup' as const, weightKg: null, reps: 5, repsMin: 5, repsMax: 8 },
+      {
+        setOrder: 1,
+        setType: 'normal' as const,
+        weightKg: 20,
+        reps: 9,
+        repsMin: 6,
+        repsMax: 10,
+        durationSeconds: null,
+        distanceMeters: null,
+      },
+      {
+        setOrder: 0,
+        setType: 'warmup' as const,
+        weightKg: null,
+        reps: 5,
+        repsMin: 5,
+        repsMax: 8,
+        durationSeconds: null,
+        distanceMeters: null,
+      },
     ],
   };
   return {
@@ -69,11 +89,20 @@ function makeResponse(overrides: Partial<ExerciseDetailResponse> = {}): Exercise
         totalVolumeKg: 0,
         maxReps: 9,
         totalSets: 3,
+        maxDurationSeconds: null,
+        maxDistanceMeters: null,
         sets: [],
       },
     ],
     lastSession: session,
-    records: { maxWeightKg: null, maxVolumeKg: 700, maxReps: 10, maxSets: 4 },
+    records: {
+      maxWeightKg: null,
+      maxVolumeKg: 700,
+      maxReps: 10,
+      maxSets: 4,
+      maxDurationSeconds: null,
+      maxDistanceMeters: null,
+    },
     ...overrides,
   };
 }
@@ -91,12 +120,12 @@ describe('toExerciseDetailData', () => {
 
   test('sorts sessions chronologically and skips null metric values', () => {
     const { metrics } = toExerciseDetailData(makeResponse(), 'pt', makeT('pt'));
-    expect(metrics.volume.points).toEqual([
+    expect(metrics.volume?.points).toEqual([
       { date: '2026-03-29T17:39:11.741831+00:00', value: 0 },
       { date: '2026-04-03T17:39:11.741831+00:00', value: 360 },
     ]);
     // the session with maxWeightKg === null drops out of the maxWeight series
-    expect(metrics.maxWeight.points).toEqual([
+    expect(metrics.maxWeight?.points).toEqual([
       { date: '2026-04-03T17:39:11.741831+00:00', value: 20 },
     ]);
   });
@@ -105,8 +134,22 @@ describe('toExerciseDetailData', () => {
     const { lastSession } = toExerciseDetailData(makeResponse(), 'pt', makeT('pt'));
     expect(lastSession.date).toBe('2026-04-03T17:39:11.741831+00:00');
     expect(lastSession.sets).toEqual([
-      { index: 1, type: 'warmup', weightKg: 0, reps: 5 },
-      { index: 2, type: 'normal', weightKg: 20, reps: 9 },
+      {
+        index: 1,
+        type: 'warmup',
+        weightKg: null,
+        reps: 5,
+        durationSeconds: null,
+        distanceMeters: null,
+      },
+      {
+        index: 2,
+        type: 'normal',
+        weightKg: 20,
+        reps: 9,
+        durationSeconds: null,
+        distanceMeters: null,
+      },
     ]);
   });
 
@@ -215,6 +258,63 @@ describe('toExerciseDetailData', () => {
     );
     expect(data.name).toBe('Barra Fixa na Máquina');
     expect(data.variationName).toBe('Pegada Fechada');
+  });
+
+  test('builds only duration-relevant metrics and records for a duration exercise', () => {
+    const data = toExerciseDetailData(
+      makeResponse({
+        variation: {
+          exerciseName: 'Prancha',
+          exerciseSlug: null,
+          variationName: null,
+          variationSlug: null,
+          equipmentSlug: 'machine',
+          equipmentPreposition: 'na',
+          muscleSlug: 'back',
+          secondaryMuscleSlug: null,
+          measurementType: 'duration',
+          youtubeUrl: null,
+          videoUrl: null,
+          userId: null,
+          deletedAt: null,
+          deletedBy: null,
+          deletedByName: null,
+        },
+        sessions: [
+          {
+            workoutLogId: 'log-1',
+            startedAt: '2026-04-03T17:39:11.741831+00:00',
+            maxWeightKg: null,
+            totalVolumeKg: 0,
+            maxReps: null,
+            totalSets: 2,
+            maxDurationSeconds: 90,
+            maxDistanceMeters: null,
+            sets: [],
+          },
+        ],
+        records: {
+          maxWeightKg: null,
+          maxVolumeKg: null,
+          maxReps: null,
+          maxSets: 3,
+          maxDurationSeconds: 120,
+          maxDistanceMeters: null,
+        },
+      }),
+      'pt',
+      makeT('pt'),
+    );
+
+    expect(Object.keys(data.metrics).sort()).toEqual(['maxDuration', 'sets']);
+    expect(data.metrics.maxDuration?.unit).toBe('seconds');
+    expect(data.metrics.maxDuration?.points).toEqual([
+      { date: '2026-04-03T17:39:11.741831+00:00', value: 90 },
+    ]);
+    expect(data.personalRecords).toEqual([
+      { metric: 'maxDuration', value: 120 },
+      { metric: 'sets', value: 3 },
+    ]);
   });
 
   test('maps the secondary muscle when present', () => {

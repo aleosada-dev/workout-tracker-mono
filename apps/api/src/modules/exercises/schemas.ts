@@ -222,6 +222,8 @@ const DetailSessionSetSchema = z.object({
 	reps: z.number().int().nullable(),
 	repsMin: z.number().int().nullable(),
 	repsMax: z.number().int().nullable(),
+	durationSeconds: z.number().int().nullable(),
+	distanceMeters: z.number().int().nullable(),
 });
 
 const DetailSessionSchema = z.object({
@@ -231,6 +233,8 @@ const DetailSessionSchema = z.object({
 	totalVolumeKg: z.number(),
 	maxReps: z.number().int().nullable(),
 	totalSets: z.number().int().nonnegative(),
+	maxDurationSeconds: z.number().int().nullable(),
+	maxDistanceMeters: z.number().int().nullable(),
 	sets: z.array(DetailSessionSetSchema),
 });
 
@@ -239,6 +243,8 @@ const DetailRecordsSchema = z.object({
 	maxVolumeKg: z.number().nullable(),
 	maxReps: z.number().int().nullable(),
 	maxSets: z.number().int().nullable(),
+	maxDurationSeconds: z.number().int().nullable(),
+	maxDistanceMeters: z.number().int().nullable(),
 });
 
 const DetailVariationSchema = z.object({
@@ -284,6 +290,8 @@ const ExerciseRecordsItemSchema = z.object({
 	maxVolumeKg: z.number().nullable(),
 	maxReps: z.number().int().nullable(),
 	maxSets: z.number().int().nullable(),
+	maxDurationSeconds: z.number().int().nullable(),
+	maxDistanceMeters: z.number().int().nullable(),
 });
 
 export const ExerciseRecordsResponseSchema = z.array(ExerciseRecordsItemSchema);

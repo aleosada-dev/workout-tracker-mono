@@ -2,7 +2,8 @@ import {
   EXERCISE_METRIC_UNIT,
   type ExerciseMetricKey,
 } from '@/features/exercises/lib/detail-types';
-import { formatCount, formatKg } from '@/features/exercises/lib/format';
+import { formatCount, formatDistanceMeters, formatKg } from '@/features/exercises/lib/format';
+import { formatTime } from '@/features/shared/lib/utils';
 
 /**
  * A 0-based numeric axis with a "nice" round step (≈4 ticks) derived from the
@@ -35,7 +36,14 @@ export function formatMetricTick(
   value: number,
   language: string,
 ): string {
-  return EXERCISE_METRIC_UNIT[metric] === 'kg'
-    ? formatKg(value, language, { min: 0, max: 0 })
-    : formatCount(value, language);
+  switch (EXERCISE_METRIC_UNIT[metric]) {
+    case 'kg':
+      return formatKg(value, language, { min: 0, max: 0 });
+    case 'seconds':
+      return formatTime(value);
+    case 'meters':
+      return formatDistanceMeters(value, language);
+    default:
+      return formatCount(value, language);
+  }
 }

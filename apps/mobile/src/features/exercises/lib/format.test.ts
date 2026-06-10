@@ -3,7 +3,12 @@ import type {
   ListExercisesResponseExercise,
   ListExercisesResponseVariation,
 } from '@/features/exercises/api/exercises';
-import { composeExerciseName, toExercise } from '@/features/exercises/lib/format';
+import {
+  composeExerciseName,
+  formatDistanceMeters,
+  formatMetricValue,
+  toExercise,
+} from '@/features/exercises/lib/format';
 
 const TRANSLATIONS: Record<string, Record<string, string>> = {
   pt: {
@@ -155,6 +160,36 @@ describe('composeExerciseName', () => {
         ),
       ).toBe('Corrida');
     });
+  });
+});
+
+describe('formatDistanceMeters', () => {
+  test('shows meters below 1km', () => {
+    expect(formatDistanceMeters(800, 'en')).toBe('800 m');
+  });
+
+  test('shows km at or above 1km', () => {
+    expect(formatDistanceMeters(5000, 'en')).toBe('5 km');
+    expect(formatDistanceMeters(5250, 'en')).toBe('5.25 km');
+  });
+});
+
+describe('formatMetricValue', () => {
+  test('formats duration metrics as mm:ss', () => {
+    expect(formatMetricValue('maxDuration', 90, 'en')).toBe('01:30');
+  });
+
+  test('formats distance metrics in m/km', () => {
+    expect(formatMetricValue('maxDistance', 5000, 'en')).toBe('5 km');
+  });
+
+  test('formats weight metrics in kg with two decimals', () => {
+    expect(formatMetricValue('maxWeight', 7.5, 'en')).toBe('7.50 kg');
+  });
+
+  test('formats rep and count metrics as integers', () => {
+    expect(formatMetricValue('maxReps', 12, 'en')).toBe('12');
+    expect(formatMetricValue('sets', 3, 'en')).toBe('3');
   });
 });
 
