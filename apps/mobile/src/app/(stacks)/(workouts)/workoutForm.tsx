@@ -17,7 +17,12 @@ import { Trash2 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
+import {
+  useReanimatedFocusedInput,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { workoutObservability } from '@/features/observability/lib';
@@ -130,6 +135,22 @@ function WorkoutForm({
   const reorderSheetRef = useRef<SupersetReorderSheetRef>(null);
   const deleteSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
 
+  const { height: screenHeight } = useWindowDimensions();
+  const { height: kbHeight } = useReanimatedKeyboardAnimation();
+  const { input: focusedInput } = useReanimatedFocusedInput();
+
+  const tabsAnimatedStyle = useAnimatedStyle(() => {
+    const keyboardHeight = -kbHeight.value;
+    const focused = focusedInput.value;
+    if (keyboardHeight <= 0 || !focused) {
+      return { transform: [{ translateY: withTiming(0, { duration: 150 }) }] };
+    }
+    const inputBottom = focused.layout.absoluteY + focused.layout.height;
+    const keyboardTop = screenHeight - keyboardHeight;
+    const overlap = Math.max(0, inputBottom - keyboardTop + 16);
+    return { transform: [{ translateY: -overlap }] };
+  });
+
   const warmupItems = toExecutionListItems(exercises, 'preparatory', t, i18n.language);
   const strengthItems = toExecutionListItems(exercises, 'strength', t, i18n.language);
   const hasStrengthExercise = exercises.some((exercise) => exercise.exerciseType === 'strength');
@@ -158,18 +179,20 @@ function WorkoutForm({
     userId: bodyUserId ?? null,
   });
 
-  const [hasSaved, setHasSaved] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const pendingActionRef = useRef<Parameters<typeof navigation.dispatch>[0] | null>(null);
+  // Saída intencional (após salvar/deletar): libera o guard de descartar sem
+  // depender de um re-render, evitando que um commit extra corra com o pop.
+  const allowLeaveRef = useRef(false);
 
-  usePreventRemove(isDirty && !hasSaved, ({ data }) => {
+  usePreventRemove(isDirty, ({ data }) => {
+    if (allowLeaveRef.current) {
+      navigation.dispatch(data.action);
+      return;
+    }
     pendingActionRef.current = data.action;
     setDiscardOpen(true);
   });
-
-  useEffect(() => {
-    if (hasSaved) router.back();
-  }, [hasSaved]);
 
   const handleAddExercise = () => {
     openExercisePicker({
@@ -212,7 +235,8 @@ function WorkoutForm({
                 ? t('workoutFormScreen.success.updatedTitle')
                 : t('workoutFormScreen.success.createdTitle'),
             });
-            setHasSaved(true);
+            allowLeaveRef.current = true;
+            router.back();
           },
           onError: handleLocalError((error) => {
             workoutObservability.captureError(error, { action: 'upsert_workout' });
@@ -244,7 +268,8 @@ function WorkoutForm({
           type: 'success',
           text1: t('workoutsScreen.deleteWorkoutsDialog.success', { count: deletedIds.length }),
         });
-        setHasSaved(true);
+        allowLeaveRef.current = true;
+        router.back();
       },
       onError: handleLocalError((error) => {
         workoutObservability.captureError(error, { action: 'delete_workouts' });
@@ -301,85 +326,87 @@ function WorkoutForm({
             title: isEdit ? t('workoutFormScreen.editTitle') : t('workoutFormScreen.createTitle'),
           }}
         />
-        <View className="gap-3 px-4 pt-2 pb-1">
-          <Field
-            label={t('workoutFormScreen.fields.name')}
-            error={errors.name?.message && t(errors.name.message)}
+        <Animated.View style={[{ flex: 1 }, tabsAnimatedStyle]}>
+          <View className="gap-3 px-4 pt-2 pb-1">
+            <Field
+              label={t('workoutFormScreen.fields.name')}
+              error={errors.name?.message && t(errors.name.message)}
+            >
+              <Controller
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Input
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    aria-invalid={fieldState.invalid}
+                    placeholder={t('workoutFormScreen.fields.namePlaceholder')}
+                    testID="workout-form.name"
+                  />
+                )}
+              />
+            </Field>
+            <Field label={t('workoutFormScreen.fields.description')}>
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <Input
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder={t('workoutFormScreen.fields.descriptionPlaceholder')}
+                    multiline
+                    textAlignVertical="top"
+                    className="h-16 items-start py-2"
+                    testID="workout-form.description"
+                  />
+                )}
+              />
+            </Field>
+          </View>
+          <Tabs
+            value={tab}
+            onValueChange={(value) => handleChangeTab(value as BuilderTab)}
+            className="flex-1 px-4"
           >
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <Input
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  aria-invalid={fieldState.invalid}
-                  placeholder={t('workoutFormScreen.fields.namePlaceholder')}
-                  testID="workout-form.name"
-                />
-              )}
-            />
-          </Field>
-          <Field label={t('workoutFormScreen.fields.description')}>
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <Input
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  placeholder={t('workoutFormScreen.fields.descriptionPlaceholder')}
-                  multiline
-                  textAlignVertical="top"
-                  className="h-16 items-start py-2"
-                  testID="workout-form.description"
-                />
-              )}
-            />
-          </Field>
-        </View>
-        <Tabs
-          value={tab}
-          onValueChange={(value) => handleChangeTab(value as BuilderTab)}
-          className="flex-1 px-4"
-        >
-          <TabsList variant="outline" className="w-full">
-            <TabsTrigger value="preparatory" className="flex-1">
-              <Text>{t('workoutExecutionScreen.tabs.preparatory')}</Text>
-            </TabsTrigger>
-            <TabsTrigger value="strength" className="flex-1">
-              <Text>{t('workoutExecutionScreen.tabs.strength')}</Text>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="preparatory" className="flex-1">
-            <ExerciseExecutionList
-              exercises={warmupItems}
-              onAddExercise={handleAddExercise}
-              onDeleteExercises={editing.handleDeleteExercises}
-              onReorder={(ids) => editing.handleReorder('preparatory', ids)}
-              selectionMode={selectionMode && tab === 'preparatory'}
-              selectedIds={selection.selected}
-              onToggleSelect={selection.toggle}
-              onLongPressItem={editing.handleLongPressItem}
-              renderCard={renderBuilderCard}
-            />
-          </TabsContent>
-          <TabsContent value="strength" className="flex-1">
-            <ExerciseExecutionList
-              exercises={strengthItems}
-              onAddExercise={handleAddExercise}
-              onDeleteExercises={editing.handleDeleteExercises}
-              onReorder={(ids) => editing.handleReorder('strength', ids)}
-              selectionMode={selectionMode && tab === 'strength'}
-              selectedIds={selection.selected}
-              onToggleSelect={selection.toggle}
-              onLongPressItem={editing.handleLongPressItem}
-              renderCard={renderBuilderCard}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsList variant="outline" className="w-full">
+              <TabsTrigger value="preparatory" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.preparatory')}</Text>
+              </TabsTrigger>
+              <TabsTrigger value="strength" className="flex-1">
+                <Text>{t('workoutExecutionScreen.tabs.strength')}</Text>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="preparatory" className="flex-1">
+              <ExerciseExecutionList
+                exercises={warmupItems}
+                onAddExercise={handleAddExercise}
+                onDeleteExercises={editing.handleDeleteExercises}
+                onReorder={(ids) => editing.handleReorder('preparatory', ids)}
+                selectionMode={selectionMode && tab === 'preparatory'}
+                selectedIds={selection.selected}
+                onToggleSelect={selection.toggle}
+                onLongPressItem={editing.handleLongPressItem}
+                renderCard={renderBuilderCard}
+              />
+            </TabsContent>
+            <TabsContent value="strength" className="flex-1">
+              <ExerciseExecutionList
+                exercises={strengthItems}
+                onAddExercise={handleAddExercise}
+                onDeleteExercises={editing.handleDeleteExercises}
+                onReorder={(ids) => editing.handleReorder('strength', ids)}
+                selectionMode={selectionMode && tab === 'strength'}
+                selectedIds={selection.selected}
+                onToggleSelect={selection.toggle}
+                onLongPressItem={editing.handleLongPressItem}
+                renderCard={renderBuilderCard}
+              />
+            </TabsContent>
+          </Tabs>
+        </Animated.View>
         {selectionMode ? (
           <SelectionToolbar
             count={selection.selected.size}
