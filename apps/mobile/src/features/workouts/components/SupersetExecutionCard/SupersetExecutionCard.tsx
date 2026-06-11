@@ -406,14 +406,14 @@ export function SupersetExecutionCard({
                 </View>
               </View>
               {layout.weight ? (
-                <View className="w-20 pr-2 pl-3">
+                <View className="min-w-[72px] flex-1 pr-2 pl-3">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     {t('workoutExecutionScreen.exercise.headers.weight')}
                   </Text>
                 </View>
               ) : null}
               {layout.reps ? (
-                <View className="w-20 px-2">
+                <View className="min-w-[56px] flex-1 px-2">
                   <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                     {t('workoutExecutionScreen.exercise.headers.reps')}
                   </Text>
@@ -438,7 +438,7 @@ export function SupersetExecutionCard({
                   />
                 </View>
               ) : null}
-              <View className="w-20 px-2">
+              <View className="min-w-[64px] flex-1 px-2">
                 <Text className="text-center font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   {t('workoutExecutionScreen.exercise.headers.target')}
                 </Text>
@@ -541,7 +541,7 @@ function SupersetSetRow({
 
   return (
     <View className={`-mx-4 flex-row items-center px-4 py-1 ${allDone ? 'bg-primary/10' : ''}`}>
-      <View>
+      <View className="flex-1">
         {roundMembers.map((member) =>
           member.setIndexes.map((setIndex) => (
             <SupersetMemberCell
@@ -556,16 +556,18 @@ function SupersetSetRow({
           )),
         )}
       </View>
-      <Pressable
-        onPress={() => toggle(!allDone)}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: allDone }}
-        className="w-10 items-center justify-center py-3"
-        hitSlop={0}
-        testID={`workout-execution.superset.round-${roundOrder}.done`}
-      >
-        <Checkbox checked={allDone} onCheckedChange={toggle} hitSlop={0} />
-      </Pressable>
+      <View className="w-10">
+        <Pressable
+          onPress={() => toggle(!allDone)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: allDone }}
+          className="w-10 items-center justify-center py-3"
+          hitSlop={0}
+          testID={`workout-execution.superset.round-${roundOrder}.done`}
+        >
+          <Checkbox checked={allDone} onCheckedChange={toggle} hitSlop={0} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -631,7 +633,7 @@ function SupersetMemberCell({
   const kgPlaceholder = weightPlaceholder(lastKg, loadPercent, preferences?.loadRounding ?? 'none');
 
   return (
-    <View className="flex-row items-center py-0.5">
+    <View className="w-full flex-row items-center py-0.5">
       <Pressable
         onPress={onPressLetter}
         hitSlop={8}
@@ -669,7 +671,7 @@ function SupersetMemberCell({
         />
       </View>
       {layout.weight ? (
-        <View className="w-20 pr-2 pl-3">
+        <View className="min-w-[72px] flex-1 pr-2 pl-3">
           {dims.weight ? (
             <Controller
               control={control}
@@ -698,7 +700,7 @@ function SupersetMemberCell({
         </View>
       ) : null}
       {layout.reps ? (
-        <View className="w-20 px-2">
+        <View className="min-w-[56px] flex-1 px-2">
           {dims.reps ? (
             <Controller
               control={control}
@@ -747,7 +749,7 @@ function SupersetMemberCell({
           <View className="w-32 px-2" />
         )
       ) : null}
-      <View className="w-20 px-2">
+      <View className="min-w-[64px] flex-1 px-2">
         <Text
           className={`text-center text-xs ${adjusted ? 'font-sans-semibold text-primary' : 'text-muted-foreground'}`}
         >

@@ -1,4 +1,4 @@
-import type { UserPreferences } from '@workout-tracker/domain';
+import { DEFAULT_USER_PREFERENCES, type UserPreferences } from '@workout-tracker/domain';
 import {
   Label,
   RequestErrorState,
@@ -46,7 +46,7 @@ function toDraft(preferences: UserPreferences): WorkoutDraft {
     loadRounding: preferences.loadRounding,
     defaultTrainingLocationId: preferences.defaultTrainingLocationId,
     autoFillReps: preferences.autoFillReps,
-    defaultSetsCount: preferences.defaultSetsCount,
+    defaultSetsCount: preferences.defaultSetsCount ?? DEFAULT_USER_PREFERENCES.defaultSetsCount,
   };
 }
 

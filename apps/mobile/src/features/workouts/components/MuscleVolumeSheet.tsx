@@ -34,7 +34,9 @@ export function MuscleVolumeSheet({ ref }: { ref?: Ref<MuscleVolumeSheetRef> }) 
         contentContainerClassName="gap-5 px-5 pt-2 pb-10"
         showsVerticalScrollIndicator={false}
       >
-        <Text variant="h4" className="text-center">{t('workoutFormScreen.muscleVolume.title')}</Text>
+        <Text variant="h4" className="text-center">
+          {t('workoutFormScreen.muscleVolume.title')}
+        </Text>
         {isError ? (
           <RequestErrorState
             title={t('workoutsScreen.error.title')}
