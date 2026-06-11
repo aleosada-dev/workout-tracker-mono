@@ -91,6 +91,7 @@ export default {
     },
   },
   deleteWorkoutsDialog: {
+    trigger: 'Excluir treino',
     title_one: 'Excluir treino?',
     title_other: 'Excluir {{count}} treinos?',
     message: 'Esta ação não pode ser desfeita.',

@@ -13,15 +13,17 @@ import {
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
+import { Trash2 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { workoutObservability } from '@/features/observability/lib';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { SelectionToolbar } from '@/features/shared/components/SelectionToolbar';
+import { useNavTheme } from '@/features/shared/lib/theme';
 import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
 import { ExerciseBuilderCard } from '@/features/workouts/components/ExerciseBuilderCard';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
@@ -32,6 +34,11 @@ import {
 } from '@/features/workouts/components/SupersetReorderSheet';
 import { WorkoutBuilderActions } from '@/features/workouts/components/WorkoutBuilderActions';
 import { WorkoutExecutionSkeleton } from '@/features/workouts/components/WorkoutExecutionSkeleton';
+import {
+  WorkoutsDeleteSheet,
+  type WorkoutsDeleteSheetRef,
+} from '@/features/workouts/components/WorkoutsDeleteSheet';
+import { useDeleteWorkouts } from '@/features/workouts/hooks/use-delete-workouts';
 import { useExerciseListEditing } from '@/features/workouts/hooks/use-exercise-list-editing';
 import { useUpsertWorkout } from '@/features/workouts/hooks/use-upsert-workout';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
@@ -102,6 +109,7 @@ function WorkoutForm({
 }) {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation();
+  const navTheme = useNavTheme();
   const isEdit = workout !== null;
   const [newWorkoutId] = useState(() => Crypto.randomUUID());
   const targetWorkoutId = workout?.id ?? newWorkoutId;
@@ -120,6 +128,7 @@ function WorkoutForm({
 
   const [tab, setTab] = useState<BuilderTab>('strength');
   const reorderSheetRef = useRef<SupersetReorderSheetRef>(null);
+  const deleteSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
 
   const warmupItems = toExecutionListItems(exercises, 'preparatory', t, i18n.language);
   const strengthItems = toExecutionListItems(exercises, 'strength', t, i18n.language);
@@ -145,6 +154,9 @@ function WorkoutForm({
   });
 
   const mutation = useUpsertWorkout(targetWorkoutId, { userId: bodyUserId ?? null });
+  const { mutate: deleteWorkout, isPending: isDeleting } = useDeleteWorkouts({
+    userId: bodyUserId ?? null,
+  });
 
   const [hasSaved, setHasSaved] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -221,6 +233,29 @@ function WorkoutForm({
       });
     },
   );
+
+  const handleConfirmDelete = () => {
+    if (!workout) return;
+    deleteWorkout([workout.id], {
+      onSuccess: ({ deletedIds }) => {
+        workoutObservability.trackAction('workouts_deleted', { count: deletedIds.length });
+        deleteSheetRef.current?.dismiss();
+        Toast.show({
+          type: 'success',
+          text1: t('workoutsScreen.deleteWorkoutsDialog.success', { count: deletedIds.length }),
+        });
+        setHasSaved(true);
+      },
+      onError: handleLocalError((error) => {
+        workoutObservability.captureError(error, { action: 'delete_workouts' });
+        Toast.show({
+          type: 'error',
+          text1: t('errors.unexpected.title'),
+          text2: t('errors.unexpected.message'),
+        });
+      }),
+    });
+  };
 
   // O botão nativo da toolbar (iOS) captura o onPress uma única vez; roteia por
   // ref para sempre ler o estado mais recente do form.
@@ -355,7 +390,26 @@ function WorkoutForm({
           />
         ) : (
           <>
-            <Stack.Screen options={{ headerLeft: undefined, headerRight: undefined }} />
+            <Stack.Screen
+              options={{
+                headerLeft: undefined,
+                headerRight: isEdit
+                  ? () => (
+                      <Pressable
+                        onPress={() => deleteSheetRef.current?.present()}
+                        disabled={isDeleting}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workoutsScreen.deleteWorkoutsDialog.trigger')}
+                        className="px-2"
+                        testID="workout-form.delete"
+                      >
+                        <Trash2 size={20} color={navTheme.colors.notification} />
+                      </Pressable>
+                    )
+                  : undefined,
+              }}
+            />
             <WorkoutBuilderActions
               onSave={onSave}
               onAddExercise={onAddExercise}
@@ -365,6 +419,14 @@ function WorkoutForm({
           </>
         )}
         <SupersetReorderSheet ref={reorderSheetRef} />
+        {isEdit ? (
+          <WorkoutsDeleteSheet
+            ref={deleteSheetRef}
+            count={1}
+            onConfirm={handleConfirmDelete}
+            isPending={isDeleting}
+          />
+        ) : null}
         <ConfirmDialog
           open={discardOpen}
           onOpenChange={setDiscardOpen}

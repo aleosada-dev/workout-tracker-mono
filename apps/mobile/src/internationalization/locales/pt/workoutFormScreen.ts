@@ -38,7 +38,7 @@ export default {
     addNote: 'Adicionar nota',
     editNote: 'Editar nota',
     editRest: 'Editar descanso',
-    restUndefined: 'Sem definição',
+    restUndefined: 'Indefinido',
   },
   noteSheet: {
     title: 'Nota do exercício',

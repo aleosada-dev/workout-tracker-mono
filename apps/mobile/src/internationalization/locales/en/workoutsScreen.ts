@@ -91,6 +91,7 @@ export default {
     },
   },
   deleteWorkoutsDialog: {
+    trigger: 'Delete workout',
     title_one: 'Delete workout?',
     title_other: 'Delete {{count}} workouts?',
     message: 'This action cannot be undone.',

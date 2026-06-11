@@ -10,7 +10,7 @@ export default {
   defaultRestSeconds: {
     label: 'Tempo padrão de descanso',
     description: 'Pré-preenche o tempo de descanso de novas séries.',
-    placeholder: 'Sem definição',
+    placeholder: 'Indefinido',
     pickerTitle: 'Tempo de descanso',
     confirm: 'Confirmar',
     clear: 'Limpar',
