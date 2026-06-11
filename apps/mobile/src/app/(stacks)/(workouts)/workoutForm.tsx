@@ -13,7 +13,7 @@ import {
 import * as Crypto from 'expo-crypto';
 import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { Trash2 } from 'lucide-react-native';
+import { BarChart3, Trash2 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm, useFormState, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,10 @@ import { useNavTheme } from '@/features/shared/lib/theme';
 import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
 import { ExerciseBuilderCard } from '@/features/workouts/components/ExerciseBuilderCard';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
+import {
+  MuscleVolumeSheet,
+  type MuscleVolumeSheetRef,
+} from '@/features/workouts/components/MuscleVolumeSheet';
 import { SupersetBuilderCard } from '@/features/workouts/components/SupersetBuilderCard';
 import {
   SupersetReorderSheet,
@@ -134,6 +138,7 @@ function WorkoutForm({
   const [tab, setTab] = useState<BuilderTab>('strength');
   const reorderSheetRef = useRef<SupersetReorderSheetRef>(null);
   const deleteSheetRef = useRef<WorkoutsDeleteSheetRef>(null);
+  const volumeSheetRef = useRef<MuscleVolumeSheetRef>(null);
 
   const { height: screenHeight } = useWindowDimensions();
   const { height: kbHeight } = useReanimatedKeyboardAnimation();
@@ -290,6 +295,7 @@ function WorkoutForm({
   const handleAddExerciseRef = useRef(handleAddExercise);
   handleAddExerciseRef.current = handleAddExercise;
   const onAddExercise = useRef(() => handleAddExerciseRef.current()).current;
+  const onOpenVolume = useRef(() => volumeSheetRef.current?.present()).current;
 
   const renderBuilderCard = (
     item: ReturnType<typeof toExecutionListItems>[number],
@@ -420,8 +426,21 @@ function WorkoutForm({
             <Stack.Screen
               options={{
                 headerLeft: undefined,
-                headerRight: isEdit
-                  ? () => (
+                headerRight: () => (
+                  <View className="flex-row items-center">
+                    {exercises.length > 0 ? (
+                      <Pressable
+                        onPress={onOpenVolume}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workoutFormScreen.muscleVolume.trigger')}
+                        className="px-2"
+                        testID="workout-form.volume"
+                      >
+                        <BarChart3 size={20} color={navTheme.colors.text} />
+                      </Pressable>
+                    ) : null}
+                    {isEdit ? (
                       <Pressable
                         onPress={() => deleteSheetRef.current?.present()}
                         disabled={isDeleting}
@@ -433,8 +452,9 @@ function WorkoutForm({
                       >
                         <Trash2 size={20} color={navTheme.colors.notification} />
                       </Pressable>
-                    )
-                  : undefined,
+                    ) : null}
+                  </View>
+                ),
               }}
             />
             <WorkoutBuilderActions
@@ -446,6 +466,7 @@ function WorkoutForm({
           </>
         )}
         <SupersetReorderSheet ref={reorderSheetRef} />
+        <MuscleVolumeSheet ref={volumeSheetRef} />
         {isEdit ? (
           <WorkoutsDeleteSheet
             ref={deleteSheetRef}

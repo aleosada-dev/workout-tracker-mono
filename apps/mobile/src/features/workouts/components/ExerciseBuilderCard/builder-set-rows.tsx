@@ -21,6 +21,29 @@ import type { ColumnLayout } from '@/features/workouts/lib/workout-mappers';
 
 export type BuilderColumnLayout = ColumnLayout & { loadPercent: boolean };
 
+type FillColumn = 'repsMin' | 'repsMax' | 'duration' | 'distance';
+type FillDimension = 'reps' | 'duration' | 'distance';
+
+// Carry the just-entered value into the following sets that share the same
+// dimension and are still empty. Existing values are never overwritten.
+function useFillFollowingSets(exerciseIndex: number, setIndex: number) {
+  const { getValues, setValue } = useFormContext<WorkoutFormInput>();
+  const { data: preferences } = useUserPreferences();
+
+  return (column: FillColumn, dimension: FillDimension, value: string) => {
+    if (!preferences?.autoFillReps || value === '') return;
+    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    for (let i = setIndex + 1; i < sets.length; i++) {
+      if (!measurementDimensions(sets[i].measurementType)[dimension]) continue;
+      if (sets[i][column]) continue;
+      setValue(`exercises.${exerciseIndex}.sets.${i}.${column}`, value, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+}
+
 export function RepsRangeCells({
   exerciseIndex,
   setIndex,
@@ -29,24 +52,9 @@ export function RepsRangeCells({
   setIndex: number;
 }) {
   const { t } = useTranslation();
-  const { control, getValues, setValue } = useFormContext<WorkoutFormInput>();
-  const { data: preferences } = useUserPreferences();
+  const { control } = useFormContext<WorkoutFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
-
-  // Carry the just-entered reps value into the following sets that share the
-  // reps dimension and are still empty. Existing values are never overwritten.
-  const fillFollowingSets = (column: 'repsMin' | 'repsMax', value: string) => {
-    if (!preferences?.autoFillReps || value === '') return;
-    const sets = getValues(`exercises.${exerciseIndex}.sets`);
-    for (let i = setIndex + 1; i < sets.length; i++) {
-      if (!measurementDimensions(sets[i].measurementType).reps) continue;
-      if (sets[i][column]) continue;
-      setValue(`exercises.${exerciseIndex}.sets.${i}.${column}`, value, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
-  };
+  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
 
   return (
     <>
@@ -62,7 +70,7 @@ export function RepsRangeCells({
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
               onBlur={() => {
                 field.onBlur();
-                fillFollowingSets('repsMin', field.value);
+                fillFollowingSets('repsMin', 'reps', field.value);
               }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMin')}
@@ -85,7 +93,7 @@ export function RepsRangeCells({
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
               onBlur={() => {
                 field.onBlur();
-                fillFollowingSets('repsMax', field.value);
+                fillFollowingSets('repsMax', 'reps', field.value);
               }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMax')}
@@ -110,6 +118,7 @@ export function DurationTargetCell({
   const { control } = useFormContext<WorkoutFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
   const sheetRef = useRef<DurationPickerSheetRef>(null);
+  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
 
   return (
     <View className="w-28 px-2">
@@ -123,7 +132,10 @@ export function DurationTargetCell({
               onPress={() =>
                 sheetRef.current?.present(
                   hasValue ? Number(field.value) : 0,
-                  (secs) => field.onChange(String(secs)),
+                  (secs) => {
+                    field.onChange(String(secs));
+                    fillFollowingSets('duration', 'duration', String(secs));
+                  },
                   () => field.onChange(''),
                 )
               }
@@ -156,6 +168,7 @@ export function DistanceTargetCell({
 }) {
   const { control } = useFormContext<WorkoutFormInput>();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
   return (
     <Controller
       control={control}
@@ -164,7 +177,10 @@ export function DistanceTargetCell({
         <DistanceInput
           value={field.value}
           onChange={field.onChange}
-          onBlur={field.onBlur}
+          onBlur={() => {
+            field.onBlur();
+            fillFollowingSets('distance', 'distance', field.value);
+          }}
           invalid={fieldState.invalid}
           unit={unit}
           testID={`workout-form.set-${setIndex}.distance`}

@@ -42,9 +42,9 @@ export default {
     description: 'Inicia o cronômetro de descanso ao concluir uma série.',
   },
   autoFillReps: {
-    label: 'Preencher repetições automaticamente',
+    label: 'Preencher séries automaticamente',
     description:
-      'Ao montar ou editar um treino, repete as repetições mín. e máx. da primeira série nas séries seguintes que estiverem vazias.',
+      'Ao montar ou editar um treino, repete as repetições, a duração e a distância da primeira série nas séries seguintes que estiverem vazias.',
   },
   error: {
     title: 'Não foi possível carregar suas preferências',

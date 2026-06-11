@@ -170,6 +170,34 @@ describe('<ExerciseBuilderCard />', () => {
     expect(getByTestId('workout-form.set-0.duration')).toBeTruthy();
   });
 
+  test('blurring a distance field fills the following empty sets, leaving filled ones untouched', () => {
+    const { getByTestId, form } = renderCard([
+      set('s1', 'distance'),
+      set('s2', 'distance', { roundOrder: 1, distance: '400' }),
+      set('s3', 'distance', { roundOrder: 2 }),
+    ]);
+
+    fireEvent.changeText(getByTestId('workout-form.set-0.distance'), '800');
+    fireEvent(getByTestId('workout-form.set-0.distance'), 'blur');
+
+    // s2 already had a distance, so it is preserved; s3 was empty and gets filled.
+    expect(form().getValues('exercises.0.sets.1.distance')).toBe('400');
+    expect(form().getValues('exercises.0.sets.2.distance')).toBe('800');
+  });
+
+  test('does not autofill distance when the preference is disabled', () => {
+    mockPreferences.autoFillReps = false;
+    const { getByTestId, form } = renderCard([
+      set('s1', 'distance'),
+      set('s2', 'distance', { roundOrder: 1 }),
+    ]);
+
+    fireEvent.changeText(getByTestId('workout-form.set-0.distance'), '800');
+    fireEvent(getByTestId('workout-form.set-0.distance'), 'blur');
+
+    expect(form().getValues('exercises.0.sets.1.distance')).toBe('');
+  });
+
   test('a distance set stores meters and converts km via the unit toggle', () => {
     const { getByTestId, form } = renderCard([set('s1', 'distance')]);
 

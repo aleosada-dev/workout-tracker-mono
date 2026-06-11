@@ -75,4 +75,18 @@ export default {
     confirm: 'Descartar',
     cancel: 'Continuar editando',
   },
+  muscleVolume: {
+    title: 'Séries por músculo',
+    trigger: 'Ver séries por músculo',
+    levels: {
+      1: 'Grupo',
+      2: 'Músculo',
+      3: 'Específico',
+    },
+    empty: {
+      title: 'Sem séries ainda',
+      subtitle: 'Adicione exercícios com séries para ver o volume por músculo.',
+    },
+    rowA11y: '{{name}}: {{count}} séries',
+  },
 };

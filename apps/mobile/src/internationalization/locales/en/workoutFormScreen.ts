@@ -75,4 +75,18 @@ export default {
     confirm: 'Discard',
     cancel: 'Keep editing',
   },
+  muscleVolume: {
+    title: 'Sets by muscle',
+    trigger: 'View sets by muscle',
+    levels: {
+      1: 'Group',
+      2: 'Muscle',
+      3: 'Specific',
+    },
+    empty: {
+      title: 'No sets yet',
+      subtitle: 'Add exercises with sets to see volume by muscle.',
+    },
+    rowA11y: '{{name}}: {{count}} sets',
+  },
 };

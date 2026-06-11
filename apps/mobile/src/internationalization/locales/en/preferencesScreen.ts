@@ -42,9 +42,9 @@ export default {
     description: 'Start the rest timer when a set is completed.',
   },
   autoFillReps: {
-    label: 'Auto-fill reps',
+    label: 'Auto-fill sets',
     description:
-      'When building or editing a workout, repeat the first set’s min and max reps into the following empty sets.',
+      'When building or editing a workout, repeat the first set’s reps, duration and distance into the following empty sets.',
   },
   error: {
     title: 'Could not load your preferences',
