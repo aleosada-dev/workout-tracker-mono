@@ -15,7 +15,20 @@ export const PREFERENCE_KEYS = [
   'load_rounding',
   'default_training_location_id',
   'auto_fill_reps',
+  'default_sets_count',
 ] as const;
+
+export const MIN_DEFAULT_SETS_COUNT = 1;
+export const MAX_DEFAULT_SETS_COUNT = 10;
+
+export function isDefaultSetsCount(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= MIN_DEFAULT_SETS_COUNT &&
+    value <= MAX_DEFAULT_SETS_COUNT
+  );
+}
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
 
@@ -27,6 +40,7 @@ export type UserPreferences = {
   loadRounding: LoadRoundingMode;
   defaultTrainingLocationId: string | null;
   autoFillReps: boolean;
+  defaultSetsCount: number;
 };
 
 export type PreferencesPatch = Partial<UserPreferences>;
@@ -39,6 +53,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   loadRounding: 'none',
   defaultTrainingLocationId: null,
   autoFillReps: true,
+  defaultSetsCount: 1,
 };
 
 export type StoredPreference = {
@@ -72,6 +87,9 @@ export function parseStoredPreferences(rows: StoredPreference[]): UserPreference
       case 'auto_fill_reps':
         if (typeof value === 'boolean') prefs.autoFillReps = value;
         break;
+      case 'default_sets_count':
+        if (isDefaultSetsCount(value)) prefs.defaultSetsCount = value;
+        break;
     }
   }
 
@@ -89,6 +107,7 @@ export function preferencesPatchToStored(patch: PreferencesPatch): Record<string
   if ('defaultTrainingLocationId' in patch)
     stored.default_training_location_id = patch.defaultTrainingLocationId;
   if ('autoFillReps' in patch) stored.auto_fill_reps = patch.autoFillReps;
+  if ('defaultSetsCount' in patch) stored.default_sets_count = patch.defaultSetsCount;
 
   return stored;
 }

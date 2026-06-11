@@ -26,6 +26,7 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import Toast from 'react-native-toast-message';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { workoutObservability } from '@/features/observability/lib';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { handleLocalError } from '@/features/query/lib/error-handling';
 import { SelectionToolbar } from '@/features/shared/components/SelectionToolbar';
 import { useNavTheme } from '@/features/shared/lib/theme';
@@ -119,6 +120,7 @@ function WorkoutForm({
   const { t, i18n } = useTranslation();
   const navigation = useNavigation();
   const navTheme = useNavTheme();
+  const { data: preferences } = useUserPreferences();
   const isEdit = workout !== null;
   const [newWorkoutId] = useState(() => Crypto.randomUUID());
   const targetWorkoutId = workout?.id ?? newWorkoutId;
@@ -200,12 +202,13 @@ function WorkoutForm({
   });
 
   const handleAddExercise = () => {
+    const setsCount = preferences?.defaultSetsCount ?? 1;
     openExercisePicker({
       onPick: (picked) => {
         if (picked.length === 0) return;
         const current = form.getValues('exercises') ?? [];
         const additions = picked.map((p, i) =>
-          buildBuilderExerciseFromPicked(p, current.length + i, Crypto.randomUUID, tab),
+          buildBuilderExerciseFromPicked(p, current.length + i, Crypto.randomUUID, tab, setsCount),
         );
         form.setValue('exercises', [...current, ...additions], { shouldDirty: true });
       },

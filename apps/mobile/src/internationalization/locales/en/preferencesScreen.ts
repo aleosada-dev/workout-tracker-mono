@@ -46,6 +46,10 @@ export default {
     description:
       'When building or editing a workout, repeat the first set’s reps, duration and distance into the following empty sets.',
   },
+  defaultSetsCount: {
+    label: 'Sets per exercise',
+    description: 'How many sets are added when you include an exercise in a workout.',
+  },
   error: {
     title: 'Could not load your preferences',
     subtitle: 'Check your connection and try again.',

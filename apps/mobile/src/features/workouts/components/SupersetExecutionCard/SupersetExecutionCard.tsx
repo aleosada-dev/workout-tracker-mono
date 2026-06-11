@@ -443,7 +443,6 @@ export function SupersetExecutionCard({
                   {t('workoutExecutionScreen.exercise.headers.target')}
                 </Text>
               </View>
-              <View className="flex-1" />
               <View className="w-10 items-center">
                 <Text className="font-sans-medium text-muted-foreground text-xs uppercase tracking-wider">
                   ✓
@@ -541,8 +540,8 @@ function SupersetSetRow({
   };
 
   return (
-    <View className={`-mx-4 flex-row items-stretch px-4 py-1 ${allDone ? 'bg-primary/10' : ''}`}>
-      <View className="flex-1">
+    <View className={`-mx-4 flex-row items-center px-4 py-1 ${allDone ? 'bg-primary/10' : ''}`}>
+      <View>
         {roundMembers.map((member) =>
           member.setIndexes.map((setIndex) => (
             <SupersetMemberCell
@@ -561,7 +560,7 @@ function SupersetSetRow({
         onPress={() => toggle(!allDone)}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: allDone }}
-        className="w-10 items-center justify-center"
+        className="w-10 items-center justify-center py-3"
         hitSlop={0}
         testID={`workout-execution.superset.round-${roundOrder}.done`}
       >

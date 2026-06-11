@@ -15,6 +15,7 @@ import Toast from 'react-native-toast-message';
 import { preferencesObservability } from '@/features/observability/lib';
 import { DefaultLocationField } from '@/features/preferences/components/default-location-field';
 import { DefaultRestSecondsField } from '@/features/preferences/components/default-rest-seconds-field';
+import { DefaultSetsCountField } from '@/features/preferences/components/default-sets-count-field';
 import { LoadRoundingSelect } from '@/features/preferences/components/load-rounding-select';
 import { PreferencesActions } from '@/features/preferences/components/PreferencesActions';
 import { PreferenceSwitchRow } from '@/features/preferences/components/preference-switch-row';
@@ -33,6 +34,7 @@ type WorkoutDraft = Pick<
   | 'loadRounding'
   | 'defaultTrainingLocationId'
   | 'autoFillReps'
+  | 'defaultSetsCount'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
@@ -44,6 +46,7 @@ function toDraft(preferences: UserPreferences): WorkoutDraft {
     loadRounding: preferences.loadRounding,
     defaultTrainingLocationId: preferences.defaultTrainingLocationId,
     autoFillReps: preferences.autoFillReps,
+    defaultSetsCount: preferences.defaultSetsCount,
   };
 }
 
@@ -55,7 +58,8 @@ function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
     a.autoStartRestTimer === b.autoStartRestTimer &&
     a.loadRounding === b.loadRounding &&
     a.defaultTrainingLocationId === b.defaultTrainingLocationId &&
-    a.autoFillReps === b.autoFillReps
+    a.autoFillReps === b.autoFillReps &&
+    a.defaultSetsCount === b.defaultSetsCount
   );
 }
 
@@ -182,6 +186,13 @@ export default function PreferencesScreen() {
               value={draft.defaultRestSeconds}
               onChange={(defaultRestSeconds) =>
                 setDraft((prev) => prev && { ...prev, defaultRestSeconds })
+              }
+            />
+
+            <DefaultSetsCountField
+              value={draft.defaultSetsCount}
+              onChange={(defaultSetsCount) =>
+                setDraft((prev) => prev && { ...prev, defaultSetsCount })
               }
             />
 

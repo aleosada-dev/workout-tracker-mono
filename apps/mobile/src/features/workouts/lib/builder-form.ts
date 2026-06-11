@@ -136,8 +136,10 @@ export function buildBuilderExerciseFromPicked(
   position: number,
   generateId: () => string,
   exerciseType: WorkoutExerciseType,
+  setsCount = 1,
 ): BuilderExerciseInput {
   const id = generateId();
+  const measurementType = setMeasurementTypeForVariation(picked.variation.measurementType);
   return {
     id,
     exerciseType,
@@ -165,14 +167,9 @@ export function buildBuilderExerciseFromPicked(
         ? { slug: picked.variation.secondaryMuscle.slug }
         : null,
     },
-    sets: [
-      buildBuilderSet(
-        generateId(),
-        'normal',
-        setMeasurementTypeForVariation(picked.variation.measurementType),
-        0,
-      ),
-    ],
+    sets: Array.from({ length: Math.max(1, setsCount) }, (_, i) =>
+      buildBuilderSet(generateId(), 'normal', measurementType, i),
+    ),
   };
 }
 

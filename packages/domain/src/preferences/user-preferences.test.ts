@@ -28,6 +28,7 @@ describe('parseStoredPreferences', () => {
       { key: 'load_rounding', value: '2.5' },
       { key: 'default_training_location_id', value: 'loc-1' },
       { key: 'auto_fill_reps', value: false },
+      { key: 'default_sets_count', value: 3 },
     ]);
 
     expect(prefs).toEqual({
@@ -38,7 +39,20 @@ describe('parseStoredPreferences', () => {
       loadRounding: '2.5',
       defaultTrainingLocationId: 'loc-1',
       autoFillReps: false,
+      defaultSetsCount: 3,
     });
+  });
+
+  test('ignores an out-of-range default_sets_count', () => {
+    expect(parseStoredPreferences([{ key: 'default_sets_count', value: 0 }])).toEqual(
+      DEFAULT_USER_PREFERENCES,
+    );
+    expect(parseStoredPreferences([{ key: 'default_sets_count', value: 99 }])).toEqual(
+      DEFAULT_USER_PREFERENCES,
+    );
+    expect(parseStoredPreferences([{ key: 'default_sets_count', value: 2.5 }])).toEqual(
+      DEFAULT_USER_PREFERENCES,
+    );
   });
 
   test('ignores an invalid load_rounding mode', () => {

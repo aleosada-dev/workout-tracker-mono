@@ -26,6 +26,7 @@ import { useExerciseRecords } from '@/features/exercises/hooks/use-exercise-reco
 import { useVariationAliases } from '@/features/exercises/hooks/use-variation-aliases';
 import { openExercisePicker } from '@/features/exercises/state/exercise-picker-bridge';
 import { useOccurrenceWorkout } from '@/features/periodizations/hooks/use-occurrence-workout';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { SelectionToolbar } from '@/features/shared/components/SelectionToolbar';
 import { useElapsedSince } from '@/features/shared/hooks/use-elapsed-since';
 import { ExerciseExecutionList } from '@/features/workouts/components/ExerciseExecutionList';
@@ -190,6 +191,7 @@ export default function WorkoutExecutionScreen() {
 
 function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   const { t, i18n } = useTranslation();
+  const { data: preferences } = useUserPreferences();
   const [tab, setTab] = useState<ExecutionTab>('preparatory');
   const notesSheetRef = useRef<WorkoutNotesSheetRef>(null);
   const kgLbsCalculatorSheetRef = useRef<KgLbsCalculatorSheetRef>(null);
@@ -319,13 +321,14 @@ function WorkoutExecutionContent({ active }: { active: ActiveWorkout }) {
   });
 
   const handleAddExercise = () => {
+    const setsCount = preferences?.defaultSetsCount ?? 1;
     openExercisePicker({
       onPick: (picked) => {
         if (picked.length === 0) return;
         const currentFormExercises = form.getValues('exercises') ?? [];
         const startPosition = currentFormExercises.length;
         const additions = picked.map((p, i) =>
-          buildExecutionExerciseFromPicked(p, startPosition + i, Crypto.randomUUID, tab),
+          buildExecutionExerciseFromPicked(p, startPosition + i, Crypto.randomUUID, tab, setsCount),
         );
         form.setValue('exercises', [...currentFormExercises, ...additions], {
           shouldDirty: true,

@@ -294,8 +294,10 @@ export function buildExecutionExerciseFromPicked(
   generateId: () => string,
   /** Seção (aba) ativa no momento do clique em adicionar; define onde o exercício entra. */
   exerciseType: WorkoutExerciseType,
+  setsCount = 1,
 ): ExecutionExerciseInput {
   const id = generateId();
+  const measurementType = setMeasurementTypeForVariation(picked.variation.measurementType);
   return {
     id,
     exerciseType,
@@ -324,26 +326,24 @@ export function buildExecutionExerciseFromPicked(
         ? { slug: picked.variation.secondaryMuscle.slug }
         : null,
     },
-    sets: [
-      {
-        id: generateId(),
-        type: 'normal',
-        measurementType: setMeasurementTypeForVariation(picked.variation.measurementType),
-        roundOrder: 0,
-        repsMin: null,
-        repsMax: null,
-        durationTarget: null,
-        distanceTarget: null,
-        kg: '',
-        reps: '',
-        duration: '',
-        distance: '',
-        done: false,
-        linkedSetId: null,
-        loadPercent: null,
-        loadPercentOfPrevious: null,
-      },
-    ],
+    sets: Array.from({ length: Math.max(1, setsCount) }, (_, i) => ({
+      id: generateId(),
+      type: 'normal',
+      measurementType,
+      roundOrder: i,
+      repsMin: null,
+      repsMax: null,
+      durationTarget: null,
+      distanceTarget: null,
+      kg: '',
+      reps: '',
+      duration: '',
+      distance: '',
+      done: false,
+      linkedSetId: null,
+      loadPercent: null,
+      loadPercentOfPrevious: null,
+    })),
   };
 }
 

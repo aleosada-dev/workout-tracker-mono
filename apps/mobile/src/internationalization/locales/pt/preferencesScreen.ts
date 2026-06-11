@@ -46,6 +46,10 @@ export default {
     description:
       'Ao montar ou editar um treino, repete as repetições, a duração e a distância da primeira série nas séries seguintes que estiverem vazias.',
   },
+  defaultSetsCount: {
+    label: 'Séries por exercício',
+    description: 'Quantas séries são adicionadas ao incluir um exercício no treino.',
+  },
   error: {
     title: 'Não foi possível carregar suas preferências',
     subtitle: 'Verifique sua conexão e tente novamente.',

@@ -1,5 +1,7 @@
 import {
 	LOAD_ROUNDING_MODES,
+	MAX_DEFAULT_SETS_COUNT,
+	MIN_DEFAULT_SETS_COUNT,
 	type PreferencesPatch,
 	type UserPreferences,
 } from "@workout-tracker/domain";
@@ -13,6 +15,7 @@ export const UserPreferencesResponseSchema = z.object({
 	loadRounding: z.enum(LOAD_ROUNDING_MODES),
 	defaultTrainingLocationId: z.uuid().nullable(),
 	autoFillReps: z.boolean(),
+	defaultSetsCount: z.number().int().min(MIN_DEFAULT_SETS_COUNT).max(MAX_DEFAULT_SETS_COUNT),
 });
 
 export type UserPreferencesResponse = z.infer<typeof UserPreferencesResponseSchema>;
@@ -29,6 +32,7 @@ export const UpdateUserPreferencesRequestSchema = z
 		loadRounding: z.enum(LOAD_ROUNDING_MODES),
 		defaultTrainingLocationId: z.uuid().nullable(),
 		autoFillReps: z.boolean(),
+		defaultSetsCount: z.number().int().min(MIN_DEFAULT_SETS_COUNT).max(MAX_DEFAULT_SETS_COUNT),
 	})
 	.partial();
 
@@ -43,6 +47,7 @@ export function toUserPreferencesResponse(preferences: UserPreferences): UserPre
 		loadRounding: preferences.loadRounding,
 		defaultTrainingLocationId: preferences.defaultTrainingLocationId,
 		autoFillReps: preferences.autoFillReps,
+		defaultSetsCount: preferences.defaultSetsCount,
 	};
 }
 

@@ -64,6 +64,10 @@
   },
   "submit": {
     "production": {
+      "ios": {
+        "appleId": "alexandre.osada.dev@gmail.com",
+        "appleTeamId": "HR5ZMMCYX2"
+      },
       "android": {
         "serviceAccountKeyPath": "./.credentials/workout-tracker-app-495718-55ff77262814.json",
         "track": "internal",

@@ -633,6 +633,20 @@ describe('buildExecutionExerciseFromPicked', () => {
     });
   });
 
+  test('seeds the requested number of sets with incremental round order', () => {
+    const result = buildExecutionExerciseFromPicked(
+      pickedExercise('forca'),
+      0,
+      sequentialIds(),
+      'strength',
+      3,
+    );
+
+    expect(result.sets).toHaveLength(3);
+    expect(result.sets.map((s) => s.roundOrder)).toEqual([0, 1, 2]);
+    expect(result.sets.every((s) => s.type === 'normal')).toBe(true);
+  });
+
   test('places the exercise in the active section, ignoring its exercise type', () => {
     const strength = buildExecutionExerciseFromPicked(
       pickedExercise('preparatorio'),
