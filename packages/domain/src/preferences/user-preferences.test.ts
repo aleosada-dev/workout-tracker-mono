@@ -27,6 +27,7 @@ describe('parseStoredPreferences', () => {
       { key: 'auto_start_rest_timer', value: false },
       { key: 'load_rounding', value: '2.5' },
       { key: 'default_training_location_id', value: 'loc-1' },
+      { key: 'auto_fill_reps', value: false },
     ]);
 
     expect(prefs).toEqual({
@@ -36,6 +37,7 @@ describe('parseStoredPreferences', () => {
       autoStartRestTimer: false,
       loadRounding: '2.5',
       defaultTrainingLocationId: 'loc-1',
+      autoFillReps: false,
     });
   });
 

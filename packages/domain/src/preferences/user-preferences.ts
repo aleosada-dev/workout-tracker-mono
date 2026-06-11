@@ -14,6 +14,7 @@ export const PREFERENCE_KEYS = [
   'auto_start_rest_timer',
   'load_rounding',
   'default_training_location_id',
+  'auto_fill_reps',
 ] as const;
 
 export type PreferenceKey = (typeof PREFERENCE_KEYS)[number];
@@ -25,6 +26,7 @@ export type UserPreferences = {
   autoStartRestTimer: boolean;
   loadRounding: LoadRoundingMode;
   defaultTrainingLocationId: string | null;
+  autoFillReps: boolean;
 };
 
 export type PreferencesPatch = Partial<UserPreferences>;
@@ -36,6 +38,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   autoStartRestTimer: true,
   loadRounding: 'none',
   defaultTrainingLocationId: null,
+  autoFillReps: true,
 };
 
 export type StoredPreference = {
@@ -66,6 +69,9 @@ export function parseStoredPreferences(rows: StoredPreference[]): UserPreference
       case 'default_training_location_id':
         if (typeof value === 'string') prefs.defaultTrainingLocationId = value;
         break;
+      case 'auto_fill_reps':
+        if (typeof value === 'boolean') prefs.autoFillReps = value;
+        break;
     }
   }
 
@@ -82,6 +88,7 @@ export function preferencesPatchToStored(patch: PreferencesPatch): Record<string
   if ('loadRounding' in patch) stored.load_rounding = patch.loadRounding;
   if ('defaultTrainingLocationId' in patch)
     stored.default_training_location_id = patch.defaultTrainingLocationId;
+  if ('autoFillReps' in patch) stored.auto_fill_reps = patch.autoFillReps;
 
   return stored;
 }

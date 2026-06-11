@@ -41,6 +41,11 @@ export default {
     label: 'Iniciar descanso automaticamente',
     description: 'Inicia o cronômetro de descanso ao concluir uma série.',
   },
+  autoFillReps: {
+    label: 'Preencher repetições automaticamente',
+    description:
+      'Ao montar ou editar um treino, repete as repetições mín. e máx. da primeira série nas séries seguintes que estiverem vazias.',
+  },
   error: {
     title: 'Não foi possível carregar suas preferências',
     subtitle: 'Verifique sua conexão e tente novamente.',

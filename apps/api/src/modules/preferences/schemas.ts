@@ -12,6 +12,7 @@ export const UserPreferencesResponseSchema = z.object({
 	autoStartRestTimer: z.boolean(),
 	loadRounding: z.enum(LOAD_ROUNDING_MODES),
 	defaultTrainingLocationId: z.uuid().nullable(),
+	autoFillReps: z.boolean(),
 });
 
 export type UserPreferencesResponse = z.infer<typeof UserPreferencesResponseSchema>;
@@ -27,6 +28,7 @@ export const UpdateUserPreferencesRequestSchema = z
 		autoStartRestTimer: z.boolean(),
 		loadRounding: z.enum(LOAD_ROUNDING_MODES),
 		defaultTrainingLocationId: z.uuid().nullable(),
+		autoFillReps: z.boolean(),
 	})
 	.partial();
 
@@ -40,6 +42,7 @@ export function toUserPreferencesResponse(preferences: UserPreferences): UserPre
 		autoStartRestTimer: preferences.autoStartRestTimer,
 		loadRounding: preferences.loadRounding,
 		defaultTrainingLocationId: preferences.defaultTrainingLocationId,
+		autoFillReps: preferences.autoFillReps,
 	};
 }
 

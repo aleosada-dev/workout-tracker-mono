@@ -32,6 +32,7 @@ type WorkoutDraft = Pick<
   | 'autoStartRestTimer'
   | 'loadRounding'
   | 'defaultTrainingLocationId'
+  | 'autoFillReps'
 >;
 
 function toDraft(preferences: UserPreferences): WorkoutDraft {
@@ -42,6 +43,7 @@ function toDraft(preferences: UserPreferences): WorkoutDraft {
     autoStartRestTimer: preferences.autoStartRestTimer,
     loadRounding: preferences.loadRounding,
     defaultTrainingLocationId: preferences.defaultTrainingLocationId,
+    autoFillReps: preferences.autoFillReps,
   };
 }
 
@@ -52,7 +54,8 @@ function isSameDraft(a: WorkoutDraft, b: WorkoutDraft): boolean {
     a.countWarmupSets === b.countWarmupSets &&
     a.autoStartRestTimer === b.autoStartRestTimer &&
     a.loadRounding === b.loadRounding &&
-    a.defaultTrainingLocationId === b.defaultTrainingLocationId
+    a.defaultTrainingLocationId === b.defaultTrainingLocationId &&
+    a.autoFillReps === b.autoFillReps
   );
 }
 
@@ -197,6 +200,15 @@ export default function PreferencesScreen() {
               value={draft.countWarmupSets}
               onValueChange={(countWarmupSets) =>
                 setDraft((prev) => prev && { ...prev, countWarmupSets })
+              }
+            />
+
+            <PreferenceSwitchRow
+              label={t('preferencesScreen.autoFillReps.label')}
+              description={t('preferencesScreen.autoFillReps.description')}
+              value={draft.autoFillReps}
+              onValueChange={(autoFillReps) =>
+                setDraft((prev) => prev && { ...prev, autoFillReps })
               }
             />
           </>

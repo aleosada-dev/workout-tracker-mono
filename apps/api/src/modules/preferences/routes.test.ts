@@ -15,6 +15,7 @@ async function resetPreferences() {
 				autoStartRestTimer: true,
 				loadRounding: "none",
 				defaultTrainingLocationId: null,
+				autoFillReps: true,
 			},
 		},
 		{ headers: authHeaders("athlete") },
@@ -42,6 +43,7 @@ describe("GET /api/v1/preferences", () => {
 			autoStartRestTimer: true,
 			loadRounding: "none",
 			defaultTrainingLocationId: null,
+			autoFillReps: true,
 		});
 	});
 

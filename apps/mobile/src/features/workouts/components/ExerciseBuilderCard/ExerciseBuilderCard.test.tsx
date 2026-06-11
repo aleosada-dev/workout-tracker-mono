@@ -32,6 +32,10 @@ jest.mock('react-i18next', () => ({
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
+const mockPreferences = { autoFillReps: true };
+jest.mock('@/features/preferences/hooks/use-user-preferences', () => ({
+  useUserPreferences: () => ({ data: mockPreferences }),
+}));
 
 import { PortalHost } from '@rn-primitives/portal';
 import { fireEvent, render } from '@testing-library/react-native';
@@ -111,6 +115,10 @@ function renderCard(
 }
 
 describe('<ExerciseBuilderCard />', () => {
+  beforeEach(() => {
+    mockPreferences.autoFillReps = true;
+  });
+
   test('weight_reps sets show min/max reps inputs bound to the form', () => {
     const { getByTestId, queryByText, form } = renderCard([set('s1', 'weight_reps')]);
 
@@ -121,6 +129,37 @@ describe('<ExerciseBuilderCard />', () => {
     fireEvent.changeText(getByTestId('workout-form.set-0.reps-max'), '12');
     expect(form().getValues('exercises.0.sets.0.repsMin')).toBe('8');
     expect(form().getValues('exercises.0.sets.0.repsMax')).toBe('12');
+  });
+
+  test('blurring a reps field fills the following empty sets, leaving filled ones untouched', () => {
+    const { getByTestId, form } = renderCard([
+      set('s1', 'weight_reps'),
+      set('s2', 'weight_reps', { roundOrder: 1, repsMin: '5' }),
+      set('s3', 'weight_reps', { roundOrder: 2 }),
+    ]);
+
+    fireEvent.changeText(getByTestId('workout-form.set-0.reps-min'), '8');
+    fireEvent(getByTestId('workout-form.set-0.reps-min'), 'blur');
+
+    // s2 already had a min, so it is preserved; s3 was empty and gets filled.
+    expect(form().getValues('exercises.0.sets.1.repsMin')).toBe('5');
+    expect(form().getValues('exercises.0.sets.2.repsMin')).toBe('8');
+    // repsMax is independent and stays empty.
+    expect(form().getValues('exercises.0.sets.1.repsMax')).toBe('');
+    expect(form().getValues('exercises.0.sets.2.repsMax')).toBe('');
+  });
+
+  test('does not autofill when the preference is disabled', () => {
+    mockPreferences.autoFillReps = false;
+    const { getByTestId, form } = renderCard([
+      set('s1', 'weight_reps'),
+      set('s2', 'weight_reps', { roundOrder: 1 }),
+    ]);
+
+    fireEvent.changeText(getByTestId('workout-form.set-0.reps-min'), '8');
+    fireEvent(getByTestId('workout-form.set-0.reps-min'), 'blur');
+
+    expect(form().getValues('exercises.0.sets.1.repsMin')).toBe('');
   });
 
   test('a duration set shows the duration target cell', () => {

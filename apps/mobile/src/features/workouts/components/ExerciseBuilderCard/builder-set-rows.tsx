@@ -6,6 +6,7 @@ import { Controller, useFormContext, useFormState, useWatch } from 'react-hook-f
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { SET_TYPE_CONFIG, type SetType } from '@/features/exercises/lib/sets';
+import { useUserPreferences } from '@/features/preferences/hooks/use-user-preferences';
 import { formatTime, sanitizeInteger } from '@/features/shared/lib/utils';
 import {
   DurationPickerSheet,
@@ -28,8 +29,25 @@ export function RepsRangeCells({
   setIndex: number;
 }) {
   const { t } = useTranslation();
-  const { control } = useFormContext<WorkoutFormInput>();
+  const { control, getValues, setValue } = useFormContext<WorkoutFormInput>();
+  const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+
+  // Carry the just-entered reps value into the following sets that share the
+  // reps dimension and are still empty. Existing values are never overwritten.
+  const fillFollowingSets = (column: 'repsMin' | 'repsMax', value: string) => {
+    if (!preferences?.autoFillReps || value === '') return;
+    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    for (let i = setIndex + 1; i < sets.length; i++) {
+      if (!measurementDimensions(sets[i].measurementType).reps) continue;
+      if (sets[i][column]) continue;
+      setValue(`exercises.${exerciseIndex}.sets.${i}.${column}`, value, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
   return (
     <>
       <View className="w-20 pr-2 pl-3">
@@ -42,7 +60,10 @@ export function RepsRangeCells({
               keyboardType="number-pad"
               value={field.value}
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
-              onBlur={field.onBlur}
+              onBlur={() => {
+                field.onBlur();
+                fillFollowingSets('repsMin', field.value);
+              }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMin')}
               className="h-8 max-w-[80px] py-0 text-sm"
@@ -62,7 +83,10 @@ export function RepsRangeCells({
               keyboardType="number-pad"
               value={field.value}
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
-              onBlur={field.onBlur}
+              onBlur={() => {
+                field.onBlur();
+                fillFollowingSets('repsMax', field.value);
+              }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMax')}
               className="h-8 max-w-[80px] py-0 text-sm"

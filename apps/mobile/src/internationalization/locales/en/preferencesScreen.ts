@@ -41,6 +41,11 @@ export default {
     label: 'Auto-start rest timer',
     description: 'Start the rest timer when a set is completed.',
   },
+  autoFillReps: {
+    label: 'Auto-fill reps',
+    description:
+      'When building or editing a workout, repeat the first set’s min and max reps into the following empty sets.',
+  },
   error: {
     title: 'Could not load your preferences',
     subtitle: 'Check your connection and try again.',
