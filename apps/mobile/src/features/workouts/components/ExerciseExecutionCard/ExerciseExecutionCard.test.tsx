@@ -235,13 +235,13 @@ describe('<ExerciseExecutionCard />', () => {
     const { queryByText } = renderCard([set('s1', 'reps', null)], 'preparatory');
 
     expect(queryByText('1')).not.toBeNull();
-    expect(queryByText('N')).toBeNull();
+    expect(queryByText('sets.normal.token')).toBeNull();
   });
 
   test('a strength exercise shows the set-type picker initial', () => {
     const { queryByText } = renderCard([set('s1', 'weight_reps', null)], 'strength');
 
-    expect(queryByText('N')).not.toBeNull();
+    expect(queryByText('sets.normal.token')).not.toBeNull();
   });
 
   test('the stopwatch records the elapsed time and marks the set done on stop', async () => {

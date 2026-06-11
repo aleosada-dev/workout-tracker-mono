@@ -685,3 +685,440 @@ describe("DELETE /api/v1/workouts", () => {
 		expect(res.status as number).toBe(401);
 	});
 });
+
+const SEED_VARIATION_GLOBAL_A = "f7fe173e-b9c5-4743-a3c9-a12602179762";
+const SEED_VARIATION_GLOBAL_B = "e5e4ac54-e120-4d39-90e4-f204e877536b";
+const SEED_VARIATION_COACH_OWNED = "46099bdd-2413-47e4-87ad-4ee6b0c98ce8";
+
+type UpsertPayload = Parameters<
+	ReturnType<typeof getTestClient>["api"]["v1"]["workouts"][":id"]["$put"]
+>[0]["json"];
+
+const createdWorkouts: { id: string; profile: "athlete" | "coach"; userId?: string }[] = [];
+
+afterEach(async () => {
+	const client = getTestClient();
+	for (const { id, profile, userId } of createdWorkouts) {
+		await client.api.v1.workouts[":id"].$delete(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id }, query: (userId ? { userId } : {}) as any },
+			{ headers: authHeaders(profile) },
+		);
+	}
+	createdWorkouts.length = 0;
+});
+
+function buildUpsertPayload(overrides: Partial<UpsertPayload> = {}): UpsertPayload {
+	const exerciseId = crypto.randomUUID();
+	const warmupId = crypto.randomUUID();
+	const normalId = crypto.randomUUID();
+	return {
+		name: "Treino do builder",
+		description: "criado pelo teste",
+		folderId: null,
+		exercises: [
+			{
+				id: exerciseId,
+				variationId: SEED_VARIATION_GLOBAL_A,
+				exerciseType: "strength",
+				position: 0,
+				supersetGroupId: exerciseId,
+				supersetOrder: 0,
+				note: null,
+				restSeconds: 90,
+				sets: [
+					{
+						id: warmupId,
+						setOrder: 0,
+						setType: "warmup",
+						repsMin: 10,
+						repsMax: 12,
+						durationSeconds: null,
+						distanceMeters: null,
+						roundOrder: 0,
+						linkedSetId: null,
+						loadPercentOfPrevious: null,
+					},
+					{
+						id: normalId,
+						setOrder: 1,
+						setType: "normal",
+						repsMin: 8,
+						repsMax: 10,
+						durationSeconds: null,
+						distanceMeters: null,
+						roundOrder: 1,
+						linkedSetId: null,
+						loadPercentOfPrevious: null,
+					},
+					{
+						id: crypto.randomUUID(),
+						setOrder: 2,
+						setType: "drop",
+						repsMin: 8,
+						repsMax: 10,
+						durationSeconds: null,
+						distanceMeters: null,
+						roundOrder: 1,
+						linkedSetId: normalId,
+						loadPercentOfPrevious: 80,
+					},
+				],
+			},
+		],
+		...overrides,
+	};
+}
+
+describe("PUT /api/v1/workouts/:id", () => {
+	test("creates a workout and round-trips targets through GET", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const workoutId = crypto.randomUUID();
+		const prepExerciseId = crypto.randomUUID();
+		const payload = buildUpsertPayload();
+		payload.exercises.push({
+			id: prepExerciseId,
+			variationId: SEED_VARIATION_GLOBAL_B,
+			exerciseType: "preparatory",
+			position: 0,
+			supersetGroupId: prepExerciseId,
+			supersetOrder: 0,
+			note: "aquecer bem",
+			restSeconds: null,
+			sets: [
+				{
+					id: crypto.randomUUID(),
+					setOrder: 0,
+					setType: "normal",
+					repsMin: null,
+					repsMax: null,
+					durationSeconds: 120,
+					distanceMeters: null,
+					roundOrder: 0,
+					linkedSetId: null,
+					loadPercentOfPrevious: null,
+				},
+				{
+					id: crypto.randomUUID(),
+					setOrder: 1,
+					setType: "normal",
+					repsMin: null,
+					repsMax: null,
+					durationSeconds: null,
+					distanceMeters: 400,
+					roundOrder: 1,
+					linkedSetId: null,
+					loadPercentOfPrevious: null,
+				},
+			],
+		});
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete" });
+
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body).toEqual({ id: workoutId });
+
+		const getRes = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: workoutId }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(getRes.status).toBe(200);
+		const detail = (await getRes.json()) as WorkoutDetailResponse;
+		expect(detail.name).toBe("Treino do builder");
+		expect(detail.description).toBe("criado pelo teste");
+		expect(detail.userId).toBe(athleteId);
+		expect(detail.exercises).toHaveLength(2);
+
+		const strength = detail.exercises.find((e) => e.exerciseType === "strength");
+		if (!strength) throw new Error("expected strength exercise");
+		expect(strength.id).toBe(payload.exercises[0].id);
+		expect(strength.restSeconds).toBe(90);
+		expect(strength.sets).toHaveLength(3);
+		expect(strength.sets[0]).toMatchObject({
+			setType: "warmup",
+			repsMin: 10,
+			repsMax: 12,
+			roundOrder: 0,
+		});
+		expect(strength.sets[2]).toMatchObject({
+			setType: "drop",
+			linkedSetId: payload.exercises[0].sets[1].id,
+			loadPercentOfPrevious: 80,
+			roundOrder: 1,
+		});
+
+		const preparatory = detail.exercises.find((e) => e.exerciseType === "preparatory");
+		if (!preparatory) throw new Error("expected preparatory exercise");
+		expect(preparatory.note).toBe("aquecer bem");
+		expect(preparatory.sets[0]).toMatchObject({ durationSeconds: 120, roundOrder: 0 });
+		expect(preparatory.sets[1]).toMatchObject({ distanceMeters: 400, roundOrder: 1 });
+	});
+
+	test("creates a superset pair sharing position and group", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const groupId = crypto.randomUUID();
+		const memberA = crypto.randomUUID();
+		const memberB = crypto.randomUUID();
+		const buildSet = (setOrder: number, roundOrder: number) => ({
+			id: crypto.randomUUID(),
+			setOrder,
+			setType: "normal" as const,
+			repsMin: 10,
+			repsMax: 12,
+			durationSeconds: null,
+			distanceMeters: null,
+			roundOrder,
+			linkedSetId: null,
+			loadPercentOfPrevious: null,
+		});
+		const payload = buildUpsertPayload({
+			exercises: [
+				{
+					id: memberA,
+					variationId: SEED_VARIATION_GLOBAL_A,
+					exerciseType: "strength",
+					position: 0,
+					supersetGroupId: groupId,
+					supersetOrder: 0,
+					note: null,
+					restSeconds: null,
+					sets: [buildSet(0, 0), buildSet(1, 1)],
+				},
+				{
+					id: memberB,
+					variationId: SEED_VARIATION_GLOBAL_B,
+					exerciseType: "strength",
+					position: 0,
+					supersetGroupId: groupId,
+					supersetOrder: 1,
+					note: null,
+					restSeconds: null,
+					sets: [buildSet(0, 0), buildSet(1, 1)],
+				},
+			],
+		});
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete" });
+
+		expect(res.status).toBe(200);
+
+		const getRes = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: workoutId }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+		const detail = (await getRes.json()) as WorkoutDetailResponse;
+		expect(detail.exercises).toHaveLength(2);
+		expect(detail.exercises.every((e) => e.supersetGroupId === groupId)).toBeTrue();
+		expect(detail.exercises.map((e) => e.supersetOrder).sort()).toEqual([0, 1]);
+	});
+
+	test("replaces exercises and updates metadata on edit", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload();
+
+		const createRes = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete" });
+		expect(createRes.status).toBe(200);
+
+		const edited: UpsertPayload = {
+			...payload,
+			name: "Treino editado",
+			description: null,
+			exercises: [
+				{
+					...payload.exercises[0],
+					note: "cadência controlada",
+					restSeconds: 120,
+					sets: [
+						{
+							...payload.exercises[0].sets[1],
+							setOrder: 0,
+							repsMin: 6,
+							repsMax: 8,
+							roundOrder: 0,
+						},
+					],
+				},
+			],
+		};
+
+		const editRes = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: edited },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(editRes.status).toBe(200);
+
+		const getRes = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: workoutId }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+		const detail = (await getRes.json()) as WorkoutDetailResponse;
+		expect(detail.name).toBe("Treino editado");
+		expect(detail.description).toBeNull();
+		expect(detail.exercises).toHaveLength(1);
+		expect(detail.exercises[0].note).toBe("cadência controlada");
+		expect(detail.exercises[0].restSeconds).toBe(120);
+		expect(detail.exercises[0].sets).toHaveLength(1);
+		expect(detail.exercises[0].sets[0]).toMatchObject({ repsMin: 6, repsMax: 8 });
+	});
+
+	test("creates a workout inside a folder", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload({ folderId: SEED_FOLDER_HIPERTROFIA });
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete" });
+		expect(res.status).toBe(200);
+
+		const getRes = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: workoutId }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+		const detail = (await getRes.json()) as WorkoutDetailResponse;
+		expect(detail.folderId).toBe(SEED_FOLDER_HIPERTROFIA);
+	});
+
+	test("allows a coach to create a workout for an athlete with a coach-owned variation", async () => {
+		const client = getTestClient();
+		const athleteId = getTestUserAuth("athlete").userId;
+		const workoutId = crypto.randomUUID();
+		const exerciseId = crypto.randomUUID();
+		const payload = buildUpsertPayload({
+			userId: athleteId,
+			exercises: [
+				{
+					id: exerciseId,
+					variationId: SEED_VARIATION_COACH_OWNED,
+					exerciseType: "strength",
+					position: 0,
+					supersetGroupId: exerciseId,
+					supersetOrder: 0,
+					note: null,
+					restSeconds: null,
+					sets: [
+						{
+							id: crypto.randomUUID(),
+							setOrder: 0,
+							setType: "normal",
+							repsMin: 10,
+							repsMax: 12,
+							durationSeconds: null,
+							distanceMeters: null,
+							roundOrder: 0,
+							linkedSetId: null,
+							loadPercentOfPrevious: null,
+						},
+					],
+				},
+			],
+		});
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("coach") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete", userId: athleteId });
+		expect(res.status).toBe(200);
+
+		const getRes = await client.api.v1.workouts[":id"].$get(
+			// biome-ignore lint/suspicious/noExplicitAny: query optional
+			{ param: { id: workoutId }, query: {} as any },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(getRes.status).toBe(200);
+		const detail = (await getRes.json()) as WorkoutDetailResponse;
+		expect(detail.userId).toBe(athleteId);
+		expect(detail.exercises[0].variation.id).toBe(SEED_VARIATION_COACH_OWNED);
+	});
+
+	test("returns 400 when a drop set has no linkedSetId", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload();
+		payload.exercises[0].sets[2].linkedSetId = null;
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 400 when repsMax is lower than repsMin", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload();
+		payload.exercises[0].sets[1].repsMin = 10;
+		payload.exercises[0].sets[1].repsMax = 8;
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(400);
+	});
+
+	test("returns 403 when the actor is not a coach of the target user", async () => {
+		const client = getTestClient();
+		const coachId = getTestUserAuth("coach").userId;
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload({ userId: coachId });
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		expect(res.status as number).toBe(403);
+	});
+
+	test("returns 404 when the workout id belongs to another user", async () => {
+		const client = getTestClient();
+		const workoutId = crypto.randomUUID();
+		const payload = buildUpsertPayload();
+
+		const createRes = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: payload },
+			{ headers: authHeaders("athlete") },
+		);
+		createdWorkouts.push({ id: workoutId, profile: "athlete" });
+		expect(createRes.status).toBe(200);
+
+		const res = await client.api.v1.workouts[":id"].$put(
+			{ param: { id: workoutId }, json: { ...payload, userId: undefined } },
+			{ headers: authHeaders("coach") },
+		);
+		expect(res.status as number).toBe(404);
+	});
+
+	test("returns 401 when Authorization header is missing", async () => {
+		const client = getTestClient();
+		const res = await client.api.v1.workouts[":id"].$put({
+			param: { id: crypto.randomUUID() },
+			json: buildUpsertPayload(),
+		});
+		expect(res.status as number).toBe(401);
+	});
+});

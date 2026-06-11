@@ -24,6 +24,14 @@ export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
 export const WEIGHT_METRICS = ['libra', 'kg'] as const;
 export type WeightMetric = (typeof WEIGHT_METRICS)[number];
 
+// ---------- Set value limits ----------
+
+export const MIN_REPS = 1;
+export const MAX_REPS = 99;
+export const MAX_DURATION_SECONDS = 5999;
+export const MAX_DISTANCE_METERS = 999999;
+export const MAX_LOAD_PERCENT = 100;
+
 // ---------- Measurement dimensions ----------
 
 /** Which value dimensions a set tracks — i.e. the fields that are required for it. */

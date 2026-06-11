@@ -45,13 +45,6 @@ import { type DistanceUnit, DistanceUnitToggle, defaultDistanceUnit } from './se
 import { DistanceSetRow, DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
 import type { ExerciseExecutionCardProps } from './types';
 
-const SET_TYPE_INITIAL: Record<SetType, string> = {
-  warmup: 'W',
-  normal: 'N',
-  drop: 'D',
-  cluster: 'C',
-};
-
 export function ExerciseExecutionCard({
   exerciseIndex,
   name,
@@ -447,7 +440,7 @@ function SetRow({
                   <Text
                     className={`w-5 text-center font-sans-semibold text-sm ${typeConfig.textColor}`}
                   >
-                    {SET_TYPE_INITIAL[field.value]}
+                    {t(typeConfig.token)}
                   </Text>
                   <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
                 </Pressable>

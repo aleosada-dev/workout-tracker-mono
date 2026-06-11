@@ -22,6 +22,7 @@ import {
   type WorkoutFolderFormSheetRef,
 } from '@/features/workouts/components/WorkoutFolderFormSheet';
 import { WorkoutSelectionActions } from '@/features/workouts/components/WorkoutSelectionActions';
+import { WorkoutsBrowseToolbar } from '@/features/workouts/components/WorkoutsBrowseToolbar';
 import { useDeleteWorkoutFolder } from '@/features/workouts/hooks/use-delete-workout-folder';
 import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
@@ -156,7 +157,7 @@ export default function WorkoutFolderDetailScreen() {
 
         <ScrollView
           contentContainerClassName="p-4"
-          contentContainerStyle={{ paddingBottom: insets.bottom + (mode === 'select' ? 96 : 32) }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
         >
           <View className="gap-3">
             {isLoading ? (
@@ -182,7 +183,17 @@ export default function WorkoutFolderDetailScreen() {
                   selectable={mode === 'select'}
                   selected={selected.has(workout.id)}
                   onPress={() => {
-                    if (mode === 'select') toggle(workout.id);
+                    if (mode === 'select') {
+                      toggle(workout.id);
+                      return;
+                    }
+                    router.push({
+                      pathname: '/(stacks)/(workouts)/workoutForm',
+                      params: {
+                        workoutId: workout.id,
+                        ...((workout.userId ?? userId) ? { userId: workout.userId ?? userId } : {}),
+                      },
+                    });
                   }}
                   onLongPress={() => {
                     if (mode === 'browse') enterSelect(workout.id);
@@ -200,6 +211,20 @@ export default function WorkoutFolderDetailScreen() {
           </View>
         </ScrollView>
       </View>
+
+      {mode === 'browse' ? (
+        <WorkoutsBrowseToolbar
+          onCreateWorkout={() =>
+            router.push({
+              pathname: '/(stacks)/(workouts)/workoutForm',
+              params: {
+                folderId,
+                ...(userId ? { userId } : {}),
+              },
+            })
+          }
+        />
+      ) : null}
 
       <WorkoutSelectionActions
         selection={selection}

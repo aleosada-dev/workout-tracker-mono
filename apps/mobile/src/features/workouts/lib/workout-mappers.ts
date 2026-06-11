@@ -106,10 +106,28 @@ export function exerciseColumnLayout(sets: { measurementType: MeasurementType }[
   );
 }
 
-type ExecutionExercise = ExecutionFormInput['exercises'][number];
+export type MappableExerciseVariation = {
+  id: string;
+  slug: string | null;
+  name: string | null;
+  exercise: { slug: string | null; name: string };
+  equipment: { slug: string; preposition: string };
+};
+
+export type MappableExercise = {
+  id: string;
+  exerciseType: WorkoutExerciseType;
+  position: number;
+  supersetGroupId: string;
+  supersetOrder: number;
+  note: string | null;
+  restSeconds: number | null;
+  aliasId?: string | null;
+  variation: MappableExerciseVariation;
+};
 
 function toExerciseExecutionItem(
-  exercise: ExecutionExercise,
+  exercise: MappableExercise,
   exerciseIndex: number,
   t: TFunction,
   language: string,
@@ -138,7 +156,7 @@ function toExerciseExecutionItem(
 }
 
 export function toExerciseExecutionItems(
-  exercises: ExecutionFormInput['exercises'],
+  exercises: readonly MappableExercise[],
   type: WorkoutExerciseType,
   t: TFunction,
   language: string,
@@ -168,12 +186,12 @@ export function listIncompleteStrengthExercises(
     );
 }
 
-export function reorderExercisesWithinType(
-  exercises: ExecutionFormInput['exercises'],
+export function reorderExercisesWithinType<T extends MappableExercise>(
+  exercises: T[],
   type: WorkoutExerciseType,
   orderedItemIds: string[],
-): ExecutionFormInput['exercises'] {
-  const isType = (exercise: ExecutionExercise) => exercise.exerciseType === type;
+): T[] {
+  const isType = (exercise: T) => exercise.exerciseType === type;
   const rank = new Map(orderedItemIds.map((id, index) => [id, index]));
 
   const reordered = exercises
@@ -192,11 +210,11 @@ export function reorderExercisesWithinType(
     .map((exercise, position) => ({ ...exercise, position }));
 }
 
-function relocateGroupWithinType(
-  exercises: ExecutionFormInput['exercises'],
+function relocateGroupWithinType<T extends MappableExercise>(
+  exercises: T[],
   orderedMemberIds: string[],
-  patch: (exercise: ExecutionExercise, order: number) => ExecutionExercise,
-): ExecutionFormInput['exercises'] {
+  patch: (exercise: T, order: number) => T,
+): T[] {
   if (orderedMemberIds.length === 0) return exercises;
   const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]));
   const first = byId.get(orderedMemberIds[0]);
@@ -205,11 +223,11 @@ function relocateGroupWithinType(
   const memberSet = new Set(orderedMemberIds);
   const orderedMembers = orderedMemberIds
     .map((id) => byId.get(id))
-    .filter((exercise): exercise is ExecutionExercise => exercise != null)
+    .filter((exercise): exercise is T => exercise != null)
     .map((exercise, order) => patch(exercise, order));
 
   let inserted = false;
-  const newTypeList: ExecutionExercise[] = [];
+  const newTypeList: T[] = [];
   for (const exercise of exercises) {
     if (exercise.exerciseType !== type) continue;
     if (memberSet.has(exercise.id)) {
@@ -236,11 +254,11 @@ function relocateGroupWithinType(
  * fundir um superset existente com um single, o chamador expande o grupo nos ids dos
  * seus membros antes de passar.
  */
-export function combineIntoSuperset(
-  exercises: ExecutionFormInput['exercises'],
+export function combineIntoSuperset<T extends MappableExercise>(
+  exercises: T[],
   orderedExerciseIds: string[],
   newGroupId: string,
-): ExecutionFormInput['exercises'] {
+): T[] {
   return relocateGroupWithinType(exercises, orderedExerciseIds, (exercise, order) => ({
     ...exercise,
     supersetGroupId: newGroupId,
@@ -249,10 +267,7 @@ export function combineIntoSuperset(
 }
 
 /** Dissolve um superset: cada membro volta a single (`supersetGroupId = id`). */
-export function ungroupSuperset(
-  exercises: ExecutionFormInput['exercises'],
-  groupId: string,
-): ExecutionFormInput['exercises'] {
+export function ungroupSuperset<T extends MappableExercise>(exercises: T[], groupId: string): T[] {
   return exercises
     .map((exercise) =>
       exercise.supersetGroupId === groupId
@@ -263,18 +278,56 @@ export function ungroupSuperset(
 }
 
 /** Reordena os membros A/B/C de um superset conforme `orderedExerciseIds`. */
-export function reorderSupersetMembers(
-  exercises: ExecutionFormInput['exercises'],
+export function reorderSupersetMembers<T extends MappableExercise>(
+  exercises: T[],
   orderedExerciseIds: string[],
-): ExecutionFormInput['exercises'] {
+): T[] {
   return relocateGroupWithinType(exercises, orderedExerciseIds, (exercise, order) => ({
     ...exercise,
     supersetOrder: order,
   }));
 }
 
+export type RoundMemberView = {
+  exerciseIndex: number;
+  letter: SupersetLetter;
+  setIndexes: number[];
+  ids: string[];
+};
+
+/**
+ * Agrupa os sets dos membros de um superset por round (série): cada round
+ * lista, por membro, os índices/ids dos sets daquele `roundOrder`.
+ */
+export function buildRounds(
+  members: readonly Pick<SupersetMember, 'exerciseIndex' | 'letter'>[],
+  setsByMember: readonly ({ id: string; roundOrder: number }[] | undefined)[],
+): { roundOrder: number; roundMembers: RoundMemberView[] }[] {
+  const roundOrders = Array.from(
+    new Set(setsByMember.flatMap((sets) => (sets ?? []).map((set) => set.roundOrder))),
+  ).sort((a, b) => a - b);
+  return roundOrders.map((roundOrder) => ({
+    roundOrder,
+    roundMembers: members
+      .map((member, i) => {
+        const sets = setsByMember[i] ?? [];
+        const matched = sets
+          .map((set, idx) => ({ set, idx }))
+          .filter(({ set }) => set.roundOrder === roundOrder);
+        if (matched.length === 0) return null;
+        return {
+          exerciseIndex: member.exerciseIndex,
+          letter: member.letter,
+          setIndexes: matched.map(({ idx }) => idx),
+          ids: matched.map(({ set }) => set.id),
+        } satisfies RoundMemberView;
+      })
+      .filter((value): value is RoundMemberView => value !== null),
+  }));
+}
+
 export function toExecutionListItems(
-  exercises: ExecutionFormInput['exercises'],
+  exercises: readonly MappableExercise[],
   type: WorkoutExerciseType,
   t: TFunction,
   language: string,
@@ -284,7 +337,7 @@ export function toExecutionListItems(
     .filter(({ exercise }) => exercise.exerciseType === type);
 
   const groupOrder: string[] = [];
-  const groups = new Map<string, { exercise: ExecutionExercise; exerciseIndex: number }[]>();
+  const groups = new Map<string, { exercise: MappableExercise; exerciseIndex: number }[]>();
   for (const entry of filtered) {
     const groupId = entry.exercise.supersetGroupId;
     const existing = groups.get(groupId);

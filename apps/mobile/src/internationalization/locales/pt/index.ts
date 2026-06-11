@@ -17,6 +17,7 @@ import trainingLocationsScreen from './trainingLocationsScreen';
 import variationNames from './variationNames';
 import workoutExecutionScreen from './workoutExecutionScreen';
 import workoutExecutionSummaryScreen from './workoutExecutionSummaryScreen';
+import workoutFormScreen from './workoutFormScreen';
 import workoutLogDetail from './workoutLogDetail';
 import workoutLogs from './workoutLogs';
 import workoutsScreen from './workoutsScreen';
@@ -42,6 +43,7 @@ const pt = {
     workoutLogs,
     workoutLogDetail,
     workoutExecutionScreen,
+    workoutFormScreen,
     workoutExecutionSummaryScreen,
     preferencesScreen,
     trainingLocationsScreen,

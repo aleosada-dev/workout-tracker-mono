@@ -35,6 +35,8 @@ type ExerciseExecutionListProps = {
   userId?: string | null;
   /** Display name of that athlete, surfaced on the detail screen when viewing their data. */
   athleteName?: string | null;
+  /** Substitui os cards de execução (default) — usado pelo builder de treino. */
+  renderCard?: (item: ExecutionListItem, dragHandle?: React.ReactNode) => React.ReactNode;
 };
 
 export function ExerciseExecutionList({
@@ -48,6 +50,7 @@ export function ExerciseExecutionList({
   onLongPressItem,
   userId,
   athleteName,
+  renderCard: renderCardOverride,
 }: ExerciseExecutionListProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -55,7 +58,7 @@ export function ExerciseExecutionList({
   const spacerHeight = insets.bottom + (Platform.OS === 'ios' ? 70 : 90);
   const actionsWidth = windowWidth - 32;
 
-  const renderCard = useCallback(
+  const renderDefaultCard = useCallback(
     (item: ExecutionListItem, dragHandle?: React.ReactNode) =>
       item.kind === 'superset' ? (
         <SupersetExecutionCard
@@ -105,6 +108,8 @@ export function ExerciseExecutionList({
       ),
     [selectionMode, selectedIds, onToggleSelect, onLongPressItem, userId, athleteName],
   );
+
+  const renderCard = renderCardOverride ?? renderDefaultCard;
 
   const estimateItemHeight = useCallback(
     (item: ListItem) => {

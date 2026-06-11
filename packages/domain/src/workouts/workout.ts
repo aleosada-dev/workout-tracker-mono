@@ -78,6 +78,40 @@ export type WorkoutDetail = {
   exercises: WorkoutDetailExercise[];
 };
 
+export type UpsertWorkoutSetInput = {
+  id: string;
+  setOrder: number;
+  setType: WorkoutSetType;
+  repsMin: number | null;
+  repsMax: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
+  roundOrder: number;
+  linkedSetId: string | null;
+  loadPercentOfPrevious: number | null;
+};
+
+export type UpsertWorkoutExerciseInput = {
+  id: string;
+  variationId: string;
+  exerciseType: WorkoutExerciseType;
+  position: number;
+  supersetGroupId: string;
+  supersetOrder: number;
+  note: string | null;
+  restSeconds: number | null;
+  sets: UpsertWorkoutSetInput[];
+};
+
+export type UpsertWorkoutInput = {
+  workoutId: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  folderId: string | null;
+  exercises: UpsertWorkoutExerciseInput[];
+};
+
 export type GetWorkoutInput = {
   userId: string;
   workoutId: string;

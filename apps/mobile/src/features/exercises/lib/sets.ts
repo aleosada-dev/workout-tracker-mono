@@ -1,5 +1,7 @@
+import type { WorkoutSetType } from '@workout-tracker/domain';
+
 /** Set-type taxonomy used by the sets table and progression charts. */
-export type SetType = 'warmup' | 'normal' | 'drop' | 'cluster';
+export type SetType = WorkoutSetType;
 
 type SetTypeConfig = {
   order: number;

@@ -1,3 +1,4 @@
+import { MAX_DISTANCE_METERS } from '@workout-tracker/domain';
 import { Input, Text } from '@workout-tracker/ui-mobile';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
@@ -10,7 +11,6 @@ import {
 } from '@/features/workouts/components/DurationPickerSheet';
 import type { ExecutionFormInput } from '@/features/workouts/lib/execution-form';
 
-const MAX_DISTANCE_METERS = 999999;
 const MAX_KM_INTEGER_DIGITS = 3;
 const MAX_KM_FRACTION_DIGITS = 2;
 

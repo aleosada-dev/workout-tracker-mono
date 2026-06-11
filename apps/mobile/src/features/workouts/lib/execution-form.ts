@@ -4,8 +4,12 @@ import {
   EXERCISE_MEASUREMENT_TYPES,
   EXERCISE_TYPES,
   type ExerciseMeasurementType,
+  MAX_DISTANCE_METERS,
+  MAX_DURATION_SECONDS,
+  MAX_REPS,
   MEASUREMENT_TYPES,
   type MeasurementType,
+  MIN_REPS,
   matchSets,
   measurementDimensions,
   type SetLike,
@@ -24,10 +28,6 @@ import type { GetWorkoutResponse } from '@/features/workouts/api/workouts';
 
 const MAX_WEIGHT_KG = 1000;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
-const MIN_REPS = 1;
-const MAX_REPS = 99;
-const MAX_DURATION_SECONDS = 5999;
-const MAX_DISTANCE_METERS = 999999;
 
 const optionalWeightField = z
   .string()

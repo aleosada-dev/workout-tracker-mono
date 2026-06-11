@@ -23,6 +23,7 @@ import {
   WorkoutFolderItemSkeleton,
 } from '@/features/workouts/components/WorkoutFolderItem';
 import { WorkoutSelectionActions } from '@/features/workouts/components/WorkoutSelectionActions';
+import { WorkoutsBrowseToolbar } from '@/features/workouts/components/WorkoutsBrowseToolbar';
 import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout';
 import { useWorkoutFolders } from '@/features/workouts/hooks/use-workout-folders';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
@@ -90,7 +91,7 @@ export default function WorkoutListScreen() {
       <ActiveWorkoutBanner />
       <ScrollView
         contentContainerClassName="p-4"
-        contentContainerStyle={{ paddingBottom: insets.bottom + (mode === 'select' ? 96 : 32) }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
       >
         {showAthleteSelect && (
           <View className="pb-4">
@@ -165,7 +166,19 @@ export default function WorkoutListScreen() {
                 selectable={mode === 'select'}
                 selected={selected.has(workout.id)}
                 onPress={() => {
-                  if (mode === 'select') toggle(workout.id);
+                  if (mode === 'select') {
+                    toggle(workout.id);
+                    return;
+                  }
+                  router.push({
+                    pathname: '/(stacks)/(workouts)/workoutForm',
+                    params: {
+                      workoutId: workout.id,
+                      ...((workout.userId ?? queryUserId)
+                        ? { userId: workout.userId ?? queryUserId }
+                        : {}),
+                    },
+                  });
                 }}
                 onLongPress={() => {
                   if (mode === 'browse') enterSelect(workout.id);
@@ -186,7 +199,17 @@ export default function WorkoutListScreen() {
         </View>
       </ScrollView>
       {mode === 'browse' ? (
-        <Stack.Screen options={{ headerLeft: undefined, headerRight: undefined }} />
+        <>
+          <Stack.Screen options={{ headerLeft: undefined, headerRight: undefined }} />
+          <WorkoutsBrowseToolbar
+            onCreateWorkout={() =>
+              router.push({
+                pathname: '/(stacks)/(workouts)/workoutForm',
+                params: { ...(queryUserId ? { userId: queryUserId } : {}) },
+              })
+            }
+          />
+        </>
       ) : null}
       <WorkoutFolderFormSheet ref={folderFormSheetRef} userId={queryUserId} />
       <WorkoutSelectionActions selection={selection} userId={queryUserId} excludeFolderId={null} />

@@ -209,6 +209,64 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 	};
 }
 
+export const UpsertWorkoutSetRequestSchema = z
+	.object({
+		id: z.uuid(),
+		setOrder: z.int().nonnegative(),
+		setType: WorkoutSetTypeSchema,
+		repsMin: z.int().positive().nullable(),
+		repsMax: z.int().positive().nullable(),
+		durationSeconds: z.int().positive().nullable(),
+		distanceMeters: z.int().positive().nullable(),
+		roundOrder: z.int().nonnegative(),
+		linkedSetId: z.uuid().nullable(),
+		loadPercentOfPrevious: z.int().nonnegative().nullable(),
+	})
+	.superRefine((set, ctx) => {
+		if (set.repsMin !== null && set.repsMax !== null && set.repsMax < set.repsMin) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["repsMax"],
+				message: "repsMax must be >= repsMin",
+			});
+		}
+		if ((set.setType === "drop" || set.setType === "cluster") && set.linkedSetId === null) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["linkedSetId"],
+				message: "linkedSetId required for drop/cluster sets",
+			});
+		}
+	});
+
+export const UpsertWorkoutExerciseRequestSchema = z.object({
+	id: z.uuid(),
+	variationId: z.uuid(),
+	exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
+	position: z.int().nonnegative(),
+	supersetGroupId: z.uuid(),
+	supersetOrder: z.int().nonnegative(),
+	note: z.string().nullable(),
+	restSeconds: z.int().nonnegative().nullable(),
+	sets: z.array(UpsertWorkoutSetRequestSchema).min(1),
+});
+
+export const UpsertWorkoutRequestSchema = z.object({
+	userId: z.uuid().optional(),
+	name: z.string().trim().min(1).max(100),
+	description: z.string().nullable(),
+	folderId: z.uuid().nullable(),
+	exercises: z.array(UpsertWorkoutExerciseRequestSchema),
+});
+
+export type UpsertWorkoutRequest = z.infer<typeof UpsertWorkoutRequestSchema>;
+
+export const UpsertWorkoutResponseSchema = z.object({
+	id: z.uuid(),
+});
+
+export type UpsertWorkoutResponse = z.infer<typeof UpsertWorkoutResponseSchema>;
+
 export const DeleteWorkoutResponseSchema = z.object({
 	id: z.uuid(),
 });

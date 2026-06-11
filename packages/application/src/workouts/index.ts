@@ -8,6 +8,7 @@ import { makeListWorkoutFolders } from './list-workout-folders';
 import { makeListWorkouts } from './list-workouts';
 import { makeMoveWorkouts } from './move-workouts';
 import { makeUpdateWorkoutFolder } from './update-workout-folder';
+import { makeUpsertWorkout } from './upsert-workout';
 
 export function makeWorkoutApp(
   folderRepository: WorkoutFolderRepository,
@@ -20,6 +21,7 @@ export function makeWorkoutApp(
     deleteFolder: makeDeleteWorkoutFolder(folderRepository),
     listWorkouts: makeListWorkouts(workoutRepository),
     getWorkout: makeGetWorkout(workoutRepository),
+    upsertWorkout: makeUpsertWorkout(workoutRepository),
     deleteWorkouts: makeDeleteWorkouts(workoutRepository),
     moveWorkouts: makeMoveWorkouts(workoutRepository),
     copyWorkouts: makeCopyWorkouts(workoutRepository, folderRepository),
@@ -35,3 +37,4 @@ export * from './list-workout-folders';
 export * from './list-workouts';
 export * from './move-workouts';
 export * from './update-workout-folder';
+export * from './upsert-workout';

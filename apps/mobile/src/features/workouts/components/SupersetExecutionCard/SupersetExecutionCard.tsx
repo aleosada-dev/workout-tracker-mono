@@ -1,4 +1,4 @@
-import { type MeasurementType, measurementDimensions } from '@workout-tracker/domain';
+import { MAX_REPS, type MeasurementType, measurementDimensions } from '@workout-tracker/domain';
 import { Button, Card, Checkbox, Icon, Input, Text } from '@workout-tracker/ui-mobile';
 import * as Crypto from 'expo-crypto';
 import {
@@ -50,9 +50,11 @@ import {
   restTimerDuration,
 } from '@/features/workouts/lib/execution-form';
 import {
+  buildRounds,
   type ColumnLayout,
   exerciseColumnLayout,
   formatSetTarget,
+  type RoundMemberView,
   type SupersetMember,
   weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
@@ -62,47 +64,8 @@ import type { SupersetExecutionCardProps } from './types';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
-const MAX_REPS = 99;
-
-const SET_TYPE_INITIAL: Record<SetType, string> = {
-  warmup: 'W',
-  normal: 'N',
-  drop: 'D',
-  cluster: 'C',
-};
 
 type MemberSets = ExecutionFormInput['exercises'][number]['sets'];
-
-type RoundMemberView = {
-  exerciseIndex: number;
-  letter: SupersetMember['letter'];
-  setIndexes: number[];
-  ids: string[];
-};
-
-function buildRounds(members: SupersetMember[], setsByMember: MemberSets[]) {
-  const roundOrders = Array.from(
-    new Set(setsByMember.flatMap((sets) => (sets ?? []).map((set) => set.roundOrder))),
-  ).sort((a, b) => a - b);
-  return roundOrders.map((roundOrder) => ({
-    roundOrder,
-    roundMembers: members
-      .map((member, i) => {
-        const sets = setsByMember[i] ?? [];
-        const matched = sets
-          .map((set, idx) => ({ set, idx }))
-          .filter(({ set }) => set.roundOrder === roundOrder);
-        if (matched.length === 0) return null;
-        return {
-          exerciseIndex: member.exerciseIndex,
-          letter: member.letter,
-          setIndexes: matched.map(({ idx }) => idx),
-          ids: matched.map(({ set }) => set.id),
-        } satisfies RoundMemberView;
-      })
-      .filter((value): value is RoundMemberView => value !== null),
-  }));
-}
 
 export function SupersetExecutionCard({
   members,
@@ -646,6 +609,7 @@ function SupersetMemberCell({
   distanceUnit: DistanceUnit;
   onPressLetter: () => void;
 }) {
+  const { t } = useTranslation();
   const { control } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
   const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
@@ -697,7 +661,7 @@ function SupersetMemberCell({
                 <Text
                   className={`w-5 text-center font-sans-semibold text-sm ${typeConfig.textColor}`}
                 >
-                  {SET_TYPE_INITIAL[field.value]}
+                  {t(typeConfig.token)}
                 </Text>
                 <Icon as={ChevronDown} size={12} className="text-muted-foreground" />
               </Pressable>

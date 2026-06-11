@@ -1,6 +1,7 @@
 import {
   computeLinkedLoad,
   type LoadRoundingMode,
+  MAX_REPS,
   measurementDimensions,
 } from '@workout-tracker/domain';
 import { Icon, Input, Text } from '@workout-tracker/ui-mobile';
@@ -27,7 +28,6 @@ import { DistanceInput, type DistanceUnit, formatDistance } from './set-cells';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
-const MAX_REPS = 99;
 
 type SetRowBodyProps = {
   exerciseIndex: number;

@@ -3140,6 +3140,7 @@ export type Database = {
         }
         Returns: number
       }
+      wt_upsert_workout: { Args: { payload: Json }; Returns: string }
     }
     Enums: {
       user_role: "coach" | "athlete"

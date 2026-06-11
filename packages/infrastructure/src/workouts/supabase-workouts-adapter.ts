@@ -1,4 +1,9 @@
-import { ForbiddenError, NotFoundError, type WorkoutRepository } from '@workout-tracker/domain';
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+  type WorkoutRepository,
+} from '@workout-tracker/domain';
 import type { Supabase } from '../supabase/client';
 import { supabaseError } from '../supabase/supabase-error';
 import {
@@ -7,6 +12,7 @@ import {
   type WorkoutDetailRow,
   type WorkoutListRow,
 } from './supabase-workouts-mapper';
+import { toUpsertWorkoutPayload } from './supabase-workouts-upsert-mapper';
 
 const LIST_SELECT = `
   id, user_id, name, folder_id, created_at, updated_at,
@@ -85,6 +91,27 @@ export function makeSupabaseWorkoutRepository(supabase: Supabase): WorkoutReposi
 
       const row = data as unknown as WorkoutDetailRow;
       return toWorkoutDetail(row);
+    },
+
+    async upsertWorkout(input) {
+      const { data, error } = await supabase.rpc('wt_upsert_workout', {
+        payload: toUpsertWorkoutPayload(input),
+      });
+
+      if (error) {
+        if (error.code === '42501') {
+          throw new ForbiddenError('not authorized to upsert a workout for this athlete');
+        }
+        if (error.code === 'P0002') {
+          throw new NotFoundError('workout');
+        }
+        if (error.code === '22023' || error.code === '23503' || error.code === '23514') {
+          throw new ValidationError([{ code: 'validation.invalid' }]);
+        }
+        throw supabaseError('Failed to upsert workout', error);
+      }
+
+      return { workoutId: data as string };
     },
 
     async deleteWorkouts({ userId, workoutIds }) {
