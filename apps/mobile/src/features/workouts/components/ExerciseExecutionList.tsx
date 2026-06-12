@@ -88,6 +88,7 @@ export function ExerciseExecutionList({
           variationName={item.variationName ?? undefined}
           note={item.note}
           restSeconds={item.restSeconds}
+          alternative={item.alternative}
           dragHandle={dragHandle}
           selectable={selectionMode}
           selected={selectedIds?.has(item.id) ?? false}

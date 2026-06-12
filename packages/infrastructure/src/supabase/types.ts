@@ -2114,6 +2114,7 @@ export type Database = {
       }
       workout_exercises: {
         Row: {
+          alternative_of_id: string | null
           created_at: string
           exercise_type: string
           id: string
@@ -2127,6 +2128,7 @@ export type Database = {
           workout_id: string
         }
         Insert: {
+          alternative_of_id?: string | null
           created_at?: string
           exercise_type?: string
           id?: string
@@ -2140,6 +2142,7 @@ export type Database = {
           workout_id: string
         }
         Update: {
+          alternative_of_id?: string | null
           created_at?: string
           exercise_type?: string
           id?: string
@@ -2153,6 +2156,20 @@ export type Database = {
           workout_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_exercises_alternative_of_id_fkey"
+            columns: ["alternative_of_id"]
+            isOneToOne: false
+            referencedRelation: "workout_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercises_alternative_of_id_fkey"
+            columns: ["alternative_of_id"]
+            isOneToOne: false
+            referencedRelation: "workout_preparatory_exercises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_exercises_variation_id_fkey"
             columns: ["variation_id"]

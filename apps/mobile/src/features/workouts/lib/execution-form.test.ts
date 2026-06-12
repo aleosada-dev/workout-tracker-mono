@@ -716,3 +716,83 @@ describe('restTimerDuration', () => {
     expect(restTimerDuration(0)).toBeNull();
   });
 });
+
+describe('buildExecutionFromWorkout alternatives', () => {
+  function workoutWithAlternative(): GetWorkoutResponse {
+    return {
+      id: 'w1',
+      userId: 'u1',
+      name: 'Treino',
+      description: null,
+      folderId: null,
+      createdAt: '2026-05-30T00:00:00Z',
+      updatedAt: '2026-05-30T00:00:00Z',
+      exercises: [
+        {
+          id: 'ex-1',
+          exerciseType: 'strength',
+          position: 0,
+          supersetGroupId: 'ex-1',
+          supersetOrder: 0,
+          note: null,
+          restSeconds: null,
+          alternativeOfId: null,
+          variation: {
+            id: VARIATION_A,
+            slug: 'supino-reto',
+            name: null,
+            exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
+            measurementType: 'weight_reps',
+            equipment: { slug: 'barra', preposition: 'com' },
+            muscle: { slug: 'chest' },
+            secondaryMuscle: null,
+          },
+          sets: [templateSet({ id: 's1' })],
+        },
+        {
+          id: 'alt-1',
+          exerciseType: 'strength',
+          position: 0,
+          supersetGroupId: 'alt-1',
+          supersetOrder: 0,
+          note: null,
+          restSeconds: 90,
+          alternativeOfId: 'ex-1',
+          variation: {
+            id: VARIATION_B,
+            slug: 'crossover',
+            name: null,
+            exercise: { slug: 'crossover', name: 'Crossover', type: 'musculacao' },
+            measurementType: 'weight_reps',
+            equipment: { slug: 'cabo', preposition: 'no' },
+            muscle: { slug: 'chest' },
+            secondaryMuscle: null,
+          },
+          sets: [templateSet({ id: 'alt-s1' })],
+        },
+      ],
+    } as GetWorkoutResponse;
+  }
+
+  test('nests the alternative and defaults usingAlternative to false', () => {
+    const result = buildExecutionFromWorkout(workoutWithAlternative());
+
+    expect(result.exercises).toHaveLength(1);
+    expect(result.exercises[0].id).toBe('ex-1');
+    expect(result.exercises[0].usingAlternative).toBe(false);
+    expect(result.exercises[0].alternative?.variation.id).toBe(VARIATION_B);
+    expect(result.exercises[0].alternative?.sets[0].repsMin).toBe(8);
+  });
+
+  test('resolves the alternative last-set bucket from the alternative variation', () => {
+    const result = buildExecutionFromWorkout(
+      workoutWithAlternative(),
+      lastSets(VARIATION_B, [refSet('normal-1', 60, 12)]),
+    );
+
+    expect(result.exercises[0].alternative?.sets[0].lastKg).toBe(60);
+    expect(result.exercises[0].alternative?.sets[0].lastReps).toBe(12);
+    // The principal variation has no last log, so its lastKg stays null.
+    expect(result.exercises[0].sets[0].lastKg).toBeNull();
+  });
+});

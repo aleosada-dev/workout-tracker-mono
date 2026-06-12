@@ -63,6 +63,7 @@ export type WorkoutDetailExercise = {
   supersetOrder: number;
   note: string | null;
   restSeconds: number | null;
+  alternativeOfId: string | null;
   variation: WorkoutDetailExerciseVariation;
   sets: WorkoutDetailSet[];
 };
@@ -91,6 +92,14 @@ export type UpsertWorkoutSetInput = {
   loadPercentOfPrevious: number | null;
 };
 
+export type UpsertWorkoutAlternativeInput = {
+  id: string;
+  variationId: string;
+  note: string | null;
+  restSeconds: number | null;
+  sets: UpsertWorkoutSetInput[];
+};
+
 export type UpsertWorkoutExerciseInput = {
   id: string;
   variationId: string;
@@ -101,6 +110,7 @@ export type UpsertWorkoutExerciseInput = {
   note: string | null;
   restSeconds: number | null;
   sets: UpsertWorkoutSetInput[];
+  alternative: UpsertWorkoutAlternativeInput | null;
 };
 
 export type UpsertWorkoutInput = {

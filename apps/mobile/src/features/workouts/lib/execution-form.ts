@@ -110,6 +110,18 @@ export const ExecutionExerciseVariationSchema = z.object({
   secondaryMuscle: z.object({ slug: z.string() }).nullable(),
 });
 
+// Exercício alternativo: substitui o principal na execução. Tem sua própria
+// variação e seus próprios sets (estado de execução separado do principal, para
+// preservar o que foi digitado ao alternar).
+export const ExecutionAlternativeSchema = z.object({
+  id: z.string(),
+  note: z.string().nullable(),
+  restSeconds: z.int().nonnegative().nullable(),
+  aliasId: z.string().nullable(),
+  variation: ExecutionExerciseVariationSchema,
+  sets: z.array(ExecutionSetSchema),
+});
+
 export const ExecutionExerciseSchema = z.object({
   id: z.string(),
   exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
@@ -120,8 +132,11 @@ export const ExecutionExerciseSchema = z.object({
   restSeconds: z.int().nonnegative().nullable(),
   // Máquina (alias) selecionada para este exercício; null = sem máquina.
   aliasId: z.string().nullable(),
+  // true = executar o alternativo no lugar do principal (escopo da sessão).
+  usingAlternative: z.boolean().default(false),
   variation: ExecutionExerciseVariationSchema,
   sets: z.array(ExecutionSetSchema),
+  alternative: ExecutionAlternativeSchema.nullable().default(null),
 });
 
 export const ExecutionFormSchema = z.object({
@@ -347,6 +362,59 @@ export function buildExecutionExerciseFromPicked(
   };
 }
 
+type ResponseExercise = GetWorkoutResponse['exercises'][number];
+
+/**
+ * Constrói os sets de execução (com targets, alias pré-selecionado e última-carga
+ * casada por slot lógico) para uma linha de exercício — principal OU alternativo.
+ * O alias e o `lastSets` são resolvidos pela variation **daquela** linha.
+ */
+function buildExecutionExercisePart(
+  exercise: ResponseExercise,
+  lastSets: ExerciseLastSetsResponse | null,
+  validAliasIds: Set<string> | null,
+): { aliasId: string | null; sets: ExecutionSetInput[] } {
+  const lastExercise = lastSets?.find((e) => e.variationId === exercise.variation.id);
+  const fallbackRounds = deriveRoundOrders(
+    exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
+  );
+  const setMeasurementType = setMeasurementTypeForVariation(exercise.variation.measurementType);
+  const sets: ExecutionSetInput[] = exercise.sets.map((set, i) => ({
+    id: set.id,
+    type: set.setType ?? 'normal',
+    measurementType: setMeasurementType,
+    roundOrder: set.roundOrder ?? fallbackRounds[i],
+    repsMin: set.repsMin,
+    repsMax: set.repsMax,
+    durationTarget: set.durationSeconds ?? null,
+    distanceTarget: set.distanceMeters ?? null,
+    kg: '',
+    reps: '',
+    duration: '',
+    distance: '',
+    done: false,
+    lastKg: null,
+    lastReps: null,
+    lastDuration: null,
+    lastDistance: null,
+    linkedSetId: set.linkedSetId,
+    loadPercent: set.loadPercent,
+    loadPercentOfPrevious: set.loadPercentOfPrevious,
+  }));
+  // Pré-seleciona o último alias usado naquela variation (fallback: sem máquina).
+  // Ignora um alias que não está mais na lista ativa (ex.: excluído).
+  const lastUsedAliasId = lastExercise?.lastUsedAliasId ?? null;
+  const aliasId =
+    lastUsedAliasId != null && (validAliasIds === null || validAliasIds.has(lastUsedAliasId))
+      ? lastUsedAliasId
+      : null;
+  const matched = matchExecutionSetsByLogicalKey(
+    sets,
+    resolveLastBucketSets(lastExercise, aliasId),
+  );
+  return { aliasId, sets: sets.map((set, i) => ({ ...set, ...matched[i] })) };
+}
+
 export function buildExecutionFromWorkout(
   workout: GetWorkoutResponse,
   lastSets: ExerciseLastSetsResponse | null = null,
@@ -360,58 +428,44 @@ export function buildExecutionFromWorkout(
   aliases: readonly { id: string }[] | null = null,
 ): ExecutionFormInput {
   const validAliasIds = aliases ? new Set(aliases.map((a) => a.id)) : null;
+  const altByPrincipal = new Map(
+    workout.exercises
+      .filter((exercise) => exercise.alternativeOfId != null)
+      .map((exercise) => [exercise.alternativeOfId as string, exercise]),
+  );
   return {
-    exercises: workout.exercises.map((exercise) => {
-      const lastExercise = lastSets?.find((e) => e.variationId === exercise.variation.id);
-      const fallbackRounds = deriveRoundOrders(
-        exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
-      );
-      const setMeasurementType = setMeasurementTypeForVariation(exercise.variation.measurementType);
-      const sets: ExecutionSetInput[] = exercise.sets.map((set, i) => ({
-        id: set.id,
-        type: set.setType ?? 'normal',
-        measurementType: setMeasurementType,
-        roundOrder: set.roundOrder ?? fallbackRounds[i],
-        repsMin: set.repsMin,
-        repsMax: set.repsMax,
-        durationTarget: set.durationSeconds ?? null,
-        distanceTarget: set.distanceMeters ?? null,
-        kg: '',
-        reps: '',
-        duration: '',
-        distance: '',
-        done: false,
-        lastKg: null,
-        lastReps: null,
-        lastDuration: null,
-        lastDistance: null,
-        linkedSetId: set.linkedSetId,
-        loadPercent: set.loadPercent,
-        loadPercentOfPrevious: set.loadPercentOfPrevious,
-      }));
-      // Pré-seleciona o último alias usado naquela variation (fallback: sem máquina).
-      // Ignora um alias que não está mais na lista ativa (ex.: excluído).
-      const lastUsedAliasId = lastExercise?.lastUsedAliasId ?? null;
-      const aliasId =
-        lastUsedAliasId != null && (validAliasIds === null || validAliasIds.has(lastUsedAliasId))
-          ? lastUsedAliasId
+    exercises: workout.exercises
+      .filter((exercise) => exercise.alternativeOfId == null)
+      .map((exercise) => {
+        const principal = buildExecutionExercisePart(exercise, lastSets, validAliasIds);
+        const altExercise = altByPrincipal.get(exercise.id) ?? null;
+        const altPart = altExercise
+          ? buildExecutionExercisePart(altExercise, lastSets, validAliasIds)
           : null;
-      const matched = matchExecutionSetsByLogicalKey(
-        sets,
-        resolveLastBucketSets(lastExercise, aliasId),
-      );
-      return {
-        id: exercise.id,
-        exerciseType: exercise.exerciseType,
-        position: exercise.position,
-        supersetGroupId: exercise.supersetGroupId,
-        supersetOrder: exercise.supersetOrder,
-        note: exercise.note,
-        restSeconds: exercise.restSeconds,
-        aliasId,
-        variation: exercise.variation,
-        sets: sets.map((set, i) => ({ ...set, ...matched[i] })),
-      };
-    }),
+        return {
+          id: exercise.id,
+          exerciseType: exercise.exerciseType,
+          position: exercise.position,
+          supersetGroupId: exercise.supersetGroupId,
+          supersetOrder: exercise.supersetOrder,
+          note: exercise.note,
+          restSeconds: exercise.restSeconds,
+          aliasId: principal.aliasId,
+          usingAlternative: false,
+          variation: exercise.variation,
+          sets: principal.sets,
+          alternative:
+            altExercise && altPart
+              ? {
+                  id: altExercise.id,
+                  note: altExercise.note,
+                  restSeconds: altExercise.restSeconds,
+                  aliasId: altPart.aliasId,
+                  variation: altExercise.variation,
+                  sets: altPart.sets,
+                }
+              : null,
+        };
+      }),
   };
 }

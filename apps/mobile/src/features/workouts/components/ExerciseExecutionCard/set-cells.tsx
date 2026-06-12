@@ -150,12 +150,18 @@ export function DistanceInput({
 export function DurationPickerCell({
   exerciseIndex,
   setIndex,
+  setsPath,
 }: {
   exerciseIndex: number;
   setIndex: number;
+  setsPath?: `exercises.${number}.sets` | `exercises.${number}.alternative.sets`;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const resolvedSetsPath = setsPath ?? (`exercises.${exerciseIndex}.sets` as const);
+  const basePath = `${resolvedSetsPath}.${setIndex}` as const;
+  const testIDBase = resolvedSetsPath.includes('.alternative.')
+    ? `workout-execution.alternative.set-${setIndex}`
+    : `workout-execution.set-${setIndex}`;
   const lastDuration = useWatch({ control, name: `${basePath}.lastDuration` });
   const sheetRef = useRef<DurationPickerSheetRef>(null);
 
@@ -176,7 +182,7 @@ export function DurationPickerCell({
                 )
               }
               accessibilityRole="button"
-              testID={`workout-execution.set-${setIndex}.duration`}
+              testID={`${testIDBase}.duration`}
               className={`h-8 items-center justify-center border-b ${
                 fieldState.invalid ? 'border-destructive' : 'border-primary'
               }`}

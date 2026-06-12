@@ -122,6 +122,7 @@ type DetailWorkoutExerciseRow = {
   superset_order: number;
   note: string | null;
   rest_seconds: number | null;
+  alternative_of_id: string | null;
   variation: DetailVariationRow | null;
   workout_sets: WorkoutSetRow[] | null;
 };
@@ -180,6 +181,7 @@ function toWorkoutExercise(row: DetailWorkoutExerciseRow): WorkoutDetailExercise
     supersetOrder: row.superset_order,
     note: row.note,
     restSeconds: row.rest_seconds,
+    alternativeOfId: row.alternative_of_id ?? null,
     variation: {
       id: variation?.id ?? '',
       slug: variation?.slug ?? null,

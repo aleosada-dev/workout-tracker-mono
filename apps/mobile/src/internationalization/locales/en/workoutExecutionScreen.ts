@@ -23,6 +23,10 @@ export default {
     continueToReview: 'Continue to review',
     goBack: 'Go back and adjust',
   },
+  alternative: {
+    use: 'Use alternative',
+    usePrincipal: 'Back to main',
+  },
   exercise: {
     addSet: 'Add set',
     noVariation: 'No variation',

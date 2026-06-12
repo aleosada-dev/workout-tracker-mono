@@ -39,31 +39,38 @@ export type CompletedExecution = {
 export function buildCompletedExecution(values: ExecutionFormValues): CompletedExecution {
   return {
     exercises: values.exercises
-      .map((exercise) => ({
-        id: exercise.id,
-        exerciseType: exercise.exerciseType,
-        position: exercise.position,
-        supersetGroupId: exercise.supersetGroupId,
-        supersetOrder: exercise.supersetOrder,
-        note: exercise.note,
-        restSeconds: exercise.restSeconds,
-        aliasId: exercise.aliasId,
-        variation: exercise.variation,
-        sets: exercise.sets
-          .filter((set) => set.done)
-          .map((set) => ({
-            id: set.id,
-            type: set.type,
-            measurementType: set.measurementType,
-            roundOrder: set.roundOrder,
-            weightKg: set.kg ?? null,
-            reps: set.reps ?? null,
-            repsMin: set.repsMin,
-            repsMax: set.repsMax,
-            durationSeconds: set.duration ?? null,
-            distanceMeters: set.distance ?? null,
-          })),
-      }))
+      .map((exercise) => {
+        // Loga o item ativo: o alternativo quando selecionado, senão o principal.
+        // Mantém position/exerciseType/superset do principal; variação, sets,
+        // alias e nota vêm do que foi de fato executado.
+        const active =
+          exercise.usingAlternative && exercise.alternative ? exercise.alternative : exercise;
+        return {
+          id: exercise.id,
+          exerciseType: exercise.exerciseType,
+          position: exercise.position,
+          supersetGroupId: exercise.supersetGroupId,
+          supersetOrder: exercise.supersetOrder,
+          note: active.note,
+          restSeconds: active.restSeconds,
+          aliasId: active.aliasId,
+          variation: active.variation,
+          sets: active.sets
+            .filter((set) => set.done)
+            .map((set) => ({
+              id: set.id,
+              type: set.type,
+              measurementType: set.measurementType,
+              roundOrder: set.roundOrder,
+              weightKg: set.kg ?? null,
+              reps: set.reps ?? null,
+              repsMin: set.repsMin,
+              repsMax: set.repsMax,
+              durationSeconds: set.duration ?? null,
+              distanceMeters: set.distance ?? null,
+            })),
+        };
+      })
       .filter((exercise) => exercise.sets.length > 0),
   };
 }

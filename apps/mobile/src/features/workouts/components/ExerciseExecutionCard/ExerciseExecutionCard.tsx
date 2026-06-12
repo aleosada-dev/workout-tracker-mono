@@ -41,7 +41,9 @@ import {
 import { type ColumnLayout, exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
 import { activeWorkout$ } from '@/features/workouts/state/active-workout-store';
 import { startRestTimer } from '@/features/workouts/state/rest-timer-bridge';
+import { AlternativeSwapControl } from './AlternativeSwapControl';
 import { type DistanceUnit, DistanceUnitToggle, defaultDistanceUnit } from './set-cells';
+import { alternativeSetsPath, type ExecutionSetsPath } from './set-paths';
 import { DistanceSetRow, DurationSetRow, RepsSetRow, WeightRepsSetRow } from './set-rows';
 import type { ExerciseExecutionCardProps } from './types';
 
@@ -51,6 +53,7 @@ export function ExerciseExecutionCard({
   variationName,
   note,
   restSeconds,
+  alternative,
   dragHandle,
   onPressHeader,
   selectable = false,
@@ -64,9 +67,20 @@ export function ExerciseExecutionCard({
   const isCollapsed = selectable || collapsed;
   const effectiveRestSeconds = restSeconds ?? preferences?.defaultRestSeconds ?? null;
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
+  const usingAlternative =
+    useWatch({ control, name: `exercises.${exerciseIndex}.usingAlternative` }) ?? false;
+  const isAlternative = alternative != null && usingAlternative;
+  const setsPath: ExecutionSetsPath = isAlternative
+    ? alternativeSetsPath(exerciseIndex)
+    : `exercises.${exerciseIndex}.sets`;
+  const activeBase = (
+    isAlternative ? `exercises.${exerciseIndex}.alternative` : `exercises.${exerciseIndex}`
+  ) as `exercises.${number}`;
+  const activeName = isAlternative ? (alternative?.name ?? name) : name;
+  const activeVariationName = isAlternative ? (alternative?.variationName ?? null) : variationName;
   const { fields, append, remove } = useFieldArray({
     control,
-    name: `exercises.${exerciseIndex}.sets`,
+    name: setsPath,
   });
   const { errors } = useFormState({
     control,
@@ -77,14 +91,14 @@ export function ExerciseExecutionCard({
   const removeSetSheetRef = useRef<RemoveSetSheetRef>(null);
   const measurementTypes = useWatch({
     control,
-    name: fields.map((_, i) => `exercises.${exerciseIndex}.sets.${i}.measurementType` as const),
+    name: fields.map((_, i) => `${setsPath}.${i}.measurementType` as const),
   });
   const layout = exerciseColumnLayout(
     measurementTypes.map((measurementType) => ({ measurementType })),
   );
   const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(() =>
     defaultDistanceUnit(
-      getValues(`exercises.${exerciseIndex}.sets`).reduce<number | null>(
+      getValues(setsPath).reduce<number | null>(
         (max, s) =>
           s.distanceTarget != null && s.distanceTarget > (max ?? 0) ? s.distanceTarget : max,
         null,
@@ -92,24 +106,22 @@ export function ExerciseExecutionCard({
     ),
   );
   const showSetType = getValues(`exercises.${exerciseIndex}.exerciseType`) !== 'preparatory';
-  const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
-  const equipmentName = t(
-    `equipment.${getValues(`exercises.${exerciseIndex}.variation.equipment.slug`)}`,
-  );
+  const variationId = getValues(`${activeBase}.variation.id`);
+  const equipmentName = t(`equipment.${getValues(`${activeBase}.variation.equipment.slug`)}`);
   const athleteId = activeWorkout$.athleteId.peek();
 
   const rematchExercise = () => {
-    const sets = getValues(`exercises.${exerciseIndex}.sets`);
-    const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
+    const sets = getValues(setsPath);
+    const variationId = getValues(`${activeBase}.variation.id`);
 
-    const aliasId = getValues(`exercises.${exerciseIndex}.aliasId`);
+    const aliasId = getValues(`${activeBase}.aliasId`);
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
     matchExecutionSetsByLogicalKey(sets, resolveLastBucketSets(lastExercise, aliasId)).forEach(
       (last, i) => {
-        setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+        setValue(`${setsPath}.${i}.lastKg`, last.lastKg);
+        setValue(`${setsPath}.${i}.lastReps`, last.lastReps);
       },
     );
 
@@ -118,16 +130,16 @@ export function ExerciseExecutionCard({
       ?.exercises.find((exercise) => exercise.variation.id === variationId);
     if (templateExercise) {
       matchExecutionSetsToTemplate(sets, templateExercise.sets).forEach((target, i) => {
-        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.distanceTarget`, target.distanceTarget);
+        setValue(`${setsPath}.${i}.repsMin`, target.repsMin);
+        setValue(`${setsPath}.${i}.repsMax`, target.repsMax);
+        setValue(`${setsPath}.${i}.durationTarget`, target.durationTarget);
+        setValue(`${setsPath}.${i}.distanceTarget`, target.distanceTarget);
       });
     }
   };
 
   const handleAddSet = () => {
-    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    const sets = getValues(setsPath);
     const measurementType = sets[sets.length - 1]?.measurementType ?? 'weight_reps';
     const roundOrder = (sets[sets.length - 1]?.roundOrder ?? -1) + 1;
     append({
@@ -173,10 +185,10 @@ export function ExerciseExecutionCard({
           accessibilityState={selectable ? { checked: selected } : undefined}
         >
           <Text className="font-sans-semibold text-base" numberOfLines={1}>
-            {name}
+            {activeName}
           </Text>
           <Text variant="muted" className="text-xs" numberOfLines={1}>
-            {variationName ?? t('workoutExecutionScreen.exercise.noVariation')}
+            {activeVariationName ?? t('workoutExecutionScreen.exercise.noVariation')}
           </Text>
         </Pressable>
         {selectable ? null : (
@@ -201,12 +213,25 @@ export function ExerciseExecutionCard({
                   {equipmentName}
                 </Text>
               </View>
-              <View className="h-4 w-px bg-border" />
-              <AliasSelector
+              {isAlternative ? null : (
+                <>
+                  <View className="h-4 w-px bg-border" />
+                  <AliasSelector
+                    exerciseIndex={exerciseIndex}
+                    variationId={variationId}
+                    userId={athleteId}
+                    onChanged={rematchExercise}
+                  />
+                </>
+              )}
+            </View>
+          ) : null}
+          {alternative != null ? (
+            <View className="px-4 pb-3">
+              <AlternativeSwapControl
                 exerciseIndex={exerciseIndex}
-                variationId={variationId}
-                userId={athleteId}
-                onChanged={rematchExercise}
+                principalName={name}
+                alternativeName={alternative.name}
               />
             </View>
           ) : null}
@@ -289,6 +314,7 @@ export function ExerciseExecutionCard({
                 key={field.id}
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
+                setsPath={setsPath}
                 layout={layout}
                 showSetType={showSetType}
                 distanceUnit={distanceUnit}
@@ -300,7 +326,7 @@ export function ExerciseExecutionCard({
                   });
                 }}
                 onPressType={(currentType, onChange) => {
-                  const sets = getValues(`exercises.${exerciseIndex}.sets`);
+                  const sets = getValues(setsPath);
                   const validTypes = getValidSetTypesAt(sets, setIndex);
                   const options = applicableSetTypes(sets[setIndex].measurementType);
                   setTypePickerRef.current?.present(
@@ -310,8 +336,8 @@ export function ExerciseExecutionCard({
                       onChange(next);
                       if ((next === 'drop' || next === 'cluster') && setIndex > 0) {
                         setValue(
-                          `exercises.${exerciseIndex}.sets.${setIndex}.roundOrder`,
-                          getValues(`exercises.${exerciseIndex}.sets.${setIndex - 1}.roundOrder`),
+                          `${setsPath}.${setIndex}.roundOrder`,
+                          getValues(`${setsPath}.${setIndex - 1}.roundOrder`),
                           { shouldDirty: true },
                         );
                       }
@@ -351,6 +377,7 @@ export function ExerciseExecutionCard({
 function SetRow({
   exerciseIndex,
   setIndex,
+  setsPath,
   layout,
   showSetType,
   distanceUnit,
@@ -360,6 +387,7 @@ function SetRow({
 }: {
   exerciseIndex: number;
   setIndex: number;
+  setsPath: ExecutionSetsPath;
   layout: ColumnLayout;
   showSetType: boolean;
   distanceUnit: DistanceUnit;
@@ -370,7 +398,11 @@ function SetRow({
   const { t } = useTranslation();
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const isAlternative = setsPath.includes('.alternative.');
+  const testIDPrefix = isAlternative
+    ? `workout-execution.alternative.set-${setIndex}`
+    : `workout-execution.set-${setIndex}`;
+  const basePath = `${setsPath}.${setIndex}` as const;
   const done = useWatch({ control, name: `${basePath}.done` });
   const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
 
@@ -378,7 +410,9 @@ function SetRow({
     if (!(preferences?.autoStartRestTimer ?? true)) {
       return;
     }
-    const exerciseRest = getValues(`exercises.${exerciseIndex}.restSeconds`);
+    const exerciseRest = isAlternative
+      ? getValues(`exercises.${exerciseIndex}.alternative.restSeconds`)
+      : getValues(`exercises.${exerciseIndex}.restSeconds`);
     const rest = restTimerDuration(exerciseRest ?? preferences?.defaultRestSeconds ?? null);
     if (rest != null) {
       startRestTimer(rest);
@@ -454,7 +488,7 @@ function SetRow({
             className="h-8 flex-row items-center justify-center gap-1 border-primary border-b"
             accessibilityRole="button"
             accessibilityLabel={t('workoutExecutionScreen.removeSetSheet.title')}
-            testID={`workout-execution.set-${setIndex}.options`}
+            testID={`${testIDPrefix}.options`}
           >
             <Text className="w-5 text-center font-sans-semibold text-foreground text-sm">
               {setIndex + 1}
@@ -470,11 +504,17 @@ function SetRow({
         )}
       </View>
       {measurementType === 'reps' ? (
-        <RepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
+        <RepsSetRow
+          exerciseIndex={exerciseIndex}
+          setIndex={setIndex}
+          setsPath={setsPath}
+          layout={layout}
+        />
       ) : measurementType === 'duration' ? (
         <DurationSetRow
           exerciseIndex={exerciseIndex}
           setIndex={setIndex}
+          setsPath={setsPath}
           layout={layout}
           onComplete={handleTimerComplete}
         />
@@ -482,11 +522,17 @@ function SetRow({
         <DistanceSetRow
           exerciseIndex={exerciseIndex}
           setIndex={setIndex}
+          setsPath={setsPath}
           layout={layout}
           unit={distanceUnit}
         />
       ) : (
-        <WeightRepsSetRow exerciseIndex={exerciseIndex} setIndex={setIndex} layout={layout} />
+        <WeightRepsSetRow
+          exerciseIndex={exerciseIndex}
+          setIndex={setIndex}
+          setsPath={setsPath}
+          layout={layout}
+        />
       )}
       <View className="flex-1" />
       <Controller

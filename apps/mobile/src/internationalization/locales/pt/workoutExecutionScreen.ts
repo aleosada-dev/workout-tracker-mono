@@ -23,6 +23,10 @@ export default {
     continueToReview: 'Continuar para revisão',
     goBack: 'Voltar e ajustar',
   },
+  alternative: {
+    use: 'Usar alternativo',
+    usePrincipal: 'Voltar ao principal',
+  },
   exercise: {
     addSet: 'Adicionar série',
     noVariation: 'Sem variação',

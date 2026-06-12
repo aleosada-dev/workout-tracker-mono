@@ -47,6 +47,7 @@ function applyOp(exercises: MutExercise[], op: WorkoutOverrideOp): void {
       supersetOrder: op.exercise.supersetOrder,
       note: op.exercise.note,
       restSeconds: op.exercise.restSeconds,
+      alternativeOfId: null,
       variation: op.exercise.variation,
       sets: op.exercise.sets.map((s, i) => toSet(s, `${op.variationId}:set:${i}`, i)),
       removed: false,

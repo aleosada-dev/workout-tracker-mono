@@ -38,6 +38,12 @@ export default {
     editRest: 'Editar descanso',
     restUndefined: 'Indefinido',
   },
+  alternative: {
+    add: 'Adicionar exercício alternativo',
+    remove: 'Remover alternativo',
+    swap: 'Trocar variação do alternativo',
+    label: 'Alternativo',
+  },
   noteSheet: {
     title: 'Nota do exercício',
     placeholder: 'Ex: cadência controlada na descida',

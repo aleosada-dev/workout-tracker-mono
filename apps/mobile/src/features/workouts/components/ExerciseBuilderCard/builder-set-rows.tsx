@@ -24,19 +24,31 @@ export type BuilderColumnLayout = ColumnLayout & { loadPercent: boolean };
 type FillColumn = 'repsMin' | 'repsMax' | 'duration' | 'distance';
 type FillDimension = 'reps' | 'duration' | 'distance';
 
+export type SetsPath = `exercises.${number}.sets` | `exercises.${number}.alternative.sets`;
+
+function setsPathFor(exerciseIndex: number, pathPrefix?: SetsPath): SetsPath {
+  return pathPrefix ?? `exercises.${exerciseIndex}.sets`;
+}
+
+function setTestIDBase(setIndex: number, pathPrefix?: SetsPath): string {
+  return pathPrefix?.includes('.alternative.')
+    ? `workout-form.alternative.set-${setIndex}`
+    : `workout-form.set-${setIndex}`;
+}
+
 // Carry the just-entered value into the following sets that share the same
 // dimension and are still empty. Existing values are never overwritten.
-function useFillFollowingSets(exerciseIndex: number, setIndex: number) {
+function useFillFollowingSets(setIndex: number, setsPath: SetsPath) {
   const { getValues, setValue } = useFormContext<WorkoutFormInput>();
   const { data: preferences } = useUserPreferences();
 
   return (column: FillColumn, dimension: FillDimension, value: string) => {
     if (!preferences?.autoFillReps || value === '') return;
-    const sets = getValues(`exercises.${exerciseIndex}.sets`);
+    const sets = getValues(setsPath) ?? [];
     for (let i = setIndex + 1; i < sets.length; i++) {
       if (!measurementDimensions(sets[i].measurementType)[dimension]) continue;
       if (sets[i][column]) continue;
-      setValue(`exercises.${exerciseIndex}.sets.${i}.${column}`, value, {
+      setValue(`${setsPath}.${i}.${column}`, value, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -47,14 +59,18 @@ function useFillFollowingSets(exerciseIndex: number, setIndex: number) {
 export function RepsRangeCells({
   exerciseIndex,
   setIndex,
+  pathPrefix,
 }: {
   exerciseIndex: number;
   setIndex: number;
+  pathPrefix?: SetsPath;
 }) {
   const { t } = useTranslation();
   const { control } = useFormContext<WorkoutFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
-  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
+  const setsPath = setsPathFor(exerciseIndex, pathPrefix);
+  const basePath = `${setsPath}.${setIndex}` as const;
+  const testBase = setTestIDBase(setIndex, pathPrefix);
+  const fillFollowingSets = useFillFollowingSets(setIndex, setsPath);
 
   return (
     <>
@@ -70,13 +86,13 @@ export function RepsRangeCells({
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
               onBlur={() => {
                 field.onBlur();
-                fillFollowingSets('repsMin', 'reps', field.value);
+                fillFollowingSets('repsMin', 'reps', field.value ?? '');
               }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMin')}
               className="h-8 max-w-[80px] py-0 text-sm"
               maxLength={2}
-              testID={`workout-form.set-${setIndex}.reps-min`}
+              testID={`${testBase}.reps-min`}
             />
           )}
         />
@@ -93,13 +109,13 @@ export function RepsRangeCells({
               onChangeText={(text) => field.onChange(sanitizeInteger(text, { max: MAX_REPS }))}
               onBlur={() => {
                 field.onBlur();
-                fillFollowingSets('repsMax', 'reps', field.value);
+                fillFollowingSets('repsMax', 'reps', field.value ?? '');
               }}
               aria-invalid={fieldState.invalid}
               placeholder={t('workoutFormScreen.exercise.headers.repsMax')}
               className="h-8 max-w-[80px] py-0 text-sm"
               maxLength={2}
-              testID={`workout-form.set-${setIndex}.reps-max`}
+              testID={`${testBase}.reps-max`}
             />
           )}
         />
@@ -111,14 +127,18 @@ export function RepsRangeCells({
 export function DurationTargetCell({
   exerciseIndex,
   setIndex,
+  pathPrefix,
 }: {
   exerciseIndex: number;
   setIndex: number;
+  pathPrefix?: SetsPath;
 }) {
   const { control } = useFormContext<WorkoutFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const setsPath = setsPathFor(exerciseIndex, pathPrefix);
+  const basePath = `${setsPath}.${setIndex}` as const;
+  const testBase = setTestIDBase(setIndex, pathPrefix);
   const sheetRef = useRef<DurationPickerSheetRef>(null);
-  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
+  const fillFollowingSets = useFillFollowingSets(setIndex, setsPath);
 
   return (
     <View className="w-28 px-2">
@@ -140,7 +160,7 @@ export function DurationTargetCell({
                 )
               }
               accessibilityRole="button"
-              testID={`workout-form.set-${setIndex}.duration`}
+              testID={`${testBase}.duration`}
               className={`h-8 items-center justify-center border-b ${
                 fieldState.invalid ? 'border-destructive' : 'border-primary'
               }`}
@@ -161,29 +181,33 @@ export function DistanceTargetCell({
   exerciseIndex,
   setIndex,
   unit,
+  pathPrefix,
 }: {
   exerciseIndex: number;
   setIndex: number;
   unit: DistanceUnit;
+  pathPrefix?: SetsPath;
 }) {
   const { control } = useFormContext<WorkoutFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
-  const fillFollowingSets = useFillFollowingSets(exerciseIndex, setIndex);
+  const setsPath = setsPathFor(exerciseIndex, pathPrefix);
+  const basePath = `${setsPath}.${setIndex}` as const;
+  const testBase = setTestIDBase(setIndex, pathPrefix);
+  const fillFollowingSets = useFillFollowingSets(setIndex, setsPath);
   return (
     <Controller
       control={control}
       name={`${basePath}.distance`}
       render={({ field, fieldState }) => (
         <DistanceInput
-          value={field.value}
+          value={field.value ?? ''}
           onChange={field.onChange}
           onBlur={() => {
             field.onBlur();
-            fillFollowingSets('distance', 'distance', field.value);
+            fillFollowingSets('distance', 'distance', field.value ?? '');
           }}
           invalid={fieldState.invalid}
           unit={unit}
-          testID={`workout-form.set-${setIndex}.distance`}
+          testID={`${testBase}.distance`}
         />
       )}
     />
@@ -194,13 +218,16 @@ export function LoadPercentCell({
   exerciseIndex,
   setIndex,
   linked,
+  pathPrefix,
 }: {
   exerciseIndex: number;
   setIndex: number;
   linked: boolean;
+  pathPrefix?: SetsPath;
 }) {
   const { control } = useFormContext<WorkoutFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPathFor(exerciseIndex, pathPrefix)}.${setIndex}` as const;
+  const testBase = setTestIDBase(setIndex, pathPrefix);
   if (!linked) {
     return <View className="w-24 px-2" />;
   }
@@ -221,7 +248,7 @@ export function LoadPercentCell({
             aria-invalid={fieldState.invalid}
             className="h-8 py-0 text-sm"
             maxLength={3}
-            testID={`workout-form.set-${setIndex}.load-percent`}
+            testID={`${testBase}.load-percent`}
           />
         )}
       />
@@ -234,24 +261,30 @@ export function BuilderSetCells({
   setIndex,
   layout,
   distanceUnit,
+  pathPrefix,
 }: {
   exerciseIndex: number;
   setIndex: number;
   layout: BuilderColumnLayout;
   distanceUnit: DistanceUnit;
+  pathPrefix?: SetsPath;
 }) {
   const { control } = useFormContext<WorkoutFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPathFor(exerciseIndex, pathPrefix)}.${setIndex}` as const;
   const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
   const type = useWatch({ control, name: `${basePath}.type` });
-  const dims = measurementDimensions(measurementType);
+  const dims = measurementDimensions(measurementType ?? 'weight_reps');
   const linked = type === 'drop' || type === 'cluster';
 
   return (
     <>
       {layout.reps ? (
         dims.reps ? (
-          <RepsRangeCells exerciseIndex={exerciseIndex} setIndex={setIndex} />
+          <RepsRangeCells
+            exerciseIndex={exerciseIndex}
+            setIndex={setIndex}
+            pathPrefix={pathPrefix}
+          />
         ) : (
           <>
             <View className="w-20 pr-2 pl-3" />
@@ -261,7 +294,11 @@ export function BuilderSetCells({
       ) : null}
       {layout.duration ? (
         dims.duration ? (
-          <DurationTargetCell exerciseIndex={exerciseIndex} setIndex={setIndex} />
+          <DurationTargetCell
+            exerciseIndex={exerciseIndex}
+            setIndex={setIndex}
+            pathPrefix={pathPrefix}
+          />
         ) : (
           <View className="w-28 px-2" />
         )
@@ -272,13 +309,19 @@ export function BuilderSetCells({
             exerciseIndex={exerciseIndex}
             setIndex={setIndex}
             unit={distanceUnit}
+            pathPrefix={pathPrefix}
           />
         ) : (
           <View className="w-32 px-2" />
         )
       ) : null}
       {layout.loadPercent ? (
-        <LoadPercentCell exerciseIndex={exerciseIndex} setIndex={setIndex} linked={linked} />
+        <LoadPercentCell
+          exerciseIndex={exerciseIndex}
+          setIndex={setIndex}
+          linked={linked}
+          pathPrefix={pathPrefix}
+        />
       ) : null}
     </>
   );
@@ -288,18 +331,25 @@ export function SetErrorMessage({
   exerciseIndex,
   setIndex,
   className,
+  alternative = false,
 }: {
   exerciseIndex: number;
   setIndex: number;
   className?: string;
+  alternative?: boolean;
 }) {
   const { t } = useTranslation();
   const { control } = useFormContext<WorkoutFormInput>();
   const { errors } = useFormState({
     control,
-    name: `exercises.${exerciseIndex}.sets.${setIndex}`,
+    name: alternative
+      ? `exercises.${exerciseIndex}.alternative.sets.${setIndex}`
+      : `exercises.${exerciseIndex}.sets.${setIndex}`,
   });
-  const setErrors = errors.exercises?.[exerciseIndex]?.sets?.[setIndex];
+  const exerciseErrors = errors.exercises?.[exerciseIndex];
+  const setErrors = alternative
+    ? exerciseErrors?.alternative?.sets?.[setIndex]
+    : exerciseErrors?.sets?.[setIndex];
   const messages = [
     setErrors?.repsMin?.message,
     setErrors?.repsMax?.message,

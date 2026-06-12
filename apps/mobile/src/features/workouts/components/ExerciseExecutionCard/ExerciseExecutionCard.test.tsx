@@ -98,9 +98,23 @@ function set(
   };
 }
 
+function variation(id: string, name: string) {
+  return {
+    id,
+    slug: null,
+    name: null,
+    exercise: { slug: name.toLowerCase(), name, type: 'musculacao' as const },
+    measurementType: 'weight_reps' as const,
+    equipment: { slug: 'barra', preposition: 'com' },
+    muscle: { slug: 'chest' },
+    secondaryMuscle: null,
+  };
+}
+
 function exercise(
   sets: ReturnType<typeof set>[],
   exerciseType: 'strength' | 'preparatory' = 'strength',
+  alternative: ExecutionFormInput['exercises'][number]['alternative'] = null,
 ): ExecutionFormInput['exercises'][number] {
   return {
     id: 'ex',
@@ -111,17 +125,10 @@ function exercise(
     note: null,
     restSeconds: 60,
     aliasId: null,
-    variation: {
-      id: 'va',
-      slug: null,
-      name: null,
-      exercise: { slug: 'supino', name: 'Supino', type: 'musculacao' },
-      measurementType: 'weight_reps',
-      equipment: { slug: 'barra', preposition: 'com' },
-      muscle: { slug: 'chest' },
-      secondaryMuscle: null,
-    },
+    variation: variation('va', 'Supino'),
     sets,
+    usingAlternative: false,
+    alternative,
   };
 }
 
@@ -153,9 +160,54 @@ function renderCard(
   };
 }
 
+function renderCardWithAlternative() {
+  const altVariation = variation('va-alt', 'Crucifixo');
+  const alternative: ExecutionFormInput['exercises'][number]['alternative'] = {
+    id: 'alt',
+    note: null,
+    restSeconds: 90,
+    aliasId: null,
+    variation: altVariation,
+    sets: [set('alt-s1', 'weight_reps', null)],
+  };
+  function Harness() {
+    const form = useForm<ExecutionFormInput>({
+      defaultValues: {
+        exercises: [exercise([set('s1', 'weight_reps', null)], 'strength', alternative)],
+      },
+    });
+    return (
+      <FormProvider {...form}>
+        <ExerciseExecutionCard
+          exerciseIndex={0}
+          name="Supino"
+          variationName="Supino com barra"
+          alternative={{ name: 'Crucifixo', variationName: 'Crucifixo na máquina' }}
+        />
+        <PortalHost />
+      </FormProvider>
+    );
+  }
+  const utils = render(<Harness />);
+  fireEvent.press(utils.getByTestId('workout-execution.exercise.collapse'));
+  return utils;
+}
+
 describe('<ExerciseExecutionCard />', () => {
   afterEach(() => {
     mockPreferencesData.defaultRestSeconds = null;
+  });
+
+  test('pressing the swap control shows the alternative variation in the header', () => {
+    const { getByTestId, queryByText } = renderCardWithAlternative();
+
+    expect(queryByText('Supino com barra')).not.toBeNull();
+    expect(queryByText('Crucifixo na máquina')).toBeNull();
+
+    fireEvent.press(getByTestId('workout-execution.exercise-0.swap-alternative'));
+
+    expect(queryByText('Crucifixo na máquina')).not.toBeNull();
+    expect(queryByText('Crucifixo')).not.toBeNull();
   });
 
   test('falls back to the default rest preference for the rest indicator when no per-exercise rest is set', () => {

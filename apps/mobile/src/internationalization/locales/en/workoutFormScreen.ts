@@ -38,6 +38,12 @@ export default {
     editRest: 'Edit rest',
     restUndefined: 'Undefined',
   },
+  alternative: {
+    add: 'Add alternative exercise',
+    remove: 'Remove alternative',
+    swap: 'Swap alternative variation',
+    label: 'Alternative',
+  },
   noteSheet: {
     title: 'Exercise note',
     placeholder: 'E.g.: controlled eccentric',

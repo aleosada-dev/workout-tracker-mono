@@ -135,6 +135,7 @@ export const WorkoutDetailExerciseSchema = z.object({
 	supersetOrder: z.int().nonnegative(),
 	note: z.string().nullable(),
 	restSeconds: z.int().nonnegative().nullable(),
+	alternativeOfId: z.uuid().nullable(),
 	variation: WorkoutDetailExerciseVariationSchema,
 	sets: z.array(WorkoutDetailSetSchema),
 });
@@ -171,6 +172,7 @@ export function toWorkoutDetailResponse(workout: WorkoutDetail): WorkoutDetailRe
 			supersetOrder: exercise.supersetOrder,
 			note: exercise.note,
 			restSeconds: exercise.restSeconds,
+			alternativeOfId: exercise.alternativeOfId,
 			variation: {
 				id: exercise.variation.id,
 				slug: exercise.variation.slug,
@@ -239,6 +241,14 @@ export const UpsertWorkoutSetRequestSchema = z
 		}
 	});
 
+export const UpsertWorkoutAlternativeRequestSchema = z.object({
+	id: z.uuid(),
+	variationId: z.uuid(),
+	note: z.string().nullable(),
+	restSeconds: z.int().nonnegative().nullable(),
+	sets: z.array(UpsertWorkoutSetRequestSchema).min(1),
+});
+
 export const UpsertWorkoutExerciseRequestSchema = z.object({
 	id: z.uuid(),
 	variationId: z.uuid(),
@@ -249,6 +259,7 @@ export const UpsertWorkoutExerciseRequestSchema = z.object({
 	note: z.string().nullable(),
 	restSeconds: z.int().nonnegative().nullable(),
 	sets: z.array(UpsertWorkoutSetRequestSchema).min(1),
+	alternative: UpsertWorkoutAlternativeRequestSchema.nullable().default(null),
 });
 
 export const UpsertWorkoutRequestSchema = z.object({

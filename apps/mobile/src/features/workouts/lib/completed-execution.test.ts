@@ -5,10 +5,9 @@ import {
   type CompletedSet,
   summarizeExecution,
 } from '@/features/workouts/lib/completed-execution';
-import type {
-  ExecutionExerciseInput,
-  ExecutionFormValues,
-} from '@/features/workouts/lib/execution-form';
+import type { ExecutionFormValues } from '@/features/workouts/lib/execution-form';
+
+type OutputExercise = ExecutionFormValues['exercises'][number];
 
 type OutputSet = ExecutionFormValues['exercises'][number]['sets'][number];
 
@@ -32,7 +31,7 @@ function set(overrides: Partial<OutputSet> = {}): OutputSet {
 
 function exercise(
   sets: OutputSet[],
-  overrides: Partial<ExecutionExerciseInput> = {},
+  overrides: Partial<OutputExercise> = {},
 ): ExecutionFormValues['exercises'][number] {
   return {
     id: 'ex-1',
@@ -113,6 +112,38 @@ describe('buildCompletedExecution', () => {
     };
 
     expect(buildCompletedExecution(values).exercises).toEqual([]);
+  });
+
+  test('logs the alternative variation and sets when usingAlternative is true', () => {
+    const result = buildCompletedExecution({
+      exercises: [
+        exercise([set({ id: 'principal', done: true, kg: 80, reps: 10 })], {
+          usingAlternative: true,
+          alternative: {
+            id: 'alt-1',
+            note: null,
+            restSeconds: 90,
+            aliasId: null,
+            variation: {
+              id: 'var-alt',
+              slug: null,
+              name: null,
+              exercise: { slug: 'leg-press', name: 'Leg Press', type: 'musculacao' },
+              measurementType: 'weight_reps',
+              equipment: { slug: 'machine', preposition: 'na' },
+              muscle: { slug: 'quads' },
+              secondaryMuscle: null,
+            },
+            sets: [set({ id: 'alt-set', done: true, kg: 50, reps: 12 })],
+          },
+        }),
+      ],
+    });
+
+    expect(result.exercises).toHaveLength(1);
+    expect(result.exercises[0].variation.id).toBe('var-alt');
+    expect(result.exercises[0].sets.map((s) => s.id)).toEqual(['alt-set']);
+    expect(result.exercises[0].position).toBe(0);
   });
 });
 

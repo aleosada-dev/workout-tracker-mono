@@ -75,6 +75,7 @@ const MEMBERS: SupersetMember[] = [
     variationName: null,
     note: null,
     restSeconds: 0,
+    alternative: null,
   },
   {
     exerciseIndex: 1,
@@ -85,6 +86,7 @@ const MEMBERS: SupersetMember[] = [
     variationName: null,
     note: null,
     restSeconds: 60,
+    alternative: null,
   },
 ];
 
@@ -320,5 +322,51 @@ describe('<SupersetExecutionCard />', () => {
 
     await waitFor(() => expect(form().getValues('exercises.0.sets.0.type')).toBe('warmup'));
     expect(form().getValues('exercises.1.sets.0.type')).toBe('normal');
+  });
+
+  test("pressing member A's swap shows A's alternative while B is unchanged", () => {
+    const membersWithAlt: SupersetMember[] = [
+      { ...MEMBERS[0], alternative: { name: 'Crucifixo', variationName: 'Crucifixo na máquina' } },
+      MEMBERS[1],
+    ];
+    const exerciseA = member(0, 0);
+    const exercises: ExecutionFormInput['exercises'] = [
+      {
+        ...exerciseA,
+        usingAlternative: false,
+        alternative: {
+          id: 'alt-a',
+          note: null,
+          restSeconds: null,
+          aliasId: null,
+          variation: {
+            ...exerciseA.variation,
+            id: 'va-alt',
+            exercise: { slug: 'crucifixo', name: 'Crucifixo', type: 'musculacao' },
+          },
+          sets: exerciseA.sets.map((s) => ({ ...s, id: 'alt-a-s0' })),
+        },
+      },
+      member(1, 60),
+    ];
+
+    function Harness() {
+      const form = useForm<ExecutionFormInput>({ defaultValues: { exercises } });
+      return (
+        <FormProvider {...form}>
+          <SupersetExecutionCard members={membersWithAlt} restSeconds={60} />
+          <PortalHost />
+        </FormProvider>
+      );
+    }
+    const { getByTestId, queryByText } = render(<Harness />);
+    fireEvent.press(getByTestId('workout-execution.superset.collapse'));
+
+    expect(queryByText('Crucifixo na máquina')).toBeNull();
+
+    fireEvent.press(getByTestId('workout-execution.exercise-0.swap-alternative'));
+
+    expect(queryByText('Crucifixo na máquina')).not.toBeNull();
+    expect(queryByText('Exercise B')).not.toBeNull();
   });
 });

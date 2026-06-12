@@ -26,6 +26,7 @@ import {
   sanitizeInteger,
 } from '@/features/shared/lib/utils';
 import { AliasSelector } from '@/features/workouts/components/AliasSelector';
+import { AlternativeSwapControl } from '@/features/workouts/components/ExerciseExecutionCard/AlternativeSwapControl';
 import {
   DistanceInput,
   type DistanceUnit,
@@ -34,6 +35,10 @@ import {
   defaultDistanceUnit,
   formatDistance,
 } from '@/features/workouts/components/ExerciseExecutionCard/set-cells';
+import {
+  alternativeSetsPath,
+  type ExecutionSetsPath,
+} from '@/features/workouts/components/ExerciseExecutionCard/set-paths';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import {
   type AddSetEntry,
@@ -98,7 +103,11 @@ export function SupersetExecutionCard({
     defaultDistanceUnit(
       members.reduce<number | null>(
         (max, m) =>
-          getValues(`exercises.${m.exerciseIndex}.sets`).reduce<number | null>(
+          getValues(
+            m.alternative != null && getValues(`exercises.${m.exerciseIndex}.usingAlternative`)
+              ? alternativeSetsPath(m.exerciseIndex)
+              : `exercises.${m.exerciseIndex}.sets`,
+          ).reduce<number | null>(
             (acc, s) =>
               s.distanceTarget != null && s.distanceTarget > (acc ?? 0) ? s.distanceTarget : acc,
             max,
@@ -108,11 +117,27 @@ export function SupersetExecutionCard({
     ),
   );
   const athleteId = activeWorkout$.athleteId.peek();
-  const memberSetsNames = members.map((m) => `exercises.${m.exerciseIndex}.sets` as const);
-  const watchedMemberSets = useWatch({ control, name: memberSetsNames }) as
+  const usingAlternativeNames = members.map(
+    (m) => `exercises.${m.exerciseIndex}.usingAlternative` as const,
+  );
+  const watchedUsingAlternative = useWatch({ control, name: usingAlternativeNames }) as
+    | (boolean | undefined)[]
+    | undefined;
+  const memberSetsPaths = members.map(
+    (m, i): ExecutionSetsPath =>
+      m.alternative != null && (watchedUsingAlternative?.[i] ?? false)
+        ? alternativeSetsPath(m.exerciseIndex)
+        : `exercises.${m.exerciseIndex}.sets`,
+  );
+  const watchedMemberSets = useWatch({ control, name: memberSetsPaths }) as
     | MemberSets[]
     | undefined;
   const setsByMember = watchedMemberSets ?? [];
+  const setsPathByExercise = new Map(members.map((m, i) => [m.exerciseIndex, memberSetsPaths[i]]));
+  const memberSetsPath = (exerciseIndex: number): ExecutionSetsPath =>
+    setsPathByExercise.get(exerciseIndex) ?? `exercises.${exerciseIndex}.sets`;
+  const getMemberSets = (exerciseIndex: number): MemberSets =>
+    getValues(memberSetsPath(exerciseIndex)) ?? [];
   const rounds = buildRounds(members, setsByMember);
   const layout = exerciseColumnLayout(
     setsByMember
@@ -124,10 +149,16 @@ export function SupersetExecutionCard({
   const addSetsSheetRef = useRef<SupersetAddSetsSheetRef>(null);
 
   const rematchMember = (exerciseIndex: number) => {
-    const memberSets = getValues(`exercises.${exerciseIndex}.sets`);
-    const variationId = getValues(`exercises.${exerciseIndex}.variation.id`);
+    const setsPath = memberSetsPath(exerciseIndex);
+    const activeBase = (
+      setsPath.includes('.alternative.')
+        ? `exercises.${exerciseIndex}.alternative`
+        : `exercises.${exerciseIndex}`
+    ) as `exercises.${number}`;
+    const memberSets = getValues(setsPath) ?? [];
+    const variationId = getValues(`${activeBase}.variation.id`);
 
-    const aliasId = getValues(`exercises.${exerciseIndex}.aliasId`);
+    const aliasId = getValues(`${activeBase}.aliasId`);
     const lastExercise = activeWorkout$.lastSets
       .peek()
       ?.find((exercise) => exercise.variationId === variationId);
@@ -135,8 +166,8 @@ export function SupersetExecutionCard({
       memberSets,
       resolveLastBucketSets(lastExercise, aliasId),
     ).forEach((last, i) => {
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastKg`, last.lastKg);
-      setValue(`exercises.${exerciseIndex}.sets.${i}.lastReps`, last.lastReps);
+      setValue(`${setsPath}.${i}.lastKg`, last.lastKg);
+      setValue(`${setsPath}.${i}.lastReps`, last.lastReps);
     });
 
     const templateExercise = activeWorkout$.workoutTemplate
@@ -144,10 +175,10 @@ export function SupersetExecutionCard({
       ?.exercises.find((exercise) => exercise.variation.id === variationId);
     if (templateExercise) {
       matchExecutionSetsToTemplate(memberSets, templateExercise.sets).forEach((target, i) => {
-        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMin`, target.repsMin);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.repsMax`, target.repsMax);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.durationTarget`, target.durationTarget);
-        setValue(`exercises.${exerciseIndex}.sets.${i}.distanceTarget`, target.distanceTarget);
+        setValue(`${setsPath}.${i}.repsMin`, target.repsMin);
+        setValue(`${setsPath}.${i}.repsMax`, target.repsMax);
+        setValue(`${setsPath}.${i}.durationTarget`, target.durationTarget);
+        setValue(`${setsPath}.${i}.distanceTarget`, target.distanceTarget);
       });
     }
   };
@@ -162,14 +193,12 @@ export function SupersetExecutionCard({
     const nextRound =
       members.reduce(
         (max, m) =>
-          getValues(`exercises.${m.exerciseIndex}.sets`).reduce(
-            (acc, set) => Math.max(acc, set.roundOrder),
-            max,
-          ),
+          getMemberSets(m.exerciseIndex).reduce((acc, set) => Math.max(acc, set.roundOrder), max),
         -1,
       ) + 1;
     for (const [exerciseIndex, types] of byMember) {
-      const current = getValues(`exercises.${exerciseIndex}.sets`);
+      const setsPath = memberSetsPath(exerciseIndex);
+      const current = getValues(setsPath) ?? [];
       const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
       const appended = types.map((type) => ({
         id: Crypto.randomUUID(),
@@ -189,7 +218,7 @@ export function SupersetExecutionCard({
         loadPercent: null,
         loadPercentOfPrevious: null,
       }));
-      setValue(`exercises.${exerciseIndex}.sets`, [...current, ...appended], { shouldDirty: true });
+      setValue(setsPath, [...current, ...appended], { shouldDirty: true });
       rematchMember(exerciseIndex);
     }
   };
@@ -199,24 +228,26 @@ export function SupersetExecutionCard({
       exerciseIndex: member.exerciseIndex,
       letter: member.letter,
       name: member.name,
-      existingTypes: getValues(`exercises.${member.exerciseIndex}.sets`).map((set) => set.type),
+      existingTypes: getMemberSets(member.exerciseIndex).map((set) => set.type),
     }));
     addSetsSheetRef.current?.present(sheetMembers, handleConfirmAddSets);
   };
 
   const removeRound = (roundOrder: number) => {
     for (const member of members) {
-      const current = getValues(`exercises.${member.exerciseIndex}.sets`);
+      const setsPath = memberSetsPath(member.exerciseIndex);
+      const current = getValues(setsPath) ?? [];
       const next = current.filter((set) => set.roundOrder !== roundOrder);
       if (next.length === current.length) continue;
-      setValue(`exercises.${member.exerciseIndex}.sets`, next, { shouldDirty: true });
+      setValue(setsPath, next, { shouldDirty: true });
       rematchMember(member.exerciseIndex);
     }
   };
 
   const handleConfirmEditRound = (roundOrder: number, entries: AddSetEntry[]) => {
     for (const member of members) {
-      const current = getValues(`exercises.${member.exerciseIndex}.sets`);
+      const setsPath = memberSetsPath(member.exerciseIndex);
+      const current = getValues(setsPath) ?? [];
       const before = current.filter((set) => set.roundOrder < roundOrder);
       const after = current.filter((set) => set.roundOrder > roundOrder);
       const measurementType = current[current.length - 1]?.measurementType ?? 'weight_reps';
@@ -244,7 +275,7 @@ export function SupersetExecutionCard({
             loadPercentOfPrevious: null,
           };
         });
-      setValue(`exercises.${member.exerciseIndex}.sets`, [...before, ...roundSets, ...after], {
+      setValue(setsPath, [...before, ...roundSets, ...after], {
         shouldDirty: true,
       });
       rematchMember(member.exerciseIndex);
@@ -256,12 +287,12 @@ export function SupersetExecutionCard({
       exerciseIndex: member.exerciseIndex,
       letter: member.letter,
       name: member.name,
-      existingTypes: getValues(`exercises.${member.exerciseIndex}.sets`)
+      existingTypes: getMemberSets(member.exerciseIndex)
         .filter((set) => set.roundOrder < roundOrder)
         .map((set) => set.type),
     }));
     const initialEntries: AddSetEntry[] = members.flatMap((member) =>
-      getValues(`exercises.${member.exerciseIndex}.sets`)
+      getMemberSets(member.exerciseIndex)
         .filter((set) => set.roundOrder === roundOrder)
         .map((set) => ({ exerciseIndex: member.exerciseIndex, type: set.type, setId: set.id })),
     );
@@ -311,7 +342,7 @@ export function SupersetExecutionCard({
       </View>
 
       <View className="gap-2 px-4">
-        {members.map((member) => {
+        {members.map((member, memberIndex) => {
           const onPress = selectable
             ? onToggleSelect
             : onPressMember
@@ -319,8 +350,21 @@ export function SupersetExecutionCard({
               : undefined;
           const hasNote = member.note != null && member.note.length > 0;
           const noteExpanded = expandedNotes.has(member.exerciseIndex);
+          const isAlternative =
+            member.alternative != null && (watchedUsingAlternative?.[memberIndex] ?? false);
+          const activeBase = (
+            isAlternative
+              ? `exercises.${member.exerciseIndex}.alternative`
+              : `exercises.${member.exerciseIndex}`
+          ) as `exercises.${number}`;
+          const memberName = isAlternative
+            ? (member.alternative?.name ?? member.name)
+            : member.name;
+          const memberVariationName = isAlternative
+            ? (member.alternative?.variationName ?? null)
+            : member.variationName;
           const equipmentName = t(
-            `equipment.${getValues(`exercises.${member.exerciseIndex}.variation.equipment.slug`)}`,
+            `equipment.${getValues(`${activeBase}.variation.equipment.slug`)}`,
           );
           return (
             <View key={member.exerciseIndex} className="gap-1">
@@ -339,11 +383,11 @@ export function SupersetExecutionCard({
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm" numberOfLines={1}>
-                    {member.name}
+                    {memberName}
                   </Text>
-                  {member.variationName != null ? (
+                  {memberVariationName != null ? (
                     <Text variant="muted" className="text-xs" numberOfLines={1}>
-                      {member.variationName}
+                      {memberVariationName}
                     </Text>
                   ) : null}
                 </View>
@@ -356,12 +400,25 @@ export function SupersetExecutionCard({
                       {equipmentName}
                     </Text>
                   </View>
-                  <View className="h-4 w-px bg-border" />
-                  <AliasSelector
+                  {isAlternative ? null : (
+                    <>
+                      <View className="h-4 w-px bg-border" />
+                      <AliasSelector
+                        exerciseIndex={member.exerciseIndex}
+                        variationId={member.variationId}
+                        userId={athleteId}
+                        onChanged={() => rematchMember(member.exerciseIndex)}
+                      />
+                    </>
+                  )}
+                </View>
+              ) : null}
+              {member.alternative != null && !isCollapsed ? (
+                <View className="pl-7">
+                  <AlternativeSwapControl
                     exerciseIndex={member.exerciseIndex}
-                    variationId={member.variationId}
-                    userId={athleteId}
-                    onChanged={() => rematchMember(member.exerciseIndex)}
+                    principalName={member.name}
+                    alternativeName={member.alternative.name}
                   />
                 </View>
               ) : null}
@@ -457,6 +514,7 @@ export function SupersetExecutionCard({
                 roundMembers={roundMembers}
                 layout={layout}
                 distanceUnit={distanceUnit}
+                setsPathByExercise={setsPathByExercise}
                 onEditRound={handleEditRound}
               />
             ))}
@@ -482,18 +540,22 @@ function SupersetSetRow({
   roundMembers,
   layout,
   distanceUnit,
+  setsPathByExercise,
   onEditRound,
 }: {
   roundOrder: number;
   roundMembers: RoundMemberView[];
   layout: ColumnLayout;
   distanceUnit: DistanceUnit;
+  setsPathByExercise: ReadonlyMap<number, ExecutionSetsPath>;
   onEditRound: (roundOrder: number) => void;
 }) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
+  const memberSetsPath = (exerciseIndex: number): ExecutionSetsPath =>
+    setsPathByExercise.get(exerciseIndex) ?? `exercises.${exerciseIndex}.sets`;
   const doneNames = roundMembers.flatMap((m) =>
-    m.setIndexes.map((setIndex) => `exercises.${m.exerciseIndex}.sets.${setIndex}.done` as const),
+    m.setIndexes.map((setIndex) => `${memberSetsPath(m.exerciseIndex)}.${setIndex}.done` as const),
   );
   const dones = useWatch({ control, name: doneNames });
   const allDone = Array.isArray(dones) && dones.length > 0 ? dones.every(Boolean) : false;
@@ -501,7 +563,7 @@ function SupersetSetRow({
   const toggle = (next: boolean) => {
     for (const member of roundMembers) {
       for (const setIndex of member.setIndexes) {
-        const base = `exercises.${member.exerciseIndex}.sets.${setIndex}` as const;
+        const base = `${memberSetsPath(member.exerciseIndex)}.${setIndex}` as const;
         if (next) {
           const kg = autofillFromLast(getValues(`${base}.kg`), getValues(`${base}.lastKg`));
           if (kg != null) {
@@ -531,7 +593,11 @@ function SupersetSetRow({
     }
     if (next && (preferences?.autoStartRestTimer ?? true)) {
       const last = roundMembers[roundMembers.length - 1];
-      const exerciseRest = last ? getValues(`exercises.${last.exerciseIndex}.restSeconds`) : null;
+      const exerciseRest = last
+        ? memberSetsPath(last.exerciseIndex).includes('.alternative.')
+          ? getValues(`exercises.${last.exerciseIndex}.alternative.restSeconds`)
+          : getValues(`exercises.${last.exerciseIndex}.restSeconds`)
+        : null;
       const rest = restTimerDuration(exerciseRest ?? preferences?.defaultRestSeconds ?? null);
       if (rest != null) {
         startRestTimer(rest);
@@ -548,6 +614,7 @@ function SupersetSetRow({
               key={`${member.exerciseIndex}-${setIndex}`}
               exerciseIndex={member.exerciseIndex}
               setIndex={setIndex}
+              setsPath={memberSetsPath(member.exerciseIndex)}
               letter={member.letter}
               layout={layout}
               distanceUnit={distanceUnit}
@@ -598,6 +665,7 @@ function memberTarget(
 function SupersetMemberCell({
   exerciseIndex,
   setIndex,
+  setsPath,
   letter,
   layout,
   distanceUnit,
@@ -605,6 +673,7 @@ function SupersetMemberCell({
 }: {
   exerciseIndex: number;
   setIndex: number;
+  setsPath: ExecutionSetsPath;
   letter: SupersetMember['letter'];
   layout: ColumnLayout;
   distanceUnit: DistanceUnit;
@@ -613,7 +682,7 @@ function SupersetMemberCell({
   const { t } = useTranslation();
   const { control } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPath}.${setIndex}` as const;
   const measurementType = useWatch({ control, name: `${basePath}.measurementType` });
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
@@ -724,7 +793,11 @@ function SupersetMemberCell({
       ) : null}
       {layout.duration ? (
         dims.duration ? (
-          <DurationPickerCell exerciseIndex={exerciseIndex} setIndex={setIndex} />
+          <DurationPickerCell
+            exerciseIndex={exerciseIndex}
+            setIndex={setIndex}
+            setsPath={setsPath}
+          />
         ) : (
           <View className="w-28 px-2" />
         )

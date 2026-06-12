@@ -54,6 +54,7 @@ import { useUpsertWorkout } from '@/features/workouts/hooks/use-upsert-workout';
 import { useWorkout } from '@/features/workouts/hooks/use-workout';
 import { useWorkoutSelection } from '@/features/workouts/hooks/use-workout-selection';
 import {
+  buildBuilderAlternativeFromPicked,
   buildBuilderExerciseFromPicked,
   buildBuilderFromWorkout,
   toUpsertWorkoutRequest,
@@ -215,6 +216,41 @@ function WorkoutForm({
     });
   };
 
+  const pickAlternative = (exerciseId: string) => {
+    openExercisePicker({
+      onPick: (picked) => {
+        if (picked.length === 0) return;
+        const exercises = form.getValues('exercises') ?? [];
+        const index = exercises.findIndex((exercise) => exercise.id === exerciseId);
+        if (index < 0) return;
+        const alternative = buildBuilderAlternativeFromPicked(
+          picked[0],
+          form.getValues(`exercises.${index}.sets`),
+          Crypto.randomUUID,
+        );
+        form.setValue(`exercises.${index}.alternative`, alternative, { shouldDirty: true });
+      },
+    });
+  };
+
+  const handleAddAlternative = (exerciseId: string) => {
+    const exercises = form.getValues('exercises') ?? [];
+    const index = exercises.findIndex((exercise) => exercise.id === exerciseId);
+    if (index < 0 || exercises[index].alternative) return;
+    pickAlternative(exerciseId);
+  };
+
+  const handleSwapAlternative = (exerciseId: string) => {
+    pickAlternative(exerciseId);
+  };
+
+  const handleRemoveAlternative = (exerciseId: string) => {
+    const exercises = form.getValues('exercises') ?? [];
+    const index = exercises.findIndex((exercise) => exercise.id === exerciseId);
+    if (index < 0) return;
+    form.setValue(`exercises.${index}.alternative`, null, { shouldDirty: true });
+  };
+
   const handleChangeTab = (value: BuilderTab) => {
     selection.exitSelect();
     setTab(value);
@@ -313,6 +349,9 @@ function WorkoutForm({
         selected={selection.selected.has(item.id)}
         onToggleSelect={() => selection.toggle(item.id)}
         onLongPress={() => editing.handleLongPressItem(item.id)}
+        onAddAlternative={handleAddAlternative}
+        onSwapAlternative={handleSwapAlternative}
+        onRemoveAlternative={handleRemoveAlternative}
       />
     ) : (
       <ExerciseBuilderCard
@@ -324,6 +363,9 @@ function WorkoutForm({
         selected={selection.selected.has(item.id)}
         onToggleSelect={() => selection.toggle(item.id)}
         onLongPress={() => editing.handleLongPressItem(item.id)}
+        onAddAlternative={() => handleAddAlternative(item.id)}
+        onSwapAlternative={() => handleSwapAlternative(item.id)}
+        onRemoveAlternative={() => handleRemoveAlternative(item.id)}
       />
     );
 

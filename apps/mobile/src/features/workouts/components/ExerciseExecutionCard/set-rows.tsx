@@ -25,14 +25,26 @@ import {
   weightPlaceholder,
 } from '@/features/workouts/lib/workout-mappers';
 import { DistanceInput, type DistanceUnit, formatDistance } from './set-cells';
+import type { ExecutionSetsPath } from './set-paths';
 
 const MAX_WEIGHT_INTEGER_DIGITS = 3;
 const MAX_WEIGHT_FRACTION_DIGITS = 2;
+
+function setsPathFor(exerciseIndex: number, setsPath?: ExecutionSetsPath): ExecutionSetsPath {
+  return setsPath ?? `exercises.${exerciseIndex}.sets`;
+}
+
+function setTestIDBase(setIndex: number, setsPath?: ExecutionSetsPath): string {
+  return setsPath?.includes('.alternative.')
+    ? `workout-execution.alternative.set-${setIndex}`
+    : `workout-execution.set-${setIndex}`;
+}
 
 type SetRowBodyProps = {
   exerciseIndex: number;
   setIndex: number;
   layout: ColumnLayout;
+  setsPath?: ExecutionSetsPath;
 };
 
 type DurationSetRowProps = SetRowBodyProps & {
@@ -51,10 +63,11 @@ function TargetCell({ target, adjusted = false }: { target: string; adjusted?: b
   );
 }
 
-export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
+export function WeightRepsSetRow({ exerciseIndex, setIndex, setsPath }: SetRowBodyProps) {
   const { control, getValues, setValue } = useFormContext<ExecutionFormInput>();
   const { data: preferences } = useUserPreferences();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const resolvedSetsPath = setsPathFor(exerciseIndex, setsPath);
+  const basePath = `${resolvedSetsPath}.${setIndex}` as const;
   const lastKg = useWatch({ control, name: `${basePath}.lastKg` });
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
@@ -73,7 +86,7 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
   // so a manually adjusted load is preserved.
   const fillLinkedLoads = () => {
     const effectiveKg = new Map<string, number>();
-    getValues(`exercises.${exerciseIndex}.sets`).forEach((set, i) => {
+    getValues(resolvedSetsPath).forEach((set, i) => {
       if (set.kg !== '') {
         const value = parseLocalizedNumber(set.kg);
         if (Number.isFinite(value)) effectiveKg.set(set.id, value);
@@ -85,7 +98,7 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
       if (base == null) return;
       const kg = computeLinkedLoad(base, set.loadPercentOfPrevious, mode);
       effectiveKg.set(set.id, kg);
-      setValue(`exercises.${exerciseIndex}.sets.${i}.kg`, String(kg), {
+      setValue(`${resolvedSetsPath}.${i}.kg`, String(kg), {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -146,9 +159,9 @@ export function WeightRepsSetRow({ exerciseIndex, setIndex }: SetRowBodyProps) {
   );
 }
 
-export function RepsSetRow({ exerciseIndex, setIndex, layout }: SetRowBodyProps) {
+export function RepsSetRow({ exerciseIndex, setIndex, layout, setsPath }: SetRowBodyProps) {
   const { control } = useFormContext<ExecutionFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPathFor(exerciseIndex, setsPath)}.${setIndex}` as const;
   const lastReps = useWatch({ control, name: `${basePath}.lastReps` });
   const repsMin = useWatch({ control, name: `${basePath}.repsMin` });
   const repsMax = useWatch({ control, name: `${basePath}.repsMax` });
@@ -185,10 +198,12 @@ export function DurationSetRow({
   exerciseIndex,
   setIndex,
   layout,
+  setsPath,
   onComplete,
 }: DurationSetRowProps) {
   const { control, setValue } = useFormContext<ExecutionFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPathFor(exerciseIndex, setsPath)}.${setIndex}` as const;
+  const testIDBase = setTestIDBase(setIndex, setsPath);
   const durationTarget = useWatch({ control, name: `${basePath}.durationTarget` });
   const lastDuration = useWatch({ control, name: `${basePath}.lastDuration` });
   const target = durationTarget ?? 0;
@@ -253,7 +268,7 @@ export function DurationSetRow({
                 }
                 disabled={running}
                 accessibilityRole="button"
-                testID={`workout-execution.set-${setIndex}.duration`}
+                testID={`${testIDBase}.duration`}
                 className={`h-8 flex-1 items-center justify-center border-b ${
                   fieldState.invalid ? 'border-destructive' : 'border-primary'
                 }`}
@@ -272,7 +287,7 @@ export function DurationSetRow({
         <Pressable
           onPress={handlePlayStop}
           accessibilityRole="button"
-          testID={`workout-execution.set-${setIndex}.timer`}
+          testID={`${testIDBase}.timer`}
           className={`h-8 w-8 items-center justify-center rounded-full ${running ? 'bg-destructive' : 'bg-primary'}`}
         >
           <Icon as={running ? Square : Play} size={16} className="text-primary-foreground" />
@@ -288,12 +303,14 @@ export function DistanceSetRow({
   exerciseIndex,
   setIndex,
   layout,
+  setsPath,
   unit,
 }: SetRowBodyProps & {
   unit: DistanceUnit;
 }) {
   const { control } = useFormContext<ExecutionFormInput>();
-  const basePath = `exercises.${exerciseIndex}.sets.${setIndex}` as const;
+  const basePath = `${setsPathFor(exerciseIndex, setsPath)}.${setIndex}` as const;
+  const testIDBase = setTestIDBase(setIndex, setsPath);
   const distanceTarget = useWatch({ control, name: `${basePath}.distanceTarget` });
   const lastDistance = useWatch({ control, name: `${basePath}.lastDistance` });
   const hasTarget = distanceTarget != null && distanceTarget > 0;
@@ -312,7 +329,7 @@ export function DistanceSetRow({
             invalid={fieldState.invalid}
             lastMeters={lastDistance ?? null}
             unit={unit}
-            testID={`workout-execution.set-${setIndex}.distance`}
+            testID={`${testIDBase}.distance`}
           />
         )}
       />

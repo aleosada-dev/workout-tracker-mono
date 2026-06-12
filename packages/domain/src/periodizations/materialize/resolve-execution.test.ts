@@ -43,6 +43,7 @@ function makeBase(): WorkoutDetail {
         supersetOrder: 0,
         note: null,
         restSeconds: 90,
+        alternativeOfId: null,
         variation: {
           id: VARIATION_A,
           slug: 'bench',

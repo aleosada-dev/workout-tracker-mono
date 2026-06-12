@@ -26,6 +26,9 @@ export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
   };
 }
 
+/** Resumo leve do alternativo, para o swap (execução) e o sub-bloco (builder). */
+export type AlternativeDescriptor = { name: string; variationName: string | null } | null;
+
 export type ExerciseExecutionItem = {
   id: string;
   exerciseIndex: number;
@@ -35,6 +38,7 @@ export type ExerciseExecutionItem = {
   variationName: string | null;
   note: string | null;
   restSeconds: number | null;
+  alternative: AlternativeDescriptor;
 };
 
 export type SupersetLetter = 'A' | 'B' | 'C';
@@ -48,6 +52,7 @@ export type SupersetMember = {
   variationName: string | null;
   note: string | null;
   restSeconds: number | null;
+  alternative: AlternativeDescriptor;
 };
 
 export type SingleExerciseItem = { kind: 'single' } & ExerciseExecutionItem;
@@ -124,15 +129,14 @@ export type MappableExercise = {
   restSeconds: number | null;
   aliasId?: string | null;
   variation: MappableExerciseVariation;
+  alternative?: { variation: MappableExerciseVariation } | null;
 };
 
-function toExerciseExecutionItem(
-  exercise: MappableExercise,
-  exerciseIndex: number,
+function composeVariationDisplay(
+  variation: MappableExerciseVariation,
   t: TFunction,
   language: string,
-): ExerciseExecutionItem {
-  const { variation } = exercise;
+): { name: string; variationName: string | null } {
   const name = composeExerciseName(
     {
       exerciseName: resolveExerciseName(variation.exercise.slug, variation.exercise.name, t),
@@ -143,15 +147,28 @@ function toExerciseExecutionItem(
     language,
   );
   const variationName = resolveVariationName(variation.slug, variation.name, t);
+  return { name, variationName };
+}
+
+function toExerciseExecutionItem(
+  exercise: MappableExercise,
+  exerciseIndex: number,
+  t: TFunction,
+  language: string,
+): ExerciseExecutionItem {
+  const { name, variationName } = composeVariationDisplay(exercise.variation, t, language);
   return {
     id: exercise.id,
     exerciseIndex,
-    variationId: variation.id,
+    variationId: exercise.variation.id,
     aliasId: exercise.aliasId ?? null,
     name,
     variationName,
     note: exercise.note,
     restSeconds: exercise.restSeconds,
+    alternative: exercise.alternative
+      ? composeVariationDisplay(exercise.alternative.variation, t, language)
+      : null,
   };
 }
 
@@ -176,10 +193,13 @@ export function listIncompleteStrengthExercises(
 ): string[] {
   return exercises
     .map((exercise, exerciseIndex) => ({ exercise, exerciseIndex }))
-    .filter(
-      ({ exercise }) =>
-        exercise.exerciseType === 'strength' && exercise.sets.some((set) => !set.done),
-    )
+    .filter(({ exercise }) => {
+      const activeSets =
+        exercise.usingAlternative && exercise.alternative
+          ? exercise.alternative.sets
+          : exercise.sets;
+      return exercise.exerciseType === 'strength' && activeSets.some((set) => !set.done);
+    })
     .map(
       ({ exercise, exerciseIndex }) =>
         toExerciseExecutionItem(exercise, exerciseIndex, t, language).name,
@@ -386,6 +406,7 @@ export function toExecutionListItems(
         variationName: item.variationName,
         note: item.note,
         restSeconds: item.restSeconds,
+        alternative: item.alternative,
       };
     });
     items.push({

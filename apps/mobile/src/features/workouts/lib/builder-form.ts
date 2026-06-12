@@ -84,6 +84,14 @@ export const BuilderSetSchema = z
     repsMax: set.repsMax ?? set.repsMin,
   }));
 
+export const BuilderAlternativeSchema = z.object({
+  id: z.string(),
+  note: z.string().nullable(),
+  restSeconds: z.int().nonnegative().nullable(),
+  variation: ExecutionExerciseVariationSchema,
+  sets: z.array(BuilderSetSchema).min(1),
+});
+
 export const BuilderExerciseSchema = z.object({
   id: z.string(),
   exerciseType: z.enum(WORKOUT_EXERCISE_TYPES),
@@ -94,6 +102,7 @@ export const BuilderExerciseSchema = z.object({
   restSeconds: z.int().nonnegative().nullable(),
   variation: ExecutionExerciseVariationSchema,
   sets: z.array(BuilderSetSchema).min(1),
+  alternative: BuilderAlternativeSchema.nullable().default(null),
 });
 
 export const WorkoutFormSchema = z.object({
@@ -173,40 +182,122 @@ export function buildBuilderExerciseFromPicked(
   };
 }
 
+export type BuilderAlternativeInput = BuilderExerciseInput['alternative'];
+
+export function buildBuilderAlternativeFromPicked(
+  picked: PickedExercise,
+  principalSets: BuilderSetInput[],
+  generateId: () => string,
+): NonNullable<BuilderAlternativeInput> {
+  const measurementType = setMeasurementTypeForVariation(picked.variation.measurementType);
+  return {
+    id: generateId(),
+    note: null,
+    restSeconds: null,
+    variation: {
+      id: picked.variation.id,
+      slug: picked.variation.slug,
+      name: picked.variation.name,
+      exercise: {
+        slug: picked.exercise.slug,
+        name: picked.exercise.name,
+        type: picked.exercise.type,
+      },
+      measurementType: picked.variation.measurementType,
+      equipment: {
+        slug: picked.variation.equipment.slug,
+        preposition: picked.variation.equipment.preposition,
+      },
+      muscle: { slug: picked.variation.muscle.slug },
+      secondaryMuscle: picked.variation.secondaryMuscle
+        ? { slug: picked.variation.secondaryMuscle.slug }
+        : null,
+    },
+    sets: principalSets.map((set) => ({
+      id: generateId(),
+      type: set.type,
+      measurementType,
+      roundOrder: set.roundOrder,
+      repsMin: set.repsMin,
+      repsMax: set.repsMax,
+      duration: set.duration,
+      distance: set.distance,
+      loadPercent: set.loadPercent,
+      linkedSetId: null,
+    })),
+  };
+}
+
+type ResponseExercise = GetWorkoutResponse['exercises'][number];
+
+function mapResponseSetsToBuilder(exercise: ResponseExercise): BuilderSetInput[] {
+  const fallbackRounds = deriveRoundOrders(
+    exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
+  );
+  const setMeasurementType = setMeasurementTypeForVariation(exercise.variation.measurementType);
+  return exercise.sets.map((set, i) => ({
+    id: set.id,
+    type: set.setType ?? 'normal',
+    measurementType: setMeasurementType,
+    roundOrder: set.roundOrder ?? fallbackRounds[i],
+    repsMin: set.repsMin != null ? String(set.repsMin) : '',
+    repsMax: set.repsMax != null ? String(set.repsMax) : '',
+    duration: set.durationSeconds != null ? String(set.durationSeconds) : '',
+    distance: set.distanceMeters != null ? String(set.distanceMeters) : '',
+    loadPercent: set.loadPercentOfPrevious != null ? String(set.loadPercentOfPrevious) : '',
+    linkedSetId: set.linkedSetId,
+  }));
+}
+
 export function buildBuilderFromWorkout(workout: GetWorkoutResponse): WorkoutFormInput {
+  const altByPrincipal = new Map(
+    workout.exercises
+      .filter((exercise) => exercise.alternativeOfId != null)
+      .map((exercise) => [exercise.alternativeOfId as string, exercise]),
+  );
   return {
     name: workout.name,
     description: workout.description ?? '',
-    exercises: workout.exercises.map((exercise) => {
-      const fallbackRounds = deriveRoundOrders(
-        exercise.sets.map((set) => ({ type: set.setType ?? 'normal' })),
-      );
-      const setMeasurementType = setMeasurementTypeForVariation(exercise.variation.measurementType);
-      return {
-        id: exercise.id,
-        exerciseType: exercise.exerciseType,
-        position: exercise.position,
-        supersetGroupId: exercise.supersetGroupId,
-        supersetOrder: exercise.supersetOrder,
-        note: exercise.note,
-        restSeconds: exercise.restSeconds,
-        variation: exercise.variation,
-        sets: exercise.sets.map((set, i) => ({
-          id: set.id,
-          type: set.setType ?? 'normal',
-          measurementType: setMeasurementType,
-          roundOrder: set.roundOrder ?? fallbackRounds[i],
-          repsMin: set.repsMin != null ? String(set.repsMin) : '',
-          repsMax: set.repsMax != null ? String(set.repsMax) : '',
-          duration: set.durationSeconds != null ? String(set.durationSeconds) : '',
-          distance: set.distanceMeters != null ? String(set.distanceMeters) : '',
-          loadPercent: set.loadPercentOfPrevious != null ? String(set.loadPercentOfPrevious) : '',
-          linkedSetId: set.linkedSetId,
-        })),
-      };
-    }),
+    exercises: workout.exercises
+      .filter((exercise) => exercise.alternativeOfId == null)
+      .map((exercise) => {
+        const alt = altByPrincipal.get(exercise.id) ?? null;
+        return {
+          id: exercise.id,
+          exerciseType: exercise.exerciseType,
+          position: exercise.position,
+          supersetGroupId: exercise.supersetGroupId,
+          supersetOrder: exercise.supersetOrder,
+          note: exercise.note,
+          restSeconds: exercise.restSeconds,
+          variation: exercise.variation,
+          sets: mapResponseSetsToBuilder(exercise),
+          alternative: alt
+            ? {
+                id: alt.id,
+                note: alt.note,
+                restSeconds: alt.restSeconds,
+                variation: alt.variation,
+                sets: mapResponseSetsToBuilder(alt),
+              }
+            : null,
+        };
+      }),
   };
 }
+
+type UpsertWorkoutSetBody = {
+  id: string;
+  setOrder: number;
+  setType: WorkoutSetType;
+  repsMin: number | null;
+  repsMax: number | null;
+  durationSeconds: number | null;
+  distanceMeters: number | null;
+  roundOrder: number;
+  linkedSetId: string | null;
+  loadPercentOfPrevious: number | null;
+};
 
 export type UpsertWorkoutRequestBody = {
   userId?: string;
@@ -222,18 +313,14 @@ export type UpsertWorkoutRequestBody = {
     supersetOrder: number;
     note: string | null;
     restSeconds: number | null;
-    sets: {
+    sets: UpsertWorkoutSetBody[];
+    alternative: {
       id: string;
-      setOrder: number;
-      setType: WorkoutSetType;
-      repsMin: number | null;
-      repsMax: number | null;
-      durationSeconds: number | null;
-      distanceMeters: number | null;
-      roundOrder: number;
-      linkedSetId: string | null;
-      loadPercentOfPrevious: number | null;
-    }[];
+      variationId: string;
+      note: string | null;
+      restSeconds: number | null;
+      sets: UpsertWorkoutSetBody[];
+    } | null;
   }[];
 };
 
@@ -243,6 +330,24 @@ export type UpsertWorkoutRequestBody = {
  * confiar no valor carregado no form — remoções/reordenações deixariam um id
  * morto para trás.
  */
+function mapBuilderSetsToRequest(
+  sets: WorkoutFormValues['exercises'][number]['sets'],
+): UpsertWorkoutSetBody[] {
+  return sets.map((set, index) => ({
+    id: set.id,
+    setOrder: index,
+    setType: set.type,
+    repsMin: set.repsMin,
+    repsMax: set.repsMax,
+    durationSeconds: set.duration,
+    distanceMeters: set.distance,
+    roundOrder: set.roundOrder,
+    linkedSetId:
+      (set.type === 'drop' || set.type === 'cluster') && index > 0 ? sets[index - 1].id : null,
+    loadPercentOfPrevious: set.type === 'drop' || set.type === 'cluster' ? set.loadPercent : null,
+  }));
+}
+
 export function toUpsertWorkoutRequest(
   values: WorkoutFormValues,
   { userId, folderId }: { userId?: string; folderId: string | null },
@@ -262,22 +367,16 @@ export function toUpsertWorkoutRequest(
       supersetOrder: exercise.supersetOrder,
       note: exercise.note,
       restSeconds: exercise.restSeconds,
-      sets: exercise.sets.map((set, index) => ({
-        id: set.id,
-        setOrder: index,
-        setType: set.type,
-        repsMin: set.repsMin,
-        repsMax: set.repsMax,
-        durationSeconds: set.duration,
-        distanceMeters: set.distance,
-        roundOrder: set.roundOrder,
-        linkedSetId:
-          (set.type === 'drop' || set.type === 'cluster') && index > 0
-            ? exercise.sets[index - 1].id
-            : null,
-        loadPercentOfPrevious:
-          set.type === 'drop' || set.type === 'cluster' ? set.loadPercent : null,
-      })),
+      sets: mapBuilderSetsToRequest(exercise.sets),
+      alternative: exercise.alternative
+        ? {
+            id: exercise.alternative.id,
+            variationId: exercise.alternative.variation.id,
+            note: exercise.alternative.note,
+            restSeconds: exercise.alternative.restSeconds,
+            sets: mapBuilderSetsToRequest(exercise.alternative.sets),
+          }
+        : null,
     })),
   };
 }

@@ -8,6 +8,7 @@ import {
   Circle,
   GripVertical,
   Plus,
+  Repeat,
   StickyNote,
   Timer,
 } from 'lucide-react-native';
@@ -22,6 +23,7 @@ import {
   DurationPickerSheet,
   type DurationPickerSheetRef,
 } from '@/features/workouts/components/DurationPickerSheet';
+import { AlternativeBuilderBlock } from '@/features/workouts/components/ExerciseBuilderCard/AlternativeBuilderBlock';
 import type { BuilderColumnLayout } from '@/features/workouts/components/ExerciseBuilderCard/builder-set-rows';
 import {
   DistanceTargetCell,
@@ -65,6 +67,9 @@ export interface SupersetBuilderCardProps {
   selected?: boolean;
   onToggleSelect?: () => void;
   onLongPress?: () => void;
+  onAddAlternative?: (exerciseId: string) => void;
+  onSwapAlternative?: (exerciseId: string) => void;
+  onRemoveAlternative?: (exerciseId: string) => void;
 }
 
 export function SupersetBuilderCard({
@@ -75,6 +80,9 @@ export function SupersetBuilderCard({
   selected = false,
   onToggleSelect,
   onLongPress,
+  onAddAlternative,
+  onSwapAlternative,
+  onRemoveAlternative,
 }: SupersetBuilderCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
@@ -85,6 +93,11 @@ export function SupersetBuilderCard({
     | MemberSets[]
     | undefined;
   const setsByMember = watchedMemberSets ?? [];
+  const memberAltNames = members.map((m) => `exercises.${m.exerciseIndex}.alternative` as const);
+  const watchedMemberAlts = useWatch({ control, name: memberAltNames }) as
+    | (WorkoutFormInput['exercises'][number]['alternative'] | undefined)[]
+    | undefined;
+  const memberAlternatives = watchedMemberAlts ?? [];
   const rounds = buildRounds(members, setsByMember);
   const allSets = setsByMember.flatMap((sets) => sets ?? []);
   const layout: BuilderColumnLayout = {
@@ -422,6 +435,48 @@ export function SupersetBuilderCard({
               </Text>
             </Button>
           </View>
+
+          {members.map((member, memberIndex) => {
+            const hasAlternative = memberAlternatives[memberIndex] != null;
+            if (hasAlternative) {
+              return (
+                <View key={member.exerciseIndex} className="-mx-1">
+                  <View className="px-4 pt-1">
+                    <Text className="font-sans-medium text-muted-foreground text-xs">
+                      {member.letter} — {member.name}
+                    </Text>
+                  </View>
+                  <AlternativeBuilderBlock
+                    exerciseIndex={member.exerciseIndex}
+                    onSwap={() =>
+                      onSwapAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
+                    }
+                    onRemove={() =>
+                      onRemoveAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
+                    }
+                  />
+                </View>
+              );
+            }
+            if (!onAddAlternative) return null;
+            return (
+              <View key={member.exerciseIndex} className="px-4 pt-3">
+                <Pressable
+                  onPress={() =>
+                    onAddAlternative(getValues(`exercises.${member.exerciseIndex}.id`))
+                  }
+                  accessibilityRole="button"
+                  className="flex-row items-center justify-center gap-2 py-1"
+                  testID={`workout-form.superset.member-${member.exerciseIndex}.add-alternative`}
+                >
+                  <Icon as={Repeat} size={14} className="text-muted-foreground" />
+                  <Text variant="muted" className="font-sans-medium text-sm">
+                    {member.letter} — {t('workoutFormScreen.alternative.add')}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          })}
         </Animated.View>
       ) : null}
       <SupersetAddSetsSheet ref={addSetsSheetRef} />

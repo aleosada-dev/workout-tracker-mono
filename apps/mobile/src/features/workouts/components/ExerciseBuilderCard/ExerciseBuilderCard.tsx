@@ -8,6 +8,7 @@ import {
   Circle,
   GripVertical,
   Plus,
+  Repeat,
   StickyNote,
   Timer,
 } from 'lucide-react-native';
@@ -42,6 +43,7 @@ import {
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import { buildBuilderSet, type WorkoutFormInput } from '@/features/workouts/lib/builder-form';
 import { exerciseColumnLayout } from '@/features/workouts/lib/workout-mappers';
+import { AlternativeBuilderBlock } from './AlternativeBuilderBlock';
 import { BuilderSetCells, SetErrorMessage, SetTypePressable } from './builder-set-rows';
 
 export interface ExerciseBuilderCardProps {
@@ -53,6 +55,9 @@ export interface ExerciseBuilderCardProps {
   selected?: boolean;
   onToggleSelect?: () => void;
   onLongPress?: () => void;
+  onAddAlternative?: () => void;
+  onSwapAlternative?: () => void;
+  onRemoveAlternative?: () => void;
 }
 
 export function ExerciseBuilderCard({
@@ -64,6 +69,9 @@ export function ExerciseBuilderCard({
   selected = false,
   onToggleSelect,
   onLongPress,
+  onAddAlternative,
+  onSwapAlternative,
+  onRemoveAlternative,
 }: ExerciseBuilderCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
@@ -82,6 +90,8 @@ export function ExerciseBuilderCard({
   const note = useWatch({ control, name: `exercises.${exerciseIndex}.note` });
   const restSeconds = useWatch({ control, name: `exercises.${exerciseIndex}.restSeconds` });
   const watchedSets = useWatch({ control, name: `exercises.${exerciseIndex}.sets` });
+  const hasAlternative =
+    useWatch({ control, name: `exercises.${exerciseIndex}.alternative` }) != null;
   const sets = watchedSets ?? [];
   const layout = {
     ...exerciseColumnLayout(sets.map((set) => ({ measurementType: set.measurementType }))),
@@ -306,6 +316,28 @@ export function ExerciseBuilderCard({
               </Text>
             </Button>
           </View>
+
+          {hasAlternative ? (
+            <AlternativeBuilderBlock
+              exerciseIndex={exerciseIndex}
+              onSwap={() => onSwapAlternative?.()}
+              onRemove={() => onRemoveAlternative?.()}
+            />
+          ) : onAddAlternative ? (
+            <View className="px-4 pt-3">
+              <Pressable
+                onPress={onAddAlternative}
+                accessibilityRole="button"
+                className="flex-row items-center justify-center gap-2 py-1"
+                testID={`workout-form.exercise-${exerciseIndex}.add-alternative`}
+              >
+                <Icon as={Repeat} size={14} className="text-muted-foreground" />
+                <Text variant="muted" className="font-sans-medium text-sm">
+                  {t('workoutFormScreen.alternative.add')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
         </Animated.View>
       ) : null}
       <SetTypePickerSheet ref={setTypePickerRef} />

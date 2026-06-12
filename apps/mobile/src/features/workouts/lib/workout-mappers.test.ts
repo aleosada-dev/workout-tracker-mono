@@ -370,4 +370,105 @@ describe('listIncompleteStrengthExercises', () => {
 
     expect(listIncompleteStrengthExercises(exercises, t, 'pt')).toEqual([]);
   });
+
+  test('uses the alternative sets for completeness when usingAlternative is true', () => {
+    const exercises = [
+      exercise({
+        id: 'a',
+        usingAlternative: true,
+        sets: [set({ id: 'a1', done: false })], // principal incompleto, mas inativo
+        alternative: {
+          id: 'alt-a',
+          note: null,
+          restSeconds: null,
+          aliasId: null,
+          variation: {
+            id: 'var-alt',
+            slug: null,
+            name: null,
+            exercise: { slug: 'leg-press', name: 'Leg Press', type: 'musculacao' },
+            measurementType: 'weight_reps',
+            equipment: { slug: 'machine', preposition: 'na' },
+            muscle: { slug: 'quads' },
+            secondaryMuscle: null,
+          },
+          sets: [set({ id: 'alt-a1', done: true })], // alternativo completo e ativo
+        },
+      }),
+    ];
+
+    expect(listIncompleteStrengthExercises(exercises, t, 'pt')).toEqual([]);
+  });
+
+  test('flags the exercise when the active alternative still has undone sets', () => {
+    const exercises = [
+      exercise({
+        id: 'a',
+        usingAlternative: true,
+        sets: [set({ id: 'a1', done: true })], // principal completo, mas inativo
+        alternative: {
+          id: 'alt-a',
+          note: null,
+          restSeconds: null,
+          aliasId: null,
+          variation: {
+            id: 'var-alt',
+            slug: null,
+            name: null,
+            exercise: { slug: 'leg-press', name: 'Leg Press', type: 'musculacao' },
+            measurementType: 'weight_reps',
+            equipment: { slug: 'machine', preposition: 'na' },
+            muscle: { slug: 'quads' },
+            secondaryMuscle: null,
+          },
+          sets: [set({ id: 'alt-a1', done: false })], // alternativo incompleto e ativo
+        },
+      }),
+    ];
+
+    expect(listIncompleteStrengthExercises(exercises, t, 'pt')).toHaveLength(1);
+  });
+});
+
+describe('toExecutionListItems alternatives', () => {
+  test('single item exposes a descriptor with the alternative name', () => {
+    const items = toExecutionListItems(
+      [
+        exercise({
+          id: 'a',
+          alternative: {
+            id: 'alt-a',
+            note: null,
+            restSeconds: null,
+            aliasId: null,
+            variation: {
+              id: 'var-alt',
+              slug: null,
+              name: null,
+              exercise: { slug: 'leg-press', name: 'Leg Press', type: 'musculacao' },
+              measurementType: 'weight_reps',
+              equipment: { slug: 'machine', preposition: 'na' },
+              muscle: { slug: 'quads' },
+              secondaryMuscle: null,
+            },
+            sets: [],
+          },
+        }),
+      ],
+      'strength',
+      t,
+      'pt',
+    );
+
+    expect(items[0].kind).toBe('single');
+    if (items[0].kind !== 'single') return;
+    expect(items[0].alternative).not.toBeNull();
+    expect(items[0].alternative?.name.length).toBeGreaterThan(0);
+  });
+
+  test('single item without an alternative has a null descriptor', () => {
+    const items = toExecutionListItems([exercise({ id: 'a' })], 'strength', t, 'pt');
+    if (items[0].kind !== 'single') throw new Error('expected single');
+    expect(items[0].alternative).toBeNull();
+  });
 });
