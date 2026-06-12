@@ -299,7 +299,13 @@ CREATE UNIQUE INDEX "workout_exercises_workout_type_position_superset_uidx"
     -- 3. Copiar workout_exercises (com superset_group_id ainda antigo;
     --    será remapeado depois). alternative_of_id é remapeado aqui via
     --    temp_exercise_mapping: NULL para principais, new_id do principal
-    --    para as linhas de alternativo.
+    --    para as linhas de alternativo. Apenas exercise_type = 'strength':
+    --    os preparatórios moram em workout_exercises mas são copiados na
+    --    etapa 5 (via a view workout_preparatory_exercises). Sem este filtro,
+    --    o preparatório seria copiado duas vezes e, inserido aqui sem
+    --    exercise_type (DEFAULT 'strength'), colidiria com o exercício de
+    --    força na mesma (position, superset_order) no índice parcial
+    --    workout_exercises_workout_type_position_superset_uidx.
     -- =========================================================
     CREATE TEMP TABLE temp_exercise_mapping (
       source_id         uuid NOT NULL,
@@ -307,11 +313,12 @@ CREATE UNIQUE INDEX "workout_exercises_workout_type_position_superset_uidx"
       source_workout_id uuid NOT NULL,
       new_workout_id    uuid NOT NULL
     ) ON COMMIT DROP;
-  
+
     INSERT INTO temp_exercise_mapping (source_id, source_workout_id, new_workout_id)
     SELECT we.id, we.workout_id, m.new_id
     FROM public.workout_exercises we
-    JOIN temp_workout_mapping m ON m.source_id = we.workout_id;
+    JOIN temp_workout_mapping m ON m.source_id = we.workout_id
+    WHERE we.exercise_type = 'strength';
   
     INSERT INTO public.workout_exercises (
       id, workout_id, variation_id, note, rest_seconds, position,
