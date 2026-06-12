@@ -1,4 +1,5 @@
 pre-commit:
+  skip: false
   piped: true
   jobs:
     - name: biome
