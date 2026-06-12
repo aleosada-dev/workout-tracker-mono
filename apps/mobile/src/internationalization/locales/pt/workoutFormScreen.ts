@@ -33,8 +33,6 @@ export default {
       description:
         'Percentual da carga em relação à série anterior (normal). Usado em séries drop e cluster.',
     },
-    addDetails: 'Adicionar nota ou descanso',
-    editDetails: 'Editar nota e descanso',
     addNote: 'Adicionar nota',
     editNote: 'Editar nota',
     editRest: 'Editar descanso',
@@ -43,15 +41,6 @@ export default {
   noteSheet: {
     title: 'Nota do exercício',
     placeholder: 'Ex: cadência controlada na descida',
-    save: 'Salvar',
-  },
-  settingsSheet: {
-    title: 'Nota e descanso',
-    noteLabel: 'Nota do exercício',
-    notePlaceholder: 'Ex: cadência controlada na descida',
-    restLabel: 'Descanso entre séries',
-    restNone: 'Sem descanso definido',
-    clearRest: 'Remover descanso',
     save: 'Salvar',
   },
   actions: {

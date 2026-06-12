@@ -82,7 +82,7 @@ describe('toExecutionListItems', () => {
     expect(group.id).toBe('sg');
     expect(group.members.map((m) => m.letter)).toEqual(['A', 'B']);
     expect(group.members.map((m) => m.exerciseIndex)).toEqual([1, 0]);
-    expect(group.restSeconds).toBe(30);
+    expect(group.restSeconds).toBe(90);
   });
 
   test('treats an exercise whose group id equals its own id as a single', () => {

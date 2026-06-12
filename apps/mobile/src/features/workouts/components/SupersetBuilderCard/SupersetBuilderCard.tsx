@@ -7,7 +7,6 @@ import {
   ChevronUp,
   Circle,
   GripVertical,
-  Pencil,
   Plus,
   StickyNote,
   Timer,
@@ -19,6 +18,10 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import type { SetType } from '@/features/exercises/lib/sets';
 import { formatRestSeconds } from '@/features/shared/lib/utils';
+import {
+  DurationPickerSheet,
+  type DurationPickerSheetRef,
+} from '@/features/workouts/components/DurationPickerSheet';
 import type { BuilderColumnLayout } from '@/features/workouts/components/ExerciseBuilderCard/builder-set-rows';
 import {
   DistanceTargetCell,
@@ -34,9 +37,9 @@ import {
   defaultDistanceUnit,
 } from '@/features/workouts/components/ExerciseExecutionCard/set-cells';
 import {
-  ExerciseSettingsSheet,
-  type ExerciseSettingsSheetRef,
-} from '@/features/workouts/components/ExerciseSettingsSheet';
+  ExerciseNoteSheet,
+  type ExerciseNoteSheetRef,
+} from '@/features/workouts/components/ExerciseNoteSheet';
 import { SetTypesHelpDialog } from '@/features/workouts/components/SetTypesHelpDialog';
 import {
   type AddSetEntry,
@@ -91,7 +94,8 @@ export function SupersetBuilderCard({
   const { errors } = useFormState({ control, name: 'exercises' });
   const hasError = members.some((m) => Boolean(errors.exercises?.[m.exerciseIndex]));
   const addSetsSheetRef = useRef<SupersetAddSetsSheetRef>(null);
-  const settingsSheetRef = useRef<ExerciseSettingsSheetRef>(null);
+  const noteSheetRef = useRef<ExerciseNoteSheetRef>(null);
+  const restPickerRef = useRef<DurationPickerSheetRef>(null);
   const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(() =>
     defaultDistanceUnit(
       members.reduce<number | null>(
@@ -105,18 +109,28 @@ export function SupersetBuilderCard({
     ),
   );
 
-  const handleEditMemberSettings = (exerciseIndex: number) => {
-    settingsSheetRef.current?.present(
-      {
-        note: getValues(`exercises.${exerciseIndex}.note`),
-        restSeconds: getValues(`exercises.${exerciseIndex}.restSeconds`),
-      },
-      (next) => {
-        setValue(`exercises.${exerciseIndex}.note`, next.note, { shouldDirty: true });
-        setValue(`exercises.${exerciseIndex}.restSeconds`, next.restSeconds, {
-          shouldDirty: true,
-        });
-      },
+  const handleEditMemberNote = (exerciseIndex: number) => {
+    noteSheetRef.current?.present(getValues(`exercises.${exerciseIndex}.note`), (next) => {
+      setValue(`exercises.${exerciseIndex}.note`, next, { shouldDirty: true });
+    });
+  };
+
+  const setRestForAll = (next: number | null) => {
+    for (const member of members) {
+      setValue(`exercises.${member.exerciseIndex}.restSeconds`, next, { shouldDirty: true });
+    }
+  };
+
+  const handleEditRest = () => {
+    const initial = members.reduce(
+      (max, member) =>
+        Math.max(max, getValues(`exercises.${member.exerciseIndex}.restSeconds`) ?? 0),
+      0,
+    );
+    restPickerRef.current?.present(
+      initial,
+      (secs) => setRestForAll(secs > 0 ? secs : null),
+      () => setRestForAll(null),
     );
   };
 
@@ -273,25 +287,32 @@ export function SupersetBuilderCard({
                     </Text>
                   ) : null}
                 </View>
-                {!isCollapsed ? (
-                  <Pressable
-                    onPress={() => handleEditMemberSettings(member.exerciseIndex)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('workoutFormScreen.exercise.editDetails')}
-                    testID={`workout-form.superset.member-${member.exerciseIndex}.edit-details`}
-                  >
-                    <Icon as={Pencil} size={16} className="text-muted-foreground" />
-                  </Pressable>
-                ) : null}
               </Pressable>
-              {hasNote && !isCollapsed ? (
-                <View className="flex-row items-start gap-1.5 pl-7">
-                  <Icon as={StickyNote} size={13} className="mt-0.5 text-muted-foreground" />
-                  <Text variant="muted" className="flex-1 text-xs">
-                    {member.note}
+              {!isCollapsed ? (
+                <Pressable
+                  onPress={() => handleEditMemberNote(member.exerciseIndex)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(
+                    hasNote
+                      ? 'workoutFormScreen.exercise.editNote'
+                      : 'workoutFormScreen.exercise.addNote',
+                  )}
+                  testID={`workout-form.superset.member-${member.exerciseIndex}.note`}
+                  className="flex-row items-start gap-1.5 pl-7"
+                >
+                  <Icon
+                    as={StickyNote}
+                    size={13}
+                    className={`mt-0.5 ${hasNote ? 'text-foreground' : 'text-muted-foreground'}`}
+                  />
+                  <Text
+                    variant={hasNote ? 'default' : 'muted'}
+                    className="flex-1 text-xs"
+                    numberOfLines={hasNote ? 2 : 1}
+                  >
+                    {hasNote ? member.note : t('workoutFormScreen.exercise.addNote')}
                   </Text>
-                </View>
+                </Pressable>
               ) : null}
             </View>
           );
@@ -300,12 +321,26 @@ export function SupersetBuilderCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-          {restSeconds != null ? (
-            <View className="flex-row items-center justify-end gap-2 px-4 pt-3 pb-4">
-              <Icon as={Timer} size={16} className="text-foreground" />
-              <Text className="text-sm">{formatRestSeconds(restSeconds)}</Text>
-            </View>
-          ) : null}
+          <View className="flex-row items-center justify-end px-4 pt-3 pb-4">
+            <Pressable
+              onPress={handleEditRest}
+              accessibilityRole="button"
+              accessibilityLabel={t('workoutFormScreen.exercise.editRest')}
+              testID="workout-form.superset.rest"
+              className="flex-row items-center gap-2"
+            >
+              <Icon
+                as={Timer}
+                size={16}
+                className={restSeconds != null ? 'text-foreground' : 'text-muted-foreground'}
+              />
+              <Text variant={restSeconds != null ? 'default' : 'muted'} className="text-sm">
+                {restSeconds != null
+                  ? formatRestSeconds(restSeconds)
+                  : t('workoutFormScreen.exercise.restUndefined')}
+              </Text>
+            </Pressable>
+          </View>
           <View className="px-4">
             <View className="flex-row items-center pb-2">
               <View className="w-8" />
@@ -390,7 +425,8 @@ export function SupersetBuilderCard({
         </Animated.View>
       ) : null}
       <SupersetAddSetsSheet ref={addSetsSheetRef} />
-      <ExerciseSettingsSheet ref={settingsSheetRef} />
+      <ExerciseNoteSheet ref={noteSheetRef} />
+      <DurationPickerSheet ref={restPickerRef} />
     </Card>
   );
 }

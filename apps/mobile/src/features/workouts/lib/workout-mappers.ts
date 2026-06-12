@@ -259,10 +259,21 @@ export function combineIntoSuperset<T extends MappableExercise>(
   orderedExerciseIds: string[],
   newGroupId: string,
 ): T[] {
+  const memberIds = new Set(orderedExerciseIds);
+  const unifiedRestSeconds = exercises.reduce<number | null>(
+    (max, exercise) =>
+      memberIds.has(exercise.id) &&
+      exercise.restSeconds != null &&
+      exercise.restSeconds > (max ?? -1)
+        ? exercise.restSeconds
+        : max,
+    null,
+  );
   return relocateGroupWithinType(exercises, orderedExerciseIds, (exercise, order) => ({
     ...exercise,
     supersetGroupId: newGroupId,
     supersetOrder: order,
+    restSeconds: unifiedRestSeconds,
   }));
 }
 
@@ -381,7 +392,11 @@ export function toExecutionListItems(
       kind: 'superset',
       id: groupId,
       members,
-      restSeconds: members[members.length - 1]?.restSeconds ?? null,
+      restSeconds: members.reduce<number | null>(
+        (max, member) =>
+          member.restSeconds != null && member.restSeconds > (max ?? -1) ? member.restSeconds : max,
+        null,
+      ),
     });
   }
   return items;

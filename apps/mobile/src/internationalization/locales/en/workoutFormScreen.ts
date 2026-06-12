@@ -33,8 +33,6 @@ export default {
       description:
         'Percentage of the load relative to the previous (normal) set. Used in drop and cluster sets.',
     },
-    addDetails: 'Add note or rest',
-    editDetails: 'Edit note and rest',
     addNote: 'Add note',
     editNote: 'Edit note',
     editRest: 'Edit rest',
@@ -43,15 +41,6 @@ export default {
   noteSheet: {
     title: 'Exercise note',
     placeholder: 'E.g.: controlled eccentric',
-    save: 'Save',
-  },
-  settingsSheet: {
-    title: 'Note and rest',
-    noteLabel: 'Exercise note',
-    notePlaceholder: 'E.g.: controlled eccentric',
-    restLabel: 'Rest between sets',
-    restNone: 'No rest set',
-    clearRest: 'Remove rest',
     save: 'Save',
   },
   actions: {
