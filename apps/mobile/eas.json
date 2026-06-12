@@ -66,6 +66,7 @@
     "production": {
       "ios": {
         "appleId": "alexandre.osada.dev@gmail.com",
+        "ascAppId": "6779336942",
         "appleTeamId": "HR5ZMMCYX2"
       },
       "android": {
