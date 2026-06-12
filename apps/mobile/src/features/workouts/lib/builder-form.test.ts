@@ -236,7 +236,7 @@ describe('toUpsertWorkoutRequest', () => {
         ],
       }),
     ]);
-    const request = toUpsertWorkoutRequest(values, { folderId: null });
+    const request = toUpsertWorkoutRequest(values, { folderId: null, generateId: () => 'gen' });
     expect(request.exercises[0].sets[1]).toMatchObject({
       setOrder: 1,
       setType: 'drop',
@@ -254,7 +254,11 @@ describe('toUpsertWorkoutRequest', () => {
         sets: [builderSet({ id: 's1', repsMin: '10', loadPercent: '50' })],
       }),
     ]);
-    const request = toUpsertWorkoutRequest(values, { userId: 'u9', folderId: 'f1' });
+    const request = toUpsertWorkoutRequest(values, {
+      userId: 'u9',
+      folderId: 'f1',
+      generateId: () => 'gen',
+    });
     expect(request.userId).toBe('u9');
     expect(request.folderId).toBe('f1');
     expect(request.exercises[0]).toMatchObject({
@@ -272,7 +276,7 @@ describe('toUpsertWorkoutRequest', () => {
 
   test('normalizes a blank description to null', () => {
     const values = parsedValues([]);
-    const request = toUpsertWorkoutRequest(values, { folderId: null });
+    const request = toUpsertWorkoutRequest(values, { folderId: null, generateId: () => 'gen' });
     expect(request.description).toBeNull();
   });
 
@@ -299,7 +303,7 @@ describe('toUpsertWorkoutRequest', () => {
         },
       }),
     ]);
-    const request = toUpsertWorkoutRequest(values, { folderId: null });
+    const request = toUpsertWorkoutRequest(values, { folderId: null, generateId: () => 'gen' });
     expect(request.exercises[0].alternative?.variationId).toBe('var-alt');
     expect(request.exercises[0].alternative?.sets[0]).toMatchObject({
       setOrder: 0,
@@ -311,7 +315,7 @@ describe('toUpsertWorkoutRequest', () => {
     const values = parsedValues([
       builderExercise({ id: 'e1', sets: [builderSet({ id: 's1', repsMin: '8' })] }),
     ]);
-    const request = toUpsertWorkoutRequest(values, { folderId: null });
+    const request = toUpsertWorkoutRequest(values, { folderId: null, generateId: () => 'gen' });
     expect(request.exercises[0].alternative).toBeNull();
   });
 });

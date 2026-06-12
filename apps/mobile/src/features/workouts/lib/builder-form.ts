@@ -348,9 +348,40 @@ function mapBuilderSetsToRequest(
   }));
 }
 
+/**
+ * As séries do alternativo são sempre iguais às do exercício principal — o form
+ * não as edita separadamente. No save espelhamos a prescrição do principal,
+ * persistindo com os ids próprios do alternativo (linhas independentes no banco),
+ * reaproveitando os ids existentes por posição e cunhando novos para sobras.
+ */
+function mirrorAlternativeSets(
+  principalSets: WorkoutFormValues['exercises'][number]['sets'],
+  alternativeSets: WorkoutFormValues['exercises'][number]['sets'],
+  generateId: () => string,
+): UpsertWorkoutSetBody[] {
+  const ids = principalSets.map((_, index) => alternativeSets[index]?.id ?? generateId());
+  return principalSets.map((set, index) => ({
+    id: ids[index],
+    setOrder: index,
+    setType: set.type,
+    repsMin: set.repsMin,
+    repsMax: set.repsMax,
+    durationSeconds: set.duration,
+    distanceMeters: set.distance,
+    roundOrder: set.roundOrder,
+    linkedSetId:
+      (set.type === 'drop' || set.type === 'cluster') && index > 0 ? ids[index - 1] : null,
+    loadPercentOfPrevious: set.type === 'drop' || set.type === 'cluster' ? set.loadPercent : null,
+  }));
+}
+
 export function toUpsertWorkoutRequest(
   values: WorkoutFormValues,
-  { userId, folderId }: { userId?: string; folderId: string | null },
+  {
+    userId,
+    folderId,
+    generateId,
+  }: { userId?: string; folderId: string | null; generateId: () => string },
 ): UpsertWorkoutRequestBody {
   const description = values.description.trim();
   return {
@@ -374,7 +405,7 @@ export function toUpsertWorkoutRequest(
             variationId: exercise.alternative.variation.id,
             note: exercise.alternative.note,
             restSeconds: exercise.alternative.restSeconds,
-            sets: mapBuilderSetsToRequest(exercise.alternative.sets),
+            sets: mirrorAlternativeSets(exercise.sets, exercise.alternative.sets, generateId),
           }
         : null,
     })),

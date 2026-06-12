@@ -67,9 +67,11 @@ export interface SupersetBuilderCardProps {
   selected?: boolean;
   onToggleSelect?: () => void;
   onLongPress?: () => void;
+  onPressMember?: (variationId: string, aliasId: string | null) => void;
   onAddAlternative?: (exerciseId: string) => void;
   onSwapAlternative?: (exerciseId: string) => void;
   onRemoveAlternative?: (exerciseId: string) => void;
+  onPressAlternativeName?: (variationId: string) => void;
 }
 
 export function SupersetBuilderCard({
@@ -80,9 +82,11 @@ export function SupersetBuilderCard({
   selected = false,
   onToggleSelect,
   onLongPress,
+  onPressMember,
   onAddAlternative,
   onSwapAlternative,
   onRemoveAlternative,
+  onPressAlternativeName,
 }: SupersetBuilderCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
@@ -271,19 +275,26 @@ export function SupersetBuilderCard({
           </Pressable>
         )}
       </View>
-
-      <View className="gap-2 px-4">
-        {members.map((member) => {
+      <View className={`${collapsed ? 'gap-2' : 'gap-4'} px-4`}>
+        {members.map((member, memberIndex) => {
           const hasNote = member.note != null && member.note.length > 0;
+          const hasAlternative = memberAlternatives[memberIndex] != null;
+          const altVariationId = member.alternative?.variationId;
           return (
             <View key={member.exerciseIndex} className="gap-1">
               <Pressable
                 className="flex-row items-center gap-2"
-                onPress={selectable ? onToggleSelect : undefined}
+                onPress={
+                  selectable
+                    ? onToggleSelect
+                    : onPressMember
+                      ? () => onPressMember(member.variationId, member.aliasId)
+                      : undefined
+                }
                 onLongPress={onLongPress}
                 delayLongPress={350}
-                disabled={selectable ? !onToggleSelect : !onLongPress}
-                accessibilityRole={selectable ? 'checkbox' : undefined}
+                disabled={selectable ? !onToggleSelect : !onLongPress && !onPressMember}
+                accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'button' : undefined}
               >
                 <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
                   <Text className="font-sans-semibold text-[10px] text-primary-foreground">
@@ -302,30 +313,67 @@ export function SupersetBuilderCard({
                 </View>
               </Pressable>
               {!isCollapsed ? (
-                <Pressable
-                  onPress={() => handleEditMemberNote(member.exerciseIndex)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(
-                    hasNote
-                      ? 'workoutFormScreen.exercise.editNote'
-                      : 'workoutFormScreen.exercise.addNote',
-                  )}
-                  testID={`workout-form.superset.member-${member.exerciseIndex}.note`}
-                  className="flex-row items-start gap-1.5 pl-7"
-                >
-                  <Icon
-                    as={StickyNote}
-                    size={13}
-                    className={`mt-0.5 ${hasNote ? 'text-foreground' : 'text-muted-foreground'}`}
-                  />
-                  <Text
-                    variant={hasNote ? 'default' : 'muted'}
-                    className="flex-1 text-xs"
-                    numberOfLines={hasNote ? 2 : 1}
+                <>
+                  {hasAlternative ? (
+                    <View className="pl-7">
+                      <AlternativeBuilderBlock
+                        exerciseIndex={member.exerciseIndex}
+                        name={member.alternative?.name ?? ''}
+                        variationName={member.alternative?.variationName ?? null}
+                        compact
+                        onPressName={
+                          altVariationId
+                            ? () => onPressAlternativeName?.(altVariationId)
+                            : undefined
+                        }
+                        onSwap={() =>
+                          onSwapAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
+                        }
+                        onRemove={() =>
+                          onRemoveAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
+                        }
+                      />
+                    </View>
+                  ) : onAddAlternative ? (
+                    <Pressable
+                      onPress={() =>
+                        onAddAlternative(getValues(`exercises.${member.exerciseIndex}.id`))
+                      }
+                      accessibilityRole="button"
+                      className="flex-row items-center gap-1.5 pl-7"
+                      testID={`workout-form.superset.member-${member.exerciseIndex}.add-alternative`}
+                    >
+                      <Icon as={Repeat} size={13} className="text-muted-foreground" />
+                      <Text variant="muted" className="font-sans-medium text-xs">
+                        {t('workoutFormScreen.alternative.add')}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  <Pressable
+                    onPress={() => handleEditMemberNote(member.exerciseIndex)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(
+                      hasNote
+                        ? 'workoutFormScreen.exercise.editNote'
+                        : 'workoutFormScreen.exercise.addNote',
+                    )}
+                    testID={`workout-form.superset.member-${member.exerciseIndex}.note`}
+                    className="mt-1 flex-row items-start gap-1.5 pl-7"
                   >
-                    {hasNote ? member.note : t('workoutFormScreen.exercise.addNote')}
-                  </Text>
-                </Pressable>
+                    <Icon
+                      as={StickyNote}
+                      size={13}
+                      className={`mt-0.5 ${hasNote ? 'text-foreground' : 'text-muted-foreground'}`}
+                    />
+                    <Text
+                      variant={hasNote ? 'default' : 'muted'}
+                      className="flex-1 text-xs"
+                      numberOfLines={hasNote ? 2 : 1}
+                    >
+                      {hasNote ? member.note : t('workoutFormScreen.exercise.addNote')}
+                    </Text>
+                  </Pressable>
+                </>
               ) : null}
             </View>
           );
@@ -435,48 +483,6 @@ export function SupersetBuilderCard({
               </Text>
             </Button>
           </View>
-
-          {members.map((member, memberIndex) => {
-            const hasAlternative = memberAlternatives[memberIndex] != null;
-            if (hasAlternative) {
-              return (
-                <View key={member.exerciseIndex} className="-mx-1">
-                  <View className="px-4 pt-1">
-                    <Text className="font-sans-medium text-muted-foreground text-xs">
-                      {member.letter} — {member.name}
-                    </Text>
-                  </View>
-                  <AlternativeBuilderBlock
-                    exerciseIndex={member.exerciseIndex}
-                    onSwap={() =>
-                      onSwapAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
-                    }
-                    onRemove={() =>
-                      onRemoveAlternative?.(getValues(`exercises.${member.exerciseIndex}.id`))
-                    }
-                  />
-                </View>
-              );
-            }
-            if (!onAddAlternative) return null;
-            return (
-              <View key={member.exerciseIndex} className="px-4 pt-3">
-                <Pressable
-                  onPress={() =>
-                    onAddAlternative(getValues(`exercises.${member.exerciseIndex}.id`))
-                  }
-                  accessibilityRole="button"
-                  className="flex-row items-center justify-center gap-2 py-1"
-                  testID={`workout-form.superset.member-${member.exerciseIndex}.add-alternative`}
-                >
-                  <Icon as={Repeat} size={14} className="text-muted-foreground" />
-                  <Text variant="muted" className="font-sans-medium text-sm">
-                    {member.letter} — {t('workoutFormScreen.alternative.add')}
-                  </Text>
-                </Pressable>
-              </View>
-            );
-          })}
         </Animated.View>
       ) : null}
       <SupersetAddSetsSheet ref={addSetsSheetRef} />

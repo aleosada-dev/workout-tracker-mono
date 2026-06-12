@@ -343,15 +343,20 @@ export function SupersetExecutionCard({
 
       <View className="gap-2 px-4">
         {members.map((member, memberIndex) => {
-          const onPress = selectable
-            ? onToggleSelect
-            : onPressMember
-              ? () => onPressMember(member.variationId, member.aliasId)
-              : undefined;
           const hasNote = member.note != null && member.note.length > 0;
           const noteExpanded = expandedNotes.has(member.exerciseIndex);
           const isAlternative =
             member.alternative != null && (watchedUsingAlternative?.[memberIndex] ?? false);
+          const activeVariationId =
+            isAlternative && member.alternative != null
+              ? member.alternative.variationId
+              : member.variationId;
+          const activeAliasId = isAlternative ? null : member.aliasId;
+          const onPress = selectable
+            ? onToggleSelect
+            : onPressMember
+              ? () => onPressMember(activeVariationId, activeAliasId)
+              : undefined;
           const activeBase = (
             isAlternative
               ? `exercises.${member.exerciseIndex}.alternative`
@@ -368,30 +373,40 @@ export function SupersetExecutionCard({
           );
           return (
             <View key={member.exerciseIndex} className="gap-1">
-              <Pressable
-                className="flex-row items-center gap-2"
-                onPress={onPress}
-                onLongPress={onLongPress}
-                delayLongPress={350}
-                disabled={!onPress && !onLongPress}
-                accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'link' : undefined}
-              >
-                <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
-                  <Text className="font-sans-semibold text-[10px] text-primary-foreground">
-                    {member.letter}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm" numberOfLines={1}>
-                    {memberName}
-                  </Text>
-                  {memberVariationName != null ? (
-                    <Text variant="muted" className="text-xs" numberOfLines={1}>
-                      {memberVariationName}
+              <View className="flex-row items-center gap-2">
+                <Pressable
+                  className="flex-1 flex-row items-center gap-2"
+                  onPress={onPress}
+                  onLongPress={onLongPress}
+                  delayLongPress={350}
+                  disabled={!onPress && !onLongPress}
+                  accessibilityRole={selectable ? 'checkbox' : onPressMember ? 'link' : undefined}
+                >
+                  <View className="h-5 w-5 items-center justify-center rounded-full bg-primary">
+                    <Text className="font-sans-semibold text-[10px] text-primary-foreground">
+                      {member.letter}
                     </Text>
-                  ) : null}
-                </View>
-              </Pressable>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm" numberOfLines={1}>
+                      {memberName}
+                    </Text>
+                    {memberVariationName != null ? (
+                      <Text variant="muted" className="text-xs" numberOfLines={1}>
+                        {memberVariationName}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+                {member.alternative != null && !selectable ? (
+                  <AlternativeSwapControl
+                    exerciseIndex={member.exerciseIndex}
+                    principalName={member.name}
+                    alternativeName={member.alternative.name}
+                    iconOnly
+                  />
+                ) : null}
+              </View>
               {!isCollapsed ? (
                 <View className="flex-row items-center gap-2 pl-7">
                   <View className="shrink flex-row items-center gap-1.5">
@@ -411,15 +426,6 @@ export function SupersetExecutionCard({
                       />
                     </>
                   )}
-                </View>
-              ) : null}
-              {member.alternative != null && !isCollapsed ? (
-                <View className="pl-7">
-                  <AlternativeSwapControl
-                    exerciseIndex={member.exerciseIndex}
-                    principalName={member.name}
-                    alternativeName={member.alternative.name}
-                  />
                 </View>
               ) : null}
               {hasNote && !isCollapsed ? (

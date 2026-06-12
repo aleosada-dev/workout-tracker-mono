@@ -326,7 +326,14 @@ describe('<SupersetExecutionCard />', () => {
 
   test("pressing member A's swap shows A's alternative while B is unchanged", () => {
     const membersWithAlt: SupersetMember[] = [
-      { ...MEMBERS[0], alternative: { name: 'Crucifixo', variationName: 'Crucifixo na máquina' } },
+      {
+        ...MEMBERS[0],
+        alternative: {
+          variationId: 'var-alt-a',
+          name: 'Crucifixo',
+          variationName: 'Crucifixo na máquina',
+        },
+      },
       MEMBERS[1],
     ];
     const exerciseA = member(0, 0);

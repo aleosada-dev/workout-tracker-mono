@@ -48,6 +48,7 @@ export * from './workout-logs/workout-log-detail';
 export * from './workout-logs/workout-log-last';
 export * from './workout-logs/workout-log-repo';
 export * from './workout-logs/workout-log-summary';
+export * from './workouts/alternative';
 export * from './workouts/matching';
 export * from './workouts/superset';
 export * from './workouts/workout';

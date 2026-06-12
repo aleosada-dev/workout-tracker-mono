@@ -182,7 +182,11 @@ function renderCardWithAlternative() {
           exerciseIndex={0}
           name="Supino"
           variationName="Supino com barra"
-          alternative={{ name: 'Crucifixo', variationName: 'Crucifixo na máquina' }}
+          alternative={{
+            variationId: 'var-alt',
+            name: 'Crucifixo',
+            variationName: 'Crucifixo na máquina',
+          }}
         />
         <PortalHost />
       </FormProvider>

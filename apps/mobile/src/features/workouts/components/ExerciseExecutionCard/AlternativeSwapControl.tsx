@@ -9,6 +9,7 @@ interface AlternativeSwapControlProps {
   exerciseIndex: number;
   principalName: string;
   alternativeName: string;
+  iconOnly?: boolean;
   onChange?: (usingAlternative: boolean) => void;
 }
 
@@ -16,6 +17,7 @@ export function AlternativeSwapControl({
   exerciseIndex,
   principalName,
   alternativeName,
+  iconOnly = false,
   onChange,
 }: AlternativeSwapControlProps) {
   const { t } = useTranslation();
@@ -35,6 +37,25 @@ export function AlternativeSwapControl({
     field.onChange(next);
     onChange?.(next);
   };
+
+  if (iconOnly) {
+    return (
+      <Pressable
+        onPress={toggle}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ checked: usingAlternative }}
+        testID={`workout-execution.exercise-${exerciseIndex}.swap-alternative`}
+      >
+        <Icon
+          as={Repeat}
+          size={18}
+          className={usingAlternative ? 'text-primary' : 'text-muted-foreground'}
+        />
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable

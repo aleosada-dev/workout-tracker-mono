@@ -43,6 +43,10 @@ export default {
     remove: 'Remover alternativo',
     swap: 'Trocar variação do alternativo',
     label: 'Alternativo',
+    incompatible: {
+      title: 'Tipo de medição incompatível',
+      message: 'O alternativo precisa ter o mesmo tipo de medição do exercício.',
+    },
   },
   noteSheet: {
     title: 'Nota do exercício',

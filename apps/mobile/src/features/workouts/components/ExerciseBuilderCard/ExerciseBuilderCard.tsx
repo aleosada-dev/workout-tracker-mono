@@ -50,28 +50,36 @@ export interface ExerciseBuilderCardProps {
   exerciseIndex: number;
   name: string;
   variationName?: string;
+  alternativeName?: string;
+  alternativeVariationName?: string | null;
   dragHandle?: React.ReactNode;
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
   onLongPress?: () => void;
+  onPressName?: () => void;
   onAddAlternative?: () => void;
   onSwapAlternative?: () => void;
   onRemoveAlternative?: () => void;
+  onPressAlternativeName?: () => void;
 }
 
 export function ExerciseBuilderCard({
   exerciseIndex,
   name,
   variationName,
+  alternativeName,
+  alternativeVariationName,
   dragHandle,
   selectable = false,
   selected = false,
   onToggleSelect,
   onLongPress,
+  onPressName,
   onAddAlternative,
   onSwapAlternative,
   onRemoveAlternative,
+  onPressAlternativeName,
 }: ExerciseBuilderCardProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
@@ -171,11 +179,11 @@ export function ExerciseBuilderCard({
         )}
         <Pressable
           className="flex-1"
-          onPress={selectable ? onToggleSelect : undefined}
+          onPress={selectable ? onToggleSelect : onPressName}
           onLongPress={onLongPress}
           delayLongPress={350}
-          disabled={selectable ? !onToggleSelect : !onLongPress}
-          accessibilityRole={selectable ? 'checkbox' : undefined}
+          disabled={selectable ? !onToggleSelect : !onLongPress && !onPressName}
+          accessibilityRole={selectable ? 'checkbox' : onPressName ? 'button' : undefined}
           accessibilityState={selectable ? { checked: selected } : undefined}
         >
           <Text className="font-sans-semibold text-base" numberOfLines={1}>
@@ -199,7 +207,32 @@ export function ExerciseBuilderCard({
 
       {!isCollapsed ? (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-          <View className="flex-row items-start gap-3 px-4 pb-4">
+          {hasAlternative ? (
+            <AlternativeBuilderBlock
+              exerciseIndex={exerciseIndex}
+              name={alternativeName ?? ''}
+              variationName={alternativeVariationName ?? null}
+              onPressName={onPressAlternativeName}
+              onSwap={() => onSwapAlternative?.()}
+              onRemove={() => onRemoveAlternative?.()}
+            />
+          ) : onAddAlternative ? (
+            <View className="px-4 pt-1">
+              <Pressable
+                onPress={onAddAlternative}
+                accessibilityRole="button"
+                className="flex-row items-center justify-center gap-2 py-1"
+                testID={`workout-form.exercise-${exerciseIndex}.add-alternative`}
+              >
+                <Icon as={Repeat} size={14} className="text-muted-foreground" />
+                <Text variant="muted" className="font-sans-medium text-sm">
+                  {t('workoutFormScreen.alternative.add')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          <View className="flex-row items-start gap-3 px-4 pt-4 pb-4">
             <Pressable
               onPress={handleEditNote}
               accessibilityRole="button"
@@ -316,28 +349,6 @@ export function ExerciseBuilderCard({
               </Text>
             </Button>
           </View>
-
-          {hasAlternative ? (
-            <AlternativeBuilderBlock
-              exerciseIndex={exerciseIndex}
-              onSwap={() => onSwapAlternative?.()}
-              onRemove={() => onRemoveAlternative?.()}
-            />
-          ) : onAddAlternative ? (
-            <View className="px-4 pt-3">
-              <Pressable
-                onPress={onAddAlternative}
-                accessibilityRole="button"
-                className="flex-row items-center justify-center gap-2 py-1"
-                testID={`workout-form.exercise-${exerciseIndex}.add-alternative`}
-              >
-                <Icon as={Repeat} size={14} className="text-muted-foreground" />
-                <Text variant="muted" className="font-sans-medium text-sm">
-                  {t('workoutFormScreen.alternative.add')}
-                </Text>
-              </Pressable>
-            </View>
-          ) : null}
         </Animated.View>
       ) : null}
       <SetTypePickerSheet ref={setTypePickerRef} />

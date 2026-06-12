@@ -107,6 +107,7 @@ export function ExerciseExecutionCard({
   );
   const showSetType = getValues(`exercises.${exerciseIndex}.exerciseType`) !== 'preparatory';
   const variationId = getValues(`${activeBase}.variation.id`);
+  const aliasId = getValues(`exercises.${exerciseIndex}.aliasId`);
   const equipmentName = t(`equipment.${getValues(`${activeBase}.variation.equipment.slug`)}`);
   const athleteId = activeWorkout$.athleteId.peek();
 
@@ -177,7 +178,13 @@ export function ExerciseExecutionCard({
         )}
         <Pressable
           className="flex-1"
-          onPress={selectable ? onToggleSelect : onPressHeader}
+          onPress={
+            selectable
+              ? onToggleSelect
+              : onPressHeader
+                ? () => onPressHeader(variationId, isAlternative ? null : aliasId)
+                : undefined
+          }
           onLongPress={onLongPress}
           delayLongPress={350}
           disabled={selectable ? !onToggleSelect : !onPressHeader && !onLongPress}
@@ -192,14 +199,28 @@ export function ExerciseExecutionCard({
           </Text>
         </Pressable>
         {selectable ? null : (
-          <Pressable
-            onPress={() => setCollapsed((c) => !c)}
-            hitSlop={12}
-            accessibilityRole="button"
-            testID="workout-execution.exercise.collapse"
-          >
-            <Icon as={collapsed ? ChevronDown : ChevronUp} size={20} className="text-foreground" />
-          </Pressable>
+          <>
+            {alternative != null ? (
+              <AlternativeSwapControl
+                exerciseIndex={exerciseIndex}
+                principalName={name}
+                alternativeName={alternative.name}
+                iconOnly
+              />
+            ) : null}
+            <Pressable
+              onPress={() => setCollapsed((c) => !c)}
+              hitSlop={{ top: 12, bottom: 12, left: 4, right: 12 }}
+              accessibilityRole="button"
+              testID="workout-execution.exercise.collapse"
+            >
+              <Icon
+                as={collapsed ? ChevronDown : ChevronUp}
+                size={20}
+                className="text-foreground"
+              />
+            </Pressable>
+          </>
         )}
       </View>
 
@@ -224,15 +245,6 @@ export function ExerciseExecutionCard({
                   />
                 </>
               )}
-            </View>
-          ) : null}
-          {alternative != null ? (
-            <View className="px-4 pb-3">
-              <AlternativeSwapControl
-                exerciseIndex={exerciseIndex}
-                principalName={name}
-                alternativeName={alternative.name}
-              />
             </View>
           ) : null}
           {effectiveRestSeconds != null || (note != null && note.length > 0) ? (

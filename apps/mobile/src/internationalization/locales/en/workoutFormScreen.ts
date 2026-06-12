@@ -43,6 +43,10 @@ export default {
     remove: 'Remove alternative',
     swap: 'Swap alternative variation',
     label: 'Alternative',
+    incompatible: {
+      title: 'Incompatible measurement type',
+      message: 'The alternative must share the same measurement type as the exercise.',
+    },
   },
   noteSheet: {
     title: 'Exercise note',

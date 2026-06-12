@@ -94,12 +94,12 @@ export function ExerciseExecutionList({
           selected={selectedIds?.has(item.id) ?? false}
           onToggleSelect={() => onToggleSelect?.(item.id)}
           onLongPress={() => onLongPressItem?.(item.id)}
-          onPressHeader={() =>
+          onPressHeader={(variationId, aliasId) =>
             router.push({
               pathname: '/exerciseDetail',
               params: {
-                id: item.variationId,
-                ...(item.aliasId ? { aliasId: item.aliasId } : {}),
+                id: variationId,
+                ...(aliasId ? { aliasId } : {}),
                 ...(userId ? { userId } : {}),
                 ...(userId && athleteName ? { athleteName } : {}),
               },

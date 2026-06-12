@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { areAlternativeMeasurementTypesCompatible } from '@workout-tracker/domain';
 import {
   ConfirmDialog,
   Field,
@@ -223,6 +224,19 @@ function WorkoutForm({
         const exercises = form.getValues('exercises') ?? [];
         const index = exercises.findIndex((exercise) => exercise.id === exerciseId);
         if (index < 0) return;
+        if (
+          !areAlternativeMeasurementTypesCompatible(
+            exercises[index].variation.measurementType,
+            picked[0].variation.measurementType,
+          )
+        ) {
+          Toast.show({
+            type: 'error',
+            text1: t('workoutFormScreen.alternative.incompatible.title'),
+            text2: t('workoutFormScreen.alternative.incompatible.message'),
+          });
+          return;
+        }
         const alternative = buildBuilderAlternativeFromPicked(
           picked[0],
           form.getValues(`exercises.${index}.sets`),
@@ -256,6 +270,17 @@ function WorkoutForm({
     setTab(value);
   };
 
+  const openExerciseDetail = (variationId: string, aliasId?: string | null) => {
+    router.push({
+      pathname: '/exerciseDetail',
+      params: {
+        id: variationId,
+        ...(aliasId ? { aliasId } : {}),
+        ...(userId ? { userId } : {}),
+      },
+    });
+  };
+
   const handleSave = form.handleSubmit(
     (values) => {
       if (!values.exercises.some((exercise) => exercise.exerciseType === 'strength')) {
@@ -267,7 +292,11 @@ function WorkoutForm({
         return;
       }
       mutation.mutate(
-        toUpsertWorkoutRequest(values, { userId: bodyUserId, folderId: targetFolderId }),
+        toUpsertWorkoutRequest(values, {
+          userId: bodyUserId,
+          folderId: targetFolderId,
+          generateId: Crypto.randomUUID,
+        }),
         {
           onSuccess: () => {
             workoutObservability.trackAction(isEdit ? 'workout_updated' : 'workout_created', {
@@ -339,8 +368,10 @@ function WorkoutForm({
   const renderBuilderCard = (
     item: ReturnType<typeof toExecutionListItems>[number],
     dragHandle?: React.ReactNode,
-  ) =>
-    item.kind === 'superset' ? (
+  ) => {
+    const alternativeVariationId =
+      item.kind === 'single' ? item.alternative?.variationId : undefined;
+    return item.kind === 'superset' ? (
       <SupersetBuilderCard
         members={item.members}
         restSeconds={item.restSeconds}
@@ -349,25 +380,34 @@ function WorkoutForm({
         selected={selection.selected.has(item.id)}
         onToggleSelect={() => selection.toggle(item.id)}
         onLongPress={() => editing.handleLongPressItem(item.id)}
+        onPressMember={openExerciseDetail}
         onAddAlternative={handleAddAlternative}
         onSwapAlternative={handleSwapAlternative}
         onRemoveAlternative={handleRemoveAlternative}
+        onPressAlternativeName={openExerciseDetail}
       />
     ) : (
       <ExerciseBuilderCard
         exerciseIndex={item.exerciseIndex}
         name={item.name}
         variationName={item.variationName ?? undefined}
+        alternativeName={item.alternative?.name}
+        alternativeVariationName={item.alternative?.variationName}
         dragHandle={dragHandle}
         selectable={selectionMode}
         selected={selection.selected.has(item.id)}
         onToggleSelect={() => selection.toggle(item.id)}
         onLongPress={() => editing.handleLongPressItem(item.id)}
+        onPressName={() => openExerciseDetail(item.variationId, item.aliasId)}
         onAddAlternative={() => handleAddAlternative(item.id)}
         onSwapAlternative={() => handleSwapAlternative(item.id)}
         onRemoveAlternative={() => handleRemoveAlternative(item.id)}
+        onPressAlternativeName={
+          alternativeVariationId ? () => openExerciseDetail(alternativeVariationId) : undefined
+        }
       />
     );
+  };
 
   return (
     <FormProvider {...form}>

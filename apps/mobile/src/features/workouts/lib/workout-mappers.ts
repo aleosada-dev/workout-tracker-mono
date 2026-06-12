@@ -27,7 +27,11 @@ export function toWorkoutCardData(workout: WorkoutResponse): WorkoutCardData {
 }
 
 /** Resumo leve do alternativo, para o swap (execução) e o sub-bloco (builder). */
-export type AlternativeDescriptor = { name: string; variationName: string | null } | null;
+export type AlternativeDescriptor = {
+  variationId: string;
+  name: string;
+  variationName: string | null;
+} | null;
 
 export type ExerciseExecutionItem = {
   id: string;
@@ -167,7 +171,10 @@ function toExerciseExecutionItem(
     note: exercise.note,
     restSeconds: exercise.restSeconds,
     alternative: exercise.alternative
-      ? composeVariationDisplay(exercise.alternative.variation, t, language)
+      ? {
+          variationId: exercise.alternative.variation.id,
+          ...composeVariationDisplay(exercise.alternative.variation, t, language),
+        }
       : null,
   };
 }
